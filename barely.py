@@ -65,10 +65,12 @@ def is_num(string):
     except ValueError:
         return False
 
+keywords = ["function", "return", "variable"]
+
 def tokenize_small(contents):
     tokens = []
 
-    if contents == "function" or contents == "return":
+    if contents in keywords:
         tokens.append(KeywordToken(contents))
     elif is_num(contents):
         tokens.append(NumberToken(int(contents)))
@@ -141,6 +143,10 @@ class RetrieveNode:
     def __init__(self, name):
         self.name = name
 
+class AssignNode:
+    def __init__(self, name):
+        self.name = name
+
 class StringNode:
     def __init__(self, string):
         self.string = string
@@ -163,14 +169,20 @@ def generate_ast(tokens):
         if isinstance(token, KeywordToken):
             if token.word == "function":
                 current_function, index = get_function_declaration(tokens, index + 1)
+                ast.append(current_function)
             elif token.word == "return":
                 statement, index = get_expression(tokens, index + 1)
 
                 if current_function:
                     current_function.instructions.extend(statement)
                     current_function.instructions.append(ReturnNode())
-        elif isinstance(token, ClosedCurlyBracketToken):
-            ast.append(current_function)
+            elif token.word == "variable":
+                index2 = index
+                statement, index = get_assign(tokens, index + 1)
+                #print(index - index2)
+
+                if current_function:
+                    current_function.instructions.extend(statement)
         else:
             statement, index = get_expression(tokens, index)
 
@@ -178,6 +190,12 @@ def generate_ast(tokens):
                 current_function.instructions.extend(statement)
 
         index += 1
+
+    for function in ast:
+        for instruction in function.instructions:
+            if isinstance(instruction, AssignNode):
+                if not instruction.name in function.locals:
+                    function.locals.append(instruction.name)
 
     return ast
 
@@ -215,10 +233,10 @@ def get_expression(tokens, index):
     statement = []
 
     if isinstance(tokens[index], NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
-        invoke, index = get_invoke(tokens, index + 2, tokens[index].name)
+        invoke, index = get_invoke(tokens, index + 1, tokens[index].name)
         statement.extend(invoke)
     elif isinstance(tokens[index], NameToken):
-        retrieve, index = get_retrieve(index + 2, tokens[index].name)
+        retrieve, index = get_retrieve(index + 1, tokens[index].name)
         statement.extend(retrieve)
     elif isinstance(tokens[index], StringToken):
         statement.append(StringNode(tokens[index].string))
@@ -232,11 +250,40 @@ def get_expression(tokens, index):
 def get_invoke(tokens, index, name):
     statement = []
 
+    index += 1
     while not isinstance(tokens[index], ClosedParenthesisToken):
         expression, index = get_expression(tokens, index)
         statement = expression + statement
+        if isinstance(tokens[index], CommaToken):
+            index += 1
 
     statement.append(InvokeNode(name))
+
+    index += 1
+
+    return statement, index
+
+def get_assign(tokens, index):
+    statement = []
+
+    name = None
+    expression = False
+
+    while not isinstance(tokens[index], SemiColonToken):
+        token = tokens[index]
+
+        if expression:
+            expression, index = get_expression(tokens, index)
+            statement.extend(expression)
+
+        if isinstance(token, NameToken) and not name:
+            name = token.name
+            index += 1
+        elif isinstance(token, NameToken) and token.name == "=":
+            expression = True
+            index += 1
+
+    statement.append(AssignNode(name))
 
     return statement, index
 
@@ -319,13 +366,19 @@ def compile_linux_x86_64(ast, name):
             elif isinstance(instruction, RetrieveNode):
                 if instruction.name in function.parameters:
                     # TODO: 8 bytes only...
-                    i = 0
+                    i = -1
 
                     for index, parameter in enumerate(function.parameters):
                         if parameter == instruction.name:
                             i = index
 
                     contents += "push qword [rbp+" + str(16 + 8 * i) + "]\n"
+                else:
+                    i = function.locals.index(instruction.name)
+                    contents += "push qword [rbp-" + str(8 + 8 * i) + "]\n"
+            elif isinstance(instruction, AssignNode):
+                i = function.locals.index(instruction.name)
+                contents += "pop qword [rbp-" + str(8 + 8 * i) + "]\n"
             elif isinstance(instruction, StringNode):
                 #contents += "push " + str(len(instruction.string)) + "\n"
                 contents += "push _" + str(data_index) + "\n"
