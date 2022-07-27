@@ -345,8 +345,8 @@ def compile_linux_x86_64(ast, name):
 
     #Builtin functions
     functions = {}
-    functions["@print"] = FunctionNode("@print", [], ["*", "integer"], [], [])
-    functions["@length"] = FunctionNode("@length", [], ["*"], ["integer"], [])
+    functions["@print"] = FunctionNode("@print", [], {"string": "*", "size": "integer"}, [], [])
+    functions["@length"] = FunctionNode("@length", [], {"string": "*"}, ["integer"], [])
 
     for function in ast:
         functions[function.name] = function
@@ -356,11 +356,12 @@ def compile_linux_x86_64(ast, name):
 
         contents += "push rbp\n"
         contents += "mov rbp, rsp\n"
+        contents += "sub rsp, " + str(len(function.locals) * 8) + "\n"
 
         for instruction in function.instructions:
             if isinstance(instruction, InvokeNode):
                 contents += "call " + instruction.name + "\n"
-                contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters)) + "\n"
+                contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters.values())) + "\n"
                 for i in range(0, get_size_linux_x86_64(functions[instruction.name].returns) // 8):
                     contents += "push r" + str(8 + i) + "\n"
             elif isinstance(instruction, RetrieveNode):
