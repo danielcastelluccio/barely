@@ -147,6 +147,10 @@ class AssignNode:
     def __init__(self, name):
         self.name = name
 
+class DeclareNode:
+    def __init__(self, name):
+        self.name = name
+
 class StringNode:
     def __init__(self, string):
         self.string = string
@@ -177,12 +181,16 @@ def generate_ast(tokens):
                     current_function.instructions.extend(statement)
                     current_function.instructions.append(ReturnNode())
             elif token.word == "variable":
-                index2 = index
-                statement, index = get_assign(tokens, index + 1)
-                #print(index - index2)
+                statement, index, name = get_assign(tokens, index + 1)
 
                 if current_function:
+                    current_function.instructions.append(DeclareNode(name))
                     current_function.instructions.extend(statement)
+        elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
+            statement, index, name = get_assign(tokens, index)
+
+            if current_function:
+                current_function.instructions.extend(statement)
         else:
             statement, index = get_expression(tokens, index)
 
@@ -285,7 +293,7 @@ def get_assign(tokens, index):
 
     statement.append(AssignNode(name))
 
-    return statement, index
+    return statement, index, name
 
 def get_retrieve(index, name):
     statement = []
