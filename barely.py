@@ -58,6 +58,14 @@ class NumberToken:
     def __str__(self) -> str:
         return "[Number: '" + str(self.number) + "']"
 
+class NumberSplitToken:
+    def __init__(self, number1, number2):
+        self.number1 = number1
+        self.number2 = number2
+
+    def __str__(self) -> str:
+        return "[NumberSplit: '" + str(self.number1) + "', '" + str(self.number2) + "']"
+
 def is_num(string):
     try:
         int(string)
@@ -74,8 +82,7 @@ def tokenize_small(contents):
         tokens.append(KeywordToken(contents))
     elif "_" in contents and is_num(contents.split("_")[0]) and is_num(contents.split("_")[1]):
         split = contents.split("_")
-        tokens.append(NumberToken(int(split[1])))
-        tokens.append(NumberToken(int(split[0])))
+        tokens.append(NumberSplitToken(int(split[0]), int(split[1])))
     elif is_num(contents):
         tokens.append(NumberToken(int(contents)))
     elif contents.strip():
@@ -163,6 +170,11 @@ class StringNode:
 class IntegerNode:
     def __init__(self, integer):
         self.integer = integer
+
+class LongNode:
+    def __init__(self, integer1, integer2):
+        self.integer1 = integer1
+        self.integer2 = integer2
 
 class ReturnNode:
     pass
@@ -258,6 +270,9 @@ def get_expression(tokens, index):
     elif isinstance(tokens[index], NumberToken):
         statement.append(IntegerNode(tokens[index].number))
         index += 1
+    elif isinstance(tokens[index], NumberSplitToken):
+        statement.append(LongNode(tokens[index].number1, tokens[index].number2))
+        index += 1
 
     return statement, index
 
@@ -295,6 +310,48 @@ def get_retrieve(index, name):
 
     return statement, index
 
+def type_check(ast, functions):
+    for function in ast:
+        variables = {}
+        types = []
+
+        for parameter in function.parameters:
+            variables[parameter] = function.parameters[parameter]
+
+        for instruction in function.instructions:
+            if isinstance(instruction, DeclareNode):
+                variables[instruction.name] = instruction.type
+            elif isinstance(instruction, IntegerNode):
+                types.append("integer")
+            elif isinstance(instruction, LongNode):
+                types.append("long")
+            elif isinstance(instruction, AssignNode):
+                popped = types.pop()
+                if not variables[instruction.name] == popped:
+                    print("TYPECHECK: Assign of " + instruction.name + " in " + function.name + " expected " + variables[instruction.name] + ", got " + popped + ".")
+                    exit()
+            elif isinstance(instruction, RetrieveNode):
+                types.append(variables[instruction.name])
+            elif isinstance(instruction, InvokeNode):
+                called_function = functions[instruction.name]
+                for parameter in called_function.parameters.values():
+                    popped = types.pop()
+                    if not parameter == popped:
+                        print("TYPECHECK: Invoke of " + instruction.name + " in " + function.name + " expected " + parameter + ", got " + popped + ".")
+                        exit()
+
+                for return_ in called_function.returns:
+                    types.append(return_)
+            elif isinstance(instruction, ReturnNode):
+                for return_ in function.returns:
+                    popped = types.pop()
+                    if not return_ == popped:
+                        print("TYPECHECK: Return in " + function.name + " expected " + return_ + ", got " + popped + ".")
+                        exit()
+            else:
+                print(instruction)
+        
+
 def get_size_linux_x86_64(types):
     size = 0
 
@@ -309,7 +366,7 @@ def get_size_linux_x86_64(types):
 
     return size
 
-def compile_linux_x86_64(ast, name):
+def compile_linux_x86_64(ast, name, functions):
     fasm_file = open("build/" + name + ".asm", 'w')
     contents = "format ELF64 executable\n"
     contents += "entry start\n"
@@ -357,58 +414,47 @@ def compile_linux_x86_64(ast, name):
     contents += "pop rbp\n"
     contents += "ret\n"
 
-    contents += """
-        @print_integer:
-    pop     rsi
-    pop     rdi
-    push    rdi
-    push    rsi
-    mov     r9, -3689348814741910323
-    sub     rsp, 40
-    mov     BYTE [rsp+31], 10
-    lea     rcx, [rsp+30]
+    contents += """@print_integer:
+pop rsi
+pop rdi
+push rdi
+push rsi
+mov r9, -3689348814741910323
+sub rsp, 40
+mov BYTE [rsp+31], 10
+lea rcx, [rsp+30]
 .L2:
-    mov     rax, rdi
-    lea     r8, [rsp+32]
-    mul     r9
-    mov     rax, rdi
-    sub     r8, rcx
-    shr     rdx, 3
-    lea     rsi, [rdx+rdx*4]
-    add     rsi, rsi
-    sub     rax, rsi
-    add     eax, 48
-    mov     BYTE [rcx], al
-    mov     rax, rdi
-    mov     rdi, rdx
-    mov     rdx, rcx
-    sub     rcx, 1
-    cmp     rax, 9
-    ja      .L2
-    lea     rax, [rsp+32]
-    mov     edi, 1
-    sub     rdx, rax
-    xor     eax, eax
-    lea     rsi, [rsp+32+rdx]
-    mov     rdx, r8
-    mov     rax, 1
-    syscall
-    add     rsp, 40
-    ret
-    """
+mov rax, rdi
+lea r8, [rsp+32]
+mul r9
+mov rax, rdi
+sub r8, rcx
+shr rdx, 3
+lea rsi, [rdx+rdx*4]
+add rsi, rsi
+sub rax, rsi
+add eax, 48
+mov BYTE [rcx], al
+mov rax, rdi
+mov rdi, rdx
+mov rdx, rcx
+sub rcx, 1
+cmp rax, 9
+ja .L2
+lea rax, [rsp+32]
+mov edi, 1
+sub rdx, rax
+xor eax, eax
+lea rsi, [rsp+32+rdx]
+mov rdx, r8
+mov rax, 1
+syscall
+add     rsp, 40
+ret
+"""
 
     contents_data = ""
     data_index = 0
-
-    #Builtin functions
-    functions = {}
-    functions["@print"] = FunctionNode("@print", [], {"string": "*", "size": "integer"}, [], [])
-    functions["@length"] = FunctionNode("@length", [], {"string": "*"}, ["integer"], [])
-    functions["@print_integer"] = FunctionNode("@print_integer", [], {"integer": "integer"}, [], [])
-    functions["@add_long"] = FunctionNode("@add_long", [], {"long": "long"}, ["integer"], [])
-
-    for function in ast:
-        functions[function.name] = function
 
     for function in ast:
         contents += function.name + ":\n"
@@ -515,6 +561,9 @@ def compile_linux_x86_64(ast, name):
                 data_index += 1
             elif isinstance(instruction, IntegerNode):
                 contents += "push " + str(instruction.integer) + "\n"
+            elif isinstance(instruction, LongNode):
+                contents += "push " + str(instruction.integer2) + "\n"
+                contents += "push " + str(instruction.integer1) + "\n"
             elif isinstance(instruction, ReturnNode):
                 size = get_size_linux_x86_64(functions[function.name].returns)
                 i = 0
@@ -552,7 +601,19 @@ contents = file.read()
 tokens = tokenize(contents)
 ast = generate_ast(tokens)
 
+#Builtin functions
+functions = {}
+functions["@print"] = FunctionNode("@print", [], {"string": "*", "size": "integer"}, [], [])
+functions["@length"] = FunctionNode("@length", [], {"string": "*"}, ["integer"], [])
+functions["@print_integer"] = FunctionNode("@print_integer", [], {"integer": "integer"}, [], [])
+functions["@add_long"] = FunctionNode("@add_long", [], {"long": "long"}, ["integer"], [])
+
+for function in ast:
+    functions[function.name] = function
+
+type_check(ast, functions)
+
 if not os.path.exists("build"):
     os.makedirs("build")
 
-compile_linux_x86_64(ast, file.name.replace(".barely", ""))
+compile_linux_x86_64(ast, file.name.replace(".barely", ""), functions)
