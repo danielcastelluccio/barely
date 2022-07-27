@@ -234,7 +234,6 @@ def get_function_declaration(tokens, index):
 
         index += 1
 
-    # TODO: actually calculate parameters
     return FunctionNode(name, [], parameters, returns, []), index
 
 def get_expression(tokens, index):
@@ -370,18 +369,18 @@ def compile_linux_x86_64(ast, name):
             if isinstance(instruction, InvokeNode):
                 contents += "call " + instruction.name + "\n"
                 contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters.values())) + "\n"
+                # TODO: fix for > 8 bytes types
                 for i in range(0, get_size_linux_x86_64(functions[instruction.name].returns) // 8):
                     contents += "push r" + str(8 + i) + "\n"
             elif isinstance(instruction, RetrieveNode):
                 if instruction.name in function.parameters:
-                    # TODO: 8 bytes only...
                     i = -1
 
                     for index, parameter in enumerate(function.parameters):
                         if parameter == instruction.name:
                             i = index
 
-                    contents += "push qword [rbp+" + str(16 + 8 * i) + "]\n"
+                    contents += "push qword [rbp+" + str(16 + get_size_linux_x86_64(list(function.parameters.values())[0 : i])) + "]\n"
                 else:
                     i = function.locals.index(instruction.name)
                     contents += "push qword [rbp-" + str(8 + 8 * i) + "]\n"
