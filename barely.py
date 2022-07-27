@@ -226,7 +226,7 @@ def get_size_linux_x86_64(types):
     return size
 
 def compile_linux_x86_64(ast, name):
-    fasm_file = open(name + ".asm", 'w')
+    fasm_file = open("build/" + name + ".asm", 'w')
     contents = "format ELF64 executable\n"
     contents += "entry start\n"
     contents += "segment readable executable\n"
@@ -299,11 +299,15 @@ def compile_linux_x86_64(ast, name):
     fasm_file.write(contents)
     fasm_file.close()
 
-    os.system("fasm " + fasm_file.name + " " + name)
+    os.system("fasm " + fasm_file.name + " build/" + name)
 
 file = open(sys.argv[1])
 contents = file.read()
 
 tokens = tokenize(contents)
 ast = generate_ast(tokens)
+
+if not os.path.exists("build"):
+    os.makedirs("build")
+
 compile_linux_x86_64(ast, file.name.replace(".barely", ""))
