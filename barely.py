@@ -1,5 +1,6 @@
 import sys
 import os
+from collections import OrderedDict
 
 class KeywordToken:
     def __init__(self, word):
@@ -23,13 +24,13 @@ class ClosedParenthesisToken:
     def __str__(self) -> str:
         return "[ClosedParenthesis]"
 
-class OpenBracketToken:
+class OpenCurlyBracketToken:
     def __str__(self) -> str:
-        return "[OpenBracket]"
+        return "[OpenCurlyBracket]"
 
-class ClosedBracketToken:
+class ClosedCurlyBracketToken:
     def __str__(self) -> str:
-        return "[ClosedBracket]"
+        return "[ClosedCurlyBracket]"
 
 class SemiColonToken:
     def __str__(self) -> str:
@@ -90,11 +91,13 @@ def tokenize(contents):
             tokens.append(OpenParenthesisToken())
             buffer = ""
         elif character == ')' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
             tokens.append(ClosedParenthesisToken())
+            buffer = ""
         elif character == '{' and not in_quotes:
-            tokens.append(OpenBracketToken())
+            tokens.append(OpenCurlyBracketToken())
         elif character == '}' and not in_quotes:
-            tokens.append(ClosedBracketToken())
+            tokens.append(ClosedCurlyBracketToken())
         elif character == ';' and not in_quotes:
             tokens.extend(tokenize_small(buffer))
             tokens.append(SemiColonToken())
@@ -104,7 +107,9 @@ def tokenize(contents):
             tokens.append(CommaToken())
             buffer = ""
         elif character == ':' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
             tokens.append(ColonToken())
+            buffer = ""
         elif character == '"':
             if in_quotes:
                 tokens.append(StringToken(buffer))
@@ -121,13 +126,18 @@ def tokenize(contents):
     return tokens
 
 class FunctionNode:
-    def __init__(self, name, instructions, parameters, returns):
+    def __init__(self, name, instructions, parameters, returns, locals):
         self.name = name
         self.instructions = instructions
         self.parameters = parameters
         self.returns = returns
+        self.locals = locals
 
 class InvokeNode:
+    def __init__(self, name):
+        self.name = name
+
+class RetrieveNode:
     def __init__(self, name):
         self.name = name
 
@@ -159,7 +169,7 @@ def generate_ast(tokens):
                 if current_function:
                     current_function.instructions.extend(statement)
                     current_function.instructions.append(ReturnNode())
-        elif isinstance(token, ClosedBracketToken):
+        elif isinstance(token, ClosedCurlyBracketToken):
             ast.append(current_function)
         else:
             statement, index = get_expression(tokens, index)
@@ -174,8 +184,13 @@ def generate_ast(tokens):
 def get_function_declaration(tokens, index):
     name = None
     searching_returns = False
+    parameters = OrderedDict()
     returns = []
-    while not isinstance(tokens[index], OpenBracketToken):
+
+    name_index = 0
+    parameter_name_cache = ""
+
+    while not isinstance(tokens[index], OpenCurlyBracketToken):
         token = tokens[index]
 
         if isinstance(token, NameToken) and not name:
@@ -184,18 +199,27 @@ def get_function_declaration(tokens, index):
             searching_returns = True
         elif isinstance(token, NameToken) and searching_returns:
             returns.append(token.name)
+        elif isinstance(token, NameToken):
+            if name_index % 2 == 1:
+                parameters[parameter_name_cache] = token.name
+            else:
+                parameter_name_cache = token.name
+            name_index += 1
 
         index += 1
 
-    # TODO: actually calculate
-    return FunctionNode(name, [], [], returns), index
+    # TODO: actually calculate parameters
+    return FunctionNode(name, [], parameters, returns, []), index
 
 def get_expression(tokens, index):
     statement = []
 
-    if isinstance(tokens[index], NameToken):
+    if isinstance(tokens[index], NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
         invoke, index = get_invoke(tokens, index + 2, tokens[index].name)
         statement.extend(invoke)
+    elif isinstance(tokens[index], NameToken):
+        retrieve, index = get_retrieve(index + 2, tokens[index].name)
+        statement.extend(retrieve)
     elif isinstance(tokens[index], StringToken):
         statement.append(StringNode(tokens[index].string))
         index += 1
@@ -210,9 +234,16 @@ def get_invoke(tokens, index, name):
 
     while not isinstance(tokens[index], ClosedParenthesisToken):
         expression, index = get_expression(tokens, index)
-        statement.extend(expression)
+        statement = expression + statement
 
     statement.append(InvokeNode(name))
+
+    return statement, index
+
+def get_retrieve(index, name):
+    statement = []
+
+    statement.append(RetrieveNode(name))
 
     return statement, index
 
@@ -248,19 +279,30 @@ def compile_linux_x86_64(ast, name):
     contents += "pop rbp\n"
     contents += "ret\n"
 
+    contents += "@length:\n"
+    contents += "push rbp\n"
+    contents += "mov rbp, rsp\n"
+    contents += "mov rax, 0\n"
+    contents += "mov rdi, [rbp+16]\n"
+    contents += "mov rcx, -1\n"
+    contents += "repne scasb\n"
+    contents += "not rcx\n"
+    contents += "sub rcx, 1\n"
+    contents += "mov r8, rcx\n"
+    contents += "mov rsp, rbp\n"
+    contents += "pop rbp\n"
+    contents += "ret\n"
+
     contents_data = ""
     data_index = 0
 
-    function_parameters = {}
-    function_returns = {}
-
     #Builtin functions
-    function_parameters["@print"] = ["*", "integer"]
-    function_returns["@print"] = []
+    functions = {}
+    functions["@print"] = FunctionNode("@print", [], ["*", "integer"], [], [])
+    functions["@length"] = FunctionNode("@length", [], ["*"], ["integer"], [])
 
     for function in ast:
-        function_parameters[function.name] = function.parameters
-        function_returns[function.name] = function.returns
+        functions[function.name] = function
 
     for function in ast:
         contents += function.name + ":\n"
@@ -271,18 +313,29 @@ def compile_linux_x86_64(ast, name):
         for instruction in function.instructions:
             if isinstance(instruction, InvokeNode):
                 contents += "call " + instruction.name + "\n"
-                contents += "add rsp, " + str(get_size_linux_x86_64(function_parameters[instruction.name])) + "\n"
-                for i in range(0, get_size_linux_x86_64(function_returns[instruction.name]) // 8):
+                contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters)) + "\n"
+                for i in range(0, get_size_linux_x86_64(functions[instruction.name].returns) // 8):
                     contents += "push r" + str(8 + i) + "\n"
+            elif isinstance(instruction, RetrieveNode):
+                if instruction.name in function.parameters:
+                    # TODO: 8 bytes only...
+                    i = 0
+
+                    for index, parameter in enumerate(function.parameters):
+                        if parameter == instruction.name:
+                            i = index
+
+                    contents += "push qword [rbp+" + str(16 + 8 * i) + "]\n"
             elif isinstance(instruction, StringNode):
-                contents += "push " + str(len(instruction.string)) + "\n"
+                #contents += "push " + str(len(instruction.string)) + "\n"
                 contents += "push _" + str(data_index) + "\n"
-                contents_data += "_" + str(data_index) + ": db \"" + instruction.string + "\", 10\n"
+                contents_data += "_" + str(data_index) + ": db \"" + instruction.string + "\", 0\n"
                 data_index += 1
             elif isinstance(instruction, IntegerNode):
                 contents += "push " + str(instruction.integer) + "\n"
             elif isinstance(instruction, ReturnNode):
-                for i in range(0, len(function_returns[function.name])):
+                # TODO: only works with 8 byte sized types (technically smaller too but could be more compact)
+                for i in range(0, len(functions[function.name].returns)):
                     contents += "pop r" + str(8 + i) + "\n"
 
                 contents += "mov rsp, rbp\n"
