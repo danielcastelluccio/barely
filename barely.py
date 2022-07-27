@@ -35,12 +35,46 @@ class SemiColonToken:
     def __str__(self) -> str:
         return "[SemiColon]"
 
+class ColonToken:
+    def __str__(self) -> str:
+        return "[Colon]"
+
+class CommaToken:
+    def __str__(self) -> str:
+        return "[Comma]"
+
 class StringToken:
     def __init__(self, string):
         self.string = string
 
     def __str__(self) -> str:
         return "[String: '" + self.string + "']"
+
+class NumberToken:
+    def __init__(self, number):
+        self.number = number
+
+    def __str__(self) -> str:
+        return "[Number: '" + str(self.number) + "']"
+
+def is_num(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False
+
+def tokenize_small(contents):
+    tokens = []
+
+    if contents == "function" or contents == "return":
+        tokens.append(KeywordToken(contents))
+    elif is_num(contents):
+        tokens.append(NumberToken(int(contents)))
+    elif contents.strip():
+        tokens.append(NameToken(contents))
+
+    return tokens
 
 def tokenize(contents):
     tokens = []
@@ -49,8 +83,7 @@ def tokenize(contents):
     in_quotes = False
     for character in contents:
         if character == ' ' and not in_quotes:
-            if buffer == "function":
-                tokens.append(KeywordToken("function"))
+            tokens.extend(tokenize_small(buffer))
             buffer = ""
         elif character == '(' and not in_quotes:
             tokens.append(NameToken(buffer))
@@ -63,7 +96,15 @@ def tokenize(contents):
         elif character == '}' and not in_quotes:
             tokens.append(ClosedBracketToken())
         elif character == ';' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
             tokens.append(SemiColonToken())
+            buffer = ""
+        elif character == ',' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(CommaToken())
+            buffer = ""
+        elif character == ':' and not in_quotes:
+            tokens.append(ColonToken())
         elif character == '"':
             if in_quotes:
                 tokens.append(StringToken(buffer))
@@ -80,10 +121,11 @@ def tokenize(contents):
     return tokens
 
 class FunctionNode:
-    def __init__(self, name, instructions, parameter_count):
+    def __init__(self, name, instructions, parameters, returns):
         self.name = name
         self.instructions = instructions
-        self.parameter_count = parameter_count
+        self.parameters = parameters
+        self.returns = returns
 
 class InvokeNode:
     def __init__(self, name):
@@ -92,6 +134,13 @@ class InvokeNode:
 class StringNode:
     def __init__(self, string):
         self.string = string
+
+class IntegerNode:
+    def __init__(self, integer):
+        self.integer = integer
+
+class ReturnNode:
+    pass
 
 def generate_ast(tokens):
     ast = []
@@ -104,6 +153,12 @@ def generate_ast(tokens):
         if isinstance(token, KeywordToken):
             if token.word == "function":
                 current_function, index = get_function_declaration(tokens, index + 1)
+            elif token.word == "return":
+                statement, index = get_expression(tokens, index + 1)
+
+                if current_function:
+                    current_function.instructions.extend(statement)
+                    current_function.instructions.append(ReturnNode())
         elif isinstance(token, ClosedBracketToken):
             ast.append(current_function)
         else:
@@ -118,16 +173,22 @@ def generate_ast(tokens):
 
 def get_function_declaration(tokens, index):
     name = None
+    searching_returns = False
+    returns = []
     while not isinstance(tokens[index], OpenBracketToken):
         token = tokens[index]
 
         if isinstance(token, NameToken) and not name:
             name = token.name
+        elif isinstance(token, ClosedParenthesisToken):
+            searching_returns = True
+        elif isinstance(token, NameToken) and searching_returns:
+            returns.append(token.name)
 
         index += 1
 
     # TODO: actually calculate
-    return FunctionNode(name, [], 0), index
+    return FunctionNode(name, [], [], returns), index
 
 def get_expression(tokens, index):
     statement = []
@@ -137,6 +198,9 @@ def get_expression(tokens, index):
         statement.extend(invoke)
     elif isinstance(tokens[index], StringToken):
         statement.append(StringNode(tokens[index].string))
+        index += 1
+    elif isinstance(tokens[index], NumberToken):
+        statement.append(IntegerNode(tokens[index].number))
         index += 1
 
     return statement, index
@@ -152,7 +216,16 @@ def get_invoke(tokens, index, name):
 
     return statement, index
 
-def generate_fasm_file(ast, name):
+def get_size_linux_x86_64(types):
+    size = 0
+
+    for type in types:
+        if type == "*" or type == "integer":
+            size += 8
+
+    return size
+
+def compile_linux_x86_64(ast, name):
     fasm_file = open(name + ".asm", 'w')
     contents = "format ELF64 executable\n"
     contents += "entry start\n"
@@ -178,27 +251,46 @@ def generate_fasm_file(ast, name):
     contents_data = ""
     data_index = 0
 
-    function_parameter_sizes = {}
+    function_parameters = {}
+    function_returns = {}
 
     #Builtin functions
-    function_parameter_sizes["@print"] = 16
+    function_parameters["@print"] = ["*", "integer"]
+    function_returns["@print"] = []
 
     for function in ast:
-        function_parameter_sizes[function.name] = function.parameter_count * 8
+        function_parameters[function.name] = function.parameters
+        function_returns[function.name] = function.returns
 
     for function in ast:
         contents += function.name + ":\n"
 
+        contents += "push rbp\n"
+        contents += "mov rbp, rsp\n"
+
         for instruction in function.instructions:
             if isinstance(instruction, InvokeNode):
                 contents += "call " + instruction.name + "\n"
-                contents += "add rsp, " + str(function_parameter_sizes[instruction.name]) + "\n"
+                contents += "add rsp, " + str(get_size_linux_x86_64(function_parameters[instruction.name])) + "\n"
+                for i in range(0, get_size_linux_x86_64(function_returns[instruction.name]) // 8):
+                    contents += "push r" + str(8 + i) + "\n"
             elif isinstance(instruction, StringNode):
                 contents += "push " + str(len(instruction.string)) + "\n"
                 contents += "push _" + str(data_index) + "\n"
                 contents_data += "_" + str(data_index) + ": db \"" + instruction.string + "\", 10\n"
                 data_index += 1
+            elif isinstance(instruction, IntegerNode):
+                contents += "push " + str(instruction.integer) + "\n"
+            elif isinstance(instruction, ReturnNode):
+                for i in range(0, len(function_returns[function.name])):
+                    contents += "pop r" + str(8 + i) + "\n"
 
+                contents += "mov rsp, rbp\n"
+                contents += "pop rbp\n"
+                contents += "ret\n"
+
+        contents += "mov rsp, rbp\n"
+        contents += "pop rbp\n"
         contents += "ret\n"
 
     contents += "segment readable\n"
@@ -214,4 +306,4 @@ contents = file.read()
 
 tokens = tokenize(contents)
 ast = generate_ast(tokens)
-generate_fasm_file(ast, file.name.replace(".barely", ""))
+compile_linux_x86_64(ast, file.name.replace(".barely", ""))
