@@ -354,9 +354,9 @@ def get_expression_lisp(tokens, index):
     elif isinstance(tokens[index], NameToken):
         retrieve, index = get_retrieve_lisp(index + 1, tokens[index].name)
         statement.extend(retrieve)
-    #elif isinstance(tokens[index], StringToken):
-    #    statement.append(StringNode(tokens[index].string))
-    #    index += 1
+    elif isinstance(tokens[index], StringToken):
+        statement.append(StringNode(tokens[index].string))
+        index += 1
     elif isinstance(tokens[index], NumberToken):
         statement.append(IntegerNode(tokens[index].number))
         index += 1
@@ -445,7 +445,6 @@ def get_assign_lisp(tokens, index, name):
     statement.extend(expression)
 
     statement.append(AssignNode(name))
-    print(statement)
 
     return statement, index
 
@@ -496,6 +495,8 @@ def type_check(ast, functions):
                 types.append("integer")
             elif isinstance(instruction, LongNode):
                 types.append("long")
+            elif isinstance(instruction, StringNode):
+                types.append("*")
             elif isinstance(instruction, AssignNode):
                 popped = types.pop()
                 if not is_type(popped, variables[instruction.name]):
@@ -798,16 +799,16 @@ file = open(sys.argv[1])
 contents = file.read()
 
 tokens = tokenize(contents)
-for token in tokens:
-    print(token)
+#for token in tokens:
+    #print(token)
 
-print("-----")
+#print("-----")
 ast = generate_ast_lisp(tokens)
 
-for function in ast:
-    if function.name == "main":
-        for intruction in function.instructions:
-            print(intruction)
+#for function in ast:
+    #if function.name == "main":
+        #for intruction in function.instructions:
+            #print(intruction)
 
 #Builtin functions
 functions = {}
