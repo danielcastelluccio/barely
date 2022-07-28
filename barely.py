@@ -398,9 +398,13 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "repne scasb\n"
     contents += "not rcx\n"
     contents += "sub rcx, 1\n"
-    contents += "mov [return_memory], rcx\n"
+    contents += "pop rbx\n"
+    contents += "pop rdx\n"
+    contents += "push rcx\n"
     contents += "mov rsp, rbp\n"
+    contents += "push rbx\n"
     contents += "pop rbp\n"
+    contents += "push rdx\n"
     contents += "ret\n"
 
     contents += "@add_long:\n"
@@ -409,9 +413,13 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "mov rax, 0\n"
     contents += "mov rax, [rbp+16]\n"
     contents += "add rax, [rbp+24]\n"
-    contents += "mov [return_memory], rax\n"
+    contents += "pop rbx\n"
+    contents += "pop rdx\n"
+    contents += "push rax\n"
     contents += "mov rsp, rbp\n"
+    contents += "push rbx\n"
     contents += "pop rbp\n"
+    contents += "push rdx\n"
     contents += "ret\n"
 
     contents += """@print_integer:
@@ -476,14 +484,14 @@ ret
         for instruction in function.instructions:
             if isinstance(instruction, InvokeNode):
                 contents += "call " + instruction.name + "\n"
-                contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters.values())) + "\n"
+                contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters.values()) - get_size_linux_x86_64(functions[instruction.name].returns)) + "\n"
                 size = get_size_linux_x86_64(functions[instruction.name].returns)
-                contents += "sub rsp, " + str(size) + "\n"
+                #contents += "sub rsp, " + str(size) + "\n"
                 i = 0
                 while i < size:
                     if size - i >= 8:
-                        contents += "mov rax, [return_memory+" + str(i) + "]\n"
-                        contents += "mov [rsp+" + str(i) + "], rax\n"
+                        #contents += "mov rax, [return_memory+" + str(i) + "]\n"
+                        #contents += "mov [rsp+" + str(i) + "], rax\n"
                         i += 8
                     else:
                         print("non multiple of 8 size 1")
@@ -567,17 +575,22 @@ ret
             elif isinstance(instruction, ReturnNode):
                 size = get_size_linux_x86_64(functions[function.name].returns)
                 i = 0
+                contents += "mov rcx, [rsp+" + str(size + 8) + "]\n"
+                contents += "mov rdx, [rsp+" + str(size) + "]\n"
+                size += 8
                 while i < size:
                     if size - i >= 8:
-                        contents += "mov rax, [rsp+" + str(i) + "]\n"
-                        contents += "mov [return_memory+" + str(i) + "], rax\n"
+                        contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
+                        contents += "mov [rsp+" + str(size - i + 8) + "], rax\n"
                         i += 8
                     else:
                         print("non multiple of 8 size 4")
                         exit()
 
                 contents += "mov rsp, rbp\n"
+                contents += "push rdx\n"
                 contents += "pop rbp\n"
+                contents += "push rcx\n"
                 contents += "ret\n"
 
         contents += "mov rsp, rbp\n"
@@ -586,9 +599,6 @@ ret
 
     contents += "segment readable\n"
     contents += contents_data
-
-    contents += "segment readable writable\n"
-    contents += "return_memory: rb 128"
 
     fasm_file.write(contents)
     fasm_file.close()
