@@ -40,10 +40,6 @@ class ColonToken:
     def __str__(self) -> str:
         return "[Colon]"
 
-class AmpersandToken:
-    def __str__(self) -> str:
-        return "[Ampersand]"
-
 class CommaToken:
     def __str__(self) -> str:
         return "[Comma]"
@@ -126,10 +122,6 @@ def tokenize(contents):
         elif character == ':' and not in_quotes:
             tokens.extend(tokenize_small(buffer))
             tokens.append(ColonToken())
-            buffer = ""
-        elif character == '&' and not in_quotes:
-            tokens.extend(tokenize_small(buffer))
-            tokens.append(AmpersandToken())
             buffer = ""
         elif character == '"':
             if in_quotes:
@@ -285,9 +277,6 @@ def get_expression(tokens, index):
     elif isinstance(tokens[index], NumberSplitToken):
         statement.append(LongNode(tokens[index].number1, tokens[index].number2))
         index += 1
-    elif isinstance(tokens[index], AmpersandToken):
-        statement.append(PointerNode())
-        index += 1
 
     return statement, index
 
@@ -310,7 +299,10 @@ def get_invoke(tokens, index, name):
     #print(name)
     #print(statement)
 
-    statement.append(InvokeNode(name))
+    if name == "ptr":
+        statement.append(PointerNode())
+    else:
+        statement.append(InvokeNode(name))
 
     index += 1
 
