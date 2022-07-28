@@ -100,7 +100,7 @@ def tokenize(contents):
             tokens.extend(tokenize_small(buffer))
             buffer = ""
         elif character == '(' and not in_quotes:
-            tokens.append(NameToken(buffer))
+            tokens.extend(tokenize_small(buffer))
             tokens.append(OpenParenthesisToken())
             buffer = ""
         elif character == ')' and not in_quotes:
@@ -182,6 +182,52 @@ class ReturnNode:
 class PointerNode:
     pass
 
+def generate_ast_lisp(tokens):
+    ast = []
+
+    current_function = None
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+
+        if isinstance(token, OpenParenthesisToken):
+            index += 1
+        elif isinstance(token, ClosedParenthesisToken):
+            index += 1
+        elif isinstance(token, KeywordToken):
+            if token.word == "function":
+                current_function, index = get_function_declaration_lisp(tokens, index + 1)
+                ast.append(current_function)
+            elif token.word == "variable":
+                name = tokens[index + 1].name
+                type = tokens[index + 2].name
+                statement, index = get_assign_lisp(tokens, index + 3, name)
+
+                if current_function:
+                    current_function.instructions.append(DeclareNode(name, type))
+                    current_function.instructions.extend(statement)
+            elif token.word == "return":
+                statement, index = get_expression_lisp(tokens, index + 1)
+
+                if current_function:
+                    current_function.instructions.extend(statement)
+                    current_function.instructions.append(ReturnNode())
+        elif isinstance(token, NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
+            statement, index = get_invoke_lisp(tokens, index + 1, tokens[index].name)
+
+            if current_function:
+                current_function.instructions.extend(statement)
+        #print(index)
+        #print(token)
+
+    for function in ast:
+        for instruction in function.instructions:
+            if isinstance(instruction, AssignNode):
+                if not instruction.name in function.locals:
+                    function.locals.append(instruction.name)
+
+    return ast
+
 def generate_ast(tokens):
     ast = []
     
@@ -229,6 +275,42 @@ def generate_ast(tokens):
 
     return ast
 
+def get_function_declaration_lisp(tokens, index):
+    name = None
+    if isinstance(tokens[index], NameToken):
+        name = tokens[index].name
+
+    index += 1
+
+    parameters = {}
+    current_param_name = None
+    indent = 0
+    while not isinstance(tokens[index], ClosedParenthesisToken) or not indent == 1:
+        if isinstance(tokens[index], OpenParenthesisToken):
+            current_param_name = None
+            indent += 1
+        elif isinstance(tokens[index], ClosedParenthesisToken):
+            indent -= 1
+        else:
+            if not current_param_name:
+                current_param_name = tokens[index].name
+            else:
+                parameters[current_param_name] = tokens[index].name
+
+        index += 1
+
+    index += 2
+
+    returns = []
+
+    while not isinstance(tokens[index], ClosedParenthesisToken):
+        returns.append(tokens[index].name)
+        index += 1
+
+    index += 1
+
+    return FunctionNode(name, [], parameters, returns, []), index
+
 def get_function_declaration(tokens, index):
     name = None
     searching_returns = False
@@ -258,6 +340,34 @@ def get_function_declaration(tokens, index):
 
     return FunctionNode(name, [], parameters, returns, []), index
 
+def get_expression_lisp(tokens, index):
+    statement = []
+
+    count = 0
+    while isinstance(tokens[index], OpenParenthesisToken):
+        count += 1
+        index += 1
+
+    if isinstance(tokens[index], NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
+        invoke, index = get_invoke_lisp(tokens, index + 1, tokens[index].name)
+        statement.extend(invoke)
+    elif isinstance(tokens[index], NameToken):
+        retrieve, index = get_retrieve_lisp(index + 1, tokens[index].name)
+        statement.extend(retrieve)
+    #elif isinstance(tokens[index], StringToken):
+    #    statement.append(StringNode(tokens[index].string))
+    #    index += 1
+    elif isinstance(tokens[index], NumberToken):
+        statement.append(IntegerNode(tokens[index].number))
+        index += 1
+    #elif isinstance(tokens[index], NumberSplitToken):
+    #    statement.append(LongNode(tokens[index].number1, tokens[index].number2))
+    #    index += 1
+
+    index += count
+
+    return statement, index
+
 def get_expression(tokens, index):
     statement = []
 
@@ -280,24 +390,20 @@ def get_expression(tokens, index):
 
     return statement, index
 
-def get_invoke(tokens, index, name):
+def get_invoke_lisp(tokens, index, name):
     statement = []
-    statement1 = []
+    #statement1 = []
 
     index += 1
     while not isinstance(tokens[index], ClosedParenthesisToken):
-        expression, index = get_expression(tokens, index)
-        statement1.extend(expression)
-        #statement = expression + statement
-        if isinstance(tokens[index], CommaToken):
-            statement = statement1 + statement
-            statement1.clear()
-            index += 1
+        expression, index = get_expression_lisp(tokens, index)
+        statement = expression + statement
+        #if isinstance(tokens[index], CommaToken):
+            #statement = statement1 + statement
+            #statement1.clear()
+            #index += 1
 
-    statement = statement1 + statement
-
-    #print(name)
-    #print(statement)
+    #statement = statement1 + statement
 
     if name == "ptr":
         statement.append(PointerNode())
@@ -305,6 +411,41 @@ def get_invoke(tokens, index, name):
         statement.append(InvokeNode(name))
 
     index += 1
+
+    return statement, index
+
+def get_invoke(tokens, index, name):
+    statement = []
+    statement1 = []
+
+    index += 1
+    while not isinstance(tokens[index], ClosedParenthesisToken):
+        expression, index = get_expression_lisp(tokens, index)
+        statement = expression + statement
+        if isinstance(tokens[index], CommaToken):
+            statement = statement1 + statement
+            statement1.clear()
+            index += 1
+
+    statement = statement1 + statement
+
+    if name == "ptr":
+        statement.append(PointerNode())
+    else:
+        statement.append(InvokeNode(name))
+
+    index += 1
+
+    return statement, index
+
+def get_assign_lisp(tokens, index, name):
+    statement = []
+
+    expression, index = get_expression_lisp(tokens, index)
+    statement.extend(expression)
+
+    statement.append(AssignNode(name))
+    print(statement)
 
     return statement, index
 
@@ -324,6 +465,13 @@ def is_type(given, wanted):
         return True
 
     return given == wanted
+
+def get_retrieve_lisp(index, name):
+    statement = []
+
+    statement.append(RetrieveNode(name))
+
+    return statement, index
 
 def get_retrieve(index, name):
     statement = []
@@ -628,6 +776,7 @@ ret
                         exit()
 
                 contents += "mov rsp, rbp\n"
+                contents += "add rsp, " + str(size - 8) + "\n"
                 contents += "push rdx\n"
                 contents += "pop rbp\n"
                 contents += "push rcx\n"
@@ -649,7 +798,16 @@ file = open(sys.argv[1])
 contents = file.read()
 
 tokens = tokenize(contents)
-ast = generate_ast(tokens)
+for token in tokens:
+    print(token)
+
+print("-----")
+ast = generate_ast_lisp(tokens)
+
+for function in ast:
+    if function.name == "main":
+        for intruction in function.instructions:
+            print(intruction)
 
 #Builtin functions
 functions = {}
