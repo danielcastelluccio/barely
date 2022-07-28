@@ -40,6 +40,10 @@ class ColonToken:
     def __str__(self) -> str:
         return "[Colon]"
 
+class AmpersandToken:
+    def __str__(self) -> str:
+        return "[Ampersand]"
+
 class CommaToken:
     def __str__(self) -> str:
         return "[Comma]"
@@ -123,6 +127,10 @@ def tokenize(contents):
             tokens.extend(tokenize_small(buffer))
             tokens.append(ColonToken())
             buffer = ""
+        elif character == '&' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(AmpersandToken())
+            buffer = ""
         elif character == '"':
             if in_quotes:
                 tokens.append(StringToken(buffer))
@@ -177,6 +185,9 @@ class LongNode:
         self.integer2 = integer2
 
 class ReturnNode:
+    pass
+
+class PointerNode:
     pass
 
 def generate_ast(tokens):
@@ -258,6 +269,7 @@ def get_function_declaration(tokens, index):
 def get_expression(tokens, index):
     statement = []
 
+    #print(tokens[index])
     if isinstance(tokens[index], NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
         invoke, index = get_invoke(tokens, index + 1, tokens[index].name)
         statement.extend(invoke)
@@ -273,18 +285,30 @@ def get_expression(tokens, index):
     elif isinstance(tokens[index], NumberSplitToken):
         statement.append(LongNode(tokens[index].number1, tokens[index].number2))
         index += 1
+    elif isinstance(tokens[index], AmpersandToken):
+        statement.append(PointerNode())
+        index += 1
 
     return statement, index
 
 def get_invoke(tokens, index, name):
     statement = []
+    statement1 = []
 
     index += 1
     while not isinstance(tokens[index], ClosedParenthesisToken):
         expression, index = get_expression(tokens, index)
-        statement = expression + statement
+        statement1.extend(expression)
+        #statement = expression + statement
         if isinstance(tokens[index], CommaToken):
+            statement = statement1 + statement
+            statement1.clear()
             index += 1
+
+    statement = statement1 + statement
+
+    #print(name)
+    #print(statement)
 
     statement.append(InvokeNode(name))
 
@@ -303,6 +327,12 @@ def get_assign(tokens, index, name):
 
     return statement, index
 
+def is_type(given, wanted):
+    if wanted == "any":
+        return True
+
+    return given == wanted
+
 def get_retrieve(index, name):
     statement = []
 
@@ -319,6 +349,7 @@ def type_check(ast, functions):
             variables[parameter] = function.parameters[parameter]
 
         for instruction in function.instructions:
+            #print(instruction)
             if isinstance(instruction, DeclareNode):
                 variables[instruction.name] = instruction.type
             elif isinstance(instruction, IntegerNode):
@@ -327,16 +358,17 @@ def type_check(ast, functions):
                 types.append("long")
             elif isinstance(instruction, AssignNode):
                 popped = types.pop()
-                if not variables[instruction.name] == popped:
+                if not is_type(popped, variables[instruction.name]):
                     print("TYPECHECK: Assign of " + instruction.name + " in " + function.name + " expected " + variables[instruction.name] + ", got " + popped + ".")
                     exit()
             elif isinstance(instruction, RetrieveNode):
+                #print(function.name)
                 types.append(variables[instruction.name])
             elif isinstance(instruction, InvokeNode):
                 called_function = functions[instruction.name]
                 for parameter in called_function.parameters.values():
                     popped = types.pop()
-                    if not parameter == popped:
+                    if not is_type(popped, parameter):
                         print("TYPECHECK: Invoke of " + instruction.name + " in " + function.name + " expected " + parameter + ", got " + popped + ".")
                         exit()
 
@@ -345,9 +377,13 @@ def type_check(ast, functions):
             elif isinstance(instruction, ReturnNode):
                 for return_ in function.returns:
                     popped = types.pop()
-                    if not return_ == popped:
+                    if not is_type(popped, return_):
                         print("TYPECHECK: Return in " + function.name + " expected " + return_ + ", got " + popped + ".")
                         exit()
+            elif isinstance(instruction, PointerNode):
+                popped = types.pop()
+                types.append("*" + popped)
+                #print("test")
             else:
                 print(instruction)
         
@@ -359,10 +395,14 @@ def get_size_linux_x86_64(types):
         types = [types]
 
     for type in types:
-        if type == "*" or type == "integer":
+        if type == "*" or type == "integer" or type == "any":
             size += 8
         elif type == "long":
             size += 16
+        elif type[0] == '*':
+            size += 8
+        else:
+            print("unknown type " + type)
 
     return size
 
@@ -413,6 +453,20 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "mov rax, 0\n"
     contents += "mov rax, [rbp+16]\n"
     contents += "add rax, [rbp+24]\n"
+    contents += "pop rbx\n"
+    contents += "pop rdx\n"
+    contents += "push rax\n"
+    contents += "mov rsp, rbp\n"
+    contents += "push rbx\n"
+    contents += "pop rbp\n"
+    contents += "push rdx\n"
+    contents += "ret\n"
+
+    contents += "@get_first_long:\n"
+    contents += "push rbp\n"
+    contents += "mov rbp, rsp\n"
+    contents += "mov rax, 0\n"
+    contents += "mov rax, [rbp+16]\n"
     contents += "pop rbx\n"
     contents += "pop rdx\n"
     contents += "push rax\n"
@@ -481,7 +535,7 @@ ret
 
         local_types = [None] * len(function.locals)
 
-        for instruction in function.instructions:
+        for index0, instruction in enumerate(function.instructions):
             if isinstance(instruction, InvokeNode):
                 contents += "call " + instruction.name + "\n"
                 contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters.values()) - get_size_linux_x86_64(functions[instruction.name].returns)) + "\n"
@@ -490,24 +544,10 @@ ret
                 i = 0
                 while i < size:
                     if size - i >= 8:
-                        #contents += "mov rax, [return_memory+" + str(i) + "]\n"
-                        #contents += "mov [rsp+" + str(i) + "], rax\n"
                         i += 8
                     else:
                         print("non multiple of 8 size 1")
                         exit()
-                    #elif size - i >= 4:
-                    #    contents += "mov eax, [return_memory+" + str(i) + "]\n"
-                    #    contents += "mov [rsp+" + str(i) + "], eax\n"
-                    #    i += 4
-                    #elif size - i >= 2:
-                    #    contents += "mov ax, [return_memory+" + str(i) + "]\n"
-                    #    contents += "mov [rsp+" + str(i) + "], ax\n"
-                    #    i += 2
-                    #else:
-                    #    contents += "mov ah, [return_memory+" + str(i) + "]\n"
-                    #    contents += "mov [rsp+" + str(i) + "], ah\n"
-                    #    i += 1
             elif isinstance(instruction, DeclareNode):
                 variables[instruction.name] = instruction.type
                 local_types[function.locals.index(instruction.name)] = instruction.type
@@ -520,33 +560,41 @@ ret
                             i = index
 
                     location = get_size_linux_x86_64(list(function.parameters.values())[0 : i])
-                    size = get_size_linux_x86_64(function.parameters[instruction.name])
-                    contents += "sub rsp, " + str(size) + "\n"
-                    j = 0
-                    while j < size:
-                        if size - j >= 8:
-                            contents += "mov rax, [rbp+" + str(16 + location + j) + "]\n"
-                            contents += "mov [rsp+" + str(j) + "], rax\n"
-                            j += 8
-                        else:
-                            print("non multiple of 8 size 2")
-                            exit()
+                    if isinstance(function.instructions[index0 + 1], PointerNode):
+                        contents += "lea rax, [rbp+" + str(16 + location) + "]\n"
+                        contents += "push rax\n"
+                    else:
+                        size = get_size_linux_x86_64(function.parameters[instruction.name])
+                        contents += "sub rsp, " + str(size) + "\n"
+                        j = 0
+                        while j < size:
+                            if size - j >= 8:
+                                contents += "mov rax, [rbp+" + str(16 + location + j) + "]\n"
+                                contents += "mov [rsp+" + str(j) + "], rax\n"
+                                j += 8
+                            else:
+                                print("non multiple of 8 size 2")
+                                exit()
                 else:
                     i = function.locals.index(instruction.name)
                     location = get_size_linux_x86_64(local_types[0 : i])
                     size = get_size_linux_x86_64(local_types[i])
 
-                    contents += "sub rsp, " + str(size) + "\n"
+                    if isinstance(function.instructions[index0 + 1], PointerNode):
+                        contents += "lea rax, [rbp-" + str(location + size) + "]\n"
+                        contents += "push rax\n"
+                    else:
+                        contents += "sub rsp, " + str(size) + "\n"
 
-                    j = 0
-                    while j < size:
-                        if size - j >= 8:
-                            contents += "mov rax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
-                            contents += "mov [rsp+" + str(j) + "], rax\n"
-                            j += 8
-                        else:
-                            print("non multiple of 8 size 5")
-                            exit()
+                        j = 0
+                        while j < size:
+                            if size - j >= 8:
+                                contents += "mov rax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                                contents += "mov [rsp+" + str(j) + "], rax\n"
+                                j += 8
+                            else:
+                                print("non multiple of 8 size 5")
+                                exit()
 
             elif isinstance(instruction, AssignNode):
                 i = function.locals.index(instruction.name)
@@ -557,7 +605,7 @@ ret
                 while i < size:
                     if size - i >= 8:
                         contents += "mov rax, [rsp+" + str(i) + "]\n"
-                        contents += "mov [rbp-" + str(8 + size - (location + i) - 8) + "], rax\n"
+                        contents += "mov [rbp-" + str(8 + size + location - i - 8) + "], rax\n"
                         i += 8
                     else:
                         print("non multiple of 8 size 3")
@@ -615,8 +663,9 @@ ast = generate_ast(tokens)
 functions = {}
 functions["@print"] = FunctionNode("@print", [], {"string": "*", "size": "integer"}, [], [])
 functions["@length"] = FunctionNode("@length", [], {"string": "*"}, ["integer"], [])
-functions["@print_integer"] = FunctionNode("@print_integer", [], {"integer": "integer"}, [], [])
+functions["@print_integer"] = FunctionNode("@print_integer", [], {"integer": "any"}, [], [])
 functions["@add_long"] = FunctionNode("@add_long", [], {"long": "long"}, ["integer"], [])
+functions["@get_first_long"] = FunctionNode("@get_first_long", [], {"long": "long"}, ["integer"], [])
 
 for function in ast:
     functions[function.name] = function
