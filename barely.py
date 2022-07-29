@@ -279,7 +279,7 @@ def generate_ast_lisp(tokens):
 
     return ast
 
-def generate_ast(tokens):
+def generate_ast_c(tokens):
     ast = []
     
     current_function = None
@@ -289,10 +289,10 @@ def generate_ast(tokens):
 
         if isinstance(token, KeywordToken):
             if token.word == "function":
-                current_function, index = get_function_declaration(tokens, index + 1)
+                current_function, index = get_function_declaration_c(tokens, index + 1)
                 ast.append(current_function)
             elif token.word == "return":
-                statement, index = get_expression(tokens, index + 1)
+                statement, index = get_expression_c(tokens, index + 1)
 
                 if current_function:
                     current_function.instructions.extend(statement)
@@ -304,7 +304,7 @@ def generate_ast(tokens):
                 statement = []
 
                 if not isinstance(tokens[index + 4], SemiColonToken):
-                    statement, index = get_assign(tokens, index + 5, name)
+                    statement, index = get_assign_c(tokens, index + 5, name)
                 else:
                     index += 4
 
@@ -343,12 +343,12 @@ def generate_ast(tokens):
                     ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
                     ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
         elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
-            statement, index = get_assign(tokens, index + 2, tokens[index].name)
+            statement, index = get_assign_c(tokens, index + 2, tokens[index].name)
 
             if current_function:
                 current_function.instructions.extend(statement)
         else:
-            statement, index = get_expression(tokens, index)
+            statement, index = get_expression_c(tokens, index)
 
             if current_function:
                 current_function.instructions.extend(statement)
@@ -400,7 +400,7 @@ def get_function_declaration_lisp(tokens, index):
 
     return FunctionNode(name, [], parameters, returns, []), index
 
-def get_function_declaration(tokens, index):
+def get_function_declaration_c(tokens, index):
     name = None
     searching_returns = False
     parameters = OrderedDict()
@@ -457,15 +457,15 @@ def get_expression_lisp(tokens, index):
 
     return statement, index
 
-def get_expression(tokens, index):
+def get_expression_c(tokens, index):
     statement = []
 
     #print(tokens[index])
     if isinstance(tokens[index], NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
-        invoke, index = get_invoke(tokens, index + 1, tokens[index].name)
+        invoke, index = get_invoke_c(tokens, index + 1, tokens[index].name)
         statement.extend(invoke)
     elif isinstance(tokens[index], NameToken):
-        retrieve, index = get_retrieve(index + 1, tokens[index].name)
+        retrieve, index = get_retrieve_c(index + 1, tokens[index].name)
         statement.extend(retrieve)
     elif isinstance(tokens[index], StringToken):
         statement.append(StringNode(tokens[index].string))
@@ -503,7 +503,7 @@ def get_invoke_lisp(tokens, index, name):
 
     return statement, index
 
-def get_invoke(tokens, index, name):
+def get_invoke_c(tokens, index, name):
     statement = []
     statement1 = []
 
@@ -537,11 +537,11 @@ def get_assign_lisp(tokens, index, name):
 
     return statement, index
 
-def get_assign(tokens, index, name):
+def get_assign_c(tokens, index, name):
     statement = []
 
     while not isinstance(tokens[index], SemiColonToken):
-        expression, index = get_expression(tokens, index)
+        expression, index = get_expression_c(tokens, index)
         statement.extend(expression)
 
     statement.append(AssignNode(name))
@@ -561,7 +561,7 @@ def get_retrieve_lisp(index, name):
 
     return statement, index
 
-def get_retrieve(index, name):
+def get_retrieve_c(index, name):
     statement = []
 
     statement.append(RetrieveNode(name))
@@ -1018,16 +1018,18 @@ ret
 
     os.system("fasm " + fasm_file.name + " build/" + name)
 
-file = open(sys.argv[1])
+syntax = sys.argv[1]
+file = open(sys.argv[2])
 contents = file.read()
 
 tokens = tokenize(contents)
-#for token in tokens:
-    #print(token)
 
-#print("-----")
-#ast = generate_ast_lisp(tokens)
-ast = generate_ast(tokens)
+ast = []
+match syntax:
+    case "lisp":
+        ast = generate_ast_lisp(tokens)
+    case "c":
+        ast = generate_ast_c(tokens)
 
 #for function in ast:
 #    if function.name == "main":
