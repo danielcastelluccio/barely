@@ -1,21 +1,16 @@
-(
-	(function main () () (
-		(variable test1 Test)
-		(variable test2 Test2)
-		(Test2<-value ((ptr (test2)) 18))
-		(Test2<-value2 ((ptr (test2)) 10))
-		(Test<-value ((ptr (test1)) test2))
-		(@print_integer (Test2->value (*Test->value (ptr (test1)))))
-	))
-	(function print ((string *)) () (
-		(@print ((string) (@length (string))))
-	))
-	
-	(struct Test (
-		(value Test2)
-	))
-	(struct Test2 (
-		(value integer)
-		(value2 integer)
-	))
-)
+function main() {
+	variable test: Test;
+	Test<-value(ptr(test), 4);
+	Test<-value2(ptr(test), 9);
+	@print_integer(Test->value(ptr(test)));
+	@print_integer(Test->value2(ptr(test)));
+};
+
+function print(string: *) {
+	@print(string, @length(string));
+};
+
+structure Test {
+	value: integer;
+	value2: integer;
+};

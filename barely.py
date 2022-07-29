@@ -73,7 +73,7 @@ def is_num(string):
     except ValueError:
         return False
 
-keywords = ["function", "return", "variable", "struct"]
+keywords = ["function", "return", "variable", "structure"]
 
 def tokenize_small(contents):
     tokens = []
@@ -107,22 +107,22 @@ def tokenize(contents):
             tokens.extend(tokenize_small(buffer))
             tokens.append(ClosedParenthesisToken())
             buffer = ""
-        #elif character == '{' and not in_quotes:
-        #    tokens.append(OpenCurlyBracketToken())
-        #elif character == '}' and not in_quotes:
-        #    tokens.append(ClosedCurlyBracketToken())
-        #elif character == ';' and not in_quotes:
-        #    tokens.extend(tokenize_small(buffer))
-        #    tokens.append(SemiColonToken())
-        #    buffer = ""
-        #elif character == ',' and not in_quotes:
-        #    tokens.extend(tokenize_small(buffer))
-        #    tokens.append(CommaToken())
-        #    buffer = ""
-        #elif character == ':' and not in_quotes:
-        #    tokens.extend(tokenize_small(buffer))
-        #    tokens.append(ColonToken())
-        #    buffer = ""
+        elif character == '{' and not in_quotes:
+            tokens.append(OpenCurlyBracketToken())
+        elif character == '}' and not in_quotes:
+            tokens.append(ClosedCurlyBracketToken())
+        elif character == ';' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(SemiColonToken())
+            buffer = ""
+        elif character == ',' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(CommaToken())
+            buffer = ""
+        elif character == ':' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(ColonToken())
+            buffer = ""
         elif character == '"':
             if in_quotes:
                 tokens.append(StringToken(buffer))
@@ -300,11 +300,48 @@ def generate_ast(tokens):
             elif token.word == "variable":
                 name = tokens[index + 1].name
                 type = tokens[index + 3].name
-                statement, index = get_assign(tokens, index + 5, name)
+
+                statement = []
+
+                if not isinstance(tokens[index + 4], SemiColonToken):
+                    statement, index = get_assign(tokens, index + 5, name)
+                else:
+                    index += 4
 
                 if current_function:
                     current_function.instructions.append(DeclareNode(name, type))
                     current_function.instructions.extend(statement)
+            elif token.word == "structure":
+                name = tokens[index + 1].name
+                items = OrderedDict()
+
+                index += 2
+
+                name_cache = None
+                while not isinstance(tokens[index], ClosedCurlyBracketToken):
+                    token = tokens[index]
+
+                    if isinstance(token, SemiColonToken):
+                        name_cache = None
+                    elif isinstance(token, NameToken):
+                        if not name_cache:
+                            name_cache = token.name
+                        else:
+                            items[name_cache] = token.name
+
+                    index += 1
+
+                index += 1
+
+                ast.append(StructNode(name, items))
+
+                for item_name in items:
+                    item_type = items[item_name]
+
+                    instructions = []
+                    ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
+                    ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
+                    ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
         elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
             statement, index = get_assign(tokens, index + 2, tokens[index].name)
 
@@ -319,10 +356,11 @@ def generate_ast(tokens):
         index += 1
 
     for function in ast:
-        for instruction in function.instructions:
-            if isinstance(instruction, AssignNode):
-                if not instruction.name in function.locals:
-                    function.locals.append(instruction.name)
+        if isinstance(function, FunctionNode):
+            for instruction in function.instructions:
+                if isinstance(instruction, DeclareNode):
+                    if not instruction.name in function.locals:
+                        function.locals.append(instruction.name)
 
     return ast
 
@@ -988,12 +1026,13 @@ tokens = tokenize(contents)
     #print(token)
 
 #print("-----")
-ast = generate_ast_lisp(tokens)
+#ast = generate_ast_lisp(tokens)
+ast = generate_ast(tokens)
 
 #for function in ast:
-    #if function.name == "main":
-        #for intruction in function.instructions:
-            #print(intruction)
+#    if function.name == "main":
+#        for intruction in function.instructions:
+#            print(intruction)
 
 #Builtin functions
 functions = {}
