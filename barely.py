@@ -223,7 +223,7 @@ def generate_ast_lisp(tokens):
                 if current_function:
                     current_function.instructions.extend(statement)
                     current_function.instructions.append(ReturnNode())
-            elif token.word == "struct":
+            elif token.word == "structure":
                 name = tokens[index + 1].name
                 items = OrderedDict()
 
