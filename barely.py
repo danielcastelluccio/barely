@@ -51,12 +51,19 @@ class StringToken:
     def __str__(self) -> str:
         return "[String: '" + self.string + "']"
 
-class NumberToken:
-    def __init__(self, number):
-        self.number = number
+class IntegerToken:
+    def __init__(self, integer):
+        self.integer = integer
 
     def __str__(self) -> str:
-        return "[Number: '" + str(self.number) + "']"
+        return "[Integer: '" + str(self.integer) + "']"
+
+class BooleanToken:
+    def __init__(self, boolean):
+        self.boolean = boolean
+
+    def __str__(self) -> str:
+        return "[Boolean: '" + str(self.boolean) + "']"
 
 class NumberSplitToken:
     def __init__(self, number1, number2):
@@ -84,7 +91,9 @@ def tokenize_small(contents):
         split = contents.split("_")
         tokens.append(NumberSplitToken(int(split[0]), int(split[1])))
     elif is_num(contents):
-        tokens.append(NumberToken(int(contents)))
+        tokens.append(IntegerToken(int(contents)))
+    elif contents == "true" or contents == "false":
+        tokens.append(BooleanToken(contents == "true"))
     elif contents.strip():
         tokens.append(NameToken(contents))
 
@@ -176,10 +185,27 @@ class IntegerNode:
     def __init__(self, integer):
         self.integer = integer
 
+class BooleanNode:
+    def __init__(self, boolean):
+        self.boolean = boolean
+
 class LongNode:
     def __init__(self, integer1, integer2):
         self.integer1 = integer1
         self.integer2 = integer2
+
+class TargetNode:
+    def __init__(self, id):
+        self.id = id
+
+class JumpNode:
+    def __init__(self, id):
+        self.id = id
+
+class ConditionalJumpNode:
+    def __init__(self, wants_true, id):
+        self.wants_true = wants_true
+        self.id = id
 
 class ReturnNode:
     pass
@@ -446,8 +472,11 @@ def get_expression_lisp(tokens, index):
     elif isinstance(tokens[index], StringToken):
         statement.append(StringNode(tokens[index].string))
         index += 1
-    elif isinstance(tokens[index], NumberToken):
-        statement.append(IntegerNode(tokens[index].number))
+    elif isinstance(tokens[index], IntegerToken):
+        statement.append(IntegerNode(tokens[index].integer))
+        index += 1
+    elif isinstance(tokens[index], BooleanToken):
+        statement.append(BooleanNode(tokens[index].boolean))
         index += 1
     #elif isinstance(tokens[index], NumberSplitToken):
     #    statement.append(LongNode(tokens[index].number1, tokens[index].number2))
@@ -470,8 +499,8 @@ def get_expression_c(tokens, index):
     elif isinstance(tokens[index], StringToken):
         statement.append(StringNode(tokens[index].string))
         index += 1
-    elif isinstance(tokens[index], NumberToken):
-        statement.append(IntegerNode(tokens[index].number))
+    elif isinstance(tokens[index], IntegerToken):
+        statement.append(IntegerNode(tokens[index].integer))
         index += 1
     elif isinstance(tokens[index], NumberSplitToken):
         statement.append(LongNode(tokens[index].number1, tokens[index].number2))
@@ -479,25 +508,39 @@ def get_expression_c(tokens, index):
 
     return statement, index
 
+target_id = 0
+
 def get_invoke_lisp(tokens, index, name):
     statement = []
-    #statement1 = []
 
-    index += 1
-    while not isinstance(tokens[index], ClosedParenthesisToken):
-        expression, index = get_expression_lisp(tokens, index)
-        statement = expression + statement
-        #if isinstance(tokens[index], CommaToken):
-            #statement = statement1 + statement
-            #statement1.clear()
-            #index += 1
+    if name == "if":
+        global target_id
 
-    #statement = statement1 + statement
+        id1 = target_id
+        target_id += 1
 
-    if name == "ptr":
-        statement.append(PointerNode())
+        iteration = 0
+        index += 1
+        while not isinstance(tokens[index], ClosedParenthesisToken):
+            expression, index = get_expression_lisp(tokens, index)
+            statement.extend(expression)
+
+            if iteration == 0:
+                statement.append(ConditionalJumpNode(False, id1))
+
+            iteration += 1
+
+        statement.append(TargetNode(id1))
     else:
-        statement.append(InvokeNode(name))
+        index += 1
+        while not isinstance(tokens[index], ClosedParenthesisToken):
+            expression, index = get_expression_lisp(tokens, index)
+            statement = expression + statement
+
+        if name == "ptr":
+            statement.append(PointerNode())
+        else:
+            statement.append(InvokeNode(name))
 
     index += 1
 
@@ -578,7 +621,6 @@ def type_check(ast, functions):
                 variables[parameter] = function.parameters[parameter]
 
             for instruction in function.instructions:
-                #print(instruction)
                 if isinstance(instruction, DeclareNode):
                     variables[instruction.name] = instruction.type
                 elif isinstance(instruction, IntegerNode):
@@ -587,13 +629,14 @@ def type_check(ast, functions):
                     types.append("long")
                 elif isinstance(instruction, StringNode):
                     types.append("*")
+                elif isinstance(instruction, BooleanNode):
+                    types.append("boolean")
                 elif isinstance(instruction, AssignNode):
                     popped = types.pop()
                     if not is_type(popped, variables[instruction.name]):
                         print("TYPECHECK: Assign of " + instruction.name + " in " + function.name + " expected " + variables[instruction.name] + ", got " + popped + ".")
                         exit()
                 elif isinstance(instruction, RetrieveNode):
-                    #print(function.name)
                     types.append(variables[instruction.name])
                 elif isinstance(instruction, InvokeNode):
                     called_function = functions[instruction.name]
@@ -614,8 +657,19 @@ def type_check(ast, functions):
                 elif isinstance(instruction, PointerNode):
                     popped = types.pop()
                     types.append("*" + popped)
+                elif isinstance(instruction, TargetNode):
+                    pass
+                elif isinstance(instruction, JumpNode):
+                    pass
+                elif isinstance(instruction, ConditionalJumpNode):
+                    popped = types.pop()
+
+                    if not popped == "boolean":
+                            print("TYPECHECK: If in " + function.name + " expected boolean, got " + popped + ".")
+                            exit()
                 else:
-                    print(instruction)
+                    print(str(instruction) + " not handled in typecheck!")
+                    exit()
         
 
 def get_size_linux_x86_64(types, ast):
@@ -717,6 +771,24 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "pop rbx\n"
     contents += "pop rdx\n"
     contents += "push rax\n"
+    contents += "mov rsp, rbp\n"
+    contents += "push rbx\n"
+    contents += "pop rbp\n"
+    contents += "push rdx\n"
+    contents += "ret\n"
+
+    contents += "@syscall3:\n"
+    contents += "push rbp\n"
+    contents += "mov rbp, rsp\n"
+    #contents += "mov rax, 0\n"
+    contents += "mov rax, [rbp+16]\n"
+    contents += "mov rdi, [rbp+24]\n"
+    contents += "mov rsi, [rbp+32]\n"
+    contents += "mov rdx, [rbp+40]\n"
+    contents += "syscall\n"
+    contents += "pop rbx\n"
+    contents += "pop rdx\n"
+    #contents += "push rax\n"
     contents += "mov rsp, rbp\n"
     contents += "push rbx\n"
     contents += "pop rbp\n"
@@ -905,8 +977,6 @@ ret
                     if len(function.instructions) > index0 + 1 and isinstance(function.instructions[index0 + 1], PointerNode) and "->" in called_name:
                         called_name = "*" + called_name
 
-                    #print(name)
-
                     contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
                     contents += "add rsp, " + str(get_size_linux_x86_64(functions[called_name].parameters.values(), ast) - get_size_linux_x86_64(functions[called_name].returns, ast)) + "\n"
                     size = get_size_linux_x86_64(functions[called_name].returns, ast)
@@ -987,9 +1057,11 @@ ret
                     data_index += 1
                 elif isinstance(instruction, IntegerNode):
                     contents += "push " + str(instruction.integer) + "\n"
-                elif isinstance(instruction, LongNode):
-                    contents += "push " + str(instruction.integer2) + "\n"
-                    contents += "push " + str(instruction.integer1) + "\n"
+                elif isinstance(instruction, BooleanNode):
+                    contents += "push " + str(1 if instruction.boolean else 0) + "\n"
+                #elif isinstance(instruction, LongNode):
+                #    contents += "push " + str(instruction.integer2) + "\n"
+                #    contents += "push " + str(instruction.integer1) + "\n"
                 elif isinstance(instruction, ReturnNode):
                     size = get_size_linux_x86_64(functions[function.name].returns, ast)
                     i = 0
@@ -1011,6 +1083,19 @@ ret
                     contents += "pop rbp\n"
                     contents += "push rcx\n"
                     contents += "ret\n"
+                elif isinstance(instruction, PointerNode):
+                    pass
+                elif isinstance(instruction, TargetNode):
+                    contents += "target_" + str(instruction.id) + ":\n"
+                elif isinstance(instruction, ConditionalJumpNode):
+                    contents += "pop rax\n"
+                    contents += "cmp rax, " + str(1 if instruction.wants_true else 0) + "\n"
+                    contents += "je target_" + str(instruction.id) + "\n"
+                elif isinstance(instruction, JumpNode):
+                    contents += "jmp target_" + str(instruction.id) + "\n"
+                else:
+                    print(str(instruction) + " not handled in linux codegen!")
+                    exit()
 
             contents += "mov rsp, rbp\n"
             contents += "pop rbp\n"
@@ -1024,18 +1109,18 @@ ret
 
     os.system("fasm " + fasm_file.name + " build/" + name)
 
-syntax = sys.argv[1]
-file = open(sys.argv[2])
+#syntax = sys.argv[1]
+file = open(sys.argv[1])
 contents = file.read()
 
 tokens = tokenize(contents)
 
-ast = []
-match syntax:
-    case "lisp":
-        ast = generate_ast_lisp(tokens)
-    case "c":
-        ast = generate_ast_c(tokens)
+ast = generate_ast_lisp(tokens)
+#match syntax:
+#    case "lisp":
+#        ast = generate_ast_lisp(tokens)
+#    case "c":
+#        ast = generate_ast_c(tokens)
 
 #for function in ast:
 #    if function.name == "main":
@@ -1044,11 +1129,11 @@ match syntax:
 
 #Builtin functions
 functions = {}
-functions["@print"] = FunctionNode("@print", [], {"string": "*", "size": "integer"}, [], [])
-functions["@length"] = FunctionNode("@length", [], {"string": "*"}, ["integer"], [])
-functions["@print_integer"] = FunctionNode("@print_integer", [], {"integer": "any"}, [], [])
-functions["@add_long"] = FunctionNode("@add_long", [], {"long": "long"}, ["integer"], [])
-functions["@get_first_long"] = FunctionNode("@get_first_long", [], {"long": "long"}, ["integer"], [])
+#functions["@print"] = FunctionNode("@print", [], {"string": "*", "size": "integer"}, [], [])
+#functions["@length"] = FunctionNode("@length", [], {"string": "*"}, ["integer"], [])
+#functions["@print_integer"] = FunctionNode("@print_integer", [], {"integer": "any"}, [], [])
+#functions["@add_long"] = FunctionNode("@add_long", [], {"long": "long"}, ["integer"], [])
+#functions["@get_first_long"] = FunctionNode("@get_first_long", [], {"long": "long"}, ["integer"], [])
 
 for function in ast:
     if isinstance(function, FunctionNode):

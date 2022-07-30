@@ -7,9 +7,15 @@
 		(Test<-value ((ptr (test1)) test2))
 		(@print_integer (Test2->value (ptr (Test->value (ptr (test1))))))
 		(@print_integer (Test2->value2 (ptr (Test->value (ptr (test1))))))
+
+        (print ("Hello World"))
+
+        (if (false (
+            (print ("test"))
+        )))
 	))
 	(function print ((string *)) () (
-		(@print ((string) (@length (string))))
+		(print_internal ((string) (@length (string))))
 	))
 	
 	(structure Test (
@@ -19,4 +25,12 @@
 		(value integer)
 		(value2 integer)
 	))
+
+    (function print_internal ((string *) (length integer)) () (
+        (@syscall3 (1 1 (string) (length)))
+    ))
+
+    (function @print_integer ((value integer)) ())
+    (function @length ((string *)) (integer))
+    (function @syscall3 ((id integer) (param1 any) (param2 any) (param3 any)))
 )
