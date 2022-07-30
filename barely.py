@@ -614,7 +614,6 @@ def type_check(ast, functions):
                 elif isinstance(instruction, PointerNode):
                     popped = types.pop()
                     types.append("*" + popped)
-                    #print("test")
                 else:
                     print(instruction)
         
@@ -901,9 +900,16 @@ ret
 
             for index0, instruction in enumerate(function.instructions):
                 if isinstance(instruction, InvokeNode):
-                    contents += "call " + remove_invalid_linux_x86_64(instruction.name) + "\n"
-                    contents += "add rsp, " + str(get_size_linux_x86_64(functions[instruction.name].parameters.values(), ast) - get_size_linux_x86_64(functions[instruction.name].returns, ast)) + "\n"
-                    size = get_size_linux_x86_64(functions[instruction.name].returns, ast)
+                    called_name = instruction.name
+
+                    if len(function.instructions) > index0 + 1 and isinstance(function.instructions[index0 + 1], PointerNode) and "->" in called_name:
+                        called_name = "*" + called_name
+
+                    #print(name)
+
+                    contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
+                    contents += "add rsp, " + str(get_size_linux_x86_64(functions[called_name].parameters.values(), ast) - get_size_linux_x86_64(functions[called_name].returns, ast)) + "\n"
+                    size = get_size_linux_x86_64(functions[called_name].returns, ast)
                     #contents += "sub rsp, " + str(size) + "\n"
                     i = 0
                     while i < size:
