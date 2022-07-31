@@ -1,17 +1,19 @@
 (
 	(function main () () (
-		(variable test1 Test)
+		(variable test Test)
 		(variable test2 Test2)
 		(Test2<-value ((ptr (test2)) 18))
 		(Test2<-value2 ((ptr (test2)) 10))
-		(Test<-value ((ptr (test1)) test2))
-		(@print_integer (Test2->value (ptr (Test->value (ptr (test1))))))
-		(@print_integer (Test2->value2 (ptr (Test->value (ptr (test1))))))
+        (Test<-value ((ptr (test)) test2))
+		(@print_integer (Test2->value (ptr (Test->value (ptr (test))))))
+		(@print_integer (Test2->value2 (ptr (Test->value (ptr (test))))))
 
         (print ("Hello World"))
 
-        (if (false (
+        (variable test3 integer 1)
+        (if ((@greater ((test3) 0)) (
             (print ("test"))
+            (test3 @subtract ((test3) 1))
         )))
 	))
 	(function print ((string *)) () (
@@ -31,6 +33,8 @@
     ))
 
     (function @print_integer ((value integer)) ())
-    (function @length ((string *)) (integer))
-    (function @syscall3 ((id integer) (param1 any) (param2 any) (param3 any)))
+    (function @length ((string *)) (integer) ())
+    (function @syscall3 ((id integer) (param1 any) (param2 any) (param3 any)) ())
+    (function @greater ((value1 integer) (value2 integer)) (boolean))
+    (function @subtract ((value1 integer) (value2 integer)) (integer))
 )

@@ -213,88 +213,92 @@ class ReturnNode:
 class PointerNode:
     pass
 
+def get_statement_lisp(tokens, index, current_function, ast):
+    statement1 = []
+    token = tokens[index]
+
+    if isinstance(token, OpenParenthesisToken):
+        index += 1
+    elif isinstance(token, ClosedParenthesisToken):
+        index += 1
+    elif isinstance(token, KeywordToken):
+        if token.word == "function":
+            current_function, index = get_function_declaration_lisp(tokens, index + 1)
+            ast.append(current_function)
+        elif token.word == "variable":
+            name = tokens[index + 1].name
+            type = tokens[index + 2].name
+
+            statement = []
+
+            if not isinstance(tokens[index + 3], ClosedParenthesisToken):
+                statement, index = get_assign_lisp(tokens, index + 3, name)
+            else:
+                index += 4
+
+            statement1.append(DeclareNode(name, type))
+            statement1.extend(statement)
+        elif token.word == "return":
+            statement, index = get_expression_lisp(tokens, index + 1)
+
+            statement1.extend(statement)
+            statement1.append(ReturnNode())
+        elif token.word == "structure":
+            name = tokens[index + 1].name
+            items = OrderedDict()
+
+            index += 2
+
+            name_cache = None
+            indent = 0
+            while not isinstance(tokens[index], ClosedParenthesisToken) or not indent == 1:
+                token = tokens[index]
+
+                if isinstance(token, OpenParenthesisToken):
+                    name_cache = None
+                    indent += 1
+                elif isinstance(token, ClosedParenthesisToken):
+                    indent -= 1
+                elif isinstance(token, NameToken):
+                    if not name_cache:
+                        name_cache = token.name
+                    else:
+                        items[name_cache] = token.name
+
+                index += 1
+
+            index += 1
+
+            ast.append(StructNode(name, items))
+
+            for item_name in items:
+                item_type = items[item_name]
+
+                instructions = []
+                ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
+                ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
+                ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
+
+    elif isinstance(token, NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
+        statement, index = get_invoke_lisp(tokens, index + 1, tokens[index].name)
+
+        statement1.extend(statement)
+    elif isinstance(token, NameToken):
+        statement, index = get_assign_lisp(tokens, index + 1, tokens[index].name)
+
+        statement1.extend(statement)
+
+    return statement1, index, current_function
+
 def generate_ast_lisp(tokens):
     ast = []
 
     current_function = None
     index = 0
     while index < len(tokens):
-        token = tokens[index]
-
-        if isinstance(token, OpenParenthesisToken):
-            index += 1
-        elif isinstance(token, ClosedParenthesisToken):
-            index += 1
-        elif isinstance(token, KeywordToken):
-            if token.word == "function":
-                current_function, index = get_function_declaration_lisp(tokens, index + 1)
-                ast.append(current_function)
-            elif token.word == "variable":
-                name = tokens[index + 1].name
-                type = tokens[index + 2].name
-
-                statement = []
-
-                if not isinstance(tokens[index + 3], ClosedParenthesisToken):
-                    statement, index = get_assign_lisp(tokens, index + 3, name)
-                else:
-                    index += 4
-
-                if current_function:
-                    current_function.instructions.append(DeclareNode(name, type))
-                    current_function.instructions.extend(statement)
-            elif token.word == "return":
-                statement, index = get_expression_lisp(tokens, index + 1)
-
-                if current_function:
-                    current_function.instructions.extend(statement)
-                    current_function.instructions.append(ReturnNode())
-            elif token.word == "structure":
-                name = tokens[index + 1].name
-                items = OrderedDict()
-
-                index += 2
-
-                name_cache = None
-                indent = 0
-                while not isinstance(tokens[index], ClosedParenthesisToken) or not indent == 1:
-                    token = tokens[index]
-
-                    if isinstance(token, OpenParenthesisToken):
-                        name_cache = None
-                        indent += 1
-                    elif isinstance(token, ClosedParenthesisToken):
-                        indent -= 1
-                    elif isinstance(token, NameToken):
-                        if not name_cache:
-                            name_cache = token.name
-                        else:
-                            items[name_cache] = token.name
-
-                    index += 1
-
-                index += 1
-
-                ast.append(StructNode(name, items))
-
-                for item_name in items:
-                    item_type = items[item_name]
-
-                    instructions = []
-                    ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
-                    ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
-                    ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
-
-        elif isinstance(token, NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
-            statement, index = get_invoke_lisp(tokens, index + 1, tokens[index].name)
-
-            if current_function:
-                current_function.instructions.extend(statement)
-        elif isinstance(token, NameToken):
-            statement, index = get_assign_lisp(tokens, index + 1, tokens[index].name)
-
-            if current_function:
-                current_function.instructions.extend(statement)
+        statement, index, current_function = get_statement_lisp(tokens, index, current_function, ast)
+        if len(statement) > 0 and current_function:
+            current_function.instructions.extend(statement)
 
     for function in ast:
         if isinstance(function, FunctionNode):
@@ -512,18 +516,26 @@ target_id = 0
 
 def get_invoke_lisp(tokens, index, name):
     statement = []
+    global target_id
+
 
     if name == "if":
-        global target_id
-
         id1 = target_id
         target_id += 1
 
         iteration = 0
         index += 1
         while not isinstance(tokens[index], ClosedParenthesisToken):
-            expression, index = get_expression_lisp(tokens, index)
+
+            offset = 0
+            while isinstance(tokens[index], OpenParenthesisToken):
+                index += 1
+                offset += 1
+
+            expression, index, _ = get_statement_lisp(tokens, index, None, None)
             statement.extend(expression)
+
+            index += offset
 
             if iteration == 0:
                 statement.append(ConditionalJumpNode(False, id1))
@@ -531,6 +543,35 @@ def get_invoke_lisp(tokens, index, name):
             iteration += 1
 
         statement.append(TargetNode(id1))
+    elif name == "while":
+        id1 = target_id
+        target_id += 1
+        id2 = target_id
+        target_id += 1
+
+        statement.append(TargetNode(id1))
+
+        iteration = 0
+        index += 1
+        while not isinstance(tokens[index], ClosedParenthesisToken):
+
+            offset = 0
+            while isinstance(tokens[index], OpenParenthesisToken):
+                index += 1
+                offset += 1
+
+            expression, index, _ = get_statement_lisp(tokens, index, None, None)
+            statement.extend(expression)
+
+            index += offset
+
+            if iteration == 0:
+                statement.append(ConditionalJumpNode(False, id2))
+
+            iteration += 1
+
+        statement.append(JumpNode(id1))
+        statement.append(TargetNode(id2))
     else:
         index += 1
         while not isinstance(tokens[index], ClosedParenthesisToken):
@@ -679,20 +720,25 @@ def get_size_linux_x86_64(types, ast):
         types = [types]
 
     for type in types:
-        if type == "*" or type == "integer" or type == "any":
+        #TODO: make boolean 1 byte
+        if type == "*" or type == "integer" or type == "any" or type == "boolean":
             size += 8
         elif type == "long":
             size += 16
         elif type[0] == '*':
             size += 8
         else:
+            added = False
             for struct in ast:
                 if isinstance(struct, StructNode):
                     if struct.name == type:
-                        return get_size_linux_x86_64(struct.items.values(), ast)
+                        size += get_size_linux_x86_64(struct.items.values(), ast)
+                        added = True
+                        break
 
-            print("unknown type " + type)
-            exit()
+            if not added:
+                print("unknown type " + type)
+                exit()
 
     return size
 
@@ -727,6 +773,7 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "mov rdx, [rbp+24]\n"
     contents += "syscall\n"
     contents += "mov rsp, rbp\n"
+    contents += "add rsp, 32\n"
     contents += "pop rbp\n"
     contents += "ret\n"
 
@@ -739,39 +786,52 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "repne scasb\n"
     contents += "not rcx\n"
     contents += "sub rcx, 1\n"
-    contents += "pop rbx\n"
-    contents += "pop rdx\n"
+    contents += "mov rbx, [rbp]\n"
+    contents += "mov rdx, [rbp+8]\n"
+    contents += "mov rsp, rbp\n"
+    contents += "add rsp, 24\n"
     contents += "push rcx\n"
-    contents += "mov rsp, rbp\n"
     contents += "push rbx\n"
     contents += "pop rbp\n"
     contents += "push rdx\n"
     contents += "ret\n"
 
-    contents += "@add_long:\n"
+    contents += "@greater:\n"
     contents += "push rbp\n"
     contents += "mov rbp, rsp\n"
-    contents += "mov rax, 0\n"
     contents += "mov rax, [rbp+16]\n"
-    contents += "add rax, [rbp+24]\n"
-    contents += "pop rbx\n"
-    contents += "pop rdx\n"
-    contents += "push rax\n"
+    contents += "cmp rax, [rbp+24]\n"
+    #contents += "push qword [rbp+16]\n"
+    #contents += "call @print_integer\n"
+    #contents += "add rsp, 8\n"
+    #contents += "mov rax, [0]\n"
+    contents += "mov r14, [rbp+24]\n"
+    contents += "mov rcx, 0\n"
+    contents += "mov rbx, 1\n"
+    contents += "cmova rcx, rbx\n"
+    contents += "mov rbx, [rbp]\n"
+    contents += "mov rdx, [rbp+8]\n"
     contents += "mov rsp, rbp\n"
+    contents += "add rsp, 32\n"
+    contents += "push rcx\n"
     contents += "push rbx\n"
     contents += "pop rbp\n"
     contents += "push rdx\n"
     contents += "ret\n"
 
-    contents += "@get_first_long:\n"
+    contents += "@subtract:\n"
     contents += "push rbp\n"
     contents += "mov rbp, rsp\n"
-    contents += "mov rax, 0\n"
-    contents += "mov rax, [rbp+16]\n"
-    contents += "pop rbx\n"
-    contents += "pop rdx\n"
-    contents += "push rax\n"
+    contents += "mov rcx, [rbp+16]\n"
+    contents += "sub rcx, [rbp+24]\n"
+    #contents += "push qword \n"
+    #contents += "call @print_integer\n"
+    #contents += "add rsp, 8\n"
+    contents += "mov rbx, [rbp]\n"
+    contents += "mov rdx, [rbp+8]\n"
     contents += "mov rsp, rbp\n"
+    contents += "add rsp, 32\n"
+    contents += "push rcx\n"
     contents += "push rbx\n"
     contents += "pop rbp\n"
     contents += "push rdx\n"
@@ -790,6 +850,7 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "pop rdx\n"
     #contents += "push rax\n"
     contents += "mov rsp, rbp\n"
+    contents += "add rsp, " + str(32 + 16) + "\n"
     contents += "push rbx\n"
     contents += "pop rbp\n"
     contents += "push rdx\n"
@@ -869,21 +930,20 @@ ret
                 while i < size:
                     if size - i >= 8:
                         contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
-                        contents += "mov [rsp+" + str(size - i + 8) + "], rax\n"
+                        contents += "mov [rbp+" + str(size - i + 8) + "], rax\n"
                         i += 8
                     else:
                         print("non multiple of 8 size 4")
                         exit()
+            
+                size -= 8
 
                 contents += "mov rsp, rbp\n"
-                contents += "add rsp, " + str(size - 8) + "\n"
+                contents += "add rsp, " + str(size + 16 - 8) + "\n"
                 contents += "push rdx\n"
                 contents += "pop rbp\n"
                 contents += "push rcx\n"
                 contents += "ret\n"
-            
-                size -= 8
-
 
                 contents += remove_invalid_linux_x86_64("*" + struct.name + "->" + item_name) + ":\n"
                 contents += "push rbp\n"
@@ -895,10 +955,10 @@ ret
                 contents += "pop rcx\n"
 
                 #contents += "sub rsp, 8\n"
-                contents += "push rax\n"
 
                 contents += "mov rsp, rbp\n"
-                contents += "add rsp, 8\n"
+                contents += "add rsp, 24\n"
+                contents += "push rax\n"
                 contents += "push rdx\n"
                 contents += "pop rbp\n"
                 contents += "push rcx\n"
@@ -909,7 +969,7 @@ ret
                 contents += "push rbp\n"
                 contents += "mov rbp, rsp\n"
                 contents += "mov rax, [rbp+16]\n"
-                contents += "add rax, " + str(location) + "\n"
+                #contents += "add rax, " + str(location) + "\n"
 
                 contents += "sub rsp, " + str(size) + "\n"
 
@@ -917,28 +977,17 @@ ret
                 while j < size:
                     if size - j >= 8:
                         contents += "mov rbx, [rbp+" + str(24 + j) + "]\n"
-                        contents += "mov [rax+" + str(j) + "], rbx\n"
+                        contents += "mov [rax+" + str(location + j) + "], rbx\n"
                         j += 8
                     else:
                         print("non multiple of 8 size 7")
                         exit()
 
-                #contents += "pop rdx\n"
-                #contents += "pop rcx\n"
-                contents += "mov rcx, [rsp+" + str(size + 8) + "]\n"
-                contents += "mov rdx, [rsp+" + str(size) + "]\n"
-                #size += 8
-                #while i < size:
-                #    if size - i >= 8:
-                #        contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
-                #        contents += "mov [rsp+" + str(size - i + 8) + "], rax\n"
-                #        i += 8
-                #    else:
-                #        print("non multiple of 8 size 4")
-                #        exit()
+                contents += "mov rcx, [rbp+" + str(8) + "]\n"
+                contents += "mov rdx, [rbp+" + str(0) + "]\n"
 
                 contents += "mov rsp, rbp\n"
-                #contents += "add rsp, " + str(size - 8) + "\n"
+                contents += "add rsp, " + str(size + 16 + 8) + "\n"
                 contents += "push rdx\n"
                 contents += "pop rbp\n"
                 contents += "push rcx\n"
@@ -978,7 +1027,7 @@ ret
                         called_name = "*" + called_name
 
                     contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
-                    contents += "add rsp, " + str(get_size_linux_x86_64(functions[called_name].parameters.values(), ast) - get_size_linux_x86_64(functions[called_name].returns, ast)) + "\n"
+                    #contents += "add rsp, " + str(get_size_linux_x86_64(functions[called_name].parameters.values(), ast) - get_size_linux_x86_64(functions[called_name].returns, ast)) + "\n"
                     size = get_size_linux_x86_64(functions[called_name].returns, ast)
                     #contents += "sub rsp, " + str(size) + "\n"
                     i = 0
@@ -1077,8 +1126,10 @@ ret
                             print("non multiple of 8 size 4")
                             exit()
 
+                    size -= 8
+
                     contents += "mov rsp, rbp\n"
-                    contents += "add rsp, " + str(size - 8) + "\n"
+                    contents += "add rsp, " + str(size + 16) + "\n"
                     contents += "push rdx\n"
                     contents += "pop rbp\n"
                     contents += "push rcx\n"
@@ -1097,8 +1148,13 @@ ret
                     print(str(instruction) + " not handled in linux codegen!")
                     exit()
 
+            contents += "mov rbx, [rbp+0]\n"
+            contents += "mov rdx, [rbp+8]\n"
             contents += "mov rsp, rbp\n"
+            contents += "add rsp, " + str(get_size_linux_x86_64(function.parameters.values(), ast) + 16) + "\n"
+            contents += "push rbx\n"
             contents += "pop rbp\n"
+            contents += "push rdx\n"
             contents += "ret\n"
 
     contents += "segment readable\n"
