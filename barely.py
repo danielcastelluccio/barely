@@ -116,22 +116,22 @@ def tokenize(contents):
             tokens.extend(tokenize_small(buffer))
             tokens.append(ClosedParenthesisToken())
             buffer = ""
-        elif character == '{' and not in_quotes:
-            tokens.append(OpenCurlyBracketToken())
-        elif character == '}' and not in_quotes:
-            tokens.append(ClosedCurlyBracketToken())
-        elif character == ';' and not in_quotes:
-            tokens.extend(tokenize_small(buffer))
-            tokens.append(SemiColonToken())
-            buffer = ""
-        elif character == ',' and not in_quotes:
-            tokens.extend(tokenize_small(buffer))
-            tokens.append(CommaToken())
-            buffer = ""
-        elif character == ':' and not in_quotes:
-            tokens.extend(tokenize_small(buffer))
-            tokens.append(ColonToken())
-            buffer = ""
+        #elif character == '{' and not in_quotes:
+        #    tokens.append(OpenCurlyBracketToken())
+        #elif character == '}' and not in_quotes:
+        #    tokens.append(ClosedCurlyBracketToken())
+        #elif character == ';' and not in_quotes:
+        #    tokens.extend(tokenize_small(buffer))
+        #    tokens.append(SemiColonToken())
+        #    buffer = ""
+        #elif character == ',' and not in_quotes:
+        #    tokens.extend(tokenize_small(buffer))
+        #    tokens.append(CommaToken())
+        #    buffer = ""
+        #elif character == ':' and not in_quotes:
+        #    tokens.extend(tokenize_small(buffer))
+        #    tokens.append(ColonToken())
+        #    buffer = ""
         elif character == '"':
             if in_quotes:
                 tokens.append(StringToken(buffer))
@@ -289,6 +289,11 @@ def get_statement_lisp(tokens, index, current_function, ast):
 
         index += 1
         statement1.extend(statement)
+    else:
+        expression, index = get_expression_lisp(tokens, index)
+
+        index += 1
+        statement1.extend(expression)
 
     return statement1, index, current_function
 
@@ -632,10 +637,18 @@ def get_assign_c(tokens, index, name):
     return statement, index
 
 def is_type(given, wanted):
+    if wanted == given:
+        return True
+
     if wanted == "any":
         return True
 
-    return given == wanted
+    if wanted.startswith("any"):
+        size = int(wanted.split(":")[1])
+        if get_size_linux_x86_64(given, None) == size:
+            return True
+
+    return False
 
 def get_retrieve_lisp(index, name):
     statement = []
@@ -724,12 +737,10 @@ def get_size_linux_x86_64(types, ast):
 
     for type in types:
         #TODO: make boolean 1 byte
-        if type == "*" or type == "integer" or type == "any" or type == "boolean":
+        if type[0] == "*" or type == "integer" or type == "any":
             size += 8
-        elif type == "long":
-            size += 16
-        elif type[0] == '*':
-            size += 8
+        elif type == "boolean":
+            size += 2
         else:
             added = False
             for struct in ast:
@@ -848,7 +859,7 @@ ret
                         contents += "mov [rbp+" + str(size - i + 16 - size + 8) + "], rax\n"
                         i += 8
                     else:
-                        print("non multiple of 8 size 4")
+                        print("non multiple of 8 size 10")
                         exit()
             
                 size -= 8
@@ -943,25 +954,33 @@ ret
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
                         contents += "cmp rax, rbx\n"
-                        contents += "mov rcx, 0\n"
-                        contents += "mov rbx, 1\n"
-                        contents += "cmova rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "mov cx, 0\n"
+                        contents += "mov bx, 1\n"
+                        contents += "cmova cx, bx\n"
+                        contents += "push cx\n"
                     elif instruction.name == "=":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
                         contents += "cmp rax, rbx\n"
-                        contents += "mov rcx, 0\n"
-                        contents += "mov rbx, 1\n"
-                        contents += "cmove rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "mov cx, 0\n"
+                        contents += "mov bx, 1\n"
+                        contents += "cmove cx, bx\n"
+                        contents += "push cx\n"
+                    elif instruction.name == "=1":
+                        contents += "pop ax\n"
+                        contents += "pop bx\n"
+                        contents += "cmp ax, bx\n"
+                        contents += "mov cx, 0\n"
+                        contents += "mov bx, 1\n"
+                        contents += "cmove cx, bx\n"
+                        contents += "push cx\n"
                     elif instruction.name == "!":
-                        contents += "pop rax\n"
-                        contents += "cmp rax, 0\n"
-                        contents += "mov rcx, 0\n"
-                        contents += "mov rbx, 1\n"
-                        contents += "cmove rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "pop ax\n"
+                        contents += "cmp ax, 0\n"
+                        contents += "mov cx, 0\n"
+                        contents += "mov bx, 1\n"
+                        contents += "cmove cx, bx\n"
+                        contents += "push cx\n"
                     elif instruction.name == "+":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -972,17 +991,20 @@ ret
                         contents += "pop rbx\n"
                         contents += "sub rax, rbx\n"
                         contents += "push rax\n"
-                    elif instruction.name == "@get_1":
+                    elif instruction.name == "*1":
                         contents += "pop rcx\n"
                         contents += "mov rax, 0\n"
                         contents += "mov al, [rcx]\n"
-                        contents += "push rax\n"
+                        contents += "push ax\n"
                     elif instruction.name == "@syscall3":
                         contents += "pop rax\n"
                         contents += "pop rdi\n"
                         contents += "pop rsi\n"
                         contents += "pop rdx\n"
                         contents += "syscall\n"
+                    elif instruction.name == "byte":
+                        contents += "pop rax\n"
+                        contents += "push ax\n"
                     elif not instruction.name.startswith("@cast_"):
                         called_name = instruction.name
 
@@ -993,13 +1015,13 @@ ret
                         #contents += "add rsp, " + str(get_size_linux_x86_64(functions[called_name].parameters.values(), ast) - get_size_linux_x86_64(functions[called_name].returns, ast)) + "\n"
                         size = get_size_linux_x86_64(functions[called_name].returns, ast)
                         #contents += "sub rsp, " + str(size) + "\n"
-                        i = 0
-                        while i < size:
-                            if size - i >= 8:
-                                i += 8
-                            else:
-                                print("non multiple of 8 size 1")
-                                exit()
+                        #i = 0
+                        #while i < size:
+                        #    if size - i >= 8:
+                        #        i += 8
+                        #    else:
+                        #        print("non multiple of 8 size 1")
+                        #        exit()
                 elif isinstance(instruction, DeclareNode):
                     variables[instruction.name] = instruction.type
                     local_types[function.locals.index(instruction.name)] = instruction.type
@@ -1075,8 +1097,11 @@ ret
                 #    contents += "push " + str(instruction.integer2) + "\n"
                 #    contents += "push " + str(instruction.integer1) + "\n"
                 elif isinstance(instruction, ReturnNode):
+                    params_size = get_size_linux_x86_64(functions[function.name].parameters.values(), ast)
                     size = get_size_linux_x86_64(functions[function.name].returns, ast)
+                    size_rounded = (((size + 8) + 7) & (-8))
                     i = 0
+                    j = size + 8
                     contents += "mov rcx, [rbp+8]\n"
                     contents += "mov rdx, [rbp]\n"
                     #contents += "mov r13, rcx\n"
@@ -1084,9 +1109,20 @@ ret
                     size += 8
                     while i < size:
                         if size - i >= 8:
+                            j -= 8
                             contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
-                            contents += "mov [rbp+" + str(size - i + 8) + "], rax\n"
+                            contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], rax\n"
                             i += 8
+                        elif size - i >= 4:
+                            j -= 4
+                            contents += "mov eax, [rsp+" + str(size - i - 4) + "]\n"
+                            contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], eax\n"
+                            i += 4
+                        elif size - i >= 2:
+                            j -= 2
+                            contents += "mov ax, [rsp+" + str(size - i - 2) + "]\n"
+                            contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], ax\n"
+                            i += 2
                         else:
                             print("non multiple of 8 size 4")
                             exit()
@@ -1095,7 +1131,7 @@ ret
 
                     contents += "mov rsp, rbp\n"
                     #contents += "add rsp, " + str(size + 16) + "\n"
-                    contents += "add rsp, " + str(16 + get_size_linux_x86_64(functions[function.name].parameters.values(), ast) - size) + "\n"
+                    contents += "add rsp, " + str(16 + params_size - size) + "\n"
                     contents += "push rdx\n"
                     contents += "pop rbp\n"
                     contents += "push rcx\n"
@@ -1105,8 +1141,8 @@ ret
                 elif isinstance(instruction, TargetNode):
                     contents += "target_" + str(instruction.id) + ":\n"
                 elif isinstance(instruction, ConditionalJumpNode):
-                    contents += "pop rax\n"
-                    contents += "cmp rax, " + str(1 if instruction.wants_true else 0) + "\n"
+                    contents += "pop ax\n"
+                    contents += "cmp ax, " + str(1 if instruction.wants_true else 0) + "\n"
                     contents += "je target_" + str(instruction.id) + "\n"
                 elif isinstance(instruction, JumpNode):
                     contents += "jmp target_" + str(instruction.id) + "\n"
@@ -1145,7 +1181,7 @@ ast = generate_ast_lisp(tokens)
 #        ast = generate_ast_c(tokens)
 
 #for function in ast:
-#    if function.name == "length":
+#    if function.name == "main":
 #        for intruction in function.instructions:
 #            print(intruction)
 
