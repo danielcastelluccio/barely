@@ -1,19 +1,24 @@
 (
 	(function main () () (
-		(variable test Test)
-		(variable test2 Test2)
+		(variable (test Test))
+		(variable (test2 Test2))
 		(Test2<-value ((ptr (test2)) 18))
 		(Test2<-value2 ((ptr (test2)) 10))
         (Test<-value ((ptr (test)) test2))
 		(@print_integer (Test2->value (ptr (Test->value (ptr (test))))))
 		(@print_integer (Test2->value2 (ptr (Test->value (ptr (test))))))
 
+        (variable (test4 Test2) (Test->value (ptr (test))))
+		(@print_integer (Test2->value (ptr (test4))))
+        (variable (thing integer) (Test2->value2 (ptr (test4))))
+		(@print_integer (thing))
+
         (print ("Hello World"))
 
-        (variable test3 integer 1)
+        (variable (test3 integer) 1)
         (if ((@greater ((test3) 0)) (
             (print ("test"))
-            (test3 @subtract ((test3) 1))
+            ((test3) (@subtract ((test3) 1)))
         )))
 	))
 	(function print ((string *)) () (

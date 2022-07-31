@@ -226,15 +226,15 @@ def get_statement_lisp(tokens, index, current_function, ast):
             current_function, index = get_function_declaration_lisp(tokens, index + 1)
             ast.append(current_function)
         elif token.word == "variable":
-            name = tokens[index + 1].name
-            type = tokens[index + 2].name
+            name = tokens[index + 2].name
+            type = tokens[index + 3].name
 
             statement = []
 
-            if not isinstance(tokens[index + 3], ClosedParenthesisToken):
-                statement, index = get_assign_lisp(tokens, index + 3, name)
+            if not isinstance(tokens[index + 5], ClosedParenthesisToken):
+                statement, index = get_assign_lisp(tokens, index + 5, name)
             else:
-                index += 4
+                index += 6
 
             statement1.append(DeclareNode(name, type))
             statement1.extend(statement)
@@ -283,8 +283,8 @@ def get_statement_lisp(tokens, index, current_function, ast):
         statement, index = get_invoke_lisp(tokens, index + 1, tokens[index].name)
 
         statement1.extend(statement)
-    elif isinstance(token, NameToken):
-        statement, index = get_assign_lisp(tokens, index + 1, tokens[index].name)
+    elif isinstance(token, NameToken) and isinstance(tokens[index - 1], OpenParenthesisToken) and isinstance(tokens[index + 1], ClosedParenthesisToken):
+        statement, index = get_assign_lisp(tokens, index + 2, tokens[index].name)
 
         statement1.extend(statement)
 
@@ -923,6 +923,8 @@ ret
                         print("non multiple of 8 size 7")
                         exit()
 
+                # works with return size 8
+                # input size 8
                 contents += "mov rcx, [rsp+" + str(size + 8) + "]\n"
                 contents += "mov rdx, [rsp+" + str(size) + "]\n"
                 size += 8
@@ -930,7 +932,7 @@ ret
                 while i < size:
                     if size - i >= 8:
                         contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
-                        contents += "mov [rbp+" + str(size - i + 8) + "], rax\n"
+                        contents += "mov [rbp+" + str(size - i + 16 - size + 8) + "], rax\n"
                         i += 8
                     else:
                         print("non multiple of 8 size 4")
@@ -938,8 +940,12 @@ ret
             
                 size -= 8
 
+                # 16 is rbp and return thing
+                # first 8 
+                # second 8 is input
+                # final is output
                 contents += "mov rsp, rbp\n"
-                contents += "add rsp, " + str(size + 16 - 8) + "\n"
+                contents += "add rsp, " + str(16 + 8 - size) + "\n"
                 contents += "push rdx\n"
                 contents += "pop rbp\n"
                 contents += "push rcx\n"
