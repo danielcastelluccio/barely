@@ -843,14 +843,21 @@ ret
                         contents += "mov rbx, [rax+" + str(location + j) + "]\n"
                         contents += "mov [rsp+" + str(j) + "], rbx\n"
                         j += 8
+                    elif size - j >= 4:
+                        contents += "mov ebx, [rax+" + str(location + j) + "]\n"
+                        contents += "mov [rsp+" + str(j) + "], ebx\n"
+                        j += 4
+                    elif size - j >= 2:
+                        contents += "mov bx, [rax+" + str(location + j) + "]\n"
+                        contents += "mov [rsp+" + str(j) + "], bx\n"
+                        j += 2
                     else:
-                        print("non multiple of 8 size 7")
+                        print("sizing error")
                         exit()
 
-                # works with return size 8
-                # input size 8
                 contents += "mov rcx, [rsp+" + str(size + 8) + "]\n"
                 contents += "mov rdx, [rsp+" + str(size) + "]\n"
+                size_rounded = (((size + 8) + 7) & (-8))
                 size += 8
                 i = 0
                 while i < size:
@@ -858,15 +865,20 @@ ret
                         contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
                         contents += "mov [rbp+" + str(size - i + 16 - size + 8) + "], rax\n"
                         i += 8
+                    elif size - i >= 4:
+                        contents += "mov eax, [rsp+" + str(size - i - 4) + "]\n"
+                        contents += "mov [rbp+" + str(16 + 8 - size - i + size_rounded) + "], eax\n"
+                        i += 4
+                    elif size - i >= 2:
+                        contents += "mov ax, [rsp+" + str(size - i - 2) + "]\n"
+                        contents += "mov [rbp+" + str(16 + 8 - size - i + size_rounded) + "], ax\n"
+                        i += 2
                     else:
-                        print("non multiple of 8 size 10")
+                        print("sizing error")
                         exit()
             
                 size -= 8
 
-                # 16 is rbp and return thing
-                # second 8 is input
-                # final is output
                 contents += "mov rsp, rbp\n"
                 contents += "add rsp, " + str(16 + 8 - size) + "\n"
                 contents += "push rdx\n"
@@ -898,7 +910,6 @@ ret
                 contents += "push rbp\n"
                 contents += "mov rbp, rsp\n"
                 contents += "mov rax, [rbp+16]\n"
-                #contents += "add rax, " + str(location) + "\n"
 
                 contents += "sub rsp, " + str(size) + "\n"
 
@@ -908,8 +919,16 @@ ret
                         contents += "mov rbx, [rbp+" + str(24 + j) + "]\n"
                         contents += "mov [rax+" + str(location + j) + "], rbx\n"
                         j += 8
+                    elif size - j >= 4:
+                        contents += "mov ebx, [rbp+" + str(24 + j) + "]\n"
+                        contents += "mov [rax+" + str(location + j) + "], ebx\n"
+                        j += 4
+                    elif size - j >= 2:
+                        contents += "mov bx, [rbp+" + str(24 + j) + "]\n"
+                        contents += "mov [rax+" + str(location + j) + "], bx\n"
+                        j += 2
                     else:
-                        print("non multiple of 8 size 7")
+                        print("sizing error")
                         exit()
 
                 contents += "mov rcx, [rbp+" + str(8) + "]\n"
@@ -1012,16 +1031,7 @@ ret
                             called_name = "*" + called_name
 
                         contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
-                        #contents += "add rsp, " + str(get_size_linux_x86_64(functions[called_name].parameters.values(), ast) - get_size_linux_x86_64(functions[called_name].returns, ast)) + "\n"
                         size = get_size_linux_x86_64(functions[called_name].returns, ast)
-                        #contents += "sub rsp, " + str(size) + "\n"
-                        #i = 0
-                        #while i < size:
-                        #    if size - i >= 8:
-                        #        i += 8
-                        #    else:
-                        #        print("non multiple of 8 size 1")
-                        #        exit()
                 elif isinstance(instruction, DeclareNode):
                     variables[instruction.name] = instruction.type
                     local_types[function.locals.index(instruction.name)] = instruction.type
@@ -1046,8 +1056,16 @@ ret
                                     contents += "mov rax, [rbp+" + str(16 + location + j) + "]\n"
                                     contents += "mov [rsp+" + str(j) + "], rax\n"
                                     j += 8
+                                elif size - j >= 4:
+                                    contents += "mov eax, [rbp+" + str(16 + location + j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], eax\n"
+                                    j += 4
+                                elif size - j >= 2:
+                                    contents += "mov ax, [rbp+" + str(16 + location + j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], ax\n"
+                                    j += 2
                                 else:
-                                    print("non multiple of 8 size 2")
+                                    print("sizing error")
                                     exit()
                     else:
                         i = function.locals.index(instruction.name)
@@ -1066,8 +1084,16 @@ ret
                                     contents += "mov rax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
                                     contents += "mov [rsp+" + str(j) + "], rax\n"
                                     j += 8
+                                elif size - j >= 4:
+                                    contents += "mov eax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], eax\n"
+                                    j += 4
+                                elif size - j >= 2:
+                                    contents += "mov ax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], ax\n"
+                                    j += 2
                                 else:
-                                    print("non multiple of 8 size 5")
+                                    print("sizing error")
                                     exit()
 
                 elif isinstance(instruction, AssignNode):
@@ -1081,8 +1107,16 @@ ret
                             contents += "mov rax, [rsp+" + str(i) + "]\n"
                             contents += "mov [rbp-" + str(8 + size + location - i - 8) + "], rax\n"
                             i += 8
+                        elif size - i >= 4:
+                            contents += "mov eax, [rsp+" + str(i) + "]\n"
+                            contents += "mov [rbp-" + str(8 + size + location - i - 8) + "], eax\n"
+                            i += 4
+                        elif size - i >= 2:
+                            contents += "mov ax, [rsp+" + str(i) + "]\n"
+                            contents += "mov [rbp-" + str(8 + size + location - i - 8) + "], ax\n"
+                            i += 2
                         else:
-                            print("non multiple of 8 size 3")
+                            print("sizing error")
                             exit()
                     contents += "add rsp, " + str(((size + 7) & (-8))) + "\n"
                 elif isinstance(instruction, StringNode):
@@ -1093,9 +1127,6 @@ ret
                     contents += "push " + str(instruction.integer) + "\n"
                 elif isinstance(instruction, BooleanNode):
                     contents += "push " + str(1 if instruction.boolean else 0) + "\n"
-                #elif isinstance(instruction, LongNode):
-                #    contents += "push " + str(instruction.integer2) + "\n"
-                #    contents += "push " + str(instruction.integer1) + "\n"
                 elif isinstance(instruction, ReturnNode):
                     params_size = get_size_linux_x86_64(functions[function.name].parameters.values(), ast)
                     size = get_size_linux_x86_64(functions[function.name].returns, ast)
@@ -1104,8 +1135,6 @@ ret
                     j = size + 8
                     contents += "mov rcx, [rbp+8]\n"
                     contents += "mov rdx, [rbp]\n"
-                    #contents += "mov r13, rcx\n"
-                    #contents += "mov r14, rdx\n"
                     size += 8
                     while i < size:
                         if size - i >= 8:
@@ -1124,7 +1153,7 @@ ret
                             contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], ax\n"
                             i += 2
                         else:
-                            print("non multiple of 8 size 4")
+                            print("sizing error")
                             exit()
 
                     size -= 8
