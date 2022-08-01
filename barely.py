@@ -80,7 +80,7 @@ def is_num(string):
     except ValueError:
         return False
 
-keywords = ["function", "return", "variable", "structure"]
+keywords = ["function", "return", "variable", "structure", "constant"]
 
 def tokenize_small(contents):
     tokens = []
@@ -147,7 +147,13 @@ def tokenize(contents):
 
     return tokens
 
-class StructNode:
+class ConstantNode:
+    def __init__(self, name, type, value_token):
+        self.name = name
+        self.type = type
+        self.value_token = value_token
+
+class StructureNode:
     def __init__(self, name, items):
         self.name = name
         self.items = items
@@ -269,7 +275,7 @@ def get_statement_lisp(tokens, index, current_function, ast):
 
             index += 1
 
-            ast.append(StructNode(name, items))
+            ast.append(StructureNode(name, items))
 
             for item_name in items:
                 item_type = items[item_name]
@@ -278,7 +284,15 @@ def get_statement_lisp(tokens, index, current_function, ast):
                 ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
                 ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
                 ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
+        elif token.word == "constant":
+            name = tokens[index + 2].name
+            type = tokens[index + 3].name
 
+            value_token = tokens[index + 5]
+
+            ast.append(ConstantNode(name, type, value_token))
+
+            index += 5
     elif isinstance(token, NameToken) and isinstance(tokens[index + 1], OpenParenthesisToken):
         statement, index = get_invoke_lisp(tokens, index + 1, tokens[index].name)
         index += 1
@@ -370,7 +384,7 @@ def generate_ast_c(tokens):
 
                 index += 1
 
-                ast.append(StructNode(name, items))
+                ast.append(StructureNode(name, items))
 
                 for item_name in items:
                     item_type = items[item_name]
@@ -665,6 +679,12 @@ def get_retrieve_c(index, name):
     return statement, index
 
 def type_check(ast, functions):
+    constants = {}
+
+    for constant in ast:
+        if isinstance(constant, ConstantNode):
+            constants[constant.name] = constant.type
+
     for function in ast:
         if isinstance(function, FunctionNode):
             variables = {}
@@ -690,7 +710,10 @@ def type_check(ast, functions):
                         print("TYPECHECK: Assign of " + instruction.name + " in " + function.name + " expected " + variables[instruction.name] + ", got " + popped + ".")
                         exit()
                 elif isinstance(instruction, RetrieveNode):
-                    types.append(variables[instruction.name])
+                    if instruction.name in variables:
+                        types.append(variables[instruction.name])
+                    else:
+                        types.append(constants[instruction.name])
                 elif isinstance(instruction, InvokeNode):
                     if instruction.name.startswith("@cast_"):
                         types.pop()
@@ -744,7 +767,7 @@ def get_size_linux_x86_64(types, ast):
         else:
             added = False
             for struct in ast:
-                if isinstance(struct, StructNode):
+                if isinstance(struct, StructureNode):
                     if struct.name == type:
                         size += get_size_linux_x86_64(struct.items.values(), ast)
                         added = True
@@ -821,7 +844,7 @@ ret
 """
 
     for struct in ast:
-        if isinstance(struct, StructNode):
+        if isinstance(struct, StructureNode):
             items = struct.items
 
             k = 0
@@ -946,6 +969,11 @@ ret
     contents_data = ""
     data_index = 0
 
+    constants = {}
+    for constant in ast:
+        if isinstance(constant, ConstantNode):
+            constants[constant.name] = constant.type
+
     for function in ast:
         if isinstance(function, FunctionNode):
             if len(function.instructions) == 0:
@@ -1067,7 +1095,7 @@ ret
                                 else:
                                     print("sizing error")
                                     exit()
-                    else:
+                    elif instruction.name in function.locals:
                         i = function.locals.index(instruction.name)
                         location = get_size_linux_x86_64(local_types[0 : i], ast)
                         size = get_size_linux_x86_64(local_types[i], ast)
@@ -1095,7 +1123,34 @@ ret
                                 else:
                                     print("sizing error")
                                     exit()
+                    else:
+                        #i = function.locals.index(instruction.name)
+                        #location = get_size_linux_x86_64(local_types[0 : i], ast)
+                        size = get_size_linux_x86_64(constants[instruction.name], ast)
 
+                        if isinstance(function.instructions[index0 + 1], PointerNode):
+                            contents += "mov rax, _" + instruction.name + "\n"
+                            contents += "push rax\n"
+                        else:
+                            contents += "sub rsp, " + str(size) + "\n"
+
+                            j = 0
+                            while j < size:
+                                if size - j >= 8:
+                                    contents += "mov rax, [_" + instruction.name + "+" + str(j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], rax\n"
+                                    j += 8
+                                elif size - j >= 4:
+                                    contents += "mov eax, [_" + instruction.name + "+" + str(j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], eax\n"
+                                    j += 4
+                                elif size - j >= 2:
+                                    contents += "mov ax, [_" + instruction.name + "+" + str(j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], ax\n"
+                                    j += 2
+                                else:
+                                    print("sizing error")
+                                    exit()
                 elif isinstance(instruction, AssignNode):
                     i = function.locals.index(instruction.name)
 
@@ -1190,6 +1245,15 @@ ret
 
     contents += "segment readable\n"
     contents += contents_data
+
+    for constant in ast:
+        if isinstance(constant, ConstantNode):
+            contents += "_" + constant.name + ":"
+
+            if isinstance(constant.value_token, IntegerToken):
+                contents += "dq " + str(constant.value_token.integer)
+
+            contents += "\n"
 
     fasm_file.write(contents)
     fasm_file.close()

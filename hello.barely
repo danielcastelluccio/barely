@@ -1,4 +1,7 @@
 (
+    (constant (SYS_WRITE integer) 1)
+    (constant (STDOUT integer) 1)
+
 	(function main () () (
         (@print_integer (foo1 ()))
         (if ((foo ()) (
@@ -43,7 +46,7 @@
         (return true)
     ))
     (function foo1 () (integer) (
-        (return 1)
+        (return (2))
     ))
 	
 	(structure Test (
@@ -56,7 +59,7 @@
 	))
 
     (function print_internal ((string *) (length integer)) () (
-        (@syscall3 (1 1 (string) (length)))
+        (@syscall3 ((SYS_WRITE) (STDOUT) (string) (length)))
     ))
 
     (function @print_integer ((value any:8)) ())
