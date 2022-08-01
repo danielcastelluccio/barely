@@ -1267,12 +1267,19 @@ ret
     os.system("fasm " + fasm_file.name + " build/" + name)
 
 #syntax = sys.argv[1]
-file = open(sys.argv[1])
-contents = file.read()
+ast = []
+name = None
+for file in sys.argv[1:]:
+    file = open(file)
 
-tokens = tokenize(contents)
+    if not name:
+        name = file.name
 
-ast = generate_ast_lisp(tokens)
+    contents = file.read()
+
+    tokens = tokenize(contents)
+
+    ast.extend(generate_ast_lisp(tokens))
 #match syntax:
 #    case "lisp":
 #        ast = generate_ast_lisp(tokens)
@@ -1295,4 +1302,5 @@ type_check(ast, functions)
 if not os.path.exists("build"):
     os.makedirs("build")
 
-compile_linux_x86_64(ast, file.name.replace(".barely", ""), functions)
+if name:
+    compile_linux_x86_64(ast, name.replace(".barely", ""), functions)
