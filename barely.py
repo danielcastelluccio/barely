@@ -388,6 +388,15 @@ def get_statement_c(tokens, index, ast, current_function):
                 ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
                 ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
                 ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
+        elif token.word == "constant":
+            name = tokens[index + 1].name
+            type = tokens[index + 3].name
+
+            value_token = tokens[index + 5]
+
+            ast.append(ConstantNode(name, type, value_token))
+
+            index += 4
         elif token.word == "if":
             index += 1
 

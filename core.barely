@@ -1,5 +1,8 @@
+constant SYS_WRITE: integer = 1;
+constant STDOUT: integer = 1;
+
 function print(string: *) {
-	@syscall3(1, 1, string, length(string));
+	@syscall3(SYS_WRITE, STDOUT, string, length(string));
 };
 
 function length(string: *): integer {
