@@ -1,64 +1,19 @@
-(
-    (constant (SYS_WRITE integer) 1)
-    (constant (STDOUT integer) 1)
+function main() {
+	variable test: Test;
+	Test<-value(&(test), 4);
+	Test<-value2(&(test), 9);
+	@print_integer(Test->value(&(test)));
+	@print_integer(Test->value2(&(test)));
+    print("test5325325");
 
-	(function main () () (
-        (@print_integer (foo1 ()))
-        (if ((foo ()) (
-            (print("thing"))
-        )))
-		(variable (test Test))
-		(variable (test2 Test2))
-		(Test2<-value ((ptr (test2)) 18))
-		(Test2<-value2 ((ptr (test2)) 10))
-        (Test<-value ((ptr (test)) test2))
-		(@print_integer (Test2->value (ptr (Test->value (ptr (test))))))
-		(@print_integer (Test2->value2 (ptr (Test->value (ptr (test))))))
+    variable test1: boolean = true;
+    while test1 {
+        print("thing");
+        test1 = false;
+    };
+};
 
-        (variable (test4 Test2) (Test->value (ptr (test))))
-		(@print_integer (Test2->value (ptr (test4))))
-        (variable (thing integer) (Test2->value2 (ptr (test4))))
-		(@print_integer (thing))
-
-        (print ("Hello World"))
-
-        (variable (test3 integer) 3)
-        (while ((> ((test3) 0)) (
-            (print ("test"))
-            ((test3) (- ((test3) 1)))
-        )))
-
-        (@print_integer ((length ("test"))))
-	))
-	(function print ((string *)) () (
-		(print_internal ((string) (length (string))))
-	))
-    (function length ((string *)) (integer) (
-        (variable (length integer) 0)
-
-        (while ((! ((=1 ((byte (0)) (*1 ((+ ((string) (length))))))))) (
-            ((length) (@cast_integer (+ ((length) 1))))
-        )))
-
-        (return (length))
-    ))
-    (function foo () (boolean) (
-        (return true)
-    ))
-    (function foo1 () (integer) (
-        (return (2))
-    ))
-	
-	(structure Test (
-		(value Test2)
-	))
-	(structure Test2 (
-		(value integer)
-		(value2 integer)
-        (value3 boolean)
-	))
-
-    (function print_internal ((string *) (length integer)) () (
-        (@syscall3 ((SYS_WRITE) (STDOUT) (string) (length)))
-    ))
-)
+structure Test {
+	value: integer;
+	value2: integer;
+};

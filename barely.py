@@ -80,7 +80,7 @@ def is_num(string):
     except ValueError:
         return False
 
-keywords = ["function", "return", "variable", "structure", "constant"]
+keywords = ["function", "return", "variable", "structure", "constant", "if", "while"]
 
 def tokenize_small(contents):
     tokens = []
@@ -116,22 +116,22 @@ def tokenize(contents):
             tokens.extend(tokenize_small(buffer))
             tokens.append(ClosedParenthesisToken())
             buffer = ""
-        #elif character == '{' and not in_quotes:
-        #    tokens.append(OpenCurlyBracketToken())
-        #elif character == '}' and not in_quotes:
-        #    tokens.append(ClosedCurlyBracketToken())
-        #elif character == ';' and not in_quotes:
-        #    tokens.extend(tokenize_small(buffer))
-        #    tokens.append(SemiColonToken())
-        #    buffer = ""
-        #elif character == ',' and not in_quotes:
-        #    tokens.extend(tokenize_small(buffer))
-        #    tokens.append(CommaToken())
-        #    buffer = ""
-        #elif character == ':' and not in_quotes:
-        #    tokens.extend(tokenize_small(buffer))
-        #    tokens.append(ColonToken())
-        #    buffer = ""
+        elif character == '{' and not in_quotes:
+            tokens.append(OpenCurlyBracketToken())
+        elif character == '}' and not in_quotes:
+            tokens.append(ClosedCurlyBracketToken())
+        elif character == ';' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(SemiColonToken())
+            buffer = ""
+        elif character == ',' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(CommaToken())
+            buffer = ""
+        elif character == ':' and not in_quotes:
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(ColonToken())
+            buffer = ""
         elif character == '"':
             if in_quotes:
                 tokens.append(StringToken(buffer))
@@ -330,81 +330,138 @@ def generate_ast_lisp(tokens):
 
     return ast
 
+def get_statement_c(tokens, index, ast, current_function):
+    statement = []
+
+    token = tokens[index]
+    if isinstance(token, KeywordToken):
+        if token.word == "function":
+            current_function, index = get_function_declaration_c(tokens, index + 1)
+            ast.append(current_function)
+        elif token.word == "return":
+            expression, index = get_expression_c(tokens, index + 1)
+
+            #if current_function:
+            statement.extend(expression)
+            statement.append(ReturnNode())
+        elif token.word == "variable":
+            name = tokens[index + 1].name
+            type = tokens[index + 3].name
+
+            statement0 = []
+
+            if not isinstance(tokens[index + 4], SemiColonToken):
+                statement0, index = get_assign_c(tokens, index + 5, name)
+            else:
+                index += 4
+
+            statement.append(DeclareNode(name, type))
+            statement.extend(statement0)
+        elif token.word == "structure":
+            name = tokens[index + 1].name
+            items = OrderedDict()
+
+            index += 2
+
+            name_cache = None
+            while not isinstance(tokens[index], ClosedCurlyBracketToken):
+                token = tokens[index]
+
+                if isinstance(token, SemiColonToken):
+                    name_cache = None
+                elif isinstance(token, NameToken):
+                    if not name_cache:
+                        name_cache = token.name
+                    else:
+                        items[name_cache] = token.name
+
+                index += 1
+
+            index += 1
+
+            ast.append(StructureNode(name, items))
+
+            for item_name in items:
+                item_type = items[item_name]
+
+                instructions = []
+                ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
+                ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
+                ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
+        elif token.word == "if":
+            index += 1
+
+            global target_id
+            id = target_id
+            target_id += 1
+
+            while not isinstance(tokens[index], OpenCurlyBracketToken):
+                expression, index = get_expression_c(tokens, index)
+                statement.extend(expression)
+                #print(expression)
+                
+                statement.append(ConditionalJumpNode(False, id))
+
+
+            index += 1
+
+            while not isinstance(tokens[index], ClosedCurlyBracketToken):
+                statement0, index, _ = get_statement_c(tokens, index, ast, None)
+                statement.extend(statement0)
+                #print(expression)
+
+                statement.append(TargetNode(id))
+
+        elif token.word == "while":
+            index += 1
+
+            id1 = target_id
+            target_id += 1
+
+            id2 = target_id
+            target_id += 1
+
+            statement.append(TargetNode(id2))
+
+            while not isinstance(tokens[index], OpenCurlyBracketToken):
+                expression, index = get_expression_c(tokens, index)
+                statement.extend(expression)
+                
+                statement.append(ConditionalJumpNode(False, id1))
+
+
+            index += 1
+
+            while not isinstance(tokens[index], ClosedCurlyBracketToken):
+                statement0, index, _ = get_statement_c(tokens, index, ast, None)
+                statement.extend(statement0)
+                #print(expression)
+
+            statement.append(JumpNode(id2))
+            statement.append(TargetNode(id1))
+
+    elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
+        assign, index = get_assign_c(tokens, index + 2, tokens[index].name)
+
+        statement.extend(assign)
+    else:
+        expression, index = get_expression_c(tokens, index)
+
+        statement.extend(expression)
+
+    index += 1
+    
+    return statement, index, current_function
+
 def generate_ast_c(tokens):
     ast = []
     
     current_function = None
     index = 0
     while index < len(tokens):
-        token = tokens[index]
-
-        if isinstance(token, KeywordToken):
-            if token.word == "function":
-                current_function, index = get_function_declaration_c(tokens, index + 1)
-                ast.append(current_function)
-            elif token.word == "return":
-                statement, index = get_expression_c(tokens, index + 1)
-
-                if current_function:
-                    current_function.instructions.extend(statement)
-                    current_function.instructions.append(ReturnNode())
-            elif token.word == "variable":
-                name = tokens[index + 1].name
-                type = tokens[index + 3].name
-
-                statement = []
-
-                if not isinstance(tokens[index + 4], SemiColonToken):
-                    statement, index = get_assign_c(tokens, index + 5, name)
-                else:
-                    index += 4
-
-                if current_function:
-                    current_function.instructions.append(DeclareNode(name, type))
-                    current_function.instructions.extend(statement)
-            elif token.word == "structure":
-                name = tokens[index + 1].name
-                items = OrderedDict()
-
-                index += 2
-
-                name_cache = None
-                while not isinstance(tokens[index], ClosedCurlyBracketToken):
-                    token = tokens[index]
-
-                    if isinstance(token, SemiColonToken):
-                        name_cache = None
-                    elif isinstance(token, NameToken):
-                        if not name_cache:
-                            name_cache = token.name
-                        else:
-                            items[name_cache] = token.name
-
-                    index += 1
-
-                index += 1
-
-                ast.append(StructureNode(name, items))
-
-                for item_name in items:
-                    item_type = items[item_name]
-
-                    instructions = []
-                    ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
-                    ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
-                    ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
-        elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
-            statement, index = get_assign_c(tokens, index + 2, tokens[index].name)
-
-            if current_function:
-                current_function.instructions.extend(statement)
-        else:
-            statement, index = get_expression_c(tokens, index)
-
-            if current_function:
-                current_function.instructions.extend(statement)
-
-        index += 1
+        statement, index, current_function = get_statement_c(tokens, index, ast, current_function)
+        if current_function:
+            current_function.instructions.extend(statement)
 
     for function in ast:
         if isinstance(function, FunctionNode):
@@ -460,7 +517,7 @@ def get_function_declaration_c(tokens, index):
     name_index = 0
     parameter_name_cache = ""
 
-    while not isinstance(tokens[index], OpenCurlyBracketToken):
+    while not isinstance(tokens[index], OpenCurlyBracketToken) and not isinstance(tokens[index], SemiColonToken):
         token = tokens[index]
 
         if isinstance(token, NameToken) and not name:
@@ -526,6 +583,9 @@ def get_expression_c(tokens, index):
         index += 1
     elif isinstance(tokens[index], IntegerToken):
         statement.append(IntegerNode(tokens[index].integer))
+        index += 1
+    elif isinstance(tokens[index], BooleanToken):
+        statement.append(BooleanNode(tokens[index].boolean))
         index += 1
     elif isinstance(tokens[index], NumberSplitToken):
         statement.append(LongNode(tokens[index].number1, tokens[index].number2))
@@ -596,7 +656,7 @@ def get_invoke_lisp(tokens, index, name):
             expression, index = get_expression_lisp(tokens, index)
             statement = expression + statement
 
-        if name == "ptr":
+        if name == "&":
             statement.append(PointerNode())
         else:
             statement.append(InvokeNode(name))
@@ -610,8 +670,12 @@ def get_invoke_c(tokens, index, name):
     statement1 = []
 
     index += 1
+    #print(tokens[index - 3])
+    #print(tokens[index])
     while not isinstance(tokens[index], ClosedParenthesisToken):
-        expression, index = get_expression_lisp(tokens, index)
+        #print(name)
+        #print(tokens[index])
+        expression, index = get_expression_c(tokens, index)
         statement = expression + statement
         if isinstance(tokens[index], CommaToken):
             statement = statement1 + statement
@@ -620,7 +684,7 @@ def get_invoke_c(tokens, index, name):
 
     statement = statement1 + statement
 
-    if name == "ptr":
+    if name == "&":
         statement.append(PointerNode())
     else:
         statement.append(InvokeNode(name))
@@ -658,7 +722,7 @@ def is_type(given, wanted):
         return True
 
     if wanted.startswith("any"):
-        size = int(wanted.split(":")[1])
+        size = int(wanted.split("_")[1])
         if get_size_linux_x86_64(given, None) == size:
             return True
 
@@ -1102,6 +1166,7 @@ ret
                         size = get_size_linux_x86_64(local_types[i], ast)
                         size = (((size) + 7) & (-8))
 
+                        #print(instruction.name)
                         if isinstance(function.instructions[index0 + 1], PointerNode):
                             contents += "lea rax, [rbp-" + str(location + size) + "]\n"
                             contents += "push rax\n"
@@ -1279,7 +1344,7 @@ for file in sys.argv[1:]:
 
     tokens = tokenize(contents)
 
-    ast.extend(generate_ast_lisp(tokens))
+    ast.extend(generate_ast_c(tokens))
 #match syntax:
 #    case "lisp":
 #        ast = generate_ast_lisp(tokens)
