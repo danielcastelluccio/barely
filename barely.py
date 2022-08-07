@@ -349,8 +349,9 @@ def get_statement_c(tokens, index):
                 if isinstance(tokens[index], CommaToken):
                     index += 1
 
-                expression, index = get_expression_lisp(tokens, index)
+                expression, index = get_expression_c(tokens, index)
                 statement.extend(expression)
+
 
             statement.append(ReturnNode())
         elif token.word == "variable":
@@ -754,6 +755,9 @@ def is_type(given, wanted):
     if wanted == "any":
         return True
 
+    if wanted == "*" and given[0] == "*":
+        return True
+
     if wanted.startswith("any"):
         size = int(wanted.split("_")[1])
         if get_size_linux_x86_64(given, None) == size:
@@ -902,6 +906,10 @@ def remove_invalid_linux_x86_64(name):
     return name
 
 def compile_linux_x86_64(ast, name, functions):
+    try:
+        os.makedirs("build/" + name[0 : name.rindex("/")])
+    except:
+        pass
     fasm_file = open("build/" + name + ".asm", 'w')
     contents = "format ELF64 executable\n"
     contents += "entry start\n"
@@ -1155,11 +1163,49 @@ ret
                         contents += "mov rax, 0\n"
                         contents += "mov al, [rcx]\n"
                         contents += "push rax\n"
+                    elif instruction.name == "@syscall1":
+                        contents += "pop rax\n"
+                        contents += "pop rdi\n"
+                        contents += "syscall\n"
+                        contents += "push rax\n"
+                    elif instruction.name == "@syscall2":
+                        contents += "pop rax\n"
+                        contents += "pop rdi\n"
+                        contents += "pop rsi\n"
+                        contents += "syscall\n"
+                        contents += "push rax\n"
                     elif instruction.name == "@syscall3":
                         contents += "pop rax\n"
                         contents += "pop rdi\n"
                         contents += "pop rsi\n"
                         contents += "pop rdx\n"
+                        contents += "syscall\n"
+                        contents += "push rax\n"
+                    elif instruction.name == "@syscall4":
+                        contents += "pop rax\n"
+                        contents += "pop rdi\n"
+                        contents += "pop rsi\n"
+                        contents += "pop rdx\n"
+                        contents += "pop r10\n"
+                        contents += "syscall\n"
+                        contents += "push rax\n"
+                    elif instruction.name == "@syscall5":
+                        contents += "pop rax\n"
+                        contents += "pop rdi\n"
+                        contents += "pop rsi\n"
+                        contents += "pop rdx\n"
+                        contents += "pop r10\n"
+                        contents += "pop r8\n"
+                        contents += "syscall\n"
+                        contents += "push rax\n"
+                    elif instruction.name == "@syscall6":
+                        contents += "pop rax\n"
+                        contents += "pop rdi\n"
+                        contents += "pop rsi\n"
+                        contents += "pop rdx\n"
+                        contents += "pop r10\n"
+                        contents += "pop r8\n"
+                        contents += "pop r9\n"
                         contents += "syscall\n"
                         contents += "push rax\n"
                     elif instruction.name == "byte":
