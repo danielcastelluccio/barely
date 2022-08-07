@@ -339,23 +339,37 @@ def get_statement_c(tokens, index, ast, current_function):
             current_function, index = get_function_declaration_c(tokens, index + 1)
             ast.append(current_function)
         elif token.word == "return":
-            expression, index = get_expression_c(tokens, index + 1)
+            index += 1
+            while not isinstance(tokens[index], SemiColonToken):
+                if isinstance(tokens[index], CommaToken):
+                    index += 1
 
-            #if current_function:
-            statement.extend(expression)
+                expression, index = get_expression_lisp(tokens, index)
+                statement.extend(expression)
+
             statement.append(ReturnNode())
         elif token.word == "variable":
-            name = tokens[index + 1].name
-            type = tokens[index + 3].name
+            variables = {}
+            names = []
+
+            i = 1
+            while (not isinstance(tokens[index + i - 1], NameToken) or not tokens[index + i - 1].name == "=") and not isinstance(tokens[index + i - 1], SemiColonToken):
+                name = tokens[index + i].name
+                type = tokens[index + i + 2].name
+
+                names.append(name)
+                variables[name] = type
+                i += 4
 
             statement0 = []
 
             if not isinstance(tokens[index + 4], SemiColonToken):
-                statement0, index = get_assign_c(tokens, index + 5, name)
+                statement0, index = get_assign_c(tokens, index + i, names)
             else:
                 index += 4
 
-            statement.append(DeclareNode(name, type))
+            for name in names:
+                statement.append(DeclareNode(name, variables[name]))
             statement.extend(statement0)
         elif token.word == "structure":
             name = tokens[index + 1].name
@@ -450,7 +464,7 @@ def get_statement_c(tokens, index, ast, current_function):
             statement.append(TargetNode(id1))
 
     elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
-        assign, index = get_assign_c(tokens, index + 2, tokens[index].name)
+        assign, index = get_assign_c(tokens, index + 2, [tokens[index].name])
 
         statement.extend(assign)
     else:
@@ -712,14 +726,15 @@ def get_assign_lisp(tokens, index, name):
 
     return statement, index
 
-def get_assign_c(tokens, index, name):
+def get_assign_c(tokens, index, names):
     statement = []
 
     while not isinstance(tokens[index], SemiColonToken):
         expression, index = get_expression_c(tokens, index)
         statement.extend(expression)
 
-    statement.append(AssignNode(name))
+    for name in reversed(names):
+        statement.append(AssignNode(name))
 
     return statement, index
 
@@ -802,7 +817,7 @@ def type_check(ast, functions):
                         for return_ in called_function.returns:
                             types.append(return_)
                 elif isinstance(instruction, ReturnNode):
-                    for return_ in function.returns:
+                    for return_ in reversed(function.returns):
                         popped = types.pop()
                         if not is_type(popped, return_):
                             print("TYPECHECK: Return in " + function.name + " expected " + return_ + ", got " + popped + ".")
@@ -1364,6 +1379,11 @@ for file in sys.argv[1:]:
 #    if function.name == "main":
 #        for intruction in function.instructions:
 #            print(intruction)
+
+for function in ast:
+    if isinstance(function, FunctionNode):
+        if function.name == "test":
+            print(function.instructions)
 
 functions = {}
 
