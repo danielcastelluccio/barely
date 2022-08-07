@@ -1,22 +1,5 @@
-constant SYS_WRITE: integer = 1;
-constant STDOUT: integer = 1;
-
-function print(string: *) {
-	@syscall3(SYS_WRITE, STDOUT, string, length(string));
-};
-
-function length(string: *): integer {
-    variable length: integer = 0;
-
-    while !(=1(byte(0), *1(+(string, length)))) {
-        length = @cast_integer(+(length, 1));
-    };
-
-    return length;
-};
-
 function @print_integer(integer: integer);
-function @syscall3(id: integer, arg1: any_8, arg2: any_8, arg3: any_8);
+function @syscall3(id: integer, arg1: any_8, arg2: any_8, arg3: any_8): any_8;
 function +(value1: any_8, value2: any_8): any_8;
 function *1(pointer: any_8): any_1;
 function byte(value: any_8): any_1;

@@ -330,14 +330,19 @@ def generate_ast_lisp(tokens):
 
     return ast
 
-def get_statement_c(tokens, index, ast, current_function):
+def get_statement_c(tokens, index):
     statement = []
 
     token = tokens[index]
     if isinstance(token, KeywordToken):
         if token.word == "function":
             current_function, index = get_function_declaration_c(tokens, index + 1)
-            ast.append(current_function)
+
+            while not isinstance(tokens[index], SemiColonToken):
+                statement, index = get_statement_c(tokens, index)
+                current_function.instructions.extend(statement)
+
+            statement.append(current_function)
         elif token.word == "return":
             index += 1
             while not isinstance(tokens[index], SemiColonToken):
@@ -429,11 +434,13 @@ def get_statement_c(tokens, index, ast, current_function):
             index += 1
 
             while not isinstance(tokens[index], ClosedCurlyBracketToken):
-                statement0, index, _ = get_statement_c(tokens, index, ast, None)
+                statement0, index = get_statement_c(tokens, index)
                 statement.extend(statement0)
                 #print(expression)
 
                 statement.append(TargetNode(id))
+
+            index += 1
 
         elif token.word == "while":
             index += 1
@@ -456,12 +463,13 @@ def get_statement_c(tokens, index, ast, current_function):
             index += 1
 
             while not isinstance(tokens[index], ClosedCurlyBracketToken):
-                statement0, index, _ = get_statement_c(tokens, index, ast, None)
+                statement0, index = get_statement_c(tokens, index)
                 statement.extend(statement0)
                 #print(expression)
 
             statement.append(JumpNode(id2))
             statement.append(TargetNode(id1))
+            index += 1
 
     elif isinstance(token, NameToken) and isinstance(tokens[index + 1], NameToken) and tokens[index + 1].name == "=":
         assign, index = get_assign_c(tokens, index + 2, [tokens[index].name])
@@ -474,17 +482,18 @@ def get_statement_c(tokens, index, ast, current_function):
 
     index += 1
     
-    return statement, index, current_function
+    return statement, index
 
 def generate_ast_c(tokens):
     ast = []
     
-    current_function = None
+    #current_function = None
     index = 0
     while index < len(tokens):
-        statement, index, current_function = get_statement_c(tokens, index, ast, current_function)
-        if current_function:
-            current_function.instructions.extend(statement)
+        statement, index = get_statement_c(tokens, index)
+        ast.extend(statement)
+        #if current_function:
+            #current_function.instructions.extend(statement)
 
     for function in ast:
         if isinstance(function, FunctionNode):
@@ -781,6 +790,8 @@ def type_check(ast, functions):
             for parameter in function.parameters:
                 variables[parameter] = function.parameters[parameter]
 
+            #print(function.instructions)
+
             for instruction in function.instructions:
                 if isinstance(instruction, DeclareNode):
                     variables[instruction.name] = instruction.type
@@ -822,6 +833,10 @@ def type_check(ast, functions):
                         if not is_type(popped, return_):
                             print("TYPECHECK: Return in " + function.name + " expected " + return_ + ", got " + popped + ".")
                             exit()
+
+                    if len(types) > 0:
+                        print("TYPECHECK: Return in " + function.name + " has extra data on stack.")
+                        exit()
                 elif isinstance(instruction, PointerNode):
                     popped = types.pop()
                     types.append("*" + popped)
@@ -838,6 +853,12 @@ def type_check(ast, functions):
                 else:
                     print(str(instruction) + " not handled in typecheck!")
                     exit()
+
+            if len(types) > 0:
+                #print(function.name)
+                #print(types)
+                print("TYPECHECK: Return in " + function.name + " has extra data on stack.")
+                exit()
         
 
 def get_size_linux_x86_64(types, ast):
@@ -850,6 +871,8 @@ def get_size_linux_x86_64(types, ast):
         #TODO: make boolean 1 byte
         if type[0] == "*" or type == "integer" or type == "any":
             size += 8
+        elif type.startswith("any"):
+            size += int(type.split("_")[1])
         elif type == "boolean":
             size += 1
         else:
@@ -1138,6 +1161,7 @@ ret
                         contents += "pop rsi\n"
                         contents += "pop rdx\n"
                         contents += "syscall\n"
+                        contents += "push rax\n"
                     elif instruction.name == "byte":
                         contents += "pop rax\n"
                         contents += "push rax\n"
@@ -1380,10 +1404,10 @@ for file in sys.argv[1:]:
 #        for intruction in function.instructions:
 #            print(intruction)
 
-for function in ast:
-    if isinstance(function, FunctionNode):
-        if function.name == "test":
-            print(function.instructions)
+#for function in ast:
+#    if isinstance(function, FunctionNode):
+#        if function.name == "main":
+#            print(function.instructions)
 
 functions = {}
 
