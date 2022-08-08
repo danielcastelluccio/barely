@@ -1,0 +1,39 @@
+function main() {
+    variable bump_allocator: BumpAllocator;
+    variable test: *Test = @cast_*Test(bump_allocate(&(bump_allocator), 8));
+    variable test2: *Test = @cast_*Test(bump_allocate(&(bump_allocator), 8));
+    Test<-value(test, 4);
+    Test<-value(test2, 5);
+    @print_integer(Test->value(test));
+    @print_integer(Test->value(test2));
+    bump_free(&(bump_allocator));
+    bump_free(&(bump_allocator));
+
+    variable test3: *Test = @cast_*Test(bump_allocate(&(bump_allocator), 8));
+    Test<-value(test3, 6);
+    @print_integer(Test->value(test));
+};
+
+structure Test {
+    value: integer;
+};
+
+structure BumpAllocator {
+    memory: any_2048;
+    location: integer;
+    count: integer;
+};
+
+function bump_allocate(bump_allocator: *BumpAllocator, size: integer): * {
+    variable pointer: * = @cast_*(+(&(BumpAllocator->memory(bump_allocator)), BumpAllocator->location(bump_allocator)));
+    BumpAllocator<-location(bump_allocator, @cast_integer(+(BumpAllocator->location(bump_allocator), size)));
+    BumpAllocator<-count(bump_allocator, @cast_integer(+(BumpAllocator->count(bump_allocator), 1)));
+    return pointer;
+};
+
+function bump_free(bump_allocator: *BumpAllocator) {
+    BumpAllocator<-count(bump_allocator, @cast_integer(-(BumpAllocator->count(bump_allocator), 1)));
+    if =(BumpAllocator->count(bump_allocator), 0) {
+        BumpAllocator<-location(bump_allocator, 0);
+    };
+};

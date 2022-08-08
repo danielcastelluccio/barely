@@ -1033,7 +1033,7 @@ ret
                 contents += "mov rdx, [rsp+" + str(size) + "]\n"
                 size_rounded = (((size) + 7) & (-8))
                 size += 8
-                i = 0
+                i = 8
                 while i < size:
                     if size - i >= 8:
                         contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
@@ -1434,7 +1434,7 @@ ret
                     size = get_size_linux_x86_64(functions[function.name].returns, ast)
                     size = (((size) + 7) & (-8))
                     size_rounded = (((size + 8) + 7) & (-8))
-                    i = 0
+                    i = 8
                     j = size + 8
                     contents += "mov rcx, [rbp+8]\n"
                     contents += "mov rdx, [rbp]\n"
