@@ -11,7 +11,17 @@ function main() {
 
     variable test3: *Test = @cast_*Test(bump_allocate(&(bump_allocator), 8));
     Test<-value(test3, 6);
-    @print_integer(Test->value(test));
+
+    variable thing1: Test;
+    Test<-(test3, thing1);
+
+    @print_integer(Test->value(test3));
+
+    Test<-value(test3, 7);
+
+    variable test4: Test = Test->(test3);
+
+    @print_integer(Test->value(&(test4)));
 };
 
 structure Test {

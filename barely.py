@@ -420,6 +420,9 @@ def get_statement_c(tokens, index):
                 ast.append(FunctionNode(name + "->" + item_name, instructions, {"struct": "*" + name}, [item_type], []))
                 ast.append(FunctionNode("*" + name + "->" + item_name, instructions, {"struct": "*" + name}, ["*" + item_type], []))
                 ast.append(FunctionNode(name + "<-" + item_name, instructions, {"struct": "*" + name, "item": item_type}, [], []))
+
+            ast.append(FunctionNode(name + "<-", [], {"struct": "*" + name, "value": name}, [], []))
+            ast.append(FunctionNode(name + "->", [], {"struct": "*" + name}, [name], []))
         elif token.word == "constant":
             name = tokens[index + 1].name
             type = tokens[index + 3].name
@@ -1007,7 +1010,6 @@ ret
 
                 struct_thing = ""
                 struct_thing += "pop rax\n"
-                struct_thing += "mov r11, 0\n"
                 struct_thing += "sub rsp, " + str(size) + "\n"
 
                 j = 0
@@ -1070,6 +1072,64 @@ ret
                 struct_things[remove_invalid_linux_x86_64(struct.name + "<-" + item_name)] = struct_thing
 
                 k += 1
+
+            size = get_size_linux_x86_64(struct.name, ast)
+
+            struct_thing = ""
+            struct_thing += "pop rax\n"
+            struct_thing += "sub rsp, " + str(size) + "\n"
+
+            j = 0
+            while j < size:
+                if size - j >= 8:
+                    struct_thing += "mov rbx, [rax+" + str(j) + "]\n"
+                    struct_thing += "mov [rsp+" + str(j) + "], rbx\n"
+                    j += 8
+                elif size - j >= 4:
+                    struct_thing += "mov ebx, [rax+" + str(j) + "]\n"
+                    struct_thing += "mov [rsp+" + str(j) + "], ebx\n"
+                    j += 4
+                elif size - j >= 2:
+                    struct_thing += "mov bx, [rax+" + str(j) + "]\n"
+                    struct_thing += "mov [rsp+" + str(j) + "], bx\n"
+                    j += 2
+                elif size - j >= 1:
+                    struct_thing += "mov bl, [rax+" + str(j) + "]\n"
+                    struct_thing += "mov [rsp+" + str(j) + "], bl\n"
+                    j += 1
+                else:
+                    print("sizing error 1")
+                    exit()
+
+            struct_things[remove_invalid_linux_x86_64(struct.name + "->")] = struct_thing
+
+            struct_thing = ""
+            struct_thing = "pop rax\n"
+            j = 0
+            while j < size:
+                if size - j >= 8:
+                    struct_thing += "mov rbx, [rsp+" + str(j) + "]\n"
+                    struct_thing += "mov [rax+" + str(j) + "], rbx\n"
+                    j += 8
+                elif size - j >= 4:
+                    contents += "mov ebx, [rsp+" + str(j) + "]\n"
+                    contents += "mov [rax+" + str(j) + "], ebx\n"
+                    j += 4
+                elif size - j >= 2:
+                    struct_thing += "mov bx, [rsp+" + str(j) + "]\n"
+                    struct_thing += "mov [rax+" + str(j) + "], bx\n"
+                    j += 2
+                elif size - j >= 1:
+                    struct_thing += "mov bl, [rsp+" + str(j) + "]\n"
+                    struct_thing += "mov [rax+" + str(j) + "], bl\n"
+                    j += 1
+                else:
+                    print("sizing error 2")
+                    exit()
+
+                struct_thing += "add rsp, " + str(size) + "\n"
+
+                struct_things[remove_invalid_linux_x86_64(struct.name + "<-")] = struct_thing
 
     contents_data = ""
     data_index = 0
