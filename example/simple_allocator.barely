@@ -1,0 +1,21 @@
+function main() {
+    variable test: *Test = @cast_*Test(allocate(8));
+    variable test2: *Test = @cast_*Test(allocate(8));
+    Test<-value(test, 4);
+    Test<-value(test2, 5);
+    @print_integer(Test->value(test));
+    @print_integer(Test->value(test2));
+};
+
+structure Test {
+    value: integer;
+};
+
+global ALLOCATOR_MEMORY: any_2048;
+global ALLOCATOR_LOCATION: integer;
+
+function allocate(size: integer): * {
+    variable pointer: * = @cast_*(+(&(ALLOCATOR_MEMORY), ALLOCATOR_LOCATION));
+    ALLOCATOR_LOCATION = @cast_integer(+(ALLOCATOR_LOCATION, size));
+    return pointer;
+};
