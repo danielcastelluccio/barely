@@ -903,7 +903,6 @@ def get_size_linux_x86_64(types, ast):
         types = [types]
 
     for type in types:
-        #TODO: make boolean 1 byte
         if type[0] == "*" or type == "integer" or type == "any":
             size += 8
         elif type.startswith("any"):
@@ -992,6 +991,8 @@ add     rsp, 8
 push     rax
 ret
 """
+    
+    struct_things = {}
 
     for struct in ast:
         if isinstance(struct, StructureNode):
@@ -1002,118 +1003,71 @@ ret
                 item_type = items[item_name]
                 location = get_size_linux_x86_64(list(items.values())[0 : k], ast)
                 size = get_size_linux_x86_64(item_type, ast)
-                size = (((size) + 7) & (-8))
+                #size = (((size) + 7) & (-8))
 
-                contents +=  remove_invalid_linux_x86_64(struct.name + "->" + item_name) + ":\n"
-                contents += "push rbp\n"
-                contents += "mov rbp, rsp\n"
-                contents += "mov rax, [rbp+16]\n"
-
-                contents += "sub rsp, " + str(size) + "\n"
+                struct_thing = ""
+                struct_thing += "pop rax\n"
+                struct_thing += "mov r11, 0\n"
+                struct_thing += "sub rsp, " + str(size) + "\n"
 
                 j = 0
                 while j < size:
                     if size - j >= 8:
-                        contents += "mov rbx, [rax+" + str(location + j) + "]\n"
-                        contents += "mov [rsp+" + str(j) + "], rbx\n"
+                        struct_thing += "mov rbx, [rax+" + str(location + j) + "]\n"
+                        struct_thing += "mov [rsp+" + str(j) + "], rbx\n"
                         j += 8
                     elif size - j >= 4:
-                        contents += "mov ebx, [rax+" + str(location + j) + "]\n"
-                        contents += "mov [rsp+" + str(j) + "], ebx\n"
+                        struct_thing += "mov ebx, [rax+" + str(location + j) + "]\n"
+                        struct_thing += "mov [rsp+" + str(j) + "], ebx\n"
                         j += 4
                     elif size - j >= 2:
-                        contents += "mov bx, [rax+" + str(location + j) + "]\n"
-                        contents += "mov [rsp+" + str(j) + "], bx\n"
+                        struct_thing += "mov bx, [rax+" + str(location + j) + "]\n"
+                        struct_thing += "mov [rsp+" + str(j) + "], bx\n"
                         j += 2
+                    elif size - j >= 1:
+                        struct_thing += "mov bl, [rax+" + str(location + j) + "]\n"
+                        struct_thing += "mov [rsp+" + str(j) + "], bl\n"
+                        j += 1
                     else:
-                        print("sizing error")
+                        print("sizing error 1")
                         exit()
 
-                contents += "mov rcx, [rsp+" + str(size + 8) + "]\n"
-                contents += "mov rdx, [rsp+" + str(size) + "]\n"
-                size_rounded = (((size) + 7) & (-8))
-                size += 8
-                i = 8
-                while i < size:
-                    if size - i >= 8:
-                        contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
-                        contents += "mov [rbp+" + str(size - i + 16 - size + 8) + "], rax\n"
-                        i += 8
-                    #elif size - i >= 4:
-                    #    contents += "mov eax, [rsp+" + str(size - i - 4) + "]\n"
-                    #    contents += "mov [rbp+" + str(16 + 8 - size - i + size_rounded) + "], eax\n"
-                    #    i += 4
-                    #elif size - i >= 2:
-                    #    contents += "mov ax, [rsp+" + str(size - i - 2) + "]\n"
-                    #    contents += "mov [rbp+" + str(16 + 8 - size - i + size_rounded) + "], ax\n"
-                    #    i += 2
-                    else:
-                        print("sizing error")
-                        exit()
-            
-                size -= 8
+                struct_things[remove_invalid_linux_x86_64(struct.name + "->" + item_name)] = struct_thing
 
-                contents += "mov rsp, rbp\n"
-                contents += "add rsp, " + str(16 + 8 - size) + "\n"
-                contents += "push rdx\n"
-                contents += "pop rbp\n"
-                contents += "push rcx\n"
-                contents += "ret\n"
+                struct_thing = ""
+                struct_thing += "pop rax\n"
+                struct_thing += "add rax, " + str(location) + "\n"
+                struct_thing += "push rax\n"
 
-                contents += remove_invalid_linux_x86_64("*" + struct.name + "->" + item_name) + ":\n"
-                contents += "push rbp\n"
-                contents += "mov rbp, rsp\n"
-                contents += "mov rax, [rbp+16]\n"
-                contents += "add rax, " + str(location) + "\n"
+                struct_things[remove_invalid_linux_x86_64("*" + struct.name + "->" + item_name)] = struct_thing
 
-                contents += "pop rdx\n"
-                contents += "pop rcx\n"
-
-                #contents += "sub rsp, 8\n"
-
-                contents += "mov rsp, rbp\n"
-                contents += "add rsp, 24\n"
-                contents += "push rax\n"
-                contents += "push rdx\n"
-                contents += "pop rbp\n"
-                contents += "push rcx\n"
-                contents += "ret\n"
-
-
-                contents += remove_invalid_linux_x86_64(struct.name + "<-" + item_name) + ":\n"
-                contents += "push rbp\n"
-                contents += "mov rbp, rsp\n"
-                contents += "mov rax, [rbp+16]\n"
-
-                contents += "sub rsp, " + str(size) + "\n"
-
+                struct_thing = ""
+                struct_thing = "pop rax\n"
                 j = 0
                 while j < size:
                     if size - j >= 8:
-                        contents += "mov rbx, [rbp+" + str(24 + j) + "]\n"
-                        contents += "mov [rax+" + str(location + j) + "], rbx\n"
+                        struct_thing += "mov rbx, [rsp+" + str(j) + "]\n"
+                        struct_thing += "mov [rax+" + str(location + j) + "], rbx\n"
                         j += 8
                     elif size - j >= 4:
-                        contents += "mov ebx, [rbp+" + str(24 + j) + "]\n"
+                        contents += "mov ebx, [rsp+" + str(j) + "]\n"
                         contents += "mov [rax+" + str(location + j) + "], ebx\n"
                         j += 4
                     elif size - j >= 2:
-                        contents += "mov bx, [rbp+" + str(24 + j) + "]\n"
-                        contents += "mov [rax+" + str(location + j) + "], bx\n"
+                        struct_thing += "mov bx, [rsp+" + str(j) + "]\n"
+                        struct_thing += "mov [rax+" + str(location + j) + "], bx\n"
                         j += 2
+                    elif size - j >= 1:
+                        struct_thing += "mov bl, [rsp+" + str(j) + "]\n"
+                        struct_thing += "mov [rax+" + str(location + j) + "], bl\n"
+                        j += 1
                     else:
-                        print("sizing error")
+                        print("sizing error 2")
                         exit()
 
-                contents += "mov rcx, [rbp+" + str(8) + "]\n"
-                contents += "mov rdx, [rbp+" + str(0) + "]\n"
+                struct_thing += "add rsp, " + str(size) + "\n"
 
-                contents += "mov rsp, rbp\n"
-                contents += "add rsp, " + str(size + 16 + 8) + "\n"
-                contents += "push rdx\n"
-                contents += "pop rbp\n"
-                contents += "push rcx\n"
-                contents += "ret\n"
+                struct_things[remove_invalid_linux_x86_64(struct.name + "<-" + item_name)] = struct_thing
 
                 k += 1
 
@@ -1153,7 +1107,14 @@ ret
 
             for index0, instruction in enumerate(function.instructions):
                 if isinstance(instruction, InvokeNode):
-                    if instruction.name == ">":
+                    called_name = instruction.name
+
+                    if len(function.instructions) > index0 + 1 and isinstance(function.instructions[index0 + 1], PointerNode) and "->" in called_name:
+                        called_name = "*" + called_name
+
+                    if remove_invalid_linux_x86_64(called_name) in struct_things:
+                        contents += struct_things[remove_invalid_linux_x86_64(called_name)]
+                    elif instruction.name == ">":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
                         contents += "cmp rax, rbx\n"
@@ -1248,11 +1209,6 @@ ret
                         contents += "pop rax\n"
                         contents += "push rax\n"
                     elif not instruction.name.startswith("@cast_"):
-                        called_name = instruction.name
-
-                        if len(function.instructions) > index0 + 1 and isinstance(function.instructions[index0 + 1], PointerNode) and "->" in called_name:
-                            called_name = "*" + called_name
-
                         contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
                 elif isinstance(instruction, DeclareNode):
                     variables[instruction.name] = instruction.type
