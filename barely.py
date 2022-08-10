@@ -954,6 +954,8 @@ def compile_linux_x86_64(ast, name, functions):
     contents += "entry start\n"
     contents += "segment readable executable\n"
     contents += "start:\n"
+    contents += "lea rax, [rsp+8]\n"
+    contents += "push rax\n"
     contents += "call main\n"
     contents += "mov rax, 60\n"
     contents += "mov rdi, 1\n"
@@ -1191,6 +1193,14 @@ ret
                         contents += "mov rbx, 1\n"
                         contents += "cmova rcx, rbx\n"
                         contents += "push rcx\n"
+                    elif instruction.name == "<":
+                        contents += "pop rax\n"
+                        contents += "pop rbx\n"
+                        contents += "cmp rax, rbx\n"
+                        contents += "mov rcx, 0\n"
+                        contents += "mov rbx, 1\n"
+                        contents += "cmovb rcx, rbx\n"
+                        contents += "push rcx\n"
                     elif instruction.name == "=":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1219,6 +1229,11 @@ ret
                         contents += "pop rbx\n"
                         contents += "add rax, rbx\n"
                         contents += "push rax\n"
+                    elif instruction.name == "*":
+                        contents += "pop rax\n"
+                        contents += "pop rbx\n"
+                        contents += "mul rbx\n"
+                        contents += "push rax\n"
                     elif instruction.name == "-":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1229,6 +1244,9 @@ ret
                         contents += "mov rax, 0\n"
                         contents += "mov al, [rcx]\n"
                         contents += "push rax\n"
+                    elif instruction.name == "*8":
+                        contents += "pop rcx\n"
+                        contents += "push qword [rcx]\n"
                     elif instruction.name == "@syscall1":
                         contents += "pop rax\n"
                         contents += "pop rdi\n"
@@ -1548,7 +1566,7 @@ ast = []
 name = None
 for file in sys.argv[1:]:
     if file == "-r":
-        continue
+        break
 
     file = open(file)
 
@@ -1596,6 +1614,6 @@ if not os.path.exists("build"):
 if name:
     compile_linux_x86_64(ast, name.replace(".barely", ""), functions)
     if "-r" in sys.argv:
-        print("------------------")
-        os.system("./build/" + name.replace(".barely", ""))
+        arguments = sys.argv[sys.argv.index("-r") + 1 : ]
+        os.system("./build/" + name.replace(".barely", "") + " " + " ".join(arguments))
 
