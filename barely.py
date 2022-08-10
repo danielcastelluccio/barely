@@ -1547,6 +1547,9 @@ ret
 ast = []
 name = None
 for file in sys.argv[1:]:
+    if file == "-r":
+        continue
+
     file = open(file)
 
     if not name:
@@ -1592,3 +1595,7 @@ if not os.path.exists("build"):
 
 if name:
     compile_linux_x86_64(ast, name.replace(".barely", ""), functions)
+    if "-r" in sys.argv:
+        print("------------------")
+        os.system("./build/" + name.replace(".barely", ""))
+
