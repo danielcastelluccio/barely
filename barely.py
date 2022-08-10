@@ -373,18 +373,21 @@ def get_statement_c(tokens, index):
             i = 1
             while (not isinstance(tokens[index + i - 1], NameToken) or not tokens[index + i - 1].name == "=") and not isinstance(tokens[index + i - 1], SemiColonToken):
                 name = tokens[index + i].name
-                type = tokens[index + i + 2].name
-
                 names.append(name)
-                variables[name] = type
-                i += 4
+
+                if isinstance(tokens[index + i + 2], NameToken) and ((not isinstance(tokens[index + i + 1], NameToken) or not tokens[index + i + 1].name == "=") and (not isinstance(tokens[index + i + 1], SemiColonToken))):
+                    variables[name] = tokens[index + i + 2].name
+                    i += 4
+                else:
+                    variables[name] = ""
+                    i += 2
 
             statement0 = []
 
-            if not isinstance(tokens[index + 4], SemiColonToken):
+            if not isinstance(tokens[index + i - 1], SemiColonToken):
                 statement0, index = get_assign_c(tokens, index + i, names)
             else:
-                index += 4
+                index += i - 1
 
             for name in names:
                 statement.append(DeclareNode(name, variables[name]))
@@ -819,13 +822,13 @@ def type_check(ast, functions):
             types = []
 
             for parameter in function.parameters:
-                variables[parameter] = function.parameters[parameter]
+                variables[parameter] = DeclareNode(parameter, function.parameters[parameter])
 
             #print(function.instructions)
 
             for instruction in function.instructions:
                 if isinstance(instruction, DeclareNode):
-                    variables[instruction.name] = instruction.type
+                    variables[instruction.name] = instruction
                 elif isinstance(instruction, IntegerNode):
                     types.append("integer")
                 elif isinstance(instruction, LongNode):
@@ -837,8 +840,11 @@ def type_check(ast, functions):
                 elif isinstance(instruction, AssignNode):
                     popped = types.pop()
                     if instruction.name in variables:
-                        if not is_type(popped, variables[instruction.name]):
-                            print("TYPECHECK: Assign of " + instruction.name + " in " + function.name + " expected " + variables[instruction.name] + ", got " + popped + ".")
+                        if variables[instruction.name].type == "":
+                            variables[instruction.name].type = popped
+
+                        if not is_type(popped, variables[instruction.name].type):
+                            print("TYPECHECK: Assign of " + instruction.name + " in " + function.name + " expected " + variables[instruction.name].type + ", got " + popped + ".")
                             exit()
                     else:
                         if not is_type(popped, globals[instruction.name]):
@@ -846,7 +852,7 @@ def type_check(ast, functions):
                             exit()
                 elif isinstance(instruction, RetrieveNode):
                     if instruction.name in variables:
-                        types.append(variables[instruction.name])
+                        types.append(variables[instruction.name].type)
                     elif instruction.name in constants:
                         types.append(constants[instruction.name])
                     else:
@@ -996,10 +1002,12 @@ ret
 """
     
     struct_things = {}
+    program_types = ["integer", "boolean"]
 
     for struct in ast:
         if isinstance(struct, StructureNode):
             items = struct.items
+            program_types.append(struct.name)
 
             k = 0
             for item_name in items:
@@ -1073,63 +1081,64 @@ ret
 
                 k += 1
 
-            size = get_size_linux_x86_64(struct.name, ast)
+    for type in program_types:
+        size = get_size_linux_x86_64(type, ast)
 
-            struct_thing = ""
-            struct_thing += "pop rax\n"
-            struct_thing += "sub rsp, " + str(size) + "\n"
+        struct_thing = ""
+        struct_thing += "pop rax\n"
+        struct_thing += "sub rsp, " + str(size) + "\n"
 
-            j = 0
-            while j < size:
-                if size - j >= 8:
-                    struct_thing += "mov rbx, [rax+" + str(j) + "]\n"
-                    struct_thing += "mov [rsp+" + str(j) + "], rbx\n"
-                    j += 8
-                elif size - j >= 4:
-                    struct_thing += "mov ebx, [rax+" + str(j) + "]\n"
-                    struct_thing += "mov [rsp+" + str(j) + "], ebx\n"
-                    j += 4
-                elif size - j >= 2:
-                    struct_thing += "mov bx, [rax+" + str(j) + "]\n"
-                    struct_thing += "mov [rsp+" + str(j) + "], bx\n"
-                    j += 2
-                elif size - j >= 1:
-                    struct_thing += "mov bl, [rax+" + str(j) + "]\n"
-                    struct_thing += "mov [rsp+" + str(j) + "], bl\n"
-                    j += 1
-                else:
-                    print("sizing error 1")
-                    exit()
+        j = 0
+        while j < size:
+            if size - j >= 8:
+                struct_thing += "mov rbx, [rax+" + str(j) + "]\n"
+                struct_thing += "mov [rsp+" + str(j) + "], rbx\n"
+                j += 8
+            elif size - j >= 4:
+                struct_thing += "mov ebx, [rax+" + str(j) + "]\n"
+                struct_thing += "mov [rsp+" + str(j) + "], ebx\n"
+                j += 4
+            elif size - j >= 2:
+                struct_thing += "mov bx, [rax+" + str(j) + "]\n"
+                struct_thing += "mov [rsp+" + str(j) + "], bx\n"
+                j += 2
+            elif size - j >= 1:
+                struct_thing += "mov bl, [rax+" + str(j) + "]\n"
+                struct_thing += "mov [rsp+" + str(j) + "], bl\n"
+                j += 1
+            else:
+                print("sizing error 1")
+                exit()
 
-            struct_things[remove_invalid_linux_x86_64(struct.name + "->")] = struct_thing
+        struct_things[remove_invalid_linux_x86_64(type + "->")] = struct_thing
 
-            struct_thing = ""
-            struct_thing = "pop rax\n"
-            j = 0
-            while j < size:
-                if size - j >= 8:
-                    struct_thing += "mov rbx, [rsp+" + str(j) + "]\n"
-                    struct_thing += "mov [rax+" + str(j) + "], rbx\n"
-                    j += 8
-                elif size - j >= 4:
-                    contents += "mov ebx, [rsp+" + str(j) + "]\n"
-                    contents += "mov [rax+" + str(j) + "], ebx\n"
-                    j += 4
-                elif size - j >= 2:
-                    struct_thing += "mov bx, [rsp+" + str(j) + "]\n"
-                    struct_thing += "mov [rax+" + str(j) + "], bx\n"
-                    j += 2
-                elif size - j >= 1:
-                    struct_thing += "mov bl, [rsp+" + str(j) + "]\n"
-                    struct_thing += "mov [rax+" + str(j) + "], bl\n"
-                    j += 1
-                else:
-                    print("sizing error 2")
-                    exit()
+        struct_thing = ""
+        struct_thing = "pop rax\n"
+        j = 0
+        while j < size:
+            if size - j >= 8:
+                struct_thing += "mov rbx, [rsp+" + str(j) + "]\n"
+                struct_thing += "mov [rax+" + str(j) + "], rbx\n"
+                j += 8
+            elif size - j >= 4:
+                contents += "mov ebx, [rsp+" + str(j) + "]\n"
+                contents += "mov [rax+" + str(j) + "], ebx\n"
+                j += 4
+            elif size - j >= 2:
+                struct_thing += "mov bx, [rsp+" + str(j) + "]\n"
+                struct_thing += "mov [rax+" + str(j) + "], bx\n"
+                j += 2
+            elif size - j >= 1:
+                struct_thing += "mov bl, [rsp+" + str(j) + "]\n"
+                struct_thing += "mov [rax+" + str(j) + "], bl\n"
+                j += 1
+            else:
+                print("sizing error 2")
+                exit()
 
-                struct_thing += "add rsp, " + str(size) + "\n"
+            struct_thing += "add rsp, " + str(size) + "\n"
 
-                struct_things[remove_invalid_linux_x86_64(struct.name + "<-")] = struct_thing
+        struct_things[remove_invalid_linux_x86_64(type + "<-")] = struct_thing
 
     contents_data = ""
     data_index = 0
@@ -1548,6 +1557,11 @@ for file in sys.argv[1:]:
     tokens = tokenize(contents)
 
     ast.extend(generate_ast_c(tokens))
+
+for type in ["integer", "boolean"]:
+    ast.append(FunctionNode(type + "<-", [], {"struct": "*" + type, "value": type}, [], []))
+    ast.append(FunctionNode(type + "->", [], {"struct": "*" + type}, [type], []))
+
 #match syntax:
 #    case "lisp":
 #        ast = generate_ast_lisp(tokens)
@@ -1562,7 +1576,8 @@ for file in sys.argv[1:]:
 #for function in ast:
 #    if isinstance(function, FunctionNode):
 #        if function.name == "main":
-#            print(function.instructions)
+#            for instruction in function.instructions:
+#                print(instruction)
 
 functions = {}
 

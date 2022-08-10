@@ -1,7 +1,7 @@
 global FILE_CONTENTS: any_2048;
 
 function main() {
-    variable descriptor: integer = sys_open("example/file_read.barely", O_RDONLY, 0);
+    variable descriptor = sys_open("example/file_read.barely", O_RDONLY, 0);
 
     sys_read(descriptor, &(FILE_CONTENTS), 2047);
 
@@ -25,7 +25,7 @@ function println(string: *) {
 };
 
 function length(string: *): integer {
-    variable length: integer = 0;
+    variable length = 0;
 
     while !(=1(byte(0), *1(+(string, length)))) {
         length = @cast_integer(+(length, 1));
