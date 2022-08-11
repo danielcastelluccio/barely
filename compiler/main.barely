@@ -1,0 +1,342 @@
+function main(arguments: **, argument_count: integer) {
+    variable i = 1;
+
+    variable tokens: any_4096;
+    variable tokens_index = 0;
+
+    variable tokens_allocator: BumpAllocator;
+
+    while <(i, argument_count) {
+        variable pointer = @cast_*(*8(@cast_*(+(arguments, *(8, i)))));
+
+        variable contents: any_2048;
+        get_contents(pointer, &(contents));
+
+        tokenize(&(contents), &(tokens), &(tokens_index), &(tokens_allocator));
+
+        i = @cast_integer(+(i, 1));
+    };
+
+    variable j = 0;
+    while <(j, tokens_index) {
+        @print_integer(integer->(@cast_*integer(+(&(tokens), *(j, TOKEN_SIZE)))));
+        variable id = integer->(@cast_*integer(+(&(tokens), *(j, TOKEN_SIZE))));
+        if =(id, TOKEN_KEYWORD) {
+            variable pointy = *->(@cast_**(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
+            println(pointy);
+        };
+        if =(id, TOKEN_NAME) {
+            variable pointy = *->(@cast_**(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
+            println(pointy);
+        };
+        if =(id, TOKEN_STRING) {
+            variable pointy = *->(@cast_**(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
+            println(pointy);
+        };
+        if =(id, TOKEN_INTEGER) {
+            variable integer = integer->(@cast_*integer(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
+            @print_integer(integer);
+        };
+        j = @cast_integer(+(j, 1));
+    };
+};
+
+function is_number(string: *): boolean {
+    variable length = length(string);
+
+    variable i = 0;
+    while <(i, length) {
+        variable character = any_1->(@cast_*any_1(+(string, i)));
+        if <(byte_to_integer(character), 48) {
+            return false;
+        };
+
+        if >(byte_to_integer(character), 57) {
+            return false;
+        };
+        i = @cast_integer(+(i, 1));
+    };
+
+    return true;
+};
+
+function to_number(string: *): integer {
+    variable length = length(string);
+
+    variable integer = 0;
+
+    variable i = 0;
+    while <(i, length) {
+        variable character = byte_to_integer(any_1->(@cast_*any_1(+(string, i))));
+        integer = @cast_integer(*(integer, 10));
+        integer = @cast_integer(+(integer, -(character, 48)));
+        i = @cast_integer(+(i, 1));
+    };
+
+    return integer;
+};
+
+function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator: *BumpAllocator) {
+    variable buffer_length = length(buffer);
+
+    if =(buffer_length, 0) {
+        return;
+    };
+
+    if string_equal(buffer, "function") {
+        variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+        copy(buffer, allocated, buffer_length);
+        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_KEYWORD);
+        any_8<-(@cast_*any_8(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+        return;
+    };
+
+    if is_number(buffer) {
+        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_INTEGER);
+        any_8<-(@cast_*any_8(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), to_number(buffer));
+        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+        return;
+    };
+    
+    variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+    copy(buffer, allocated, buffer_length);
+    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_NAME);
+    any_8<-(@cast_*any_8(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+};
+
+function reset_buffer(pointer: *any_16) {
+    any_8<-(@cast_*any_8(pointer), 0);
+    any_8<-(@cast_*any_8(+(pointer, 8)), 0);
+};
+
+constant ASCII_SPACE: integer = 32;
+constant ASCII_OPEN_PARENTHESIS: integer = 40;
+constant ASCII_CLOSED_PARENTHESIS: integer = 41;
+constant ASCII_OPEN_CURLY_BRACKETS: integer = 123;
+constant ASCII_CLOSED_CURLY_BRACKETS: integer = 125;
+constant ASCII_COMMA: integer = 44;
+constant ASCII_SEMICOLON: integer = 59;
+constant ASCII_TAB: integer = 9;
+constant ASCII_LINE_FEED: integer = 10;
+constant ASCII_QUOTATION: integer = 34;
+
+constant TOKEN_OPEN_PARENTHESIS: integer = 0;
+constant TOKEN_CLOSED_PARENTHESIS: integer = 1;
+constant TOKEN_OPEN_CURLY_BRACKETS: integer = 2;
+constant TOKEN_CLOSED_CURLY_BRACKETS: integer = 3;
+constant TOKEN_COMMA: integer = 4;
+constant TOKEN_SEMICOLON: integer = 5;
+constant TOKEN_KEYWORD: integer = 6;
+constant TOKEN_NAME: integer = 7;
+constant TOKEN_STRING: integer = 8;
+constant TOKEN_INTEGER: integer = 9;
+
+constant TOKEN_SIZE: integer = 32;
+
+function tokenize(contents: *, tokens: *, tokens_index: *integer, allocator: *BumpAllocator) {
+    variable index = 0;
+    variable contents_length = length(contents);
+
+    variable buffer: any_16;
+    reset_buffer(&(buffer));
+    variable buffer_index = 0;
+
+    variable in_quotes = false;
+
+    while <(index, contents_length) {
+        variable character_pointer = @cast_*(+(contents, index));
+        variable done_anything = false;
+
+        if !(in_quotes) {
+            if =1(*1(character_pointer), byte(ASCII_SPACE)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+            };
+            if =1(*1(character_pointer), byte(ASCII_OPEN_PARENTHESIS)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_OPEN_PARENTHESIS);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+            };
+            if =1(*1(character_pointer), byte(ASCII_CLOSED_PARENTHESIS)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_CLOSED_PARENTHESIS);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+            };
+            if =1(*1(character_pointer), byte(ASCII_OPEN_CURLY_BRACKETS)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_OPEN_CURLY_BRACKETS);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+            };
+            if =1(*1(character_pointer), byte(ASCII_CLOSED_CURLY_BRACKETS)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_CLOSED_CURLY_BRACKETS);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+            };
+            if =1(*1(character_pointer), byte(ASCII_COMMA)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_COMMA);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+            };
+            if =1(*1(character_pointer), byte(ASCII_SEMICOLON)) {
+                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_SEMICOLON);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+            };
+            if =1(*1(character_pointer), byte(ASCII_TAB)) {
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+            };
+            if =1(*1(character_pointer), byte(ASCII_LINE_FEED)) {
+                done_anything = true;
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+            };
+        };
+        if =1(*1(character_pointer), byte(ASCII_QUOTATION)) {
+            if in_quotes {
+                variable buffer_length = length(&(buffer));
+                variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+                copy(&(buffer), allocated, buffer_length);
+                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_STRING);
+                any_8<-(@cast_*any_8(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+
+                reset_buffer(&(buffer));
+                buffer_index = 0;
+            };
+
+            in_quotes = !(in_quotes);
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            variable buffer_pointer = @cast_*any_1(+(&(buffer), buffer_index));
+
+            any_1<-(buffer_pointer, *1(character_pointer));
+
+            buffer_index = @cast_integer(+(buffer_index, 1));
+
+            if =(buffer_index, 16) {
+                println("Buffer index at limit!");
+                exit(1);
+            };
+        };
+
+        index = @cast_integer(+(index, 1));
+    };
+};
+
+function string_equal(string1: *, string2: *): boolean {
+    variable string1_length = length(string1);
+    variable string2_length = length(string2);
+
+    if !(=(string1_length, string2_length)) {
+        return false;
+    };
+
+    variable i = 0;
+    while <(i, string1_length) {
+        variable string1_character = *1(@cast_*(+(string1, i)));
+        variable string2_character = *1(@cast_*(+(string2, i)));
+
+        if !(=1(string1_character, string2_character)) {
+            return false;
+        };
+
+        i = @cast_integer(+(i, 1));
+    };
+
+    return true;
+};
+
+function length(string: *): integer {
+    variable length = 0;
+
+    while !(=1(byte(0), *1(+(string, length)))) {
+        length = @cast_integer(+(length, 1));
+    };
+
+    return length;
+};
+
+function copy(from: *, to: *, size: integer) {
+    variable i = 0;
+
+    while <(i, size) {
+        any_1<-(@cast_*any_1(+(to, i)), any_1->(@cast_*any_1(+(from, i))));
+        i = @cast_integer(+(i, 1));
+    };
+};
+
+function print(string: *) {
+    sys_write(STDOUT, string, length(string));
+};
+
+function println(string: *) {
+    print(string);
+
+    variable new_line: integer = 10;
+    sys_write(STDOUT, &(new_line), 1);
+};
+
+function get_contents(name: *, buffer: *) {
+    variable descriptor = sys_open(name, O_RDONLY, 0);
+
+    variable stat: Stat;
+    sys_fstat(descriptor, &(stat));
+
+    sys_read(descriptor, buffer, Stat->size(&(stat)));
+};
+
+function exit(code: integer) {
+    sys_exit(code);
+};
+
+structure BumpAllocator {
+    memory: any_2048;
+    location: integer;
+    count: integer;
+};
+
+function bump_allocate(bump_allocator: *BumpAllocator, size: integer): * {
+    variable pointer = @cast_*(+(&(BumpAllocator->memory(bump_allocator)), BumpAllocator->location(bump_allocator)));
+    BumpAllocator<-location(bump_allocator, @cast_integer(+(BumpAllocator->location(bump_allocator), size)));
+    BumpAllocator<-count(bump_allocator, @cast_integer(+(BumpAllocator->count(bump_allocator), 1)));
+    return pointer;
+};
+
+function bump_free(bump_allocator: *BumpAllocator) {
+    BumpAllocator<-count(bump_allocator, @cast_integer(-(BumpAllocator->count(bump_allocator), 1)));
+    if =(BumpAllocator->count(bump_allocator), 0) {
+        BumpAllocator<-location(bump_allocator, 0);
+    };
+};

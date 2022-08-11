@@ -1,0 +1,120 @@
+function main(arguments: **, argument_count: integer) {
+    variable i = 1;
+
+    variable tokens: any_4096;
+    variable tokens_index = 0;
+
+    while <(i, argument_count) {
+        variable pointer = @cast_*(*8(@cast_*(+(arguments, *(8, i)))));
+
+        variable contents: any_2048;
+        get_contents(pointer, &(contents));
+
+        tokenize(&(contents), &(tokens), &(tokens_index));
+
+        i = @cast_integer(+(i, 1));
+    };
+};
+
+constant ASCII_SPACE: integer = 32;
+
+function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer) {
+    variable buffer_length = length(buffer);
+
+    println(buffer);
+    if string_equal(buffer, "function") {
+        println("test");
+    };
+};
+
+function tokenize(contents: *, tokens: *, tokens_index: *integer) {
+    variable index = 0;
+    variable contents_length = length(contents);
+
+    variable buffer: any_16;
+    variable buffer_index = 0;
+
+    while <(index, contents_length) {
+        variable character_pointer = @cast_*(+(contents, index));
+        variable done_anything = false;
+
+        if =1(*1(character_pointer), byte(ASCII_SPACE)) {
+            tokenize_inner(&(buffer), tokens, tokens_index);
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            variable buffer_pointer = @cast_*any_1(+(&(buffer), buffer_index));
+
+            any_1<-(buffer_pointer, *1(character_pointer));
+
+            buffer_index = @cast_integer(+(buffer_index, 1));
+
+            if =(buffer_index, 16) {
+                println("Buffer index at limit!");
+                exit(1);
+            };
+        };
+
+        index = @cast_integer(+(index, 1));
+    };
+};
+
+function string_equal(string1: *, string2: *): boolean {
+    variable string1_length = length(string1);
+    variable string2_length = length(string2);
+
+    if !(=(string1_length, string2_length)) {
+        return false;
+    };
+
+    variable i = 0;
+    while <(i, string1_length) {
+        variable string1_character = *1(@cast_*(+(string1, i)));
+        variable string2_character = *1(@cast_*(+(string2, i)));
+
+        if !(=1(string1_character, string2_character)) {
+            @print_integer(byte_to_integer(string1_character));
+            @print_integer(byte_to_integer(string2_character));
+            return false;
+        };
+
+        i = @cast_integer(+(i, 1));
+    };
+
+    return true;
+};
+
+function length(string: *): integer {
+    variable length = 0;
+
+    while !(=1(byte(0), *1(+(string, length)))) {
+        length = @cast_integer(+(length, 1));
+    };
+
+    return length;
+};
+
+function print(string: *) {
+    sys_write(STDOUT, string, length(string));
+};
+
+function println(string: *) {
+    print(string);
+
+    variable new_line: integer = 10;
+    sys_write(STDOUT, &(new_line), 1);
+};
+
+function get_contents(name: *, buffer: *) {
+    variable descriptor = sys_open(name, O_RDONLY, 0);
+
+    variable stat: Stat;
+    sys_fstat(descriptor, &(stat));
+
+    sys_read(descriptor, buffer, Stat->size(&(stat)));
+};
+
+function exit(code: integer) {
+    sys_exit(code);
+};

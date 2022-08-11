@@ -456,7 +456,6 @@ def get_statement_c(tokens, index):
                 
                 statement.append(ConditionalJumpNode(False, id))
 
-
             index += 1
 
             while not isinstance(tokens[index], ClosedCurlyBracketToken):
@@ -464,7 +463,7 @@ def get_statement_c(tokens, index):
                 statement.extend(statement0)
                 #print(expression)
 
-                statement.append(TargetNode(id))
+            statement.append(TargetNode(id))
 
             index += 1
 
@@ -484,7 +483,6 @@ def get_statement_c(tokens, index):
                 statement.extend(expression)
                 
                 statement.append(ConditionalJumpNode(False, id1))
-
 
             index += 1
 
@@ -1004,7 +1002,10 @@ ret
 """
     
     struct_things = {}
-    program_types = ["integer", "boolean"]
+    program_types = ["integer", "boolean", "*"]
+
+    for i in range(0, 8):
+        program_types.append("any_" + str(2**i))
 
     for struct in ast:
         if isinstance(struct, StructureNode):
@@ -1138,7 +1139,7 @@ ret
                 print("sizing error 2")
                 exit()
 
-            struct_thing += "add rsp, " + str(size) + "\n"
+        struct_thing += "add rsp, " + str(size) + "\n"
 
         struct_things[remove_invalid_linux_x86_64(type + "<-")] = struct_thing
 
@@ -1192,7 +1193,8 @@ ret
                         contents += "mov rcx, 0\n"
                         contents += "mov rbx, 1\n"
                         contents += "cmova rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], cl\n"
                     elif instruction.name == "<":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1200,7 +1202,8 @@ ret
                         contents += "mov rcx, 0\n"
                         contents += "mov rbx, 1\n"
                         contents += "cmovb rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], cl\n"
                     elif instruction.name == "=":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1208,22 +1211,28 @@ ret
                         contents += "mov rcx, 0\n"
                         contents += "mov rbx, 1\n"
                         contents += "cmove rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], cl\n"
                     elif instruction.name == "=1":
-                        contents += "pop rax\n"
-                        contents += "pop rbx\n"
-                        contents += "cmp rax, rbx\n"
+                        contents += "mov al, [rsp]\n"
+                        contents += "add rsp, 1\n"
+                        contents += "mov bl, [rsp]\n"
+                        contents += "add rsp, 1\n"
+                        contents += "cmp al, bl\n"
                         contents += "mov rcx, 0\n"
                         contents += "mov rbx, 1\n"
                         contents += "cmove rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], cl\n"
                     elif instruction.name == "!":
-                        contents += "pop rax\n"
-                        contents += "cmp rax, 0\n"
-                        contents += "mov rcx, 0\n"
-                        contents += "mov rbx, 1\n"
-                        contents += "cmove rcx, rbx\n"
-                        contents += "push rcx\n"
+                        contents += "mov al, [rsp]\n"
+                        contents += "add rsp, 1\n"
+                        contents += "cmp al, 0\n"
+                        contents += "mov cx, 0\n"
+                        contents += "mov bx, 1\n"
+                        contents += "cmove cx, bx\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], cl\n"
                     elif instruction.name == "+":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1241,9 +1250,9 @@ ret
                         contents += "push rax\n"
                     elif instruction.name == "*1":
                         contents += "pop rcx\n"
-                        contents += "mov rax, 0\n"
                         contents += "mov al, [rcx]\n"
-                        contents += "push rax\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], al\n"
                     elif instruction.name == "*8":
                         contents += "pop rcx\n"
                         contents += "push qword [rcx]\n"
@@ -1294,7 +1303,15 @@ ret
                         contents += "push rax\n"
                     elif instruction.name == "byte":
                         contents += "pop rax\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], al\n"
+                    elif instruction.name == "byte_to_integer":
+                        contents += "mov rax, 0\n"
+                        contents += "mov al, [rsp]\n"
+                        contents += "add rsp, 1\n"
                         contents += "push rax\n"
+                    elif instruction.name == "get_rsp":
+                        contents += "push rsp\n"
                     elif not instruction.name.startswith("@cast_"):
                         contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
                 elif isinstance(instruction, DeclareNode):
@@ -1314,7 +1331,7 @@ ret
                             contents += "push rax\n"
                         else:
                             size = get_size_linux_x86_64(function.parameters[instruction.name], ast)
-                            size = (((size) + 7) & (-8))
+                            #size = (((size) + 7) & (-8))
                             contents += "sub rsp, " + str(size) + "\n"
                             j = 0
                             while j < size:
@@ -1330,6 +1347,10 @@ ret
                                     contents += "mov ax, [rbp+" + str(16 + location + j) + "]\n"
                                     contents += "mov [rsp+" + str(j) + "], ax\n"
                                     j += 2
+                                elif size - j >= 1:
+                                    contents += "mov al, [rbp+" + str(16 + location + j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], al\n"
+                                    j += 1
                                 else:
                                     print("sizing error")
                                     exit()
@@ -1337,9 +1358,9 @@ ret
                         i = function.locals.index(instruction.name)
                         location = get_size_linux_x86_64(local_types[0 : i], ast)
                         size = get_size_linux_x86_64(local_types[i], ast)
-                        size = (((size) + 7) & (-8))
+                        #size = (((size) + 7) & (-8))
 
-                        #print(instruction.name)
+                        #print(size)
                         if isinstance(function.instructions[index0 + 1], PointerNode):
                             contents += "lea rax, [rbp-" + str(location + size) + "]\n"
                             contents += "push rax\n"
@@ -1360,12 +1381,16 @@ ret
                                     contents += "mov ax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
                                     contents += "mov [rsp+" + str(j) + "], ax\n"
                                     j += 2
+                                elif size - j >= 1:
+                                    contents += "mov al, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], al\n"
+                                    j += 1
                                 else:
                                     print("sizing error")
                                     exit()
                     elif instruction.name in constants:
                         size = get_size_linux_x86_64(constants[instruction.name], ast)
-                        size = (((size) + 7) & (-8))
+                        #size = (((size) + 7) & (-8))
 
                         if isinstance(function.instructions[index0 + 1], PointerNode):
                             contents += "mov rax, _" + instruction.name + "\n"
@@ -1387,12 +1412,16 @@ ret
                                     contents += "mov ax, [_" + instruction.name + "+" + str(j) + "]\n"
                                     contents += "mov [rsp+" + str(j) + "], ax\n"
                                     j += 2
+                                elif size - j >= 1:
+                                    contents += "mov al, [_" + instruction.name + "+" + str(j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], al\n"
+                                    j += 1
                                 else:
                                     print("sizing error")
                                     exit()
                     elif instruction.name in globals:
                         size = get_size_linux_x86_64(globals[instruction.name], ast)
-                        size = (((size) + 7) & (-8))
+                        #size = (((size) + 7) & (-8))
 
                         if isinstance(function.instructions[index0 + 1], PointerNode):
                             contents += "mov rax, _" + instruction.name + "\n"
@@ -1414,6 +1443,10 @@ ret
                                     contents += "mov ax, [_" + instruction.name + "+" + str(j) + "]\n"
                                     contents += "mov [rsp+" + str(j) + "], ax\n"
                                     j += 2
+                                elif size - j >= 1:
+                                    contents += "mov al, [_" + instruction.name + "+" + str(j) + "]\n"
+                                    contents += "mov [rsp+" + str(j) + "], al\n"
+                                    j += 1
                                 else:
                                     print("sizing error")
                                     exit()
@@ -1422,7 +1455,7 @@ ret
                         i = function.locals.index(instruction.name)
 
                         size = get_size_linux_x86_64(variables[instruction.name], ast)
-                        size = (((size) + 7) & (-8))
+                        #size = (((size) + 7) & (-8))
                         location = get_size_linux_x86_64(local_types[0 : i], ast)
                         i = 0
                         while i < size:
@@ -1438,13 +1471,17 @@ ret
                                 contents += "mov ax, [rsp+" + str(i) + "]\n"
                                 contents += "mov [rbp-" + str(8 + size + location - i - 8) + "], ax\n"
                                 i += 2
+                            elif size - i >= 1:
+                                contents += "mov al, [rsp+" + str(i) + "]\n"
+                                contents += "mov [rbp-" + str(8 + size + location - i - 8) + "], al\n"
+                                i += 1
                             else:
                                 print("sizing error")
                                 exit()
-                        contents += "add rsp, " + str(((size + 7) & (-8))) + "\n"
+                        contents += "add rsp, " + str(size) + "\n"
                     else:
                         size = get_size_linux_x86_64(globals[instruction.name], ast)
-                        size = (((size) + 7) & (-8))
+                        #size = (((size) + 7) & (-8))
                         i = 0
                         while i < size:
                             if size - i >= 8:
@@ -1459,10 +1496,14 @@ ret
                                 contents += "mov ax, [rsp+" + str(i) + "]\n"
                                 contents += "mov [" + "_" + instruction.name + "+" + str(i) + "], ax\n"
                                 i += 2
+                            elif size - i >= 1:
+                                contents += "mov al, [rsp+" + str(i) + "]\n"
+                                contents += "mov [" + "_" + instruction.name + "+" + str(i) + "], al\n"
+                                i += 1
                             else:
                                 print("sizing error")
                                 exit()
-                        contents += "add rsp, " + str(((size + 7) & (-8))) + "\n"
+                        contents += "add rsp, " + str(size) + "\n"
                 elif isinstance(instruction, StringNode):
                     contents += "push _" + str(data_index) + "\n"
                     contents_data += "_" + str(data_index) + ": db \"" + instruction.string + "\", 0\n"
@@ -1470,12 +1511,13 @@ ret
                 elif isinstance(instruction, IntegerNode):
                     contents += "push " + str(instruction.integer) + "\n"
                 elif isinstance(instruction, BooleanNode):
-                    contents += "push " + str(1 if instruction.boolean else 0) + "\n"
+                    contents += "sub rsp, 1\n"
+                    contents += "mov [rsp], byte " + str(1 if instruction.boolean else 0) + "\n"
                 elif isinstance(instruction, ReturnNode):
                     params_size = get_size_linux_x86_64(functions[function.name].parameters.values(), ast)
                     params_size = (((params_size) + 7) & (-8))
                     size = get_size_linux_x86_64(functions[function.name].returns, ast)
-                    size = (((size) + 7) & (-8))
+                    #size = (((size) + 7) & (-8))
                     size_rounded = (((size + 8) + 7) & (-8))
                     i = 8
                     j = size + 8
@@ -1498,6 +1540,11 @@ ret
                             contents += "mov ax, [rsp+" + str(size - i - 2) + "]\n"
                             contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], ax\n"
                             i += 2
+                        elif size - i >= 1:
+                            j -= 1
+                            contents += "mov al, [rsp+" + str(size - i - 1) + "]\n"
+                            contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], al\n"
+                            i += 1
                         else:
                             print("sizing error")
                             exit()
@@ -1516,8 +1563,9 @@ ret
                 elif isinstance(instruction, TargetNode):
                     contents += "target_" + str(instruction.id) + ":\n"
                 elif isinstance(instruction, ConditionalJumpNode):
-                    contents += "pop rax\n"
-                    contents += "cmp rax, " + str(1 if instruction.wants_true else 0) + "\n"
+                    contents += "mov al, [rsp]\n"
+                    contents += "add rsp, 1\n"
+                    contents += "cmp al, " + str(1 if instruction.wants_true else 0) + "\n"
                     contents += "je target_" + str(instruction.id) + "\n"
                 elif isinstance(instruction, JumpNode):
                     contents += "jmp target_" + str(instruction.id) + "\n"
@@ -1583,6 +1631,14 @@ for type in ["integer", "boolean"]:
     ast.append(FunctionNode(type + "<-", [], {"struct": "*" + type, "value": type}, [], []))
     ast.append(FunctionNode(type + "->", [], {"struct": "*" + type}, [type], []))
 
+for i in range(0, 64):
+    type = "any_" + str(2**i)
+    ast.append(FunctionNode(type + "<-", [], {"struct": "*" + type, "value": type}, [], []))
+    ast.append(FunctionNode(type + "->", [], {"struct": "*" + type}, [type], []))
+
+ast.append(FunctionNode("*" + "<-", [], {"struct": "*" + "*", "value": "*"}, [], []))
+ast.append(FunctionNode("*" + "->", [], {"struct": "*" + "*"}, ["*"], []))
+
 #match syntax:
 #    case "lisp":
 #        ast = generate_ast_lisp(tokens)
@@ -1596,7 +1652,7 @@ for type in ["integer", "boolean"]:
 
 #for function in ast:
 #    if isinstance(function, FunctionNode):
-#        if function.name == "main":
+#        if function.name == "string_equal":
 #            for instruction in function.instructions:
 #                print(instruction)
 
@@ -1614,6 +1670,7 @@ if not os.path.exists("build"):
 if name:
     compile_linux_x86_64(ast, name.replace(".barely", ""), functions)
     if "-r" in sys.argv:
+        print("--------------------")
         arguments = sys.argv[sys.argv.index("-r") + 1 : ]
         os.system("./build/" + name.replace(".barely", "") + " " + " ".join(arguments))
 

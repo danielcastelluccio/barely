@@ -10,6 +10,8 @@ constant SYS_STAT: integer = 4;
 
 constant SYS_FSTAT: integer = 5;
 
+constant SYS_EXIT: integer = 60;
+
 function sys_read(fd: integer, buffer: *, length: integer) {
     variable _: any_8 = @syscall3(SYS_READ, fd, buffer, length);
 };
@@ -34,4 +36,8 @@ function sys_stat(name: *, buffer: *Stat) {
 
 function sys_fstat(fd: integer, buffer: *Stat) {
     variable _: any_8 = @syscall2(SYS_FSTAT, fd, buffer);
+};
+
+function sys_exit(code: integer) {
+    variable _: any_8 = @syscall1(SYS_EXIT, code);
 };
