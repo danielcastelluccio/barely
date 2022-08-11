@@ -121,6 +121,7 @@ constant ASCII_SEMICOLON: integer = 59;
 constant ASCII_TAB: integer = 9;
 constant ASCII_LINE_FEED: integer = 10;
 constant ASCII_QUOTATION: integer = 34;
+constant ASCII_SLASH: integer = 47;
 
 constant TOKEN_OPEN_PARENTHESIS: integer = 0;
 constant TOKEN_CLOSED_PARENTHESIS: integer = 1;
@@ -143,78 +144,84 @@ function tokenize(contents: *, tokens: *, tokens_index: *integer, allocator: *Bu
     variable buffer_index = 0;
 
     variable in_quotes = false;
+    variable in_comment = false;
 
     while <(index, contents_length) {
         variable character_pointer = @cast_*(+(contents, index));
+        variable character_pointer_next = @cast_*(+(contents, +(index, 1)));
         variable done_anything = false;
 
         if !(in_quotes) {
-            if =1(*1(character_pointer), byte(ASCII_SPACE)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
-            };
-            if =1(*1(character_pointer), byte(ASCII_OPEN_PARENTHESIS)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
+            if !(in_comment) {
+                if =1(*1(character_pointer), byte(ASCII_SPACE)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
+                };
+                if =1(*1(character_pointer), byte(ASCII_OPEN_PARENTHESIS)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
 
-                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_OPEN_PARENTHESIS);
-                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-            };
-            if =1(*1(character_pointer), byte(ASCII_CLOSED_PARENTHESIS)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
+                    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_OPEN_PARENTHESIS);
+                    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                };
+                if =1(*1(character_pointer), byte(ASCII_CLOSED_PARENTHESIS)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
 
-                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_CLOSED_PARENTHESIS);
-                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-            };
-            if =1(*1(character_pointer), byte(ASCII_OPEN_CURLY_BRACKETS)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
+                    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_CLOSED_PARENTHESIS);
+                    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                };
+                if =1(*1(character_pointer), byte(ASCII_OPEN_CURLY_BRACKETS)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
 
-                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_OPEN_CURLY_BRACKETS);
-                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-            };
-            if =1(*1(character_pointer), byte(ASCII_CLOSED_CURLY_BRACKETS)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
+                    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_OPEN_CURLY_BRACKETS);
+                    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                };
+                if =1(*1(character_pointer), byte(ASCII_CLOSED_CURLY_BRACKETS)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
 
-                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_CLOSED_CURLY_BRACKETS);
-                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-            };
-            if =1(*1(character_pointer), byte(ASCII_COMMA)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
+                    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_CLOSED_CURLY_BRACKETS);
+                    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                };
+                if =1(*1(character_pointer), byte(ASCII_COMMA)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
 
-                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_COMMA);
-                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-            };
-            if =1(*1(character_pointer), byte(ASCII_SEMICOLON)) {
-                tokenize_inner(&(buffer), tokens, tokens_index, allocator);
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
+                    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_COMMA);
+                    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                };
+                if =1(*1(character_pointer), byte(ASCII_SEMICOLON)) {
+                    tokenize_inner(&(buffer), tokens, tokens_index, allocator);
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
 
-                integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_SEMICOLON);
-                integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                    integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_SEMICOLON);
+                    integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+                };
+                if =1(*1(character_pointer), byte(ASCII_TAB)) {
+                    done_anything = true;
+                    reset_buffer(&(buffer));
+                    buffer_index = 0;
+                };
             };
-            if =1(*1(character_pointer), byte(ASCII_TAB)) {
-                done_anything = true;
-                reset_buffer(&(buffer));
-                buffer_index = 0;
-            };
+
             if =1(*1(character_pointer), byte(ASCII_LINE_FEED)) {
+                in_comment = false;
                 done_anything = true;
                 reset_buffer(&(buffer));
                 buffer_index = 0;
@@ -236,17 +243,25 @@ function tokenize(contents: *, tokens: *, tokens_index: *integer, allocator: *Bu
             in_quotes = !(in_quotes);
             done_anything = true;
         };
+        if =1(*1(character_pointer), byte(ASCII_SLASH)) {
+            if =1(*1(character_pointer_next), byte(ASCII_SLASH)) {
+                in_comment = true;
+                done_anything = true;
+            };
+        };
 
         if !(done_anything) {
-            variable buffer_pointer = @cast_*any_1(+(&(buffer), buffer_index));
+            if !(in_comment) {
+                variable buffer_pointer = @cast_*any_1(+(&(buffer), buffer_index));
 
-            any_1<-(buffer_pointer, *1(character_pointer));
+                any_1<-(buffer_pointer, *1(character_pointer));
 
-            buffer_index = @cast_integer(+(buffer_index, 1));
+                buffer_index = @cast_integer(+(buffer_index, 1));
 
-            if =(buffer_index, 16) {
-                println("Buffer index at limit!");
-                exit(1);
+                if =(buffer_index, 16) {
+                    println("Buffer index at limit!");
+                    exit(1);
+                };
             };
         };
 

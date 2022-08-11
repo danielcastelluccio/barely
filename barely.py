@@ -1594,7 +1594,8 @@ ret
                     j = 0
                     while j < size:
                         if size - j >= 8:
-                            contents += "mov [rsp+" + str(j) + "], qword 0\n"
+                            contents += "mov rax, 0\n"
+                            contents += "mov [rsp+" + str(j) + "], rax\n"
                             j += 8
                         elif size - j >= 4:
                             contents += "mov [rsp+" + str(j) + "], dword 0\n"
