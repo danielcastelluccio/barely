@@ -104,31 +104,32 @@ def tokenize(contents):
 
     buffer = ""
     in_quotes = False
-    for character in contents:
-        if character == ' ' and not in_quotes:
+    in_comment = False
+    for index, character in enumerate(contents):
+        if character == ' ' and not in_quotes and not in_comment:
             tokens.extend(tokenize_small(buffer))
             buffer = ""
-        elif character == '(' and not in_quotes:
+        elif character == '(' and not in_quotes and not in_comment:
             tokens.extend(tokenize_small(buffer))
             tokens.append(OpenParenthesisToken())
             buffer = ""
-        elif character == ')' and not in_quotes:
+        elif character == ')' and not in_quotes and not in_comment:
             tokens.extend(tokenize_small(buffer))
             tokens.append(ClosedParenthesisToken())
             buffer = ""
-        elif character == '{' and not in_quotes:
+        elif character == '{' and not in_quotes and not in_comment:
             tokens.append(OpenCurlyBracketToken())
-        elif character == '}' and not in_quotes:
+        elif character == '}' and not in_quotes and not in_comment:
             tokens.append(ClosedCurlyBracketToken())
-        elif character == ';' and not in_quotes:
+        elif character == ';' and not in_quotes and not in_comment:
             tokens.extend(tokenize_small(buffer))
             tokens.append(SemiColonToken())
             buffer = ""
-        elif character == ',' and not in_quotes:
+        elif character == ',' and not in_quotes and not in_comment:
             tokens.extend(tokenize_small(buffer))
             tokens.append(CommaToken())
             buffer = ""
-        elif character == ':' and not in_quotes:
+        elif character == ':' and not in_quotes and not in_comment:
             tokens.extend(tokenize_small(buffer))
             tokens.append(ColonToken())
             buffer = ""
@@ -139,9 +140,16 @@ def tokenize(contents):
                 in_quotes = False
             else:
                 in_quotes = True
+        elif character == '/' and contents[index + 1] == '/':
+            in_comment = True
+            tokens.extend(tokenize_small(buffer))
+            tokens.append(ColonToken())
+            buffer = ""
         elif character == '\t' or character == '\n':
+            if character == '\n':
+                in_comment = False
             pass
-        else:
+        elif not in_comment:
             buffer += character
 
 
@@ -223,6 +231,10 @@ class ReturnNode:
 
 class PointerNode:
     pass
+
+class ZeroNode:
+    def __init__(self, type):
+        self.type = type
 
 def get_statement_lisp(tokens, index, current_function, ast):
     statement1 = []
@@ -349,10 +361,15 @@ def get_statement_c(tokens, index):
     if isinstance(token, KeywordToken):
         if token.word == "function":
             current_function, index = get_function_declaration_c(tokens, index + 1)
+            has_body = False
 
             while not isinstance(tokens[index], SemiColonToken):
                 statement, index = get_statement_c(tokens, index)
                 current_function.instructions.extend(statement)
+                has_body = True
+
+            if has_body and (len(current_function.instructions) == 0 or not isinstance(current_function.instructions[-1], ReturnNode)):
+                current_function.instructions.append(ReturnNode())
 
             statement.append(current_function)
         elif token.word == "return":
@@ -387,6 +404,7 @@ def get_statement_c(tokens, index):
             if not isinstance(tokens[index + i - 1], SemiColonToken):
                 statement0, index = get_assign_c(tokens, index + i, names)
             else:
+                statement0 = [ZeroNode(variables[names[0]]), AssignNode(names[0])]
                 index += i - 1
 
             for name in names:
@@ -892,6 +910,8 @@ def type_check(ast, functions):
                     if not popped == "boolean":
                             print("TYPECHECK: If in " + function.name + " expected boolean, got " + popped + ".")
                             exit()
+                elif isinstance(instruction, ZeroNode):
+                    types.append(instruction.type)
                 else:
                     print(str(instruction) + " not handled in typecheck!")
                     exit()
@@ -1331,7 +1351,6 @@ ret
                             contents += "push rax\n"
                         else:
                             size = get_size_linux_x86_64(function.parameters[instruction.name], ast)
-                            #size = (((size) + 7) & (-8))
                             contents += "sub rsp, " + str(size) + "\n"
                             j = 0
                             while j < size:
@@ -1569,18 +1588,38 @@ ret
                     contents += "je target_" + str(instruction.id) + "\n"
                 elif isinstance(instruction, JumpNode):
                     contents += "jmp target_" + str(instruction.id) + "\n"
+                elif isinstance(instruction, ZeroNode):
+                    size = get_size_linux_x86_64(instruction.type, ast)
+                    contents += "sub rsp, " + str(size) + "\n"
+                    j = 0
+                    while j < size:
+                        if size - j >= 8:
+                            contents += "mov [rsp+" + str(j) + "], qword 0\n"
+                            j += 8
+                        elif size - j >= 4:
+                            contents += "mov [rsp+" + str(j) + "], dword 0\n"
+                            j += 4
+                        elif size - j >= 2:
+                            contents += "mov [rsp+" + str(j) + "], word 0\n"
+                            j += 2
+                        elif size - j >= 1:
+                            contents += "mov [rsp+" + str(j) + "], byte 0\n"
+                            j += 1
+                        else:
+                            print("sizing error")
+                            exit()
                 else:
                     print(str(instruction) + " not handled in linux codegen!")
                     exit()
 
-            contents += "mov rbx, [rbp]\n"
-            contents += "mov rdx, [rbp+8]\n"
-            contents += "mov rsp, rbp\n"
-            contents += "add rsp, " + str(16 + get_size_linux_x86_64(function.parameters.values(), ast)) + "\n"
-            contents += "push rbx\n"
-            contents += "pop rbp\n"
-            contents += "push rdx\n"
-            contents += "ret\n"
+            #contents += "mov rbx, [rbp]\n"
+            #contents += "mov rdx, [rbp+8]\n"
+            #contents += "mov rsp, rbp\n"
+            #contents += "add rsp, " + str(16 + get_size_linux_x86_64(function.parameters.values(), ast)) + "\n"
+            #contents += "push rbx\n"
+            #contents += "pop rbp\n"
+            #contents += "push rdx\n"
+            #contents += "ret\n"
 
     contents += "segment readable\n"
     contents += contents_data
