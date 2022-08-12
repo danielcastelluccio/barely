@@ -1022,10 +1022,13 @@ ret
 """
     
     struct_things = {}
-    program_types = ["integer", "boolean", "*"]
+    program_types = ["integer", "boolean"]
 
     for i in range(0, 8):
         program_types.append("any_" + str(2**i))
+
+    for i in range(1, 3):
+        program_types.append("*" * i)
 
     for struct in ast:
         if isinstance(struct, StructureNode):
@@ -1258,6 +1261,12 @@ ret
                         contents += "pop rbx\n"
                         contents += "add rax, rbx\n"
                         contents += "push rax\n"
+                    elif instruction.name == "_%":
+                        contents += "pop rax\n"
+                        contents += "pop rbx\n"
+                        contents += "mov rdx, 0\n"
+                        contents += "div rbx\n"
+                        contents += "push rdx\n"
                     elif instruction.name == "*":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1676,8 +1685,10 @@ for i in range(0, 64):
     ast.append(FunctionNode(type + "<-", [], {"struct": "*" + type, "value": type}, [], []))
     ast.append(FunctionNode(type + "->", [], {"struct": "*" + type}, [type], []))
 
-ast.append(FunctionNode("*" + "<-", [], {"struct": "*" + "*", "value": "*"}, [], []))
-ast.append(FunctionNode("*" + "->", [], {"struct": "*" + "*"}, ["*"], []))
+for i in range(1, 3):
+    type = "*" * i
+    ast.append(FunctionNode(type + "<-", [], {"struct": "*" + type, "value": type}, [], []))
+    ast.append(FunctionNode(type + "->", [], {"struct": "*" + type}, [type], []))
 
 #match syntax:
 #    case "lisp":

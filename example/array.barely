@@ -1,0 +1,17 @@
+function main() {
+    variable array: any_40;
+
+    array8_set(&(array), 0, 4);
+
+    @print_integer(array8_get(&(array), 0));
+};
+
+function array8_set(array: *, index: integer, value: any_8) {
+    variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
+    any_8<-(index_pointer, value);
+};
+
+function array8_get(array: *, index: integer): any_8 {
+    variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
+    return any_8->(index_pointer);
+};
