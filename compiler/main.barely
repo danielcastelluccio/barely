@@ -53,8 +53,8 @@ function main(arguments: **, argument_count: integer) {
             variable pointy = *->(@cast_**(+(+(&(nodes), *(j, NODE_SIZE)), 8)));
             println(pointy);
 
-            variable pointy2 = *->(**->(@cast_***(+(+(&(nodes), *(j, NODE_SIZE)), 32))));
-            println(pointy2);
+            //variable pointy2 = *->(**->(@cast_***(+(+(&(nodes), *(j, NODE_SIZE)), 16))));
+            //println(pointy2);
         };
         j = @cast_integer(+(j, 1));
     };
@@ -319,6 +319,11 @@ function tokenize(contents: *, tokens: *, tokens_index: *integer, allocator: *Bu
 };
 
 constant NODE_FUNCTION: integer = 0;
+constant NODE_ENDFUNCTION: integer = 1;
+constant NODE_RETRIEVE: integer = 2;
+constant NODE_STRING: integer = 3;
+constant NODE_INTEGER: integer = 4;
+constant NODE_INVOKE: integer = 5;
 
 constant NODE_SIZE: integer = 40;
 
@@ -338,6 +343,8 @@ function increment_integer_pointer(pointer: *integer, amount: integer) {
 
 function append_node(nodes: *, nodes_index: *integer, id: integer): * {
     variable to_return = @cast_*(+(nodes, *(integer->(nodes_index), NODE_SIZE)));
+
+    integer<-(@cast_*integer(to_return), id);
 
     increment_integer_pointer(nodes_index, 1);
 
@@ -394,8 +401,6 @@ function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_inde
             variable token_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
 
             array8_set(returns_pointer, returns_index, token_name);
-
-            returns_index = @cast_integer(+(returns_index, 1));
         };
 
         index = @cast_integer(+(index, 1));
@@ -404,6 +409,85 @@ function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_inde
     *<-(@cast_**(+(function_node, 16)), parameter_names_pointer);
     *<-(@cast_**(+(function_node, 24)), parameter_types_pointer);
     *<-(@cast_**(+(function_node, 32)), returns_pointer);
+
+    index = @cast_integer(+(index, 1));
+
+    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+        parse_statement(tokens, &(index), nodes, nodes_index, allocator);
+    };
+
+    variable _ = append_node(nodes, nodes_index, NODE_ENDFUNCTION);
+
+    integer<-(index_pointer, index);
+};
+
+function parse_expression(tokens: *, index_pointer: *integer, nodes: *, nodes_index: *integer, allocator: *BumpAllocator) {
+    variable index = integer->(index_pointer);
+
+    if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+        variable done_anything_name = false;
+        if =(tokens_get_id(tokens, @cast_integer(+(index, 1))), TOKEN_OPEN_PARENTHESIS) {
+            variable function_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+
+            index = @cast_integer(+(index, 2));
+
+            while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
+                variable done_anything_loop = false;
+
+                if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
+                    index = @cast_integer(+(index, 1));
+                    done_anything_loop = true;
+                };
+
+                if !(done_anything_loop) {
+                    parse_expression(tokens, &(index), nodes, nodes_index, allocator);
+                };
+            };
+
+            index = @cast_integer(+(index, 1));
+
+            variable invoke_pointer = append_node(nodes, nodes_index, NODE_INVOKE);
+            *<-(@cast_**(+(invoke_pointer, 8)), function_name);
+
+            done_anything_name = true;
+        };
+
+        if !(done_anything_name) {
+            variable retrieve_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+            variable retrieve_pointer = append_node(nodes, nodes_index, NODE_RETRIEVE);
+            *<-(@cast_**(+(retrieve_pointer, 8)), retrieve_name);
+
+            index = @cast_integer(+(index, 1));
+        };
+    };
+
+    if =(tokens_get_id(tokens, index), TOKEN_STRING) {
+        variable string_value = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+        variable string_pointer = append_node(nodes, nodes_index, NODE_STRING);
+        *<-(@cast_**(+(string_pointer, 8)), string_value);
+
+        index = @cast_integer(+(index, 1));
+    };
+
+    if =(tokens_get_id(tokens, index), TOKEN_INTEGER) {
+        variable integer_value = integer->(@cast_*integer(+(tokens_get_pointer(tokens, index), 8)));
+        variable integer_pointer = append_node(nodes, nodes_index, NODE_INTEGER);
+        integer<-(@cast_*integer(+(integer_pointer, 8)), integer_value);
+
+        index = @cast_integer(+(index, 1));
+    };
+
+    integer<-(index_pointer, index);
+};
+
+function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_index: *integer, allocator: *BumpAllocator) {
+    variable done_anything = false;
+
+    if !(done_anything) {
+        parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
+    };
+
+    increment_integer_pointer(index_pointer, 1);
 };
 
 function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer, allocator: *BumpAllocator) {
