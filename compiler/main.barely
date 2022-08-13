@@ -121,6 +121,17 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
         return;
     };
+    if string=(buffer, "return") {
+        variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+        copy(buffer, allocated, buffer_length);
+
+        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_KEYWORD);
+
+        TokenKeywordData<-keyword(@cast_*TokenKeywordData(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+
+        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+        return;
+    };
 
     if is_number(buffer) {
         integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_INTEGER);
@@ -334,6 +345,7 @@ constant NODE_INTEGER: integer = 4;
 constant NODE_INVOKE: integer = 5;
 constant NODE_DECLARE: integer = 6;
 constant NODE_ASSIGN: integer = 7;
+constant NODE_RETURN: integer = 8;
 
 constant NODE_SIZE: integer = 40;
 
@@ -562,6 +574,14 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
             integer<-(index_pointer, index);
         };
     };
+    if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
+        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "return") {
+            increment_integer_pointer(index_pointer, 1);
+            parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
+
+            variable node = append_node(nodes, nodes_index, NODE_RETURN);
+        };
+    };
 
     if !(done_anything) {
         parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
@@ -602,6 +622,9 @@ function get_size_multiple_linux_x86-64(array: *, count: integer): integer {
 
     variable i = 0;
     while <(i, count) {
+        if =(array8_get(array, i), 0) {
+            return total;
+        };
         total = integer+(total, get_size_linux_x86-64(@cast_*(array8_get(array, i))));
         i = integer+(i, 1);
     };
@@ -628,6 +651,7 @@ function type_check(nodes: *, node_count: integer) {
 
     variable functions: any_512;
     variable function_arguments: any_512;
+    variable function_returns: any_512;
     variable index = 0;
 
     variable i = 0;
@@ -640,6 +664,8 @@ function type_check(nodes: *, node_count: integer) {
             array8_set(&(functions), index, function_name);
             variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
             array8_set(&(function_arguments), index, function_arguments2);
+            variable function_returns2 = *->(@cast_**(+(pointer, 32)));
+            array8_set(&(function_returns), index, function_returns2);
             index = integer+(index, 1);
         };
 
@@ -680,6 +706,7 @@ function type_check(nodes: *, node_count: integer) {
             while <(j, index) {
                 if string=(@cast_*(array8_get(&(functions), j)), function_name) {
                     variable arguments = @cast_*(array8_get(&(function_arguments), j));
+                    variable returns = @cast_*(array8_get(&(function_returns), j));
 
                     variable length = array8_length(arguments);
                     variable k = 0;
@@ -698,6 +725,14 @@ function type_check(nodes: *, node_count: integer) {
                             println("'");
                             sys_exit(1);
                         };
+
+                        k = integer+(k, 1);
+                    };
+
+                    variable k = 0;
+                    while !(=(array8_get(returns, k), 0)) {
+                        variable return_value = @cast_*(array8_get(returns, k));
+                        stack8_push(&(stack), &(stack_pointer), return_value);
 
                         k = integer+(k, 1);
                     };
@@ -745,7 +780,6 @@ function type_check(nodes: *, node_count: integer) {
                 print(popped_stack);
                 println("'");
                 sys_exit(1);
-                
             };
 
             done_anything = true;
@@ -754,6 +788,30 @@ function type_check(nodes: *, node_count: integer) {
             variable variable_name = *->(@cast_**(+(pointer, 8)));
             variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
             stack8_push(&(stack), &(stack_pointer), variable_type);
+
+            done_anything = true;
+        };
+        if =(id, NODE_RETURN) {
+            variable function_returns2 = stringarraymap_get(&(functions), &(function_returns), current_function, index);
+
+            variable j = 0;
+            while !(=(array8_get(function_returns2, j), 0)) {
+                variable function_return = @cast_*(array8_get(function_returns2, j));
+                variable stack_popped = @cast_*(stack8_pop(&(stack), &(stack_pointer)));
+                
+                if !(is_type(function_return, stack_popped)) {
+                    print("TYPECHECK: ");
+                    print(current_function);
+                    print(": Return wants '");
+                    print(function_return);
+                    print("', given '");
+                    print(stack_popped);
+                    println("'");
+                    sys_exit(1);
+                };
+
+                j = integer+(j, 1);
+            };
 
             done_anything = true;
         };
@@ -776,6 +834,7 @@ function stringarraymap_get(keys: *, values: *, wanted: *, size: integer): * {
         if string=(@cast_*(array8_get(keys, j)), wanted) {
             return @cast_*(array8_get(values, j));
         };
+        j = integer+(j, 1);
     };
 
     return @cast_*(0);
@@ -787,6 +846,7 @@ function stringarraymap_get_index(keys: *, wanted: *, size: integer): integer {
         if string=(@cast_*(array8_get(keys, j)), wanted) {
             return j;
         };
+        j = integer+(j, 1);
     };
 
     return 999;
@@ -847,6 +907,31 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
     push_string_with_newline(&(buffer), &(buffer_index), "mov rdi, 0");
     push_string_with_newline(&(buffer), &(buffer_index), "syscall");
 
+    variable functions: any_512;
+    variable function_arguments: any_512;
+    variable function_returns: any_512;
+    variable index = 0;
+
+    variable i = 0;
+    while <(i, node_count) {
+        variable id = nodes_get_id(nodes, i);
+        variable pointer = nodes_get_pointer(nodes, i);
+
+        if =(id, NODE_FUNCTION) {
+            variable function_name = *->(@cast_**(+(pointer, 8)));
+            array8_set(&(functions), index, function_name);
+            variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
+            array8_set(&(function_arguments), index, function_arguments2);
+            variable function_returns2 = *->(@cast_**(+(pointer, 32)));
+            array8_set(&(function_returns), index, function_returns2);
+            index = integer+(index, 1);
+        };
+
+        i = integer+(i, 1);
+    };
+
+    variable current_function: *;
+
     variable variable_names: any_128;
     variable variable_types: any_128;
     variable variable_index = 0;
@@ -868,6 +953,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
             push_string_with_newline(&(buffer), &(buffer_index), "mov rbp, rsp");
             //TODO: actually implement & calculate
             push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 256");
+            current_function = function_name;
 
             variable_index = 0;
             done_anything = true;
@@ -957,9 +1043,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
                     j = integer+(j, 8);
-                    done_anything = true;
+                    done_anything_assign = true;
                 };
-                if &&(>(-(size, j), 3), !(done_anything)) {
+                if &&(>(-(size, j), 3), !(done_anything_assign)) {
                     push_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
                     push_integer(&(buffer), &(buffer_index), j);
                     push_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -969,9 +1055,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
                     j = integer+(j, 4);
-                    done_anything = true;
+                    done_anything_assign = true;
                 };
-                if &&(>(-(size, j), 1), !(done_anything)) {
+                if &&(>(-(size, j), 1), !(done_anything_assign)) {
                     push_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
                     push_integer(&(buffer), &(buffer_index), j);
                     push_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -981,9 +1067,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                     j = integer+(j, 2);
-                    done_anything = true;
+                    done_anything_assign = true;
                 };
-                if &&(>(-(size, j), 0), !(done_anything)) {
+                if &&(>(-(size, j), 0), !(done_anything_assign)) {
                     push_string(&(buffer), &(buffer_index), "mov al, [rsp+");
                     push_integer(&(buffer), &(buffer_index), j);
                     push_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -992,10 +1078,11 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
                     push_string_with_newline(&(buffer), &(buffer_index), "], al");
 
-                    j = integer+(j, 2);
-                    done_anything = true;
+                    j = integer+(j, 1);
+                    done_anything_assign = true;
                 };
             };
+
 
             push_string(&(buffer), &(buffer_index), "add rsp, ");
             push_integer(&(buffer), &(buffer_index), size);
@@ -1028,9 +1115,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
                     j = integer+(j, 8);
-                    done_anything = true;
+                    done_anything_assign = true;
                 };
-                if &&(>(-(size, j), 3), !(done_anything)) {
+                if &&(>(-(size, j), 3), !(done_anything_assign)) {
                     push_string(&(buffer), &(buffer_index), "mov eax, [rbp-");
                     push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
                     push_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -1040,9 +1127,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
                     j = integer+(j, 4);
-                    done_anything = true;
+                    done_anything_assign = true;
                 };
-                if &&(>(-(size, j), 1), !(done_anything)) {
+                if &&(>(-(size, j), 1), !(done_anything_assign)) {
                     push_string(&(buffer), &(buffer_index), "mov ax, [rbp-");
                     push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
                     push_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -1052,9 +1139,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                     j = integer+(j, 2);
-                    done_anything = true;
+                    done_anything_assign = true;
                 };
-                if &&(>(-(size, j), 0), !(done_anything)) {
+                if &&(>(-(size, j), 0), !(done_anything_assign)) {
                     push_string(&(buffer), &(buffer_index), "mov al, [rbp-");
                     push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
                     push_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -1063,47 +1150,150 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
                     push_integer(&(buffer), &(buffer_index), j);
                     push_string_with_newline(&(buffer), &(buffer_index), "], al");
 
-                    j = integer+(j, 2);
-                    done_anything = true;
+                    j = integer+(j, 1);
+                    done_anything_assign = true;
                 };
             };
 
             done_anything = true;
+        };
 
+        if =(id, NODE_RETURN) {
+            variable arguments_size = get_size_multiple_linux_x86-64(stringarraymap_get(&(functions), &(function_arguments), current_function, index), 999);
+            variable returns_size = get_size_multiple_linux_x86-64(stringarraymap_get(&(functions), &(function_returns), current_function, index), 999);
+            variable returns_size_rounded = returns_size;
+            if !(=(%(returns_size_rounded, 8), 0)) {
+                returns_size_rounded = integer+(returns_size_rounded, @cast_integer(-(8, %(returns_size, 8))));
+            };
 
-                        //i = function.locals.index(instruction.name)
-                        //location = get_size_linux_x86_64(local_types[0 : i], ast)
-                        //size = get_size_linux_x86_64(local_types[i], ast)
-                        //#size = (((size) + 7) & (-8))
+            variable j = 8;
+            variable k = integer+(returns_size, 8);
 
-                        //#print(size)
-                        //if isinstance(function.instructions[index0 + 1], PointerNode):
-                        //    contents += "lea rax, [rbp-" + str(location + size) + "]\n"
-                        //    contents += "push rax\n"
-                        //else:
-                        //    contents += "sub rsp, " + str(size) + "\n"
+            push_string_with_newline(&(buffer), &(buffer_index), "mov rcx, [rbp+8]");
+            push_string_with_newline(&(buffer), &(buffer_index), "mov rdx, [rbp]");
 
-                        //    j = 0
-                        //    while j < size:
-                        //        if size - j >= 8:
-                        //            contents += "mov rax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
-                        //            contents += "mov [rsp+" + str(j) + "], rax\n"
-                        //            j += 8
-                        //        elif size - j >= 4:
-                        //            contents += "mov eax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
-                        //            contents += "mov [rsp+" + str(j) + "], eax\n"
-                        //            j += 4
-                        //        elif size - j >= 2:
-                        //            contents += "mov ax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
-                        //            contents += "mov [rsp+" + str(j) + "], ax\n"
-                        //            j += 2
-                        //        elif size - j >= 1:
-                        //            contents += "mov al, [rbp-" + str(8 + location + size - j - 8) + "]\n"
-                        //            contents += "mov [rsp+" + str(j) + "], al\n"
-                        //            j += 1
-                        //        else:
-                        //            print("sizing error")
-                        //            exit()
+            returns_size = integer+(returns_size, 8);
+
+            while <(j, returns_size) {
+                variable done_anything_assign = false;
+
+                if >(-(returns_size, j), 7) {
+                    k = @cast_integer(-(k, 8));
+                    push_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 8)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], rax");
+
+                    j = integer+(j, 8);
+                    done_anything_assign = true;
+                };
+                if &&(>(-(returns_size, j), 3), !(done_anything_assign)) {
+                    k = @cast_integer(-(k, 4));
+                    push_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 4)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], eax");
+
+                    j = integer+(j, 4);
+                    done_anything_assign = true;
+                };
+                if &&(>(-(returns_size, j), 1), !(done_anything_assign)) {
+                    k = @cast_integer(-(k, 2));
+                    push_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 2)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], ax");
+
+                    j = integer+(j, 2);
+                    done_anything_assign = true;
+                };
+                if &&(>(-(returns_size, j), 0), !(done_anything_assign)) {
+                    k = @cast_integer(-(k, 1));
+                    push_string(&(buffer), &(buffer_index), "mov al, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 1)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp+");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], al");
+
+                    j = integer+(j, 1);
+                    done_anything_assign = true;
+                };
+            };
+
+            returns_size = @cast_integer(-(returns_size, 8));
+
+            push_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
+            push_string(&(buffer), &(buffer_index), "add rsp, ");
+            push_integer(&(buffer), &(buffer_index), integer+(16, @cast_integer(-(arguments_size, returns_size))));
+            push_string_with_newline(&(buffer), &(buffer_index), "");
+            push_string_with_newline(&(buffer), &(buffer_index), "push rdx");
+            push_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
+            push_string_with_newline(&(buffer), &(buffer_index), "push rcx");
+            push_string_with_newline(&(buffer), &(buffer_index), "ret");
+            //contents += "mov rsp, rbp\n"
+            //#contents += "add rsp, " + str(size + 16) + "\n"
+            //contents += "add rsp, " + str(16 + params_size - size) + "\n"
+            //contents += "push rdx\n"
+            //contents += "pop rbp\n"
+            //contents += "push rcx\n"
+            //contents += "ret\n"
+                
+            done_anything = true;
+            ////params_size = get_size_linux_x86_64(functions[function.name].parameters.values(), ast)
+            ////params_size = (((params_size) + 7) & (-8))
+            ////size = get_size_linux_x86_64(functions[function.name].returns, ast)
+            ////#size = (((size) + 7) & (-8))
+            ////size_rounded = (((size + 8) + 7) & (-8))
+            ////i = 8
+            ////j = size + 8
+            ////contents += "mov rcx, [rbp+8]\n"
+            ////contents += "mov rdx, [rbp]\n"
+            //size += 8
+            //while i < size:
+            //    if size - i >= 8:
+            //        j -= 8
+            //        contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
+            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], rax\n"
+            //        i += 8
+            //    elif size - i >= 4:
+            //        j -= 4
+            //        contents += "mov eax, [rsp+" + str(size - i - 4) + "]\n"
+            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], eax\n"
+            //        i += 4
+            //    elif size - i >= 2:
+            //        j -= 2
+            //        contents += "mov ax, [rsp+" + str(size - i - 2) + "]\n"
+            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], ax\n"
+            //        i += 2
+            //    elif size - i >= 1:
+            //        j -= 1
+            //        contents += "mov al, [rsp+" + str(size - i - 1) + "]\n"
+            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], al\n"
+            //        i += 1
+            //    else:
+            //        print("sizing error")
+            //        exit()
+
+            //size -= 8
+
+            //contents += "mov rsp, rbp\n"
+            //#contents += "add rsp, " + str(size + 16) + "\n"
+            //contents += "add rsp, " + str(16 + params_size - size) + "\n"
+            //contents += "push rdx\n"
+            //contents += "pop rbp\n"
+            //contents += "push rcx\n"
+            //contents += "ret\n"
         };
 
         if =(id, NODE_ENDFUNCTION) {
