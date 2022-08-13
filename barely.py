@@ -133,7 +133,7 @@ def tokenize(contents):
             tokens.extend(tokenize_small(buffer))
             tokens.append(ColonToken())
             buffer = ""
-        elif character == '"':
+        elif character == '"' and not in_comment:
             if in_quotes:
                 tokens.append(StringToken(buffer))
                 buffer = ""
@@ -952,7 +952,7 @@ def get_size_linux_x86_64(types, ast):
     return size
 
 def remove_invalid_linux_x86_64(name):
-    invalid = "-><*"
+    invalid = "-><*/%="
 
     for character in invalid:
         name = name.replace(character, str(ord(character)))
@@ -1261,12 +1261,18 @@ ret
                         contents += "pop rbx\n"
                         contents += "add rax, rbx\n"
                         contents += "push rax\n"
-                    elif instruction.name == "_%":
+                    elif instruction.name == "%":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
                         contents += "mov rdx, 0\n"
                         contents += "div rbx\n"
                         contents += "push rdx\n"
+                    elif instruction.name == "/":
+                        contents += "pop rax\n"
+                        contents += "pop rbx\n"
+                        contents += "mov rdx, 0\n"
+                        contents += "div rbx\n"
+                        contents += "push rax\n"
                     elif instruction.name == "*":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"
@@ -1285,6 +1291,10 @@ ret
                     elif instruction.name == "*8":
                         contents += "pop rcx\n"
                         contents += "push qword [rcx]\n"
+                    elif instruction.name == "@syscall0":
+                        contents += "pop rax\n"
+                        contents += "syscall\n"
+                        contents += "push rax\n"
                     elif instruction.name == "@syscall1":
                         contents += "pop rax\n"
                         contents += "pop rdi\n"

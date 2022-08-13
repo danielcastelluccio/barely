@@ -6,8 +6,14 @@ function main(arguments: **, argument_count: integer) {
 
     variable allocator: BumpAllocator;
 
+    variable main_name: *;
+
     while <(i, argument_count) {
         variable pointer = @cast_*(*8(@cast_*(+(arguments, *(8, i)))));
+
+        if =(i, 1) {
+            main_name = pointer;
+        };
 
         variable contents: any_2048;
         get_contents(pointer, &(contents));
@@ -17,47 +23,12 @@ function main(arguments: **, argument_count: integer) {
         i = @cast_integer(+(i, 1));
     };
 
-    //variable j = 0;
-    //while <(j, tokens_index) {
-    //    @print_integer(integer->(@cast_*integer(+(&(tokens), *(j, TOKEN_SIZE)))));
-    //    variable id = integer->(@cast_*integer(+(&(tokens), *(j, TOKEN_SIZE))));
-    //    if =(id, TOKEN_KEYWORD) {
-    //        variable pointy = *->(@cast_**(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
-    //        println(pointy);
-    //    };
-    //    if =(id, TOKEN_NAME) {
-    //        variable pointy = *->(@cast_**(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
-    //        println(pointy);
-    //    };
-    //    if =(id, TOKEN_STRING) {
-    //        variable pointy = *->(@cast_**(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
-    //        println(pointy);
-    //    };
-    //    if =(id, TOKEN_INTEGER) {
-    //        variable integer = integer->(@cast_*integer(+(+(&(tokens), *(j, TOKEN_SIZE)), 8)));
-    //        @print_integer(integer);
-    //    };
-    //    j = @cast_integer(+(j, 1));
-    //};
-
     variable nodes: any_4096;
     variable nodes_index = 0;
 
     parse(&(tokens), tokens_index, &(nodes), &(nodes_index), &(allocator));
 
-    variable j = 0;
-    while <(j, nodes_index) {
-        @print_integer(integer->(@cast_*integer(+(&(nodes), *(j, NODE_SIZE)))));
-        variable id = integer->(@cast_*integer(+(&(nodes), *(j, NODE_SIZE))));
-        if =(id, NODE_FUNCTION) {
-            variable pointy = *->(@cast_**(+(+(&(nodes), *(j, NODE_SIZE)), 8)));
-            println(pointy);
-
-            //variable pointy2 = *->(**->(@cast_***(+(+(&(nodes), *(j, NODE_SIZE)), 16))));
-            //println(pointy2);
-        };
-        j = @cast_integer(+(j, 1));
-    };
+    output_linux_x86-64(&(nodes), nodes_index, main_name);
 };
 
 function is_number(string: *): boolean {
@@ -95,6 +66,30 @@ function to_number(string: *): integer {
     return integer;
 };
 
+function integer_to_string(integer: integer, buffer: *) {
+    variable integer2 = integer;
+
+    if =(integer, 0) {
+        any_1<-(@cast_*any_1(buffer), byte(48));
+    };
+
+    variable length = 0;
+    while !(=(integer2, 0)) {
+        integer2 = @cast_integer(/(integer2, 10));
+        length = @cast_integer(+(length, 1));
+    };
+
+    integer2 = integer;
+
+    variable i = 0;
+    while !(=(integer2, 0)) {
+        variable number = @cast_integer(%(integer2, 10));
+        any_1<-(@cast_*any_1(+(buffer, -(-(length, 1), i))), byte(+(number, 48)));
+        integer2 = @cast_integer(/(integer2, 10));
+        i = @cast_integer(+(i, 1));
+    };
+};
+
 function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator: *BumpAllocator) {
     variable buffer_length = length(buffer);
 
@@ -102,7 +97,7 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         return;
     };
 
-    if string_equal(buffer, "function") {
+    if =string(buffer, "function") {
         variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
         copy(buffer, allocated, buffer_length);
 
@@ -375,7 +370,7 @@ function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_inde
             variable token_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
 
             variable done_anything = false;
-            if =(_%(parameters_index, 2), 0) {
+            if =(%(parameters_index, 2), 0) {
                 array8_set(parameter_names_pointer, parameters_index2, token_name);
                 done_anything = true;
             };
@@ -499,7 +494,7 @@ function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer
         if =(*8(token_pointer), TOKEN_KEYWORD) {
             variable keyword = *->(@cast_**(+(token_pointer, 8)));
 
-            if string_equal(keyword, "function") {
+            if =string(keyword, "function") {
                 parse_function(tokens, &(index), nodes, nodes_index, allocator);
             };
         };
@@ -508,7 +503,173 @@ function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer
     };
 };
 
-function string_equal(string1: *, string2: *): boolean {
+function push_string(buffer: *, buffer_index_pointer: *integer, string: *) {
+    variable length = length(string);
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    variable i = 0;
+    while <(i, length) {
+        any_1<-(@cast_*any_1(+(buffer, +(buffer_index, i))), @cast_any_1(any_1->(@cast_*any_1(+(string, i)))));
+        i = @cast_integer(+(i, 1));
+    };
+
+    increment_integer_pointer(buffer_index_pointer, length);
+};
+
+function push_string_with_newline(buffer: *, buffer_index_pointer: *integer, string: *) {
+    push_string(buffer, buffer_index_pointer, string);
+    variable new_line = 10;
+    push_string(buffer, buffer_index_pointer, &(new_line));
+};
+
+function push_character(buffer: *, buffer_index_pointer: *integer, character: any_1) {
+    push_string(buffer, buffer_index_pointer, &(character));
+};
+
+function nodes_get_id(nodes: *, index: integer): integer {
+    variable index_pointer = @cast_*integer(+(nodes, *(index, NODE_SIZE)));
+    return integer->(index_pointer);
+};
+
+function nodes_get_pointer(nodes: *, index: integer): * {
+    variable index_pointer = @cast_*(+(nodes, *(index, NODE_SIZE)));
+    return index_pointer;
+};
+
+function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
+    variable buffer: any_2048;
+    variable buffer_index = 0;
+
+    variable data_buffer: any_1024;
+    variable data_buffer_index = 0;
+
+    push_string_with_newline(&(buffer), &(buffer_index), "format ELF64 executable");
+    push_string_with_newline(&(buffer), &(buffer_index), "entry start");
+    push_string_with_newline(&(buffer), &(buffer_index), "segment readable executable");
+    push_string_with_newline(&(buffer), &(buffer_index), "start:");
+    push_string_with_newline(&(buffer), &(buffer_index), "call main");
+    push_string_with_newline(&(buffer), &(buffer_index), "mov rax, 60");
+    push_string_with_newline(&(buffer), &(buffer_index), "mov rdi, 0");
+    push_string_with_newline(&(buffer), &(buffer_index), "syscall");
+
+    variable constant_index = 0;
+
+    variable i = 0;
+    while <(i, node_count) {
+        variable id = nodes_get_id(nodes, i);
+        variable pointer = nodes_get_pointer(nodes, i);
+
+        variable done_anything = false;
+
+        if =(id, NODE_FUNCTION) {
+            variable function_name = *->(@cast_**(+(pointer, 8)));
+            push_string(&(buffer), &(buffer_index), function_name);
+            push_string_with_newline(&(buffer), &(buffer_index), ":");
+            push_string_with_newline(&(buffer), &(buffer_index), "push rbp");
+            push_string_with_newline(&(buffer), &(buffer_index), "mov rbp, rsp");
+            //TODO: actually implement & calculate
+            push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 256");
+
+            done_anything = true;
+        };
+
+        if =(id, NODE_INTEGER) {
+            variable value = integer->(@cast_*integer(+(pointer, 8)));
+
+            variable integer: any_8;
+            integer_to_string(value, &(integer));
+            push_string(&(buffer), &(buffer_index), "push ");
+            push_string_with_newline(&(buffer), &(buffer_index), &(integer));
+            done_anything = true;
+        };
+
+        if =(id, NODE_INVOKE) {
+            variable function_name = *->(@cast_**(+(pointer, 8)));
+
+            variable done_anything_invoke = false;
+
+            if =string(function_name, "@syscall3") {
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rdx");
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rax");
+                push_string_with_newline(&(buffer), &(buffer_index), "syscall");
+                done_anything_invoke = true;
+            };
+
+            if !(done_anything_invoke) {
+                push_string(&(buffer), &(buffer_index), "call ");
+                push_string_with_newline(&(buffer), &(buffer_index), function_name);
+            };
+            done_anything = true;
+        };
+
+        if =(id, NODE_STRING) {
+            variable string_value = *->(@cast_**(+(pointer, 8)));
+            variable id = constant_index;
+            constant_index = @cast_integer(+(constant_index, 1));
+
+            variable id_string: any_8;
+            integer_to_string(id, &(id_string));
+
+            push_string(&(buffer), &(buffer_index), "push _");
+            push_string_with_newline(&(buffer), &(buffer_index), &(id_string));
+
+            push_string(&(data_buffer), &(data_buffer_index), "_");
+            push_string(&(data_buffer), &(data_buffer_index), &(id_string));
+            push_string(&(data_buffer), &(data_buffer_index), ": db ");
+            push_character(&(data_buffer), &(data_buffer_index), byte(34));
+            push_string(&(data_buffer), &(data_buffer_index), string_value);
+            push_character(&(data_buffer), &(data_buffer_index), byte(34));
+            push_string_with_newline(&(data_buffer), &(data_buffer_index), ", 0");
+
+            done_anything = true;
+        };
+
+        if =(id, NODE_ENDFUNCTION) {
+            push_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
+            push_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
+            push_string_with_newline(&(buffer), &(buffer_index), "ret");
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            @print_integer(id);
+        };
+
+        i = @cast_integer(+(i, 1));
+    };
+
+    push_string_with_newline(&(buffer), &(buffer_index), "segment readable");
+    push_string(&(buffer), &(buffer_index), &(data_buffer));
+
+    variable asm_output: any_32;
+    variable asm_output_length: integer = 0;
+    push_string(&(asm_output), &(asm_output_length), "build/");
+    push_string(&(asm_output), &(asm_output_length), name);
+    push_string(&(asm_output), &(asm_output_length), ".asm");
+
+    variable asm_output_descriptor = sys_open(&(asm_output), @cast_integer(+(+(O_WRONLY, O_CREAT), O_TRUNC)), 388);
+    sys_write(asm_output_descriptor, &(buffer), length(&(buffer)));
+    sys_close(asm_output_descriptor);
+
+    if =(sys_fork(), 0) {
+        variable arguments_buffer: any_32;
+
+        array8_set(&(arguments_buffer), 0, "/bin/fasm");
+        array8_set(&(arguments_buffer), 1, &(asm_output));
+
+        variable binary_output: any_32;
+        variable binary_output_length: integer = 0;
+        push_string(&(binary_output), &(binary_output_length), "build/");
+        push_string(&(binary_output), &(binary_output_length), name);
+        array8_set(&(arguments_buffer), 2, &(binary_output));
+
+        variable _ = sys_execve("/bin/fasm", &(arguments_buffer), @cast_**(0));
+    };
+};
+
+function =string(string1: *, string2: *): boolean {
     variable string1_length = length(string1);
     variable string2_length = length(string2);
 

@@ -5,10 +5,19 @@ constant STDOUT: integer = 1;
 
 constant SYS_OPEN: integer = 2;
 constant O_RDONLY: integer = 0;
+constant O_WRONLY: integer = 1;
+constant O_CREAT: integer = 64;
+constant O_TRUNC: integer = 512;
+
+constant SYS_CLOSE: integer = 3;
 
 constant SYS_STAT: integer = 4;
 
 constant SYS_FSTAT: integer = 5;
+
+constant SYS_FORK: integer = 57;
+
+constant SYS_EXECVE: integer = 59;
 
 constant SYS_EXIT: integer = 60;
 
@@ -24,6 +33,10 @@ function sys_open(name: *, flags: integer, mode: integer): integer {
     return @cast_integer(@syscall3(SYS_OPEN, name, flags, mode));
 };
 
+function sys_close(fd: integer) {
+    variable _: any_8 = @syscall1(SYS_CLOSE, fd);
+};
+
 structure Stat {
     nonsense_0: any_48;
     size: integer;
@@ -36,6 +49,14 @@ function sys_stat(name: *, buffer: *Stat) {
 
 function sys_fstat(fd: integer, buffer: *Stat) {
     variable _: any_8 = @syscall2(SYS_FSTAT, fd, buffer);
+};
+
+function sys_fork(): integer {
+    return @cast_integer(@syscall0(SYS_FORK));
+};
+
+function sys_execve(file: *, args: *, env: **): integer {
+    return @cast_integer(@syscall3(SYS_EXECVE, file, args, env));
 };
 
 function sys_exit(code: integer) {
