@@ -614,6 +614,9 @@ function get_size_linux_x86-64(type: *): integer {
     if string_length=(type, "*", 1) {
         return 8;
     };
+    if string_length=(type, "any", 3) {
+        return to_number(@cast_*(+(type, 4)));
+    };
     return 0;
 };
 
@@ -940,6 +943,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
     variable function_argument_names: any_512;
     variable function_arguments: any_512;
     variable function_returns: any_512;
+    variable function_local_sizes: any_512;
     variable index = 0;
 
     variable i = 0;
@@ -956,6 +960,23 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
             array8_set(&(function_arguments), index, function_arguments2);
             variable function_returns2 = *->(@cast_**(+(pointer, 32)));
             array8_set(&(function_returns), index, function_returns2);
+
+            variable total = 16;
+            variable j = i;
+            while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
+                variable id = nodes_get_id(nodes, j);
+                variable pointer = nodes_get_pointer(nodes, j);
+                
+                if =(id, NODE_DECLARE) {
+                    variable declare_type = *->(@cast_**(+(pointer, 16)));
+                    total = integer+(total, get_size_linux_x86-64(declare_type));
+                };
+
+                j = integer+(j, 1);
+            };
+
+            array8_set(&(function_local_sizes), index, total);
+
             index = integer+(index, 1);
         };
 
@@ -983,8 +1004,12 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
             push_string_with_newline(&(buffer), &(buffer_index), ":");
             push_string_with_newline(&(buffer), &(buffer_index), "push rbp");
             push_string_with_newline(&(buffer), &(buffer_index), "mov rbp, rsp");
-            //TODO: actually implement & calculate
-            push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 256");
+
+            variable locals_size = @cast_integer(stringarraymap_get(&(functions), &(function_local_sizes), function_name, index));
+            push_string(&(buffer), &(buffer_index), "sub rsp, ");
+            push_integer(&(buffer), &(buffer_index), locals_size);
+            push_string_with_newline(&(buffer), &(buffer_index), "");
+
             current_function = function_name;
 
             variable_index = 0;
