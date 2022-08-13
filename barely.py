@@ -952,7 +952,7 @@ def get_size_linux_x86_64(types, ast):
     return size
 
 def remove_invalid_linux_x86_64(name):
-    invalid = "-><*/%="
+    invalid = "-><*/%=+"
 
     for character in invalid:
         name = name.replace(character, str(ord(character)))

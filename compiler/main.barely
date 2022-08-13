@@ -28,6 +28,8 @@ function main(arguments: **, argument_count: integer) {
 
     parse(&(tokens), tokens_index, &(nodes), &(nodes_index), &(allocator));
 
+    type_check(&(nodes), nodes_index);
+
     output_linux_x86-64(&(nodes), nodes_index, main_name);
 };
 
@@ -97,7 +99,7 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         return;
     };
 
-    if =string(buffer, "function") {
+    if string=(buffer, "function") {
         variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
         copy(buffer, allocated, buffer_length);
 
@@ -336,6 +338,10 @@ function increment_integer_pointer(pointer: *integer, amount: integer) {
     integer<-(pointer, @cast_integer(+(integer->(pointer), amount)));
 };
 
+function decrement_integer_pointer(pointer: *integer, amount: integer) {
+    integer<-(pointer, @cast_integer(-(integer->(pointer), amount)));
+};
+
 function append_node(nodes: *, nodes_index: *integer, id: integer): * {
     variable to_return = @cast_*(+(nodes, *(integer->(nodes_index), NODE_SIZE)));
 
@@ -494,12 +500,128 @@ function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer
         if =(*8(token_pointer), TOKEN_KEYWORD) {
             variable keyword = *->(@cast_**(+(token_pointer, 8)));
 
-            if =string(keyword, "function") {
+            if string=(keyword, "function") {
                 parse_function(tokens, &(index), nodes, nodes_index, allocator);
             };
         };
 
         index = @cast_integer(+(index, 1));
+    };
+};
+
+function get_size_linux_x86-64(type: *): integer {
+    if string=(type, "integer") {
+        return 8;
+    };
+    if string_length=(type, "*", 1) {
+        return 8;
+    };
+    return 0;
+};
+
+function is_type(wanted: *, given: *): boolean {
+    if string=(wanted, given) {
+        return true;
+    };
+
+    if string_length=(wanted, "any_", 4) {
+        variable size = to_number(@cast_*(+(wanted, 4)));
+        return =(size, get_size_linux_x86-64(given));
+    };
+
+    return false;
+};
+
+function type_check(nodes: *, node_count: integer) {
+    variable stack: any_64;
+    variable stack_pointer: integer;
+
+    variable functions: any_512;
+    variable function_arguments: any_512;
+    variable index = 0;
+
+    variable i = 0;
+    while <(i, node_count) {
+        variable id = nodes_get_id(nodes, i);
+        variable pointer = nodes_get_pointer(nodes, i);
+
+        if =(id, NODE_FUNCTION) {
+            variable function_name = *->(@cast_**(+(pointer, 8)));
+            array8_set(&(functions), index, function_name);
+            variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
+            array8_set(&(function_arguments), index, function_arguments2);
+            index = integer+(index, 1);
+        };
+
+        i = integer+(i, 1);
+    };
+
+    variable current_function: *;
+
+    i = 0;
+    while <(i, node_count) {
+        variable id = nodes_get_id(nodes, i);
+        variable pointer = nodes_get_pointer(nodes, i);
+        variable done_anything = false;
+
+        if =(id, NODE_FUNCTION) {
+            variable function_name = *->(@cast_**(+(pointer, 8)));
+            current_function = function_name;
+            done_anything = true;
+        };
+        if =(id, NODE_INTEGER) {
+            stack8_push(&(stack), &(stack_pointer), "integer");
+            done_anything = true;
+        };
+        if =(id, NODE_STRING) {
+            stack8_push(&(stack), &(stack_pointer), "*");
+            done_anything = true;
+        };
+        if =(id, NODE_INVOKE) {
+            variable function_name = *->(@cast_**(+(pointer, 8)));
+
+            variable j = 0;
+            while <(j, index) {
+                if string=(@cast_*(array8_get(&(functions), j)), function_name) {
+                    variable arguments = @cast_*(array8_get(&(function_arguments), j));
+
+                    variable length = array8_length(arguments);
+                    variable k = 0;
+                    while !(=(array8_get(arguments, k), 0)) {
+                        variable given = @cast_*(stack8_pop(&(stack), &(stack_pointer)));
+                        variable wanted = @cast_*(array8_get(arguments, @cast_integer(-(-(length, k), 1))));
+                        if !(is_type(wanted, given)) {
+                            print("TYPECHECK: ");
+                            print(current_function);
+                            print(": ");
+                            print("Invoke of ");
+                            print(function_name);
+                            print(" wants '");
+                            print(wanted);
+                            print("', given '");
+                            print(given);
+                            println("'");
+                            sys_exit(1);
+                        };
+
+                        k = integer+(k, 1);
+                    };
+                };
+                j = integer+(j, 1);
+            };
+
+            done_anything = true;
+        };
+        if =(id, NODE_ENDFUNCTION) {
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            print("Unhandled ");
+            @print_integer(id);
+        };
+
+        i = integer+(i, 1);
     };
 };
 
@@ -588,7 +710,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
 
             variable done_anything_invoke = false;
 
-            if =string(function_name, "@syscall3") {
+            if string=(function_name, "@syscall3") {
                 push_string_with_newline(&(buffer), &(buffer_index), "pop rdx");
                 push_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
                 push_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
@@ -669,16 +791,9 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
     };
 };
 
-function =string(string1: *, string2: *): boolean {
-    variable string1_length = length(string1);
-    variable string2_length = length(string2);
-
-    if !(=(string1_length, string2_length)) {
-        return false;
-    };
-
+function string_length=(string1: *, string2: *, length: integer): boolean {
     variable i = 0;
-    while <(i, string1_length) {
+    while <(i, length) {
         variable string1_character = *1(@cast_*(+(string1, i)));
         variable string2_character = *1(@cast_*(+(string2, i)));
 
@@ -692,6 +807,17 @@ function =string(string1: *, string2: *): boolean {
     return true;
 };
 
+function string=(string1: *, string2: *): boolean {
+    variable string1_length = length(string1);
+    variable string2_length = length(string2);
+
+    if !(=(string1_length, string2_length)) {
+        return false;
+    };
+
+    return string_length=(string1, string2, string1_length);
+};
+
 function length(string: *): integer {
     variable length = 0;
 
@@ -700,6 +826,10 @@ function length(string: *): integer {
     };
 
     return length;
+};
+
+function integer+(value1: integer, value2: integer): integer {
+    return @cast_integer(+(value1, value2));
 };
 
 function copy(from: *, to: *, size: integer) {
@@ -762,5 +892,25 @@ function array8_set(array: *, index: integer, value: any_8) {
 
 function array8_get(array: *, index: integer): any_8 {
     variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
+    return any_8->(index_pointer);
+};
+
+function array8_length(array: *): integer {
+    variable k = 0;
+    while !(=(array8_get(array, k), 0)) {
+        k = integer+(k, 1);
+    };
+    return k;
+};
+
+function stack8_push(stack: *, stack_pointer: *integer, value: any_8) {
+    variable index_pointer = @cast_*any_8(+(stack, *(integer->(stack_pointer), 8)));
+    any_8<-(index_pointer, value);
+    increment_integer_pointer(stack_pointer, 1);
+};
+
+function stack8_pop(stack: *, stack_pointer: *integer): any_8 {
+    decrement_integer_pointer(stack_pointer, 1);
+    variable index_pointer = @cast_*any_8(+(stack, *(integer->(stack_pointer), 8)));
     return any_8->(index_pointer);
 };
