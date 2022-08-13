@@ -110,6 +110,17 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
         return;
     };
+    if string=(buffer, "variable") {
+        variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+        copy(buffer, allocated, buffer_length);
+
+        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_KEYWORD);
+
+        TokenKeywordData<-keyword(@cast_*TokenKeywordData(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+
+        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+        return;
+    };
 
     if is_number(buffer) {
         integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_INTEGER);
@@ -321,6 +332,8 @@ constant NODE_RETRIEVE: integer = 2;
 constant NODE_STRING: integer = 3;
 constant NODE_INTEGER: integer = 4;
 constant NODE_INVOKE: integer = 5;
+constant NODE_DECLARE: integer = 6;
+constant NODE_ASSIGN: integer = 7;
 
 constant NODE_SIZE: integer = 40;
 
@@ -484,11 +497,76 @@ function parse_expression(tokens: *, index_pointer: *integer, nodes: *, nodes_in
 function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_index: *integer, allocator: *BumpAllocator) {
     variable done_anything = false;
 
-    if !(done_anything) {
-        parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
+    if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
+        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "variable") {
+            variable variable_name = *->(@cast_**(+(tokens_get_pointer(tokens, integer+(integer->(index_pointer), 1)), 8)));
+            variable index = integer->(index_pointer);
+            index = integer+(index, 1);
+
+            variable names: any_40;
+            variable types: any_40;
+
+            variable name_index = 0;
+            variable seen_name = false;
+            variable running = true;
+            while running {
+                variable id = tokens_get_id(tokens, index);
+                if =(id, TOKEN_COMMA) {
+                    name_index = integer+(name_index, 1);
+                    seen_name = false;
+                };
+
+                if =(id, TOKEN_NAME) {
+                    variable name_value = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+                    if seen_name {
+                        array8_set(&(types), name_index, name_value);
+                    };
+
+                    if !(seen_name) {
+                        array8_set(&(names), name_index, name_value);
+                        array8_set(&(types), name_index, "");
+                        seen_name = true;
+                    };
+                };
+
+                index = integer+(index, 1);
+
+                if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+                    if string=(*->(@cast_**(+(tokens_get_pointer(tokens, index), 8))), "=") {
+                        running = false;
+                    };
+                };
+            };
+
+            index = integer+(index, 1);
+
+            variable i = 0;
+            while !(=(array8_get(&(names), i), 0)) {
+                variable node = append_node(nodes, nodes_index, NODE_DECLARE);
+                *<-(@cast_**(+(node, 8)), @cast_*(array8_get(&(names), i)));
+                *<-(@cast_**(+(node, 16)), @cast_*(array8_get(&(types), i)));
+
+                i = integer+(i, 1);
+            };
+
+            parse_expression(tokens, &(index), nodes, nodes_index, allocator);
+
+            variable i = 0;
+            while !(=(array8_get(&(names), i), 0)) {
+                variable node = append_node(nodes, nodes_index, NODE_ASSIGN);
+                *<-(@cast_**(+(node, 8)), @cast_*(array8_get(&(names), i)));
+
+                i = integer+(i, 1);
+            };
+
+            integer<-(index_pointer, index);
+        };
     };
 
-    increment_integer_pointer(index_pointer, 1);
+    if !(done_anything) {
+        parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
+        increment_integer_pointer(index_pointer, 1);
+    };
 };
 
 function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer, allocator: *BumpAllocator) {
@@ -517,6 +595,18 @@ function get_size_linux_x86-64(type: *): integer {
         return 8;
     };
     return 0;
+};
+
+function get_size_multiple_linux_x86-64(array: *, count: integer): integer {
+    variable total = 0;
+
+    variable i = 0;
+    while <(i, count) {
+        total = integer+(total, get_size_linux_x86-64(@cast_*(array8_get(array, i))));
+        i = integer+(i, 1);
+    };
+
+    return total;
 };
 
 function is_type(wanted: *, given: *): boolean {
@@ -558,6 +648,10 @@ function type_check(nodes: *, node_count: integer) {
 
     variable current_function: *;
 
+    variable variable_names: any_128;
+    variable variable_types: any_128;
+    variable variable_index = 0;
+
     i = 0;
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
@@ -567,6 +661,7 @@ function type_check(nodes: *, node_count: integer) {
         if =(id, NODE_FUNCTION) {
             variable function_name = *->(@cast_**(+(pointer, 8)));
             current_function = function_name;
+            variable_index = 0;
             done_anything = true;
         };
         if =(id, NODE_INTEGER) {
@@ -580,6 +675,7 @@ function type_check(nodes: *, node_count: integer) {
         if =(id, NODE_INVOKE) {
             variable function_name = *->(@cast_**(+(pointer, 8)));
 
+            variable found_function = false;
             variable j = 0;
             while <(j, index) {
                 if string=(@cast_*(array8_get(&(functions), j)), function_name) {
@@ -593,8 +689,7 @@ function type_check(nodes: *, node_count: integer) {
                         if !(is_type(wanted, given)) {
                             print("TYPECHECK: ");
                             print(current_function);
-                            print(": ");
-                            print("Invoke of ");
+                            print(": Invoke of ");
                             print(function_name);
                             print(" wants '");
                             print(wanted);
@@ -606,9 +701,59 @@ function type_check(nodes: *, node_count: integer) {
 
                         k = integer+(k, 1);
                     };
+                    
+                    found_function = true;
                 };
                 j = integer+(j, 1);
             };
+
+            if !(found_function) {
+                print("TYPECHECK: ");
+                print(current_function);
+                print(": Invoke target '");
+                print(function_name);
+                println("' not found");
+                sys_exit(1);
+            };
+
+            done_anything = true;
+        };
+        if =(id, NODE_DECLARE) {
+            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_type = *->(@cast_**(+(pointer, 16)));
+
+            array8_set(&(variable_names), variable_index, variable_name);
+            array8_set(&(variable_types), variable_index, variable_type);
+            variable_index = integer+(variable_index, 1);
+
+            done_anything = true;
+        };
+        if =(id, NODE_ASSIGN) {
+            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+
+            variable popped_stack = @cast_*(stack8_pop(&(stack), &(stack_pointer)));
+
+            if !(string=(variable_type, popped_stack)) {
+                print("TYPECHECK: ");
+                print(current_function);
+                print(": Assign of ");
+                print(variable_name);
+                print(" wants '");
+                print(variable_type);
+                print("', given '");
+                print(popped_stack);
+                println("'");
+                sys_exit(1);
+                
+            };
+
+            done_anything = true;
+        };
+        if =(id, NODE_RETRIEVE) {
+            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            stack8_push(&(stack), &(stack_pointer), variable_type);
 
             done_anything = true;
         };
@@ -623,6 +768,28 @@ function type_check(nodes: *, node_count: integer) {
 
         i = integer+(i, 1);
     };
+};
+
+function stringarraymap_get(keys: *, values: *, wanted: *, size: integer): * {
+    variable j = 0;
+    while <(j, size) {
+        if string=(@cast_*(array8_get(keys, j)), wanted) {
+            return @cast_*(array8_get(values, j));
+        };
+    };
+
+    return @cast_*(0);
+};
+
+function stringarraymap_get_index(keys: *, wanted: *, size: integer): integer {
+    variable j = 0;
+    while <(j, size) {
+        if string=(@cast_*(array8_get(keys, j)), wanted) {
+            return j;
+        };
+    };
+
+    return 999;
 };
 
 function push_string(buffer: *, buffer_index_pointer: *integer, string: *) {
@@ -646,6 +813,12 @@ function push_string_with_newline(buffer: *, buffer_index_pointer: *integer, str
 
 function push_character(buffer: *, buffer_index_pointer: *integer, character: any_1) {
     push_string(buffer, buffer_index_pointer, &(character));
+};
+
+function push_integer(buffer: *, buffer_index_pointer: *integer, integer: integer) {
+    variable integer_buffer: any_8;
+    integer_to_string(integer, &(integer_buffer));
+    push_string(buffer, buffer_index_pointer, &(integer_buffer));
 };
 
 function nodes_get_id(nodes: *, index: integer): integer {
@@ -674,6 +847,10 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
     push_string_with_newline(&(buffer), &(buffer_index), "mov rdi, 0");
     push_string_with_newline(&(buffer), &(buffer_index), "syscall");
 
+    variable variable_names: any_128;
+    variable variable_types: any_128;
+    variable variable_index = 0;
+
     variable constant_index = 0;
 
     variable i = 0;
@@ -692,6 +869,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
             //TODO: actually implement & calculate
             push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 256");
 
+            variable_index = 0;
             done_anything = true;
         };
 
@@ -748,6 +926,186 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
             done_anything = true;
         };
 
+        if =(id, NODE_DECLARE) {
+            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_type = *->(@cast_**(+(pointer, 16)));
+
+            array8_set(&(variable_names), variable_index, variable_name);
+            array8_set(&(variable_types), variable_index, variable_type);
+            variable_index = integer+(variable_index, 1);
+
+            done_anything = true;
+        };
+
+        if =(id, NODE_ASSIGN) {
+            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            variable size = get_size_linux_x86-64(variable_type);
+            variable location = get_size_multiple_linux_x86-64(&(variable_types), stringarraymap_get_index(&(variable_names), variable_name, variable_index));
+
+            variable j = 0;
+            while <(j, size) {
+                variable done_anything_assign = false;
+
+                if >(-(size, j), 7) {
+                    push_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], rax");
+
+                    j = integer+(j, 8);
+                    done_anything = true;
+                };
+                if &&(>(-(size, j), 3), !(done_anything)) {
+                    push_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], eax");
+
+                    j = integer+(j, 4);
+                    done_anything = true;
+                };
+                if &&(>(-(size, j), 1), !(done_anything)) {
+                    push_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], ax");
+
+                    j = integer+(j, 2);
+                    done_anything = true;
+                };
+                if &&(>(-(size, j), 0), !(done_anything)) {
+                    push_string(&(buffer), &(buffer_index), "mov al, [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "], al");
+
+                    j = integer+(j, 2);
+                    done_anything = true;
+                };
+            };
+
+            push_string(&(buffer), &(buffer_index), "add rsp, ");
+            push_integer(&(buffer), &(buffer_index), size);
+            push_string_with_newline(&(buffer), &(buffer_index), "");
+
+            done_anything = true;
+        };
+
+        if =(id, NODE_RETRIEVE) {
+            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            variable size = get_size_linux_x86-64(variable_type);
+            variable location = get_size_multiple_linux_x86-64(&(variable_types), stringarraymap_get_index(&(variable_names), variable_name, variable_index));
+
+            push_string(&(buffer), &(buffer_index), "sub rsp, ");
+            push_integer(&(buffer), &(buffer_index), size);
+            push_string_with_newline(&(buffer), &(buffer_index), "");
+
+            variable j = 0;
+            while <(j, size) {
+                variable done_anything_assign = false;
+
+                if >(-(size, j), 7) {
+                    push_string(&(buffer), &(buffer_index), "mov rax, [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "], rax");
+
+                    j = integer+(j, 8);
+                    done_anything = true;
+                };
+                if &&(>(-(size, j), 3), !(done_anything)) {
+                    push_string(&(buffer), &(buffer_index), "mov eax, [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "], eax");
+
+                    j = integer+(j, 4);
+                    done_anything = true;
+                };
+                if &&(>(-(size, j), 1), !(done_anything)) {
+                    push_string(&(buffer), &(buffer_index), "mov ax, [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "], ax");
+
+                    j = integer+(j, 2);
+                    done_anything = true;
+                };
+                if &&(>(-(size, j), 0), !(done_anything)) {
+                    push_string(&(buffer), &(buffer_index), "mov al, [rbp-");
+                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                    push_integer(&(buffer), &(buffer_index), j);
+                    push_string_with_newline(&(buffer), &(buffer_index), "], al");
+
+                    j = integer+(j, 2);
+                    done_anything = true;
+                };
+            };
+
+            done_anything = true;
+
+
+                        //i = function.locals.index(instruction.name)
+                        //location = get_size_linux_x86_64(local_types[0 : i], ast)
+                        //size = get_size_linux_x86_64(local_types[i], ast)
+                        //#size = (((size) + 7) & (-8))
+
+                        //#print(size)
+                        //if isinstance(function.instructions[index0 + 1], PointerNode):
+                        //    contents += "lea rax, [rbp-" + str(location + size) + "]\n"
+                        //    contents += "push rax\n"
+                        //else:
+                        //    contents += "sub rsp, " + str(size) + "\n"
+
+                        //    j = 0
+                        //    while j < size:
+                        //        if size - j >= 8:
+                        //            contents += "mov rax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                        //            contents += "mov [rsp+" + str(j) + "], rax\n"
+                        //            j += 8
+                        //        elif size - j >= 4:
+                        //            contents += "mov eax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                        //            contents += "mov [rsp+" + str(j) + "], eax\n"
+                        //            j += 4
+                        //        elif size - j >= 2:
+                        //            contents += "mov ax, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                        //            contents += "mov [rsp+" + str(j) + "], ax\n"
+                        //            j += 2
+                        //        elif size - j >= 1:
+                        //            contents += "mov al, [rbp-" + str(8 + location + size - j - 8) + "]\n"
+                        //            contents += "mov [rsp+" + str(j) + "], al\n"
+                        //            j += 1
+                        //        else:
+                        //            print("sizing error")
+                        //            exit()
+        };
+
         if =(id, NODE_ENDFUNCTION) {
             push_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
             push_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
@@ -756,6 +1114,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
         };
 
         if !(done_anything) {
+            print("Unhandled ");
             @print_integer(id);
         };
 
@@ -775,7 +1134,8 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
     sys_write(asm_output_descriptor, &(buffer), length(&(buffer)));
     sys_close(asm_output_descriptor);
 
-    if =(sys_fork(), 0) {
+    variable id = sys_fork();
+    if =(id, 0) {
         variable arguments_buffer: any_32;
 
         array8_set(&(arguments_buffer), 0, "/bin/fasm");
@@ -789,6 +1149,8 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
 
         variable _ = sys_execve("/bin/fasm", &(arguments_buffer), @cast_**(0));
     };
+
+    variable _ = @syscall5(247, 1, id, 0, 4, 0);
 };
 
 function string_length=(string1: *, string2: *, length: integer): boolean {
