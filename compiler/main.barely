@@ -632,6 +632,21 @@ function get_size_multiple_linux_x86-64(array: *, count: integer): integer {
     return total;
 };
 
+function get_size_multiple_reversed_linux_x86-64(array: *, count: integer): integer {
+    variable i = array8_length(array);
+
+    i = @cast_integer(-(i, 1));
+
+    variable total = 0;
+
+    while >(+(array, i), +(array, count)) {
+        total = integer+(total, get_size_linux_x86-64(@cast_*(array8_get(array, i))));
+        i = integer-(i, 1);
+    };
+
+    return total;
+};
+
 function is_type(wanted: *, given: *): boolean {
     if string=(wanted, given) {
         return true;
@@ -1180,7 +1195,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
 
                 variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, index);
                 variable size = get_size_linux_x86-64(variable_type);
-                variable location = get_size_multiple_linux_x86-64(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)));
+                variable location = get_size_multiple_reversed_linux_x86-64(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)));
 
                 variable j = 0;
                 while <(j, size) {
@@ -1463,6 +1478,10 @@ function length(string: *): integer {
 
 function integer+(value1: integer, value2: integer): integer {
     return @cast_integer(+(value1, value2));
+};
+
+function integer-(value1: integer, value2: integer): integer {
+    return @cast_integer(-(value1, value2));
 };
 
 function copy(from: *, to: *, size: integer) {
