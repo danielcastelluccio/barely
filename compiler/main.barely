@@ -650,6 +650,7 @@ function type_check(nodes: *, node_count: integer) {
     variable stack_pointer: integer;
 
     variable functions: any_512;
+    variable function_argument_names: any_512;
     variable function_arguments: any_512;
     variable function_returns: any_512;
     variable index = 0;
@@ -662,6 +663,8 @@ function type_check(nodes: *, node_count: integer) {
         if =(id, NODE_FUNCTION) {
             variable function_name = *->(@cast_**(+(pointer, 8)));
             array8_set(&(functions), index, function_name);
+            variable function_argument_names2 = *->(@cast_**(+(pointer, 16)));
+            array8_set(&(function_argument_names), index, function_argument_names2);
             variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
             array8_set(&(function_arguments), index, function_arguments2);
             variable function_returns2 = *->(@cast_**(+(pointer, 32)));
@@ -787,7 +790,18 @@ function type_check(nodes: *, node_count: integer) {
         if =(id, NODE_RETRIEVE) {
             variable variable_name = *->(@cast_**(+(pointer, 8)));
             variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
-            stack8_push(&(stack), &(stack_pointer), variable_type);
+            if !(=(variable_type, 0)) {
+                stack8_push(&(stack), &(stack_pointer), variable_type);
+            };
+
+            if =(variable_type, 0) {
+                variable function_argument_names2 = stringarraymap_get(&(functions), &(function_argument_names), current_function, index);
+                variable function_arguments2 = stringarraymap_get(&(functions), &(function_arguments), current_function, index);
+
+                variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, index);
+
+                stack8_push(&(stack), &(stack_pointer), variable_type);
+            };
 
             done_anything = true;
         };
@@ -908,6 +922,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
     push_string_with_newline(&(buffer), &(buffer_index), "syscall");
 
     variable functions: any_512;
+    variable function_argument_names: any_512;
     variable function_arguments: any_512;
     variable function_returns: any_512;
     variable index = 0;
@@ -920,6 +935,8 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
         if =(id, NODE_FUNCTION) {
             variable function_name = *->(@cast_**(+(pointer, 8)));
             array8_set(&(functions), index, function_name);
+            variable function_argument_names2 = *->(@cast_**(+(pointer, 16)));
+            array8_set(&(function_argument_names), index, function_argument_names2);
             variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
             array8_set(&(function_arguments), index, function_arguments2);
             variable function_returns2 = *->(@cast_**(+(pointer, 32)));
@@ -1094,65 +1111,129 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
         if =(id, NODE_RETRIEVE) {
             variable variable_name = *->(@cast_**(+(pointer, 8)));
             variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
-            variable size = get_size_linux_x86-64(variable_type);
-            variable location = get_size_multiple_linux_x86-64(&(variable_types), stringarraymap_get_index(&(variable_names), variable_name, variable_index));
+            if !(=(variable_type, 0)) {
+                variable size = get_size_linux_x86-64(variable_type);
+                variable location = get_size_multiple_linux_x86-64(&(variable_types), stringarraymap_get_index(&(variable_names), variable_name, variable_index));
 
-            push_string(&(buffer), &(buffer_index), "sub rsp, ");
-            push_integer(&(buffer), &(buffer_index), size);
-            push_string_with_newline(&(buffer), &(buffer_index), "");
+                push_string(&(buffer), &(buffer_index), "sub rsp, ");
+                push_integer(&(buffer), &(buffer_index), size);
+                push_string_with_newline(&(buffer), &(buffer_index), "");
 
-            variable j = 0;
-            while <(j, size) {
-                variable done_anything_assign = false;
+                variable j = 0;
+                while <(j, size) {
+                    variable done_anything_assign = false;
 
-                if >(-(size, j), 7) {
-                    push_string(&(buffer), &(buffer_index), "mov rax, [rbp-");
-                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+                    if >(-(size, j), 7) {
+                        push_string(&(buffer), &(buffer_index), "mov rax, [rbp-");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    push_integer(&(buffer), &(buffer_index), j);
-                    push_string_with_newline(&(buffer), &(buffer_index), "], rax");
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
-                    j = integer+(j, 8);
-                    done_anything_assign = true;
+                        j = integer+(j, 8);
+                        done_anything_assign = true;
+                    };
+                    if &&(>(-(size, j), 3), !(done_anything_assign)) {
+                        push_string(&(buffer), &(buffer_index), "mov eax, [rbp-");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], eax");
+
+                        j = integer+(j, 4);
+                        done_anything_assign = true;
+                    };
+                    if &&(>(-(size, j), 1), !(done_anything_assign)) {
+                        push_string(&(buffer), &(buffer_index), "mov ax, [rbp-");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], ax");
+
+                        j = integer+(j, 2);
+                        done_anything_assign = true;
+                    };
+                    if &&(>(-(size, j), 0), !(done_anything_assign)) {
+                        push_string(&(buffer), &(buffer_index), "mov al, [rbp-");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], al");
+
+                        j = integer+(j, 1);
+                        done_anything_assign = true;
+                    };
                 };
-                if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                    push_string(&(buffer), &(buffer_index), "mov eax, [rbp-");
-                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                    push_string_with_newline(&(buffer), &(buffer_index), "]");
+            };
+            
+            if =(variable_type, 0) {
+                variable function_argument_names2 = stringarraymap_get(&(functions), &(function_argument_names), current_function, index);
+                variable function_arguments2 = stringarraymap_get(&(functions), &(function_arguments), current_function, index);
 
-                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    push_integer(&(buffer), &(buffer_index), j);
-                    push_string_with_newline(&(buffer), &(buffer_index), "], eax");
+                variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, index);
+                variable size = get_size_linux_x86-64(variable_type);
+                variable location = get_size_multiple_linux_x86-64(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)));
 
-                    j = integer+(j, 4);
-                    done_anything_assign = true;
+                variable j = 0;
+                while <(j, size) {
+                    if >(-(size, j), 7) {
+                        push_string(&(buffer), &(buffer_index), "mov rax, [rbp+");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], rax");
+
+                        j = integer+(j, 8);
+                        done_anything_assign = true;
+                    };
+                    if &&(>(-(size, j), 3), !(done_anything_assign)) {
+                        push_string(&(buffer), &(buffer_index), "mov eax, [rbp+");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], eax");
+
+                        j = integer+(j, 4);
+                        done_anything_assign = true;
+                    };
+                    if &&(>(-(size, j), 1), !(done_anything_assign)) {
+                        push_string(&(buffer), &(buffer_index), "mov ax, [rbp+");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], ax");
+
+                        j = integer+(j, 2);
+                        done_anything_assign = true;
+                    };
+                    if &&(>(-(size, j), 0), !(done_anything_assign)) {
+                        push_string(&(buffer), &(buffer_index), "mov al, [rbp=");
+                        push_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
+                        push_string_with_newline(&(buffer), &(buffer_index), "]");
+
+                        push_string(&(buffer), &(buffer_index), "mov [rsp+");
+                        push_integer(&(buffer), &(buffer_index), j);
+                        push_string_with_newline(&(buffer), &(buffer_index), "], al");
+
+                        j = integer+(j, 1);
+                        done_anything_assign = true;
+                    };
                 };
-                if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                    push_string(&(buffer), &(buffer_index), "mov ax, [rbp-");
-                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                    push_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    push_integer(&(buffer), &(buffer_index), j);
-                    push_string_with_newline(&(buffer), &(buffer_index), "], ax");
-
-                    j = integer+(j, 2);
-                    done_anything_assign = true;
-                };
-                if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                    push_string(&(buffer), &(buffer_index), "mov al, [rbp-");
-                    push_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                    push_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    push_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    push_integer(&(buffer), &(buffer_index), j);
-                    push_string_with_newline(&(buffer), &(buffer_index), "], al");
-
-                    j = integer+(j, 1);
-                    done_anything_assign = true;
-                };
+                
             };
 
             done_anything = true;
