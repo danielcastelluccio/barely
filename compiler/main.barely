@@ -41,6 +41,8 @@ function main(arguments: **, argument_count: integer) {
     while <(i, nodes_index_saved) {
         if =(nodes_get_id(&(nodes), i), NODE_STRUCTURE) {
             variable name = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 8)));
+
+            // Setter for whole value
             variable allocated = bump_allocate(&(allocator), integer+(length(name), 3));
             copy(name, allocated, length(name));
             copy("<-", @cast_*(+(allocated, length(name))), 2);
@@ -62,6 +64,78 @@ function main(arguments: **, argument_count: integer) {
             *<-(@cast_**(+(pointer_store_node, 32)), allocated_returns);
 
             variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
+
+            // Getter for whole value
+            variable allocated = bump_allocate(&(allocator), integer+(length(name), 3));
+            copy(name, allocated, length(name));
+            copy("->", @cast_*(+(allocated, length(name))), 2);
+
+            variable allocated_arguments = bump_allocate(&(allocator), 16);
+            array8_set(allocated_arguments, 0, allocated_pointer);
+
+            variable allocated_returns = bump_allocate(&(allocator), 16);
+            array8_set(allocated_returns, 0, name);
+
+            variable pointer_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
+            *<-(@cast_**(+(pointer_store_node, 8)), allocated);
+            *<-(@cast_**(+(pointer_store_node, 16)), @cast_*(0));
+            *<-(@cast_**(+(pointer_store_node, 24)), allocated_arguments);
+            *<-(@cast_**(+(pointer_store_node, 32)), allocated_returns);
+
+            variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
+
+
+            variable member_names = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 16)));
+            variable member_types = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 24)));
+
+            variable j = 0;
+            while !(=(array8_get(member_names, j), 0)) {
+                variable member_name = @cast_*(array8_get(member_names, j));
+                variable member_type = @cast_*(array8_get(member_types, j));
+
+                // Setter for individual members
+                variable allocated = bump_allocate(&(allocator), integer+(length(name), integer+(length(member_name), 3)));
+                copy(name, allocated, length(name));
+                copy("<-", @cast_*(+(allocated, length(name))), 2);
+                copy(member_name, @cast_*(+(allocated, +(length(name), 2))), length(member_name));
+
+                variable allocated_arguments = bump_allocate(&(allocator), 24);
+                array8_set(allocated_arguments, 0, allocated_pointer);
+                array8_set(allocated_arguments, 1, member_type);
+
+                variable allocated_returns = bump_allocate(&(allocator), 8);
+
+                variable member_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
+                *<-(@cast_**(+(member_store_node, 8)), allocated);
+                *<-(@cast_**(+(member_store_node, 16)), @cast_*(0));
+                *<-(@cast_**(+(member_store_node, 24)), allocated_arguments);
+                *<-(@cast_**(+(member_store_node, 32)), allocated_returns);
+
+                variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
+
+
+                // Getter for individual members
+                variable allocated = bump_allocate(&(allocator), integer+(length(name), integer+(length(member_name), 3)));
+                copy(name, allocated, length(name));
+                copy("->", @cast_*(+(allocated, length(name))), 2);
+                copy(member_name, @cast_*(+(allocated, +(length(name), 2))), length(member_name));
+
+                variable allocated_arguments = bump_allocate(&(allocator), 16);
+                array8_set(allocated_arguments, 0, allocated_pointer);
+
+                variable allocated_returns = bump_allocate(&(allocator), 16);
+                array8_set(allocated_returns, 0, member_type);
+
+                variable member_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
+                *<-(@cast_**(+(member_store_node, 8)), allocated);
+                *<-(@cast_**(+(member_store_node, 16)), @cast_*(0));
+                *<-(@cast_**(+(member_store_node, 24)), allocated_arguments);
+                *<-(@cast_**(+(member_store_node, 32)), allocated_returns);
+
+                variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
+
+                j = integer+(j, 1);
+            };
         };
         i = integer+(i, 1);
     };
@@ -1165,6 +1239,8 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
         };
         if =(id, NODE_STRUCTURE) {
             variable structure_name = *->(@cast_**(+(nodes_get_pointer(nodes, i), 8)));
+
+            // Setter for whole value
             variable allocated = bump_allocate(allocator, integer+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
@@ -1245,6 +1321,251 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
             array8_set(&(memory_function_contents), memory_function_index, allocated_contents);
 
             memory_function_index = integer+(memory_function_index, 1);
+
+            // Getter for whole value
+            variable allocated = bump_allocate(allocator, integer+(length(structure_name), 3));
+            copy(structure_name, allocated, length(structure_name));
+            copy("->", @cast_*(+(allocated, length(structure_name))), 2);
+
+            array8_set(&(memory_functions), memory_function_index, allocated);
+
+            variable allocated_contents = bump_allocate(allocator, 128);
+            variable contents_index = 0;
+
+            push_string_with_newline(allocated_contents, &(contents_index), "pop rax");
+            push_string(allocated_contents, &(contents_index), "sub rsp, ");
+            push_integer(allocated_contents, &(contents_index), size);
+            push_string_with_newline(allocated_contents, &(contents_index), "");
+
+            variable k = 0;
+            while <(k, size) {
+                variable done_anything_structure = false;
+
+                if >(-(size, k), 7) {
+                    push_string(allocated_contents, &(contents_index), "mov rbx, [rax+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                    push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "], rbx");
+
+                    k = integer+(k, 8);
+                    done_anything_structure = true;
+                };
+                if &&(>(-(size, k), 3), !(done_anything_structure)) {
+                    push_string(allocated_contents, &(contents_index), "mov ebx, [rax+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                    push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "], ebx");
+
+                    k = integer+(k, 4);
+                    done_anything_structure = true;
+                };
+                if &&(>(-(size, k), 1), !(done_anything_structure)) {
+                    push_string(allocated_contents, &(contents_index), "mov bx, [rax+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                    push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "], bx");
+
+                    k = integer+(k, 2);
+                    done_anything_structure = true;
+                };
+                if &&(>(-(size, k), 0), !(done_anything_structure)) {
+                    push_string(allocated_contents, &(contents_index), "mov bl, [rax+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                    push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                    push_integer(allocated_contents, &(contents_index), k);
+                    push_string_with_newline(allocated_contents, &(contents_index), "], bl");
+
+                    k = integer+(k, 1);
+                    done_anything_structure = true;
+                };
+            };
+
+            array8_set(&(memory_function_contents), memory_function_index, allocated_contents);
+
+            memory_function_index = integer+(memory_function_index, 1);
+
+            variable member_names = *->(@cast_**(+(nodes_get_pointer(nodes, i), 16)));
+            variable member_types = *->(@cast_**(+(nodes_get_pointer(nodes, i), 24)));
+
+            variable j = 0;
+            while !(=(array8_get(member_names, j), 0)) {
+                variable member_name = @cast_*(array8_get(member_names, j));
+                variable member_type = @cast_*(array8_get(member_types, j));
+
+                // Setter for individual members
+                variable allocated = bump_allocate(allocator, integer+(length(structure_name), integer+(length(member_name), 3)));
+                copy(structure_name, allocated, length(structure_name));
+                copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
+                copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
+
+                array8_set(&(memory_functions), memory_function_index, allocated);
+
+                variable allocated_contents = bump_allocate(allocator, 128);
+                variable contents_index = 0;
+
+                variable size = get_size_linux_x86-64(member_type, nodes, node_count);
+                variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, node_count);
+
+                push_string(allocated_contents, &(contents_index), "add rsp, ");
+                push_integer(allocated_contents, &(contents_index), size);
+                push_string_with_newline(allocated_contents, &(contents_index), "");
+                push_string_with_newline(allocated_contents, &(contents_index), "mov rax, [rsp]");
+                push_string(allocated_contents, &(contents_index), "sub rsp, ");
+                push_integer(allocated_contents, &(contents_index), size);
+                push_string_with_newline(allocated_contents, &(contents_index), "");
+
+                variable k = 0;
+                while <(k, size) {
+                    variable done_anything_structure = false;
+
+                    if >(-(size, k), 7) {
+                        push_string(allocated_contents, &(contents_index), "mov rbx, [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "], rbx");
+
+                        k = integer+(k, 8);
+                        done_anything_structure = true;
+                    };
+                    if &&(>(-(size, k), 3), !(done_anything_structure)) {
+                        push_string(allocated_contents, &(contents_index), "mov ebx, [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "], ebx");
+
+                        k = integer+(k, 4);
+                        done_anything_structure = true;
+                    };
+                    if &&(>(-(size, k), 1), !(done_anything_structure)) {
+                        push_string(allocated_contents, &(contents_index), "mov bx, [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "], bx");
+
+                        k = integer+(k, 2);
+                        done_anything_structure = true;
+                    };
+                    if &&(>(-(size, k), 0), !(done_anything_structure)) {
+                        push_string(allocated_contents, &(contents_index), "mov bl, [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "], bl");
+
+                        k = integer+(k, 1);
+                        done_anything_structure = true;
+                    };
+                };
+
+                push_string(allocated_contents, &(contents_index), "add rsp, ");
+                push_integer(allocated_contents, &(contents_index), integer+(size, 8));
+                push_string_with_newline(allocated_contents, &(contents_index), "");
+
+                array8_set(&(memory_function_contents), memory_function_index, allocated_contents);
+
+                memory_function_index = integer+(memory_function_index, 1);
+
+                // Getter for indivudal members
+                variable allocated = bump_allocate(allocator, integer+(length(structure_name), integer+(length(member_name), 3)));
+                copy(structure_name, allocated, length(structure_name));
+                copy("->", @cast_*(+(allocated, length(structure_name))), 2);
+                copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
+
+                array8_set(&(memory_functions), memory_function_index, allocated);
+
+                variable allocated_contents = bump_allocate(allocator, 128);
+                variable contents_index = 0;
+
+                variable size = get_size_linux_x86-64(member_type, nodes, node_count);
+                variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, node_count);
+
+                push_string_with_newline(allocated_contents, &(contents_index), "pop rax");
+                push_string(allocated_contents, &(contents_index), "sub rsp, ");
+                push_integer(allocated_contents, &(contents_index), size);
+                push_string_with_newline(allocated_contents, &(contents_index), "");
+
+                variable k = 0;
+                while <(k, size) {
+                    variable done_anything_structure = false;
+
+                    if >(-(size, k), 7) {
+                        push_string(allocated_contents, &(contents_index), "mov rbx, [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "], rbx");
+
+                        k = integer+(k, 8);
+                        done_anything_structure = true;
+                    };
+                    if &&(>(-(size, k), 3), !(done_anything_structure)) {
+                        push_string(allocated_contents, &(contents_index), "mov ebx, [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "], ebx");
+
+                        k = integer+(k, 4);
+                        done_anything_structure = true;
+                    };
+                    if &&(>(-(size, k), 1), !(done_anything_structure)) {
+                        push_string(allocated_contents, &(contents_index), "mov bx, [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "], bx");
+
+                        k = integer+(k, 2);
+                        done_anything_structure = true;
+                    };
+                    if &&(>(-(size, k), 0), !(done_anything_structure)) {
+                        push_string(allocated_contents, &(contents_index), "mov bl, [rax+");
+                        push_integer(allocated_contents, &(contents_index), integer+(k, location));
+                        push_string_with_newline(allocated_contents, &(contents_index), "]");
+
+                        push_string(allocated_contents, &(contents_index), "mov [rsp+");
+                        push_integer(allocated_contents, &(contents_index), k);
+                        push_string_with_newline(allocated_contents, &(contents_index), "], bl");
+
+                        k = integer+(k, 1);
+                        done_anything_structure = true;
+                    };
+                };
+
+                array8_set(&(memory_function_contents), memory_function_index, allocated_contents);
+
+                memory_function_index = integer+(memory_function_index, 1);
+
+                j = integer+(j, 1);
+            };
         };
 
         i = integer+(i, 1);
@@ -1806,7 +2127,7 @@ function exit(code: integer) {
 };
 
 structure BumpAllocator {
-    memory: any_2048;
+    memory: any_4096;
     location: integer;
     count: integer;
 };

@@ -1,5 +1,6 @@
 structure Foo {
     value: *;
+    value2: *;
 };
 
 // this is a comment
@@ -8,9 +9,11 @@ function main() {
     variable test2: integer;
     variable test4: *integer = &(test2);
     integer<-(test4, 12);
-    variable test3: Foo = @cast_Foo("Hello World!");
+    variable test3: Foo;
+    Foo<-value(&(test3), "Hello World!");
+    Foo<-value2(&(test3), "Hello Mommy!");
     // this is a comment
-    print(@cast_*(test3), test2);
+    print(Foo->value2(&(test3)), integer->(test4));
 };
 
 function print(buffer: *, size: integer) {
