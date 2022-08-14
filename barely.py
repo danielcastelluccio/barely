@@ -1264,6 +1264,14 @@ ret
                         contents += "and al, bl\n"
                         contents += "sub rsp, 1\n"
                         contents += "mov [rsp], al\n"
+                    elif instruction.name == "|":
+                        contents += "mov al, [rsp]\n"
+                        contents += "add rsp, 1\n"
+                        contents += "mov bl, [rsp]\n"
+                        contents += "add rsp, 1\n"
+                        contents += "or al, bl\n"
+                        contents += "sub rsp, 1\n"
+                        contents += "mov [rsp], al\n"
                     elif instruction.name == "+":
                         contents += "pop rax\n"
                         contents += "pop rbx\n"

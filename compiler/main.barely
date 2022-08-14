@@ -1,8 +1,8 @@
+global tokens: any_65536;
+global tokens_index: integer;
+
 function main(arguments: **, argument_count: integer) {
     variable i = 1;
-
-    variable tokens: any_4096;
-    variable tokens_index = 0;
 
     variable allocator: BumpAllocator;
 
@@ -25,6 +25,13 @@ function main(arguments: **, argument_count: integer) {
 
     variable nodes: any_4096;
     variable nodes_index = 0;
+
+    variable empty: any_8;
+
+    variable integer_structure = append_node(&(nodes), &(nodes_index), NODE_STRUCTURE);
+    *<-(@cast_**(+(integer_structure, 8)), "integer");
+    *<-(@cast_**(+(integer_structure, 16)), &(empty));
+    *<-(@cast_**(+(integer_structure, 24)), &(empty));
 
     parse(&(tokens), tokens_index, &(nodes), &(nodes_index), &(allocator));
 
@@ -122,6 +129,17 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         return;
     };
     if string=(buffer, "return") {
+        variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+        copy(buffer, allocated, buffer_length);
+
+        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_KEYWORD);
+
+        TokenKeywordData<-keyword(@cast_*TokenKeywordData(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+
+        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+        return;
+    };
+    if string=(buffer, "structure") {
         variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
         copy(buffer, allocated, buffer_length);
 
@@ -346,6 +364,7 @@ constant NODE_INVOKE: integer = 5;
 constant NODE_DECLARE: integer = 6;
 constant NODE_ASSIGN: integer = 7;
 constant NODE_RETURN: integer = 8;
+constant NODE_STRUCTURE: integer = 9;
 
 constant NODE_SIZE: integer = 40;
 
@@ -375,6 +394,49 @@ function append_node(nodes: *, nodes_index: *integer, id: integer): * {
     increment_integer_pointer(nodes_index, 1);
 
     return to_return;
+};
+
+function parse_structure(tokens: *, index_pointer: *integer, nodes: *, nodes_index: *integer, allocator: *BumpAllocator) {
+    variable index = integer->(index_pointer);
+    variable name_token_pointer = @cast_*(+(tokens, *(+(index, 1), TOKEN_SIZE)));
+    variable name = *->(@cast_**(+(name_token_pointer, 8)));
+
+    variable member_names_pointer = bump_allocate(allocator, 40);
+    variable member_types_pointer = bump_allocate(allocator, 40);
+    variable member_index = 0;
+
+    index = integer+(index, 3);
+
+    variable seen_name = false;
+
+    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+        variable id = tokens_get_id(tokens, index);
+
+        if =(id, TOKEN_NAME) {
+            variable token_pointer = tokens_get_pointer(tokens, index);
+            variable name_name = *->(@cast_**(+(token_pointer, 8)));
+
+            if seen_name {
+                array8_set(member_types_pointer, member_index, name_name);
+                member_index = integer+(member_index, 1);
+            };
+
+            if !(seen_name) {
+                array8_set(member_names_pointer, member_index, name_name);
+            };
+
+            seen_name = !(seen_name);
+        };
+
+        index = integer+(index, 1);
+    };
+
+    variable structure_node = append_node(nodes, nodes_index, NODE_STRUCTURE);
+    *<-(@cast_**(+(structure_node, 8)), name);
+    *<-(@cast_**(+(structure_node, 16)), member_names_pointer);
+    *<-(@cast_**(+(structure_node, 24)), member_types_pointer);
+
+    integer<-(index_pointer, index);
 };
 
 function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_index: *integer, allocator: *BumpAllocator) {
@@ -420,7 +482,7 @@ function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_inde
     index = @cast_integer(+(index, 1));
 
     variable returns_index = 0;
-    while !(=(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS)) {
+    while &&(!(=(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS)), !(=(tokens_get_id(tokens, index), TOKEN_SEMICOLON))) {
         variable id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_NAME) {
@@ -432,14 +494,18 @@ function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_inde
         index = @cast_integer(+(index, 1));
     };
 
+    variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
+
     *<-(@cast_**(+(function_node, 16)), parameter_names_pointer);
     *<-(@cast_**(+(function_node, 24)), parameter_types_pointer);
     *<-(@cast_**(+(function_node, 32)), returns_pointer);
 
     index = @cast_integer(+(index, 1));
 
-    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
-        parse_statement(tokens, &(index), nodes, nodes_index, allocator);
+    if has_body {
+        while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+            parse_statement(tokens, &(index), nodes, nodes_index, allocator);
+        };
     };
 
     variable _ = append_node(nodes, nodes_index, NODE_ENDFUNCTION);
@@ -521,6 +587,7 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
             variable name_index = 0;
             variable seen_name = false;
             variable running = true;
+            variable parse_expression = false;
             while running {
                 variable id = tokens_get_id(tokens, index);
                 if =(id, TOKEN_COMMA) {
@@ -546,11 +613,14 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
                 if =(tokens_get_id(tokens, index), TOKEN_NAME) {
                     if string=(*->(@cast_**(+(tokens_get_pointer(tokens, index), 8))), "=") {
                         running = false;
+                        parse_expression = true;
                     };
                 };
+                if =(tokens_get_id(tokens, index), TOKEN_SEMICOLON) {
+                    running = false;
+                    parse_expression = false;
+                };
             };
-
-            index = integer+(index, 1);
 
             variable i = 0;
             while !(=(array8_get(&(names), i), 0)) {
@@ -561,14 +631,17 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
                 i = integer+(i, 1);
             };
 
-            parse_expression(tokens, &(index), nodes, nodes_index, allocator);
+            if parse_expression {
+                index = integer+(index, 1);
+                parse_expression(tokens, &(index), nodes, nodes_index, allocator);
 
-            variable i = 0;
-            while !(=(array8_get(&(names), i), 0)) {
-                variable node = append_node(nodes, nodes_index, NODE_ASSIGN);
-                *<-(@cast_**(+(node, 8)), @cast_*(array8_get(&(names), i)));
+                variable i = 0;
+                while !(=(array8_get(&(names), i), 0)) {
+                    variable node = append_node(nodes, nodes_index, NODE_ASSIGN);
+                    *<-(@cast_**(+(node, 8)), @cast_*(array8_get(&(names), i)));
 
-                i = integer+(i, 1);
+                    i = integer+(i, 1);
+                };
             };
 
             integer<-(index_pointer, index);
@@ -624,6 +697,10 @@ function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer
 
             if string=(keyword, "function") {
                 parse_function(tokens, &(index), nodes, nodes_index, allocator);
+            };
+
+            if string=(keyword, "structure") {
+                parse_structure(tokens, &(index), nodes, nodes_index, allocator);
             };
         };
 
@@ -846,14 +923,20 @@ function type_check(nodes: *, node_count: integer) {
                 stack8_push(&(stack), &(stack_pointer), variable_type);
             };
 
+            //println("test1");
+
             if =(variable_type, 0) {
                 variable function_argument_names2 = stringarraymap_get(&(functions), &(function_argument_names), current_function, index);
                 variable function_arguments2 = stringarraymap_get(&(functions), &(function_arguments), current_function, index);
 
+                //println("start");
+
                 variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, index);
+                //println("end");
 
                 stack8_push(&(stack), &(stack_pointer), variable_type);
             };
+            //println("test2");
 
             done_anything = true;
         };
@@ -882,6 +965,9 @@ function type_check(nodes: *, node_count: integer) {
             done_anything = true;
         };
         if =(id, NODE_ENDFUNCTION) {
+            done_anything = true;
+        };
+        if =(id, NODE_STRUCTURE) {
             done_anything = true;
         };
 
@@ -1400,65 +1486,18 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *) {
             push_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
             push_string_with_newline(&(buffer), &(buffer_index), "push rcx");
             push_string_with_newline(&(buffer), &(buffer_index), "ret");
-            //contents += "mov rsp, rbp\n"
-            //#contents += "add rsp, " + str(size + 16) + "\n"
-            //contents += "add rsp, " + str(16 + params_size - size) + "\n"
-            //contents += "push rdx\n"
-            //contents += "pop rbp\n"
-            //contents += "push rcx\n"
-            //contents += "ret\n"
                 
             done_anything = true;
-            ////params_size = get_size_linux_x86_64(functions[function.name].parameters.values(), ast)
-            ////params_size = (((params_size) + 7) & (-8))
-            ////size = get_size_linux_x86_64(functions[function.name].returns, ast)
-            ////#size = (((size) + 7) & (-8))
-            ////size_rounded = (((size + 8) + 7) & (-8))
-            ////i = 8
-            ////j = size + 8
-            ////contents += "mov rcx, [rbp+8]\n"
-            ////contents += "mov rdx, [rbp]\n"
-            //size += 8
-            //while i < size:
-            //    if size - i >= 8:
-            //        j -= 8
-            //        contents += "mov rax, [rsp+" + str(size - i - 8) + "]\n"
-            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], rax\n"
-            //        i += 8
-            //    elif size - i >= 4:
-            //        j -= 4
-            //        contents += "mov eax, [rsp+" + str(size - i - 4) + "]\n"
-            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], eax\n"
-            //        i += 4
-            //    elif size - i >= 2:
-            //        j -= 2
-            //        contents += "mov ax, [rsp+" + str(size - i - 2) + "]\n"
-            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], ax\n"
-            //        i += 2
-            //    elif size - i >= 1:
-            //        j -= 1
-            //        contents += "mov al, [rsp+" + str(size - i - 1) + "]\n"
-            //        contents += "mov [rbp+" + str(16 + params_size - size - i + size_rounded) + "], al\n"
-            //        i += 1
-            //    else:
-            //        print("sizing error")
-            //        exit()
-
-            //size -= 8
-
-            //contents += "mov rsp, rbp\n"
-            //#contents += "add rsp, " + str(size + 16) + "\n"
-            //contents += "add rsp, " + str(16 + params_size - size) + "\n"
-            //contents += "push rdx\n"
-            //contents += "pop rbp\n"
-            //contents += "push rcx\n"
-            //contents += "ret\n"
         };
 
         if =(id, NODE_ENDFUNCTION) {
             push_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
             push_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
             push_string_with_newline(&(buffer), &(buffer_index), "ret");
+            done_anything = true;
+        };
+
+        if =(id, NODE_STRUCTURE) {
             done_anything = true;
         };
 
