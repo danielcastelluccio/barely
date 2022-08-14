@@ -1194,7 +1194,7 @@ ret
 
             contents += "push rbp\n"
             contents += "mov rbp, rsp\n"
-            contents += "sub rsp, " + str(get_size_linux_x86_64(local_types, ast) + 16) + "\n"
+            contents += "sub rsp, " + str(get_size_linux_x86_64(local_types, ast) + 64) + "\n"
 
             variables = {}
 

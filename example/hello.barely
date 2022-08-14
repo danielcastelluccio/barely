@@ -6,14 +6,15 @@ structure Foo {
 function main() {
     variable test: integer = 1;
     variable test2: integer;
-    test2 = 12;
-    variable test3: Foo;
+    variable test4: *integer = &(test2);
+    integer<-(test4, 12);
+    variable test3: Foo = @cast_Foo("Hello World!");
     // this is a comment
-    variable _: any_8 = @syscall3(@cast_integer(foo(1, 3)), test, "Hello World!", test2);
+    print(@cast_*(test3), test2);
 };
 
-function foo(value1: integer, value2: integer): any_8 {
-    return value1;
+function print(buffer: *, size: integer) {
+    variable _: any_8 = @syscall3(1, 1, buffer, size);
 };
 
 function @syscall3(id: integer, value1: any_8, value2: any_8, value3: any_8): any_8;
