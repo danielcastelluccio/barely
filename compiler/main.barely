@@ -272,6 +272,17 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
         return;
     };
+    if string=(buffer, "while") {
+        variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
+        copy(buffer, allocated, buffer_length);
+
+        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_KEYWORD);
+
+        TokenKeywordData<-keyword(@cast_*TokenKeywordData(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
+
+        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
+        return;
+    };
 
     if is_number(buffer) {
         integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_INTEGER);
@@ -506,6 +517,7 @@ constant NODE_POINTER: integer = 10;
 constant NODE_BOOLEAN: integer = 11;
 constant NODE_JUMP_CONDITIONAL: integer = 12;
 constant NODE_TARGET: integer = 13;
+constant NODE_JUMP: integer = 14;
 
 constant NODE_SIZE: integer = 48;
 
@@ -585,6 +597,8 @@ function parse_structure(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
     *<-(@cast_**(+(structure_node, 16)), member_names_pointer);
     *<-(@cast_**(+(structure_node, 24)), member_types_pointer);
 
+    index = integer+(index, 2);
+
     integer<-(index_pointer, index);
 };
 
@@ -661,6 +675,14 @@ function parse_function(tokens: *, index_pointer: *integer, nodes: *, nodes_inde
     if has_body {
         while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
             parse_statement(tokens, &(index), nodes, nodes_index, allocator);
+        };
+
+        index = integer+(index, 2);
+    };
+
+    if !(=(nodes_get_id(nodes, integer-(integer->(nodes_index), 1)), NODE_RETURN)) {
+        if !(=(nodes_get_id(nodes, integer-(integer->(nodes_index), 1)), NODE_FUNCTION)) {
+            variable _ = append_node(nodes, nodes_index, NODE_RETURN);
         };
     };
 
@@ -741,6 +763,13 @@ function parse_expression(tokens: *, index_pointer: *integer, nodes: *, nodes_in
     };
 
     integer<-(index_pointer, index);
+};
+
+function get_target_id(): integer {
+    variable return_ = target_id;
+    target_id = integer+(target_id, 1);
+
+    return return_;
 };
 
 function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_index: *integer, allocator: *BumpAllocator) {
@@ -830,8 +859,7 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
         if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "if") {
             increment_integer_pointer(index_pointer, 1);
 
-            variable target = target_id;
-            target_id = integer+(target_id, 1);
+            variable target = get_target_id();
 
             parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
             variable conditional_jump = append_node(nodes, nodes_index, NODE_JUMP_CONDITIONAL);
@@ -846,6 +874,37 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
 
             variable target_node = append_node(nodes, nodes_index, NODE_TARGET);
             any_8<-(@cast_*any_8(+(target_node, 8)), target);
+ 
+            increment_integer_pointer(index_pointer, 1);
+        };
+    };
+    if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
+        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "while") {
+            increment_integer_pointer(index_pointer, 1);
+
+            variable target1 = get_target_id();
+
+            variable target2 = get_target_id();
+
+            variable target_node1 = append_node(nodes, nodes_index, NODE_TARGET);
+            any_8<-(@cast_*any_8(+(target_node1, 8)), target1);
+
+            parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
+            variable conditional_jump = append_node(nodes, nodes_index, NODE_JUMP_CONDITIONAL);
+            any_8<-(@cast_*any_8(+(conditional_jump, 8)), target2);
+            any_1<-(@cast_*any_1(+(conditional_jump, 16)), byte(0));
+
+            increment_integer_pointer(index_pointer, 1);
+
+            while !(=(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
+                parse_statement(tokens, index_pointer, nodes, nodes_index, allocator);
+            };
+
+            variable jump_node = append_node(nodes, nodes_index, NODE_JUMP);
+            any_8<-(@cast_*any_8(+(jump_node, 8)), target1);
+
+            variable target_node2 = append_node(nodes, nodes_index, NODE_TARGET);
+            any_8<-(@cast_*any_8(+(target_node2, 8)), target2);
  
             increment_integer_pointer(index_pointer, 1);
         };
@@ -902,14 +961,15 @@ function parse(tokens: *, tokens_count: integer, nodes: *, nodes_index, *integer
                 parse_structure(tokens, &(index), nodes, nodes_index, allocator);
             };
         };
-
-        index = @cast_integer(+(index, 1));
     };
 };
 
 function get_size_linux_x86-64(type: *, nodes: *, node_count: integer): integer {
     if string=(type, "integer") {
         return 8;
+    };
+    if string=(type, "boolean") {
+        return 1;
     };
     if string_length=(type, "*", 1) {
         return 8;
@@ -930,6 +990,9 @@ function get_size_linux_x86-64(type: *, nodes: *, node_count: integer): integer 
         };
         i = integer+(i, 1);
     };
+
+    print("unknown type ");
+    println(type);
 
     return 0;
 };
@@ -1201,6 +1264,9 @@ function type_check(nodes: *, node_count: integer, allocator: *BumpAllocator) {
                 println("'");
                 sys_exit(1);
             };
+            done_anything = true;
+        };
+        if =(id, NODE_JUMP) {
             done_anything = true;
         };
         if =(id, NODE_TARGET) {
@@ -1760,6 +1826,38 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
                 done_anything_invoke = true;
             };
 
+            if string=(function_name, "=") {
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rax");
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
+                push_string_with_newline(&(buffer), &(buffer_index), "cmp rax, rbx");
+                push_string_with_newline(&(buffer), &(buffer_index), "mov rcx, 0");
+                push_string_with_newline(&(buffer), &(buffer_index), "mov rbx, 1");
+                push_string_with_newline(&(buffer), &(buffer_index), "cmove rcx, rbx");
+                push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
+                push_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
+                done_anything_invoke = true;
+            };
+
+            if string=(function_name, "!") {
+                push_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
+                push_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
+                push_string_with_newline(&(buffer), &(buffer_index), "cmp al, 0");
+                push_string_with_newline(&(buffer), &(buffer_index), "mov cx, 0");
+                push_string_with_newline(&(buffer), &(buffer_index), "mov bx, 1");
+                push_string_with_newline(&(buffer), &(buffer_index), "cmove cx, bx");
+                push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
+                push_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
+                done_anything_invoke = true;
+            };
+            
+            if string=(function_name, "+") {
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rax");
+                push_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
+                push_string_with_newline(&(buffer), &(buffer_index), "add rax, rbx");
+                push_string_with_newline(&(buffer), &(buffer_index), "push rax");
+                done_anything_invoke = true;
+            };
+
             if string=(function_name, "@syscall3") {
                 push_string_with_newline(&(buffer), &(buffer_index), "pop rdx");
                 push_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
@@ -2142,6 +2240,16 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
             push_string_with_newline(&(buffer), &(buffer_index), "");
         };
 
+        if =(id, NODE_JUMP) {
+            variable target = integer->(@cast_*integer(+(pointer, 8)));
+
+            push_string(&(buffer), &(buffer_index), "jmp target_");
+            push_integer(&(buffer), &(buffer_index), target);
+            push_string_with_newline(&(buffer), &(buffer_index), "");
+
+            done_anything = true;
+        };
+
         if =(id, NODE_TARGET) {
             variable target = integer->(@cast_*integer(+(pointer, 8)));
             push_string(&(buffer), &(buffer_index), "target_");
@@ -2152,13 +2260,6 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
         };
 
         if =(id, NODE_ENDFUNCTION) {
-            variable prev_id = nodes_get_id(nodes, integer-(i, 1));
-
-            if !(=(prev_id, NODE_FUNCTION)) {
-                push_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
-                push_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
-                push_string_with_newline(&(buffer), &(buffer_index), "ret");
-            };
             done_anything = true;
         };
 

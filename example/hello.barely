@@ -5,10 +5,11 @@ structure Foo {
 
 // this is a comment
 function main() {
-    variable test5: boolean = false;
+    variable test5: integer = 0;
 
-    if test5 {
+    while !(=(test5, 5)) {
         print("test", 4);
+        test5 = @cast_integer(+(test5, 1));
     };
 
     variable test: integer = 1;
@@ -26,4 +27,8 @@ function print(buffer: *, size: integer) {
     variable _: any_8 = @syscall3(1, 1, buffer, size);
 };
 
+function =(value_1: any_8, value2: any_8): boolean;
+function !(value: boolean): boolean;
+function +(value_1: any_8, value2: any_8): any_8;
 function @syscall3(id: integer, value1: any_8, value2: any_8, value3: any_8): any_8;
+
