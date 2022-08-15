@@ -2,8 +2,6 @@
 global tokens: any_65536;
 global tokens_index: integer;
 
-global target_id: integer;
-
 function main(arguments: **, argument_count: integer) {
     variable i = 1;
 
@@ -30,7 +28,7 @@ function main(arguments: **, argument_count: integer) {
         println("tokens overflows buffer");
     };
 
-    variable nodes: any_131072;
+    variable nodes: any_4096;
     variable nodes_index = 0;
 
     variable empty: any_8;
@@ -261,28 +259,10 @@ function tokenize_inner(buffer: *, tokens: *, tokens_index: *integer, allocator:
         integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
         return;
     };
-    if string=(buffer, "if") {
-        variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
-        copy(buffer, allocated, buffer_length);
-
-        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_KEYWORD);
-
-        TokenKeywordData<-keyword(@cast_*TokenKeywordData(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), allocated);
-
-        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-        return;
-    };
 
     if is_number(buffer) {
         integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_INTEGER);
         any_8<-(@cast_*any_8(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), to_number(buffer));
-        integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
-        return;
-    };
-
-    if |(string=(buffer, "true"), string=(buffer, "false")) {
-        integer<-(@cast_*integer(+(tokens, *(integer->(tokens_index), TOKEN_SIZE))), TOKEN_BOOLEAN);
-        any_1<-(@cast_*any_1(+(+(tokens, *(integer->(tokens_index), TOKEN_SIZE)), 8)), string=(buffer, "true"));
         integer<-(tokens_index, @cast_integer(+(integer->(tokens_index), 1)));
         return;
     };
@@ -329,7 +309,6 @@ constant TOKEN_NAME: integer = 7;
 constant TOKEN_STRING: integer = 8;
 constant TOKEN_INTEGER: integer = 9;
 constant TOKEN_COLON: integer = 10;
-constant TOKEN_BOOLEAN: integer = 11;
 
 structure TokenKeywordData {
     keyword: *;
@@ -503,9 +482,6 @@ constant NODE_ASSIGN: integer = 7;
 constant NODE_RETURN: integer = 8;
 constant NODE_STRUCTURE: integer = 9;
 constant NODE_POINTER: integer = 10;
-constant NODE_BOOLEAN: integer = 11;
-constant NODE_JUMP_CONDITIONAL: integer = 12;
-constant NODE_TARGET: integer = 13;
 
 constant NODE_SIZE: integer = 48;
 
@@ -534,7 +510,7 @@ function append_node(nodes: *, nodes_index: *integer, id: integer): * {
 
     increment_integer_pointer(nodes_index, 1);
 
-    if >(+(integer->(nodes_index), NODE_SIZE), /(131072, NODE_SIZE)) {
+    if >(+(integer->(nodes_index), NODE_SIZE), /(4096, NODE_SIZE)) {
         println("nodes overflows buffer");
     };
 
@@ -732,14 +708,6 @@ function parse_expression(tokens: *, index_pointer: *integer, nodes: *, nodes_in
         index = @cast_integer(+(index, 1));
     };
 
-    if =(tokens_get_id(tokens, index), TOKEN_BOOLEAN) {
-        variable boolean_value = any_1->(@cast_*any_1(+(tokens_get_pointer(tokens, index), 8)));
-        variable integer_pointer = append_node(nodes, nodes_index, NODE_BOOLEAN);
-        any_1<-(@cast_*any_1(+(integer_pointer, 8)), boolean_value);
-
-        index = @cast_integer(+(index, 1));
-    };
-
     integer<-(index_pointer, index);
 };
 
@@ -824,30 +792,6 @@ function parse_statement(tokens: *, index_pointer: *integer, nodes: *, nodes_ind
             parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
 
             variable node = append_node(nodes, nodes_index, NODE_RETURN);
-        };
-    };
-    if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
-        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "if") {
-            increment_integer_pointer(index_pointer, 1);
-
-            variable target = target_id;
-            target_id = integer+(target_id, 1);
-
-            parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
-            variable conditional_jump = append_node(nodes, nodes_index, NODE_JUMP_CONDITIONAL);
-            any_8<-(@cast_*any_8(+(conditional_jump, 8)), target);
-            any_1<-(@cast_*any_1(+(conditional_jump, 16)), byte(0));
-
-            increment_integer_pointer(index_pointer, 1);
-
-            while !(=(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
-                parse_statement(tokens, index_pointer, nodes, nodes_index, allocator);
-            };
-
-            variable target_node = append_node(nodes, nodes_index, NODE_TARGET);
-            any_8<-(@cast_*any_8(+(target_node, 8)), target);
- 
-            increment_integer_pointer(index_pointer, 1);
         };
     };
     if &&(=(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, integer+(integer->(index_pointer), 1)), TOKEN_NAME)) {
@@ -1033,10 +977,6 @@ function type_check(nodes: *, node_count: integer, allocator: *BumpAllocator) {
             stack8_push(&(stack), &(stack_pointer), "integer");
             done_anything = true;
         };
-        if =(id, NODE_BOOLEAN) {
-            stack8_push(&(stack), &(stack_pointer), "boolean");
-            done_anything = true;
-        };
         if =(id, NODE_STRING) {
             stack8_push(&(stack), &(stack_pointer), "*");
             done_anything = true;
@@ -1191,21 +1131,6 @@ function type_check(nodes: *, node_count: integer, allocator: *BumpAllocator) {
             stack8_push(&(stack), &(stack_pointer), allocated);
             done_anything = true;
         };
-        if =(id, NODE_JUMP_CONDITIONAL) {
-            variable popped = @cast_*(stack8_pop(&(stack), &(stack_pointer)));
-            if !(string=(popped, "boolean")) {
-                print("TYPECHECK: ");
-                print(current_function);
-                print(": If wants 'boolean', given '");
-                print(stack_popped);
-                println("'");
-                sys_exit(1);
-            };
-            done_anything = true;
-        };
-        if =(id, NODE_TARGET) {
-            done_anything = true;
-        };
         if =(id, NODE_ENDFUNCTION) {
             done_anything = true;
         };
@@ -1296,8 +1221,6 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
     push_string_with_newline(&(buffer), &(buffer_index), "entry start");
     push_string_with_newline(&(buffer), &(buffer_index), "segment readable executable");
     push_string_with_newline(&(buffer), &(buffer_index), "start:");
-    push_string_with_newline(&(buffer), &(buffer_index), "lea rax, [rsp+8]");
-    push_string_with_newline(&(buffer), &(buffer_index), "push rax");
     push_string_with_newline(&(buffer), &(buffer_index), "call main");
     push_string_with_newline(&(buffer), &(buffer_index), "mov rax, 60");
     push_string_with_newline(&(buffer), &(buffer_index), "mov rdi, 0");
@@ -1723,26 +1646,11 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
         if =(id, NODE_INTEGER) {
             variable value = integer->(@cast_*integer(+(pointer, 8)));
 
+            variable integer: any_8;
+            integer_to_string(value, &(integer));
             push_string(&(buffer), &(buffer_index), "push ");
-            push_integer(&(buffer), &(buffer_index), value);
-            push_string_with_newline(&(buffer), &(buffer_index), "");
+            push_string_with_newline(&(buffer), &(buffer_index), &(integer));
             done_anything = true;
-        };
-
-        if =(id, NODE_BOOLEAN) {
-            variable value = any_1->(@cast_*any_1(+(pointer, 8)));
-
-            if @cast_boolean(value) {
-                push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                push_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], byte 1");
-                done_anything = true;
-            };
-
-            if !(done_anything) {
-                push_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                push_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], byte 0");
-                done_anything = true;
-            };
         };
 
         if =(id, NODE_INVOKE) {
@@ -2121,36 +2029,6 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
             done_anything = true;
         };
 
-        if =(id, NODE_JUMP_CONDITIONAL) {
-            variable target = integer->(@cast_*integer(+(pointer, 8)));
-            variable conditional = any_1->(@cast_*any_1(+(pointer, 16)));
-            push_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-            push_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-
-            if @cast_boolean(conditional) {
-                push_string_with_newline(&(buffer), &(buffer_index), "cmp al, 1");
-                done_anything = true;
-            };
-
-            if !(done_anything) {
-                push_string_with_newline(&(buffer), &(buffer_index), "cmp al, 0");
-                done_anything = true;
-            };
-
-            push_string(&(buffer), &(buffer_index), "je target_");
-            push_integer(&(buffer), &(buffer_index), target);
-            push_string_with_newline(&(buffer), &(buffer_index), "");
-        };
-
-        if =(id, NODE_TARGET) {
-            variable target = integer->(@cast_*integer(+(pointer, 8)));
-            push_string(&(buffer), &(buffer_index), "target_");
-            push_integer(&(buffer), &(buffer_index), target);
-            push_string_with_newline(&(buffer), &(buffer_index), ":");
-
-            done_anything = true;
-        };
-
         if =(id, NODE_ENDFUNCTION) {
             variable prev_id = nodes_get_id(nodes, integer-(i, 1));
 
@@ -2189,7 +2067,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
 
     variable id = sys_fork();
     if =(id, 0) {
-        variable arguments_buffer: any_48;
+        variable arguments_buffer: any_32;
 
         array8_set(&(arguments_buffer), 0, "/bin/fasm");
         array8_set(&(arguments_buffer), 1, &(asm_output));
@@ -2198,10 +2076,7 @@ function output_linux_x86-64(nodes: *, node_count: integer, name: *, allocator: 
         variable binary_output_length = 0;
         push_string(&(binary_output), &(binary_output_length), "build/");
         push_string(&(binary_output), &(binary_output_length), name);
-
         array8_set(&(arguments_buffer), 2, &(binary_output));
-        array8_set(&(arguments_buffer), 3, "-m");
-        array8_set(&(arguments_buffer), 4, "131072");
 
         variable _ = sys_execve("/bin/fasm", &(arguments_buffer), @cast_**(0));
     };

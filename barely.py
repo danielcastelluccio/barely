@@ -1682,7 +1682,7 @@ ret
     fasm_file.write(contents)
     fasm_file.close()
 
-    os.system("fasm " + fasm_file.name + " build/" + name)
+    os.system("fasm " + fasm_file.name + " build/" + name + " -m 131072")
 
 #syntax = sys.argv[1]
 ast = []
