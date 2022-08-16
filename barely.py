@@ -1411,6 +1411,7 @@ ret
                     elif instruction.name in function.locals:
                         i = function.locals.index(instruction.name)
                         location = get_size_linux_x86_64(local_types[0 : i], ast)
+
                         size = get_size_linux_x86_64(local_types[i], ast)
                         #size = (((size) + 7) & (-8))
 
