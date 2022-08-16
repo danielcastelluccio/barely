@@ -1074,6 +1074,7 @@ function type_check(nodes: *, node_count: integer, allocator: *BumpAllocator) {
 
     variable variable_names: any_128;
     variable variable_types: any_128;
+    variable variable_declares: any_128;
     variable variable_index = 0;
 
     i = 0;
@@ -1175,6 +1176,7 @@ function type_check(nodes: *, node_count: integer, allocator: *BumpAllocator) {
 
             array8_set(&(variable_names), variable_index, variable_name);
             array8_set(&(variable_types), variable_index, variable_type);
+            array8_set(&(variable_declares), variable_index, pointer);
             variable_index = integer+(variable_index, 1);
 
             if >(variable_index, 15) {
@@ -1186,8 +1188,17 @@ function type_check(nodes: *, node_count: integer, allocator: *BumpAllocator) {
         if =(id, NODE_ASSIGN) {
             variable variable_name = *->(@cast_**(+(pointer, 8)));
             variable variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
-
             variable popped_stack = @cast_*(stack8_pop(&(stack), &(stack_pointer)));
+
+            if string=(variable_type, "") {
+                variable variable_index2 = stringarraymap_get_index(&(variable_names), variable_name, variable_index);
+                array8_set(&(variable_types), variable_index2, popped_stack);
+                variable_type = stringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+
+                variable variable_declare = stringarraymap_get(&(variable_names), &(variable_declares), variable_name, variable_index);
+
+                *<-(@cast_**(+(variable_declare, 16)), variable_type);
+            };
 
             if !(string=(variable_type, popped_stack)) {
                 print("TYPECHECK: ");
