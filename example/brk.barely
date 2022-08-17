@@ -1,0 +1,59 @@
+function main() {
+    variable buffer = autobuffer_new(40);
+    @print_integer(AutoBuffer->size(&(buffer)));
+    autobuffer_set(&(buffer), "test", 0, 41);
+    @print_integer(AutoBuffer->size(&(buffer)));
+
+    sys_write(STDOUT, AutoBuffer->buffer(&(buffer)), 4);
+};
+
+function brk_allocate(size: integer): * {
+    variable current_break = sys_brk(@cast_*(0));
+    variable _ = sys_brk(@cast_*(+(current_break, size)));
+    return current_break;
+};
+
+structure AutoBuffer {
+    buffer: *;
+    size: integer;
+    increment: integer;
+};
+
+function autobuffer_new(size: integer): AutoBuffer {
+    variable auto_buffer: AutoBuffer;
+
+    AutoBuffer<-size(&(auto_buffer), size);
+    AutoBuffer<-increment(&(auto_buffer), size);
+
+    variable allocated = brk_allocate(size);
+    AutoBuffer<-buffer(&(auto_buffer), allocated);
+
+    return auto_buffer;
+};
+
+function autobuffer_set(buffer: *AutoBuffer, from: *, to: integer, size: integer) {
+    variable to_pointer = @cast_*(+(AutoBuffer->buffer(buffer), to));
+
+    if >(+(to, size), AutoBuffer->size(buffer)) {
+        variable previous_buffer = AutoBuffer->buffer(buffer);
+        variable previous_size = AutoBuffer->size(buffer);
+        variable new_buffer_size = @cast_integer(+(AutoBuffer->size(buffer), AutoBuffer->increment(buffer)));
+        variable allocated = brk_allocate(new_buffer_size);
+        AutoBuffer<-buffer(buffer, allocated);
+        AutoBuffer<-size(buffer, new_buffer_size);
+        copy(previous_buffer, allocated, previous_size);
+
+        to_pointer = @cast_*(+(AutoBuffer->buffer(buffer), to));
+    };
+
+    copy(from, to_pointer, size);
+};
+
+function copy(from: *, to: *, size: integer) {
+    variable i = 0;
+
+    while <(i, size) {
+        any_1<-(@cast_*any_1(+(to, i)), any_1->(@cast_*any_1(+(from, i))));
+        i = @cast_integer(+(i, 1));
+    };
+};

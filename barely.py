@@ -1367,6 +1367,8 @@ ret
                         contents += "push rax\n"
                     elif instruction.name == "get_rsp":
                         contents += "push rsp\n"
+                    elif instruction.name == "get_rbp":
+                        contents += "push rbp\n"
                     elif not instruction.name.startswith("@cast_"):
                         contents += "call " + remove_invalid_linux_x86_64(called_name) + "\n"
                 elif isinstance(instruction, DeclareNode):
@@ -1570,7 +1572,6 @@ ret
                     contents += "mov [rsp], byte " + str(1 if instruction.boolean else 0) + "\n"
                 elif isinstance(instruction, ReturnNode):
                     params_size = get_size_linux_x86_64(functions[function.name].parameters.values(), ast)
-                    params_size = (((params_size) + 7) & (-8))
                     size = get_size_linux_x86_64(functions[function.name].returns, ast)
                     #size = (((size) + 7) & (-8))
                     size_rounded = (((size + 8) + 7) & (-8))
