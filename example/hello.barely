@@ -9,12 +9,6 @@ constant SIZE: integer = 12;
 
 // this is a comment
 function main() {
-    while !(=(test5, 5)) {
-        print("test", 4);
-
-        integer<-(&(test5), @cast_integer(+(integer->(&(test5)), 1)));
-    };
-
     variable test = 1;
     variable test2: integer;
     variable test4 = &(test2);
@@ -22,8 +16,29 @@ function main() {
     variable test3: Foo;
     Foo<-value(&(test3), "Hello World!");
     Foo<-value2(&(test3), "Hello Mommy!");
+    copy("test", &(test5), 4);
+    print(&(test5), 4);
     // this is a comment
-    print(Foo->value2(&(test3)), integer->(test4));
+    print(Foo->value2(&(test3)), length("Hello Mom"));
+};
+
+function copy(from: *, to: *, size: integer) {
+    variable i = 0;
+
+    while <(i, size) {
+        any_1<-(@cast_*any_1(+(to, i)), any_1->(@cast_*any_1(+(from, i))));
+        i = @cast_integer(+(i, 1));
+    };
+};
+
+function length(string: *): integer {
+    variable length = 0;
+
+    while !(=1(byte(0), *1(+(string, length)))) {
+        length = @cast_integer(+(length, 1));
+    };
+
+    return length;
 };
 
 function print(buffer: *, size: integer) {
@@ -31,7 +46,11 @@ function print(buffer: *, size: integer) {
 };
 
 function =(value_1: any_8, value2: any_8): boolean;
+function <(value_1: any_8, value2: any_8): boolean;
 function !(value: boolean): boolean;
 function +(value_1: any_8, value2: any_8): any_8;
 function @syscall3(id: integer, value1: any_8, value2: any_8, value3: any_8): any_8;
+function byte(integer: integer): any_1;
+function *1(pointer: any_8): any_1;
+function =1(value1: any_1, value2: any_1): boolean;
 
