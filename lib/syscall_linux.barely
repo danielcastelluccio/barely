@@ -23,6 +23,8 @@ constant SYS_EXECVE: integer = 59;
 
 constant SYS_EXIT: integer = 60;
 
+constant SYS_MKDIR: integer = 83;
+
 function sys_read(fd: integer, buffer: *, length: integer) {
     variable _: any_8 = @syscall3(SYS_READ, fd, buffer, length);
 };
@@ -31,8 +33,8 @@ function sys_write(fd: integer, buffer: *, length: integer) {
     variable _: any_8 = @syscall3(SYS_WRITE, fd, buffer, length);
 };
 
-function sys_open(name: *, flags: integer, mode: integer): integer {
-    return @cast_integer(@syscall3(SYS_OPEN, name, flags, mode));
+function sys_open(path: *, flags: integer, mode: integer): integer {
+    return @cast_integer(@syscall3(SYS_OPEN, path, flags, mode));
 };
 
 function sys_close(fd: integer) {
@@ -67,4 +69,8 @@ function sys_execve(file: *, args: *, env: **): integer {
 
 function sys_exit(code: integer) {
     variable _ = @syscall1(SYS_EXIT, code);
+};
+
+function sys_mkdir(path: *, mode: integer) {
+    variable _ = @syscall2(SYS_MKDIR, path, mode);
 };

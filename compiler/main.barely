@@ -3147,6 +3147,25 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
     push_string(&(asm_output), &(asm_output_length), name_new);
     push_string(&(asm_output), &(asm_output_length), ".asm");
 
+    sys_mkdir("build", 511);
+
+    variable output_directory_index = 0;
+    while !(=(output_directory_index, 999)) {
+        output_directory_index = indexof(name_new, byte(ASCII_SLASH), integer+(output_directory_index, 1));
+
+        if !(=(output_directory_index, 999)) {
+            variable directory_new = brk_allocate(output_directory_index);
+            copy(name_new, directory_new, output_directory_index);
+
+            variable asm_output_directory: any_32;
+            variable asm_output_directory_length: integer = 0;
+            push_string(&(asm_output_directory), &(asm_output_directory_length), "build/");
+            push_string(&(asm_output_directory), &(asm_output_directory_length), directory_new);
+
+            sys_mkdir(&(asm_output_directory), 511);
+        };
+    };
+
     variable asm_output_descriptor = sys_open(&(asm_output), @cast_integer(+(+(O_WRONLY, O_CREAT), O_TRUNC)), 388);
     sys_write(asm_output_descriptor, AutoBuffer->buffer(&(buffer)), length(AutoBuffer->buffer(&(buffer))));
     sys_close(asm_output_descriptor);
@@ -3171,6 +3190,20 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
     };
 
     variable _2 = @syscall5(247, 1, id, 0, 4, 0);
+};
+
+function indexof(string: *, character: any_1, start: integer): integer {
+    variable length = length(string);
+
+    variable i = start;
+    while <(i, length) {
+        if =1(any_1->(@cast_*any_1(+(string, i))), character) {
+            return i;
+        };
+        i = integer+(i, 1);
+    };
+
+    return 999;
 };
 
 function string_length=(string1: *, string2: *, length: integer): boolean {
