@@ -215,6 +215,21 @@ function integer_to_string(integer: integer, buffer: *) {
     };
 };
 
+function append_token_data(tokens: *AutoBuffer, tokens_index: *integer, id: integer): * {
+    return @cast_*(+(append_token(tokens, tokens_index, id), 8));
+};
+
+function append_token(tokens: *AutoBuffer, tokens_index: *integer, id: integer): * {
+    autobuffer_register(tokens, integer*(integer->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
+    variable to_return = autobuffer_get(tokens, integer*(integer->(tokens_index), TOKEN_SIZE));
+
+    autobuffer_set_integer(tokens, id, integer*(integer->(tokens_index), TOKEN_SIZE));
+
+    increment_integer_pointer(tokens_index, 1);
+
+    return to_return;
+};
+
 function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_index: *integer, allocator: *BumpAllocator) {
     variable buffer = AutoBuffer->buffer(auto_buffer);
     variable buffer_length = length(AutoBuffer->buffer(auto_buffer));
@@ -253,32 +268,28 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
         variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
         copy(buffer, allocated, buffer_length);
 
-        autobuffer_set_integer(tokens, TOKEN_KEYWORD, integer*(integer->(tokens_index), TOKEN_SIZE));
-        autobuffer_set_*(tokens, allocated, integer+(integer*(integer->(tokens_index), TOKEN_SIZE), 8));
-
-        increment_integer_pointer(tokens_index, 1);
+        variable keyword_data = @cast_*TokenKeywordData(append_token_data(tokens, tokens_index, TOKEN_KEYWORD));
+        TokenKeywordData<-keyword(keyword_data, allocated);
         return;
     };
 
     if is_number(buffer) {
-        autobuffer_set_integer(tokens, TOKEN_INTEGER, integer*(integer->(tokens_index), TOKEN_SIZE));
-        autobuffer_set_integer(tokens, to_number(buffer), integer+(integer*(integer->(tokens_index), TOKEN_SIZE), 8));
-        increment_integer_pointer(tokens_index, 1);
+        variable integer_data = @cast_*TokenIntegerData(append_token_data(tokens, tokens_index, TOKEN_INTEGER));
+        TokenIntegerData<-value(integer_data, to_number(buffer));
         return;
     };
 
     if |(string=(buffer, "true"), string=(buffer, "false")) {
-        autobuffer_set_integer(tokens, TOKEN_BOOLEAN, integer*(integer->(tokens_index), TOKEN_SIZE));
-        autobuffer_set_boolean(tokens, string=(buffer, "true"), integer+(integer*(integer->(tokens_index), TOKEN_SIZE), 8));
-        increment_integer_pointer(tokens_index, 1);
+        variable boolean_data = @cast_*TokenBooleanData(append_token_data(tokens, tokens_index, TOKEN_BOOLEAN));
+        TokenBooleanData<-value(boolean_data, string=(buffer, "true"));
         return;
     };
     
     variable allocated = brk_allocate(@cast_integer(+(buffer_length, 1)));
     copy(buffer, allocated, buffer_length);
-    autobuffer_set_integer(tokens, TOKEN_NAME, integer*(integer->(tokens_index), TOKEN_SIZE));
-    autobuffer_set_*(tokens, allocated, integer+(integer*(integer->(tokens_index), TOKEN_SIZE), 8));
-    increment_integer_pointer(tokens_index, 1);
+
+    variable name_data = @cast_*TokenNameData(append_token_data(tokens, tokens_index, TOKEN_NAME));
+    TokenNameData<-name(name_data, allocated);
 };
 
 constant ASCII_SPACE: integer = 32;
@@ -301,26 +312,35 @@ constant TOKEN_CLOSED_CURLY_BRACKETS: integer = 3;
 constant TOKEN_COMMA: integer = 4;
 constant TOKEN_SEMICOLON: integer = 5;
 constant TOKEN_KEYWORD: integer = 6;
-constant TOKEN_NAME: integer = 7;
-constant TOKEN_STRING: integer = 8;
-constant TOKEN_INTEGER: integer = 9;
-constant TOKEN_COLON: integer = 10;
-constant TOKEN_BOOLEAN: integer = 11;
 
 structure TokenKeywordData {
     keyword: *;
 };
 
+constant TOKEN_NAME: integer = 7;
+
 structure TokenNameData {
     name: *;
 };
 
+constant TOKEN_STRING: integer = 8;
+
 structure TokenStringData {
-    string: *;
+    value: *;
 };
 
+constant TOKEN_INTEGER: integer = 9;
+
 structure TokenIntegerData {
-    integer: integer;
+    value: integer;
+};
+
+constant TOKEN_COLON: integer = 10;
+
+constant TOKEN_BOOLEAN: integer = 11;
+
+structure TokenBooleanData {
+    value: boolean;
 };
 
 constant TOKEN_SIZE: integer = 16;
@@ -432,9 +452,8 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *integer, allo
                     variable allocated = bump_allocate(allocator, @cast_integer(+(buffer_length, 1)));
                     copy(AutoBuffer->buffer(&(buffer)), allocated, buffer_length);
 
-                    autobuffer_set_integer(tokens, TOKEN_STRING, integer*(integer->(tokens_index), TOKEN_SIZE));
-                    autobuffer_set_*(tokens, allocated, integer+(integer*(integer->(tokens_index), TOKEN_SIZE), 8));
-                    increment_integer_pointer(tokens_index, 1);
+                    variable string_pointer_data = @cast_*TokenStringData(append_token_data(tokens, tokens_index, TOKEN_STRING));
+                    TokenStringData<-value(string_pointer_data, allocated);
 
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
@@ -473,13 +492,46 @@ structure NodeFunctionData {
 };
 
 constant NODE_ENDFUNCTION: integer = 1;
+
 constant NODE_RETRIEVE: integer = 2;
+
+structure NodeRetrieveData {
+    name: *;
+};
+
 constant NODE_STRING: integer = 3;
+
+structure NodeStringData {
+    value: *;
+};
+
 constant NODE_INTEGER: integer = 4;
+
+structure NodeIntegerData {
+    value: integer;
+};
+
 constant NODE_INVOKE: integer = 5;
+
+structure NodeInvokeData {
+    name: *;
+};
+
 constant NODE_DECLARE: integer = 6;
+
+structure NodeDeclareData {
+    name: *;
+    type: *;
+};
+
 constant NODE_ASSIGN: integer = 7;
+
+structure NodeAssignData {
+    name: *;
+};
+
 constant NODE_RETURN: integer = 8;
+
 constant NODE_STRUCTURE: integer = 9;
 
 structure NodeStructureData {
@@ -489,13 +541,53 @@ structure NodeStructureData {
 };
 
 constant NODE_POINTER: integer = 10;
+
 constant NODE_BOOLEAN: integer = 11;
+
+structure NodeBooleanData {
+    value: boolean;
+};
+
 constant NODE_JUMP_CONDITIONAL: integer = 12;
+
+structure NodeJumpConditionalData {
+    target_id: integer;
+    desired_state: boolean;
+};
+
 constant NODE_TARGET: integer = 13;
+
+structure NodeTargetData {
+    id: integer;
+};
+
 constant NODE_JUMP: integer = 14;
+
+structure NodeJumpData {
+    target_id: integer;
+};
+
 constant NODE_GLOBAL: integer = 15;
+
+structure NodeGlobalData {
+    name: *;
+    type: *;
+};
+
 constant NODE_CONSTANT: integer = 16;
+
+structure NodeConstantData {
+    name: *;
+    type: *;
+    value: any_8;
+};
+
 constant NODE_ZERO: integer = 17;
+
+structure NodeZeroData {
+    name: *;
+    type: *;
+};
 
 constant NODE_SIZE: integer = 48;
 
@@ -505,6 +597,10 @@ function tokens_get_id(tokens: *AutoBuffer, index: integer): integer {
 
 function tokens_get_pointer(tokens: *AutoBuffer, index: integer): * {
     return autobuffer_get(tokens, integer*(index, TOKEN_SIZE));
+};
+
+function tokens_get_pointer_data(tokens: *AutoBuffer, index: integer): * {
+    return autobuffer_get(tokens, integer+(integer*(index, TOKEN_SIZE), 8));
 };
 
 function increment_integer_pointer(pointer: *integer, amount: integer) {
@@ -539,39 +635,39 @@ function append_structure(nodes: *AutoBuffer, nodes_index, *integer, name: *) {
 
 function parse_constant(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer, allocator: *BumpAllocator) {
     variable index = integer->(index_pointer);
-    variable name_token_pointer = tokens_get_pointer(tokens, integer+(index, 1));
-    variable name = *->(@cast_**(+(name_token_pointer, 8)));
-    variable type_token_pointer = tokens_get_pointer(tokens, integer+(index, 3));
-    variable type = *->(@cast_**(+(type_token_pointer, 8)));
-    variable value_token_pointer = tokens_get_pointer(tokens, integer+(index, 5));
-    variable value = any_8->(@cast_*any_8(+(value_token_pointer, 8)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 3)));
+    variable type = TokenNameData->name(type_token_pointer_data);
+    variable value_token_pointer_data = @cast_*TokenIntegerData(tokens_get_pointer_data(tokens, integer+(index, 5)));
+    variable value = TokenIntegerData->value(value_token_pointer_data);
 
-    variable global_node = append_node(nodes, nodes_index, NODE_CONSTANT);
-    *<-(@cast_**(+(global_node, 8)), name);
-    *<-(@cast_**(+(global_node, 16)), type);
-    any_8<-(@cast_*any_8(+(global_node, 24)), value);
+    variable constant_node_data = @cast_*NodeConstantData(append_node_data(nodes, nodes_index, NODE_CONSTANT));
+    NodeConstantData<-name(constant_node_data, name);
+    NodeConstantData<-type(constant_node_data, type);
+    NodeConstantData<-value(constant_node_data, value);
 
     increment_integer_pointer(index_pointer, 7);
 };
 
 function parse_global(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer, allocator: *BumpAllocator) {
     variable index = integer->(index_pointer);
-    variable name_token_pointer = tokens_get_pointer(tokens, integer+(index, 1));
-    variable name = *->(@cast_**(+(name_token_pointer, 8)));
-    variable type_token_pointer = tokens_get_pointer(tokens, integer+(index, 3));
-    variable type = *->(@cast_**(+(type_token_pointer, 8)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 3)));
+    variable type = TokenNameData->name(type_token_pointer_data);
 
-    variable global_node = append_node(nodes, nodes_index, NODE_GLOBAL);
-    *<-(@cast_**(+(global_node, 8)), name);
-    *<-(@cast_**(+(global_node, 16)), type);
+    variable global_node_data = @cast_*NodeGlobalData(append_node_data(nodes, nodes_index, NODE_GLOBAL));
+    NodeGlobalData<-name(global_node_data, name);
+    NodeGlobalData<-type(global_node_data, type);
 
     increment_integer_pointer(index_pointer, 5);
 };
 
 function parse_structure(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer, allocator: *BumpAllocator) {
     variable index = integer->(index_pointer);
-    variable name_token_pointer = autobuffer_get(tokens, integer*(integer+(index, 1), TOKEN_SIZE));
-    variable name = *->(@cast_**(+(name_token_pointer, 8)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
 
     variable member_names_pointer = bump_allocate(allocator, 40);
     variable member_types_pointer = bump_allocate(allocator, 40);
@@ -589,8 +685,8 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                 println("member_names_pointer overflows buffer");
             };
 
-            variable token_pointer = tokens_get_pointer(tokens, index);
-            variable name_name = *->(@cast_**(+(token_pointer, 8)));
+            variable token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, index));
+            variable name_name = TokenNameData->name(token_pointer_data);
 
             if seen_name {
                 array8_set(member_types_pointer, member_index, name_name);
@@ -620,8 +716,8 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
 function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer, allocator: *BumpAllocator) {
     variable index = integer->(index_pointer);
 
-    variable name_token_pointer = tokens_get_pointer(tokens, integer+(index, 1));
-    variable name = *->(@cast_**(+(name_token_pointer, 8)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
 
     variable function_data = @cast_*NodeFunctionData(append_node_data(nodes, nodes_index, NODE_FUNCTION));
     NodeFunctionData<-name(function_data, name);
@@ -638,7 +734,7 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Au
         variable id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_NAME) {
-            variable token_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+            variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
 
             variable done_anything = false;
             if =(%(parameters_index, 2), 0) {
@@ -664,7 +760,7 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Au
         variable id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_NAME) {
-            variable token_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+            variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
 
             autoarray8_set(&(returns_pointer), returns_index, token_name);
         };
@@ -702,10 +798,13 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Au
 function parse_expression(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer, allocator: *BumpAllocator) {
     variable index = integer->(index_pointer);
 
-    if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+    variable id = tokens_get_id(tokens, index);
+    variable pointer_data = tokens_get_pointer_data(tokens, index);
+
+    if =(id, TOKEN_NAME) {
         variable done_anything_name = false;
         if =(tokens_get_id(tokens, @cast_integer(+(index, 1))), TOKEN_OPEN_PARENTHESIS) {
-            variable function_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+            variable function_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
 
             index = @cast_integer(+(index, 2));
 
@@ -730,42 +829,42 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *integer, nodes: *
                 is_pointer = true;
             };
             if !(is_pointer) {
-                variable invoke_pointer = append_node(nodes, nodes_index, NODE_INVOKE);
-                *<-(@cast_**(+(invoke_pointer, 8)), function_name);
+                variable invoke_pointer_data = @cast_*NodeInvokeData(append_node_data(nodes, nodes_index, NODE_INVOKE));
+                NodeInvokeData<-name(invoke_pointer_data, function_name);
             };
 
             done_anything_name = true;
         };
 
         if !(done_anything_name) {
-            variable retrieve_name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
-            variable retrieve_pointer = append_node(nodes, nodes_index, NODE_RETRIEVE);
-            *<-(@cast_**(+(retrieve_pointer, 8)), retrieve_name);
+            variable retrieve_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+            variable retrieve_pointer_data = @cast_*NodeRetrieveData(append_node_data(nodes, nodes_index, NODE_RETRIEVE));
+            NodeRetrieveData<-name(retrieve_pointer_data, retrieve_name);
 
             index = @cast_integer(+(index, 1));
         };
     };
 
-    if =(tokens_get_id(tokens, index), TOKEN_STRING) {
-        variable string_value = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
-        variable string_pointer = append_node(nodes, nodes_index, NODE_STRING);
-        *<-(@cast_**(+(string_pointer, 8)), string_value);
+    if =(id, TOKEN_STRING) {
+        variable string_value = TokenStringData->value(@cast_*TokenStringData(pointer_data));
+        variable string_pointer_data = @cast_*NodeStringData(append_node_data(nodes, nodes_index, NODE_STRING));
+        NodeStringData<-value(string_pointer_data, string_value);
 
         index = @cast_integer(+(index, 1));
     };
 
-    if =(tokens_get_id(tokens, index), TOKEN_INTEGER) {
-        variable integer_value = integer->(@cast_*integer(+(tokens_get_pointer(tokens, index), 8)));
-        variable integer_pointer = append_node(nodes, nodes_index, NODE_INTEGER);
-        integer<-(@cast_*integer(+(integer_pointer, 8)), integer_value);
+    if =(id, TOKEN_INTEGER) {
+        variable integer_value = TokenIntegerData->value(@cast_*TokenIntegerData(pointer_data));
+        variable integer_pointer_data = @cast_*NodeIntegerData(append_node_data(nodes, nodes_index, NODE_INTEGER));
+        NodeIntegerData<-value(integer_pointer_data, integer_value);
 
         index = @cast_integer(+(index, 1));
     };
 
-    if =(tokens_get_id(tokens, index), TOKEN_BOOLEAN) {
-        variable boolean_value = any_1->(@cast_*any_1(+(tokens_get_pointer(tokens, index), 8)));
-        variable integer_pointer = append_node(nodes, nodes_index, NODE_BOOLEAN);
-        any_1<-(@cast_*any_1(+(integer_pointer, 8)), boolean_value);
+    if =(id, TOKEN_BOOLEAN) {
+        variable boolean_value = TokenBooleanData->value(@cast_*TokenBooleanData(pointer_data));
+        variable boolean_pointer_data = @cast_*NodeBooleanData(append_node_data(nodes, nodes_index, NODE_BOOLEAN));
+        NodeBooleanData<-value(boolean_pointer_data, @cast_boolean(boolean_value));
 
         index = @cast_integer(+(index, 1));
     };
@@ -784,8 +883,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
     variable done_anything = false;
 
     if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
-        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "variable") {
-            variable variable_name = *->(@cast_**(+(tokens_get_pointer(tokens, integer+(integer->(index_pointer), 1)), 8)));
+        if string=(TokenKeywordData->keyword(@cast_*TokenKeywordData(tokens_get_pointer_data(tokens, integer->(index_pointer)))), "variable") {
+            variable variable_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, integer->(index_pointer))));
             variable index = integer->(index_pointer);
             index = integer+(index, 1);
 
@@ -804,7 +903,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                 };
 
                 if =(id, TOKEN_NAME) {
-                    variable name_value = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+                    variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
                     if seen_name {
                         autoarray8_set(&(types), name_index, name_value);
                     };
@@ -819,7 +918,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                 index = integer+(index, 1);
 
                 if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-                    if string=(*->(@cast_**(+(tokens_get_pointer(tokens, index), 8))), "=") {
+                    variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+                    if string=(name_value, "=") {
                         running = false;
                         parse_expression = true;
                     };
@@ -832,9 +932,9 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
 
             variable i = 0;
             while !(=(autoarray8_get(&(names), i), 0)) {
-                variable node = append_node(nodes, nodes_index, NODE_DECLARE);
-                *<-(@cast_**(+(node, 8)), @cast_*(autoarray8_get(&(names), i)));
-                *<-(@cast_**(+(node, 16)), @cast_*(autoarray8_get(&(types), i)));
+                variable node_data = @cast_*NodeDeclareData(append_node_data(nodes, nodes_index, NODE_DECLARE));
+                NodeDeclareData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
+                NodeDeclareData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
 
                 i = integer+(i, 1);
             };
@@ -847,9 +947,9 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
             if !(parse_expression) {
                 variable i = 0;
                 while !(=(autoarray8_get(&(names), i), 0)) {
-                    variable node = append_node(nodes, nodes_index, NODE_ZERO);
-                    *<-(@cast_**(+(node, 8)), @cast_*(autoarray8_get(&(names), i)));
-                    *<-(@cast_**(+(node, 16)), @cast_*(autoarray8_get(&(types), i)));
+                    variable node_data = @cast_*NodeZeroData(append_node_data(nodes, nodes_index, NODE_ZERO));
+                    NodeZeroData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
+                    NodeZeroData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
 
                     i = integer+(i, 1);
                 };
@@ -857,8 +957,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
 
             variable i = 0;
             while !(=(autoarray8_get(&(names), i), 0)) {
-                variable node = append_node(nodes, nodes_index, NODE_ASSIGN);
-                *<-(@cast_**(+(node, 8)), @cast_*(autoarray8_get(&(names), i)));
+                variable node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
+                NodeAssignData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
 
                 i = integer+(i, 1);
             };
@@ -869,7 +969,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
         };
     };
     if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
-        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "return") {
+        variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, integer->(index_pointer))));
+        if string=(name_value, "return") {
             increment_integer_pointer(index_pointer, 1);
             parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
 
@@ -879,15 +980,16 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
         };
     };
     if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
-        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "if") {
+        variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, integer->(index_pointer))));
+        if string=(name_value, "if") {
             increment_integer_pointer(index_pointer, 1);
 
             variable target = get_target_id();
 
             parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
-            variable conditional_jump = append_node(nodes, nodes_index, NODE_JUMP_CONDITIONAL);
-            any_8<-(@cast_*any_8(+(conditional_jump, 8)), target);
-            any_1<-(@cast_*any_1(+(conditional_jump, 16)), byte(0));
+            variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+            NodeJumpConditionalData<-target_id(conditional_jump_data, target);
+            NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
 
             increment_integer_pointer(index_pointer, 1);
 
@@ -895,8 +997,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                 parse_statement(tokens, index_pointer, nodes, nodes_index, allocator);
             };
 
-            variable target_node = append_node(nodes, nodes_index, NODE_TARGET);
-            any_8<-(@cast_*any_8(+(target_node, 8)), target);
+            variable target_node_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+            NodeTargetData<-id(target_node_data, target);
  
             increment_integer_pointer(index_pointer, 1);
             done_anything = true;
@@ -904,20 +1006,21 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
         };
     };
     if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
-        if string=(*->(@cast_**(+(tokens_get_pointer(tokens, integer->(index_pointer)), 8))), "while") {
+        variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, integer->(index_pointer))));
+        if string=(name_value, "while") {
             increment_integer_pointer(index_pointer, 1);
 
             variable target1 = get_target_id();
 
             variable target2 = get_target_id();
 
-            variable target_node1 = append_node(nodes, nodes_index, NODE_TARGET);
-            any_8<-(@cast_*any_8(+(target_node1, 8)), target1);
+            variable target_node1_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+            NodeTargetData<-id(target_node1_data, target1);
 
             parse_expression(tokens, index_pointer, nodes, nodes_index, allocator);
-            variable conditional_jump = append_node(nodes, nodes_index, NODE_JUMP_CONDITIONAL);
-            any_8<-(@cast_*any_8(+(conditional_jump, 8)), target2);
-            any_1<-(@cast_*any_1(+(conditional_jump, 16)), byte(0));
+            variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+            NodeJumpConditionalData<-target_id(conditional_jump_data, target2);
+            NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
 
             increment_integer_pointer(index_pointer, 1);
 
@@ -925,11 +1028,11 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                 parse_statement(tokens, index_pointer, nodes, nodes_index, allocator);
             };
 
-            variable jump_node = append_node(nodes, nodes_index, NODE_JUMP);
-            any_8<-(@cast_*any_8(+(jump_node, 8)), target1);
+            variable jump_node_data = @cast_*NodeJumpData(append_node_data(nodes, nodes_index, NODE_JUMP));
+            NodeJumpData<-target_id(jump_node_data, target1);
 
-            variable target_node2 = append_node(nodes, nodes_index, NODE_TARGET);
-            any_8<-(@cast_*any_8(+(target_node2, 8)), target2);
+            variable target_node2_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+            NodeTargetData<-id(target_node2_data, target2);
  
             increment_integer_pointer(index_pointer, 1);
             done_anything = true;
@@ -941,8 +1044,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
         variable name_index = 0;
 
         variable index = integer->(index_pointer);
-        while !(string=(*->(@cast_**(+(tokens_get_pointer(tokens, index), 8))), "=")) {
-            variable name = *->(@cast_**(+(tokens_get_pointer(tokens, index), 8)));
+        while !(string=(TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index))), "=")) {
+            variable name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
             autostack8_push(&(names), &(name_index), name);
             index = integer+(index, 1);
         };
@@ -953,8 +1056,8 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
 
         variable i = 0;
         while !(=(autoarray8_get(&(names), i), 0)) {
-            variable assign_node = append_node(nodes, nodes_index, NODE_ASSIGN);
-            *<-(@cast_**(+(assign_node, 8)), @cast_*(autoarray8_get(&(names), i)));
+            variable assign_node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
+            NodeAssignData<-name(assign_node_data, @cast_*(autoarray8_get(&(names), i)));
             i = integer+(i, 1);
         };
 
@@ -976,7 +1079,8 @@ function parse(tokens: *AutoBuffer, tokens_count: integer, nodes: *AutoBuffer, n
         variable id = autobuffer_get_integer(tokens, integer*(index, TOKEN_SIZE));
 
         if =(id, TOKEN_KEYWORD) {
-            variable keyword = autobuffer_get_*(tokens, integer+(integer*(index, TOKEN_SIZE), 8));
+            variable keyword_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, index));
+            variable keyword = TokenKeywordData->keyword(keyword_data);
 
             if string=(keyword, "function") {
                 parse_function(tokens, &(index), nodes, nodes_index, allocator);
@@ -1161,8 +1265,9 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
         };
 
         if =(id, NODE_GLOBAL) {
-            variable global_name = *->(@cast_**(+(pointer, 8)));
-            variable global_type = *->(@cast_**(+(pointer, 16)));
+            variable global_data = @cast_*NodeGlobalData(pointer_data);
+            variable global_name = NodeGlobalData->name(global_data);
+            variable global_type = NodeGlobalData->type(global_data);
 
             autoarray8_set(&(globals), global_index, global_name);
             autoarray8_set(&(global_types), global_index, global_type);
@@ -1171,8 +1276,9 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
         };
 
         if =(id, NODE_CONSTANT) {
-            variable constant_name = *->(@cast_**(+(pointer, 8)));
-            variable constant_type = *->(@cast_**(+(pointer, 16)));
+            variable constant_data = @cast_*NodeConstantData(pointer_data);
+            variable constant_name = NodeConstantData->name(constant_data);
+            variable constant_type = NodeConstantData->type(constant_data);
 
             autoarray8_set(&(constants), constant_index, constant_name);
             autoarray8_set(&(constant_types), constant_index, constant_type);
@@ -1194,6 +1300,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
         variable pointer = nodes_get_pointer(nodes, i);
+        variable pointer_data = nodes_get_pointer_data(nodes, i);
         variable done_anything = false;
 
         if =(id, NODE_FUNCTION) {
@@ -1214,7 +1321,8 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
             done_anything = true;
         };
         if =(id, NODE_INVOKE) {
-            variable function_name = *->(@cast_**(+(pointer, 8)));
+            variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+            variable function_name = NodeInvokeData->name(invoke_data);
 
             variable matched_internal = false;
 
@@ -1279,8 +1387,9 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
             done_anything = true;
         };
         if =(id, NODE_DECLARE) {
-            variable variable_name = *->(@cast_**(+(pointer, 8)));
-            variable variable_type = *->(@cast_**(+(pointer, 16)));
+            variable declare_data = @cast_*NodeDeclareData(pointer_data);
+            variable variable_name = NodeDeclareData->name(declare_data);
+            variable variable_type = NodeDeclareData->type(declare_data);
 
             variable temp_variable_index = 999;
             variable k = 0;
@@ -1307,7 +1416,8 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
             done_anything = true;
         };
         if =(id, NODE_ASSIGN) {
-            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable assign_data = @cast_*NodeAssignData(pointer_data);
+            variable variable_name = NodeAssignData->name(assign_data);
 
             variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
             variable popped_stack = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
@@ -1358,7 +1468,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
             done_anything = true;
         };
         if =(id, NODE_RETRIEVE) {
-            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
 
             variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
             if !(=(variable_type, 0)) {
@@ -1434,7 +1544,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
             if !(string=(popped, "boolean")) {
                 print("TYPECHECK: ");
                 print(current_function);
-                print(": If wants 'boolean', given '");
+                print(": Conditional Jump (if/while) wants 'boolean', given '");
                 print(stack_popped);
                 println("'");
                 sys_exit(1);
@@ -1461,7 +1571,8 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
         };
 
         if =(id, NODE_ZERO) {
-            variable type2 = *->(@cast_**(+(pointer, 16)));
+            variable zero_data = @cast_*NodeZeroData(pointer_data);
+            variable type2 = NodeZeroData->type(zero_data);
             autostack8_push(&(stack), &(stack_pointer), type2);
             done_anything = true;
         };
@@ -1598,10 +1709,12 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
             while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
                 variable id = nodes_get_id(nodes, j);
                 variable pointer = nodes_get_pointer(nodes, j);
+                variable pointer_data = nodes_get_pointer_data(nodes, j);
                 
                 if =(id, NODE_DECLARE) {
-                    variable declare_name = *->(@cast_**(+(pointer, 8)));
-                    variable declare_type = *->(@cast_**(+(pointer, 16)));
+                    variable declare_data = @cast_*NodeDeclareData(pointer_data);
+                    variable declare_name = NodeDeclareData->name(declare_data);
+                    variable declare_type = NodeDeclareData->type(declare_data);
                     total = integer+(total, get_size_linux_x86-64(declare_type, nodes, node_count));
                 };
 
@@ -1613,8 +1726,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
             index = integer+(index, 1);
         };
         if =(id, NODE_GLOBAL) {
-            variable global_name = *->(@cast_**(+(pointer, 8)));
-            variable global_type = *->(@cast_**(+(pointer, 16)));
+            variable global_data = @cast_*NodeGlobalData(pointer_data);
+            variable global_name = NodeGlobalData->name(global_data);
+            variable global_type = NodeGlobalData->type(global_data);
 
             autoarray8_set(&(globals), global_index, global_name);
             autoarray8_set(&(global_types), global_index, global_type);
@@ -1622,8 +1736,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
             global_index = integer+(global_index, 1);
         };
         if =(id, NODE_CONSTANT) {
-            variable constant_name = *->(@cast_**(+(pointer, 8)));
-            variable constant_type = *->(@cast_**(+(pointer, 16)));
+            variable constant_data = @cast_*NodeConstantData(pointer_data);
+            variable constant_name = NodeConstantData->name(constant_data);
+            variable constant_type = NodeConstantData->type(constant_data);
 
             autoarray8_set(&(constants), constant_index, constant_name);
             autoarray8_set(&(constant_types), constant_index, constant_type);
@@ -2032,7 +2147,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_INTEGER) {
-            variable value_integer = integer->(@cast_*integer(+(pointer, 8)));
+            variable integer_data = @cast_*NodeIntegerData(pointer_data);
+            variable value_integer = NodeIntegerData->value(integer_data);
 
             autopush_string(&(buffer), &(buffer_index), "push ");
             autopush_integer(&(buffer), &(buffer_index), value_integer);
@@ -2041,7 +2157,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_BOOLEAN) {
-            variable value_boolean = any_1->(@cast_*any_1(+(pointer, 8)));
+            variable boolean_data = @cast_*NodeBooleanData(pointer_data);
+            variable value_boolean = NodeBooleanData->value(boolean_data);
 
             if @cast_boolean(value_boolean) {
                 autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
@@ -2057,7 +2174,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_INVOKE) {
-            variable function_name = *->(@cast_**(+(pointer, 8)));
+            variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+            variable function_name = NodeInvokeData->name(invoke_data);
             variable next_id = nodes_get_id(nodes, integer+(i, 1));
 
             if =(next_id, NODE_POINTER) {
@@ -2290,7 +2408,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_STRING) {
-            variable string_value = *->(@cast_**(+(pointer, 8)));
+            variable string_data = @cast_*NodeStringData(pointer_data);
+            variable string_value = NodeStringData->value(string_data);
             variable string_id = program_constant_index;
             program_constant_index = @cast_integer(+(program_constant_index, 1));
 
@@ -2312,8 +2431,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_DECLARE) {
-            variable variable_name = *->(@cast_**(+(pointer, 8)));
-            variable variable_type = *->(@cast_**(+(pointer, 16)));
+            variable declare_data = @cast_*NodeDeclareData(pointer_data);
+            variable variable_name = NodeDeclareData->name(declare_data);
+            variable variable_type = NodeDeclareData->type(declare_data);
 
             autoarray8_set(&(variable_names), variable_index, variable_name);
             autoarray8_set(&(variable_types), variable_index, variable_type);
@@ -2324,7 +2444,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_ASSIGN) {
-            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable assign_data = @cast_*NodeAssignData(pointer_data);
+            variable variable_name = NodeAssignData->name(assign_data);
             variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
 
             if !(=(variable_type, 0)) {
@@ -2336,7 +2457,6 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
                     location = @cast_integer(+(location, autoarray8_get(&(variable_sizes), j)));
                     j = integer+(j, 1);
                 };
-                //variable location = get_size_multiple_linux_x86-64(AutoBuffer->buffer(&(variable_types)), autostringarraymap_get_index(&(variable_names), variable_name, variable_index), nodes, node_count);
 
                 variable j = 0;
                 while <(j, size) {
@@ -2479,7 +2599,7 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         if =(id, NODE_RETRIEVE) {
             variable next_id = nodes_get_id(nodes, integer+(i, 1));
 
-            variable variable_name = *->(@cast_**(+(pointer, 8)));
+            variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
             variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
@@ -2915,8 +3035,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_JUMP_CONDITIONAL) {
-            variable target = integer->(@cast_*integer(+(pointer, 8)));
-            variable conditional = any_1->(@cast_*any_1(+(pointer, 16)));
+            variable jump_conditional_data = @cast_*NodeJumpConditionalData(pointer_data);
+            variable target = NodeJumpConditionalData->target_id(jump_conditional_data);
+            variable conditional = NodeJumpConditionalData->desired_state(jump_conditional_data);
             autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
             autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
 
@@ -2936,7 +3057,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_JUMP) {
-            variable target = integer->(@cast_*integer(+(pointer, 8)));
+            variable jump_data = @cast_*NodeJumpData(pointer_data);
+            variable target = NodeJumpData->target_id(jump_data);
 
             autopush_string(&(buffer), &(buffer_index), "jmp target_");
             autopush_integer(&(buffer), &(buffer_index), target);
@@ -2946,7 +3068,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_TARGET) {
-            variable target = integer->(@cast_*integer(+(pointer, 8)));
+            variable target_data = @cast_*NodeTargetData(pointer_data);
+            variable target = NodeTargetData->id(target_data);
             autopush_string(&(buffer), &(buffer_index), "target_");
             autopush_integer(&(buffer), &(buffer_index), target);
             autopush_string_with_newline(&(buffer), &(buffer_index), ":");
@@ -2963,8 +3086,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_GLOBAL) {
-            variable name2 = *->(@cast_**(+(pointer, 8)));
-            variable type = *->(@cast_**(+(pointer, 16)));
+            variable global_data = @cast_*NodeGlobalData(pointer_data);
+            variable name2 = NodeGlobalData->name(global_data);
+            variable type = NodeGlobalData->type(global_data);
             variable global_name = bump_allocate(allocator, integer+(length(name2), 1));
             copy("_", global_name, 1);
             copy(name2, @cast_*(+(global_name, 1)), length(name2));
@@ -2980,8 +3104,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_CONSTANT) {
-            variable name3 = *->(@cast_**(+(pointer, 8)));
-            variable type2 = *->(@cast_**(+(pointer, 16)));
+            variable constant_data = @cast_*NodeConstantData(pointer_data);
+            variable name3 = NodeConstantData->name(constant_data);
+            variable type2 = NodeConstantData->type(constant_data);
             //TODO: reassigning locals should warn
             variable value2 = any_8->(@cast_*any_8(+(pointer, 24)));
 
@@ -3000,7 +3125,8 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
         };
 
         if =(id, NODE_ZERO) {
-            variable type2 = *->(@cast_**(+(pointer, 16)));
+            variable zero_data = @cast_*NodeZeroData(pointer_data);
+            variable type2 = NodeZeroData->type(zero_data);
 
             variable size = get_size_linux_x86-64(type2, nodes, node_count);
 
