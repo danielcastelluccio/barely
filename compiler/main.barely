@@ -1,3 +1,6 @@
+include "core.barely";
+include "lib/syscall_linux.barely";
+
 global target_id: integer;
 
 global empty: any_8;
@@ -9,24 +12,9 @@ global cached_index: integer;
 function main(arguments: **, argument_count: integer) {
     variable i = 1;
 
-    variable tokens = autobuffer_new(131072);
-    variable tokens_index = 0;
-
     variable main_name: *;
 
-    while <(i, argument_count) {
-        variable pointer = @cast_*(*8(@cast_*(+(arguments, *(8, i)))));
-
-        if =(i, 1) {
-            main_name = pointer;
-        };
-
-        variable contents = get_contents(pointer);
-
-        tokenize(contents, &(tokens), &(tokens_index));
-
-        i = @cast_integer(+(i, 1));
-    };
+    println("Parsing...");
 
     variable nodes = autobuffer_new(131072);
     variable nodes_index = 0;
@@ -36,12 +24,23 @@ function main(arguments: **, argument_count: integer) {
     append_structure(&(nodes), &(nodes_index), "any_1");
     append_structure(&(nodes), &(nodes_index), "any_8");
 
-    println("Parsing...");
-
     cached_types = autobuffer_new(131072);
     cached_sizes = autobuffer_new(131072);
 
-    parse(&(tokens), tokens_index, &(nodes), &(nodes_index));
+    variable already_included = autobuffer_new(64);
+    variable already_included_index = 0;
+
+    while <(i, argument_count) {
+        variable pointer = @cast_*(*8(@cast_*(+(arguments, *(8, i)))));
+
+        if =(i, 1) {
+            main_name = pointer;
+        };
+
+        include_file(pointer, &(nodes), &(nodes_index), &(already_included), &(already_included_index));
+
+        i = @cast_integer(+(i, 1));
+    };
 
     variable nodes_index_saved = nodes_index;
     variable i = 0;
@@ -154,6 +153,46 @@ function main(arguments: **, argument_count: integer) {
     output_linux_x86-64(&(nodes), nodes_index, main_name);
 };
 
+function include_file(file_name: *, nodes: *AutoBuffer, nodes_index: *integer, already_included: *AutoBuffer, already_included_index: *integer) {
+    variable tokens = autobuffer_new(131072);
+    variable tokens_index = 0;
+
+    variable contents = get_contents(file_name);
+
+    tokenize(contents, &(tokens), &(tokens_index));
+
+    variable previous_index = integer->(nodes_index);
+
+    parse(&(tokens), tokens_index, nodes, nodes_index);
+
+    autostack8_push(already_included, already_included_index, file_name);
+
+    variable i = 0;
+    while <(i, integer->(nodes_index)) {
+        variable id = nodes_get_id(nodes, i);
+
+        if =(id, NODE_INCLUDE) {
+            variable include_data = @cast_*NodeIncludeData(nodes_get_pointer_data(nodes, i));
+            variable path = NodeIncludeData->path(include_data);
+
+            variable included = false;
+            variable j = 0;
+            while <(j, integer->(already_included_index)) {
+                if string=(@cast_*(autoarray8_get(already_included, j)), path) {
+                    included = true;
+                };
+                j = integer+(j, 1);
+            };
+
+            if !(included) {
+                include_file(path, nodes, nodes_index, already_included, already_included_index);
+            };
+        };
+
+        i = integer+(i, 1);
+    };
+};
+
 function is_number(string: *): boolean {
     variable length = length(string);
 
@@ -259,6 +298,9 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
         is_keyword = true;
     };
     if string=(buffer, "constant") {
+        is_keyword = true;
+    };
+    if string=(buffer, "include") {
         is_keyword = true;
     };
 
@@ -587,6 +629,12 @@ structure NodeZeroData {
     type: *;
 };
 
+constant NODE_INCLUDE: integer = 18;
+
+structure NodeIncludeData {
+    path: *;
+};
+
 constant NODE_SIZE: integer = 48;
 
 function tokens_get_id(tokens: *AutoBuffer, index: integer): integer {
@@ -660,6 +708,17 @@ function parse_global(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Auto
     NodeGlobalData<-type(global_node_data, type);
 
     increment_integer_pointer(index_pointer, 5);
+};
+
+function parse_include(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer) {
+    variable index = integer->(index_pointer);
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, integer+(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+
+    variable include_node_data = @cast_*NodeIncludeData(append_node_data(nodes, nodes_index, NODE_INCLUDE));
+    NodeIncludeData<-path(include_node_data, name);
+
+    increment_integer_pointer(index_pointer, 3);
 };
 
 function parse_structure(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer) {
@@ -1090,6 +1149,10 @@ function parse(tokens: *AutoBuffer, tokens_count: integer, nodes: *AutoBuffer, n
 
             if string=(keyword, "constant") {
                 parse_constant(tokens, &(index), nodes, nodes_index);
+            };
+
+            if string=(keyword, "include") {
+                parse_include(tokens, &(index), nodes, nodes_index);
             };
         };
     };
@@ -1561,6 +1624,9 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
             done_anything = true;
         };
         if =(id, NODE_CONSTANT) {
+            done_anything = true;
+        };
+        if =(id, NODE_INCLUDE) {
             done_anything = true;
         };
 
@@ -3169,6 +3235,9 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
                 };
             };
 
+            done_anything = true;
+        };
+        if =(id, NODE_INCLUDE) {
             done_anything = true;
         };
 
