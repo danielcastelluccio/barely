@@ -6,13 +6,6 @@ global cached_types: AutoBuffer;
 global cached_sizes: AutoBuffer;
 global cached_index: integer;
 
-function append_structure(nodes: *AutoBuffer, nodes_index, *integer, name: *) {
-    variable structure_data = @cast_*NodeStructureData(append_node_data(nodes, nodes_index, NODE_STRUCTURE));
-    NodeStructureData<-name(structure_data, name);
-    NodeStructureData<-item_names(structure_data, &(empty));
-    NodeStructureData<-item_types(structure_data, &(empty));
-};
-
 function main(arguments: **, argument_count: integer) {
     variable i = 1;
 
@@ -56,8 +49,8 @@ function main(arguments: **, argument_count: integer) {
     variable i = 0;
     while <(i, nodes_index_saved) {
         if =(nodes_get_id(&(nodes), i), NODE_STRUCTURE) {
-            variable pointer = nodes_get_pointer(&(nodes), i);
-            variable name = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 8)));
+            variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(&(nodes), i));
+            variable name = NodeStructureData->name(pointer);
 
             // Setter for whole value
             variable allocated = bump_allocate(&(allocator), integer+(length(name), 3));
@@ -74,11 +67,11 @@ function main(arguments: **, argument_count: integer) {
 
             variable allocated_returns = bump_allocate(&(allocator), 8);
 
-            variable pointer_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
-            *<-(@cast_**(+(pointer_store_node, 8)), allocated);
-            *<-(@cast_**(+(pointer_store_node, 16)), @cast_*(0));
-            *<-(@cast_**(+(pointer_store_node, 24)), allocated_arguments);
-            *<-(@cast_**(+(pointer_store_node, 32)), allocated_returns);
+            variable pointer_store_node = @cast_*NodeFunctionData(append_node_data(&(nodes), &(nodes_index), NODE_FUNCTION));
+            NodeFunctionData<-name(pointer_store_node, allocated);
+            NodeFunctionData<-argument_names(pointer_store_node, @cast_*(0));
+            NodeFunctionData<-argument_types(pointer_store_node, allocated_arguments);
+            NodeFunctionData<-returns(pointer_store_node, allocated_returns);
 
             variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
 
@@ -93,11 +86,11 @@ function main(arguments: **, argument_count: integer) {
             variable allocated_returns = bump_allocate(&(allocator), 16);
             array8_set(allocated_returns, 0, name);
 
-            variable pointer_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
-            *<-(@cast_**(+(pointer_store_node, 8)), allocated);
-            *<-(@cast_**(+(pointer_store_node, 16)), @cast_*(0));
-            *<-(@cast_**(+(pointer_store_node, 24)), allocated_arguments);
-            *<-(@cast_**(+(pointer_store_node, 32)), allocated_returns);
+            variable pointer_store_node = @cast_*NodeFunctionData(append_node_data(&(nodes), &(nodes_index), NODE_FUNCTION));
+            NodeFunctionData<-name(pointer_store_node, allocated);
+            NodeFunctionData<-argument_names(pointer_store_node, @cast_*(0));
+            NodeFunctionData<-argument_types(pointer_store_node, allocated_arguments);
+            NodeFunctionData<-returns(pointer_store_node, allocated_returns);
 
             variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
 
@@ -122,14 +115,13 @@ function main(arguments: **, argument_count: integer) {
 
                 variable allocated_returns = bump_allocate(&(allocator), 8);
 
-                variable member_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
-                *<-(@cast_**(+(member_store_node, 8)), allocated);
-                *<-(@cast_**(+(member_store_node, 16)), @cast_*(0));
-                *<-(@cast_**(+(member_store_node, 24)), allocated_arguments);
-                *<-(@cast_**(+(member_store_node, 32)), allocated_returns);
+                variable member_store_node = @cast_*NodeFunctionData(append_node_data(&(nodes), &(nodes_index), NODE_FUNCTION));
+                NodeFunctionData<-name(member_store_node, allocated);
+                NodeFunctionData<-argument_names(member_store_node, @cast_*(0));
+                NodeFunctionData<-argument_types(member_store_node, allocated_arguments);
+                NodeFunctionData<-returns(member_store_node, allocated_returns);
 
                 variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
-
 
                 // Getter for individual members
                 variable allocated = bump_allocate(&(allocator), integer+(length(name), integer+(length(member_name), 3)));
@@ -143,11 +135,11 @@ function main(arguments: **, argument_count: integer) {
                 variable allocated_returns = bump_allocate(&(allocator), 16);
                 array8_set(allocated_returns, 0, member_type);
 
-                variable member_store_node = append_node(&(nodes), &(nodes_index), NODE_FUNCTION);
-                *<-(@cast_**(+(member_store_node, 8)), allocated);
-                *<-(@cast_**(+(member_store_node, 16)), @cast_*(0));
-                *<-(@cast_**(+(member_store_node, 24)), allocated_arguments);
-                *<-(@cast_**(+(member_store_node, 32)), allocated_returns);
+                variable member_store_node = @cast_*NodeFunctionData(append_node_data(&(nodes), &(nodes_index), NODE_FUNCTION));
+                NodeFunctionData<-name(member_store_node, allocated);
+                NodeFunctionData<-argument_names(member_store_node, @cast_*(0));
+                NodeFunctionData<-argument_types(member_store_node, allocated_arguments);
+                NodeFunctionData<-returns(member_store_node, allocated_returns);
 
                 variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
 
@@ -472,6 +464,14 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *integer, allo
 };
 
 constant NODE_FUNCTION: integer = 0;
+
+structure NodeFunctionData {
+    name: *;
+    argument_names: *;
+    argument_types: *;
+    returns: *;
+};
+
 constant NODE_ENDFUNCTION: integer = 1;
 constant NODE_RETRIEVE: integer = 2;
 constant NODE_STRING: integer = 3;
@@ -528,6 +528,13 @@ function append_node(nodes: *AutoBuffer, nodes_index: *integer, id: integer): * 
     increment_integer_pointer(nodes_index, 1);
 
     return to_return;
+};
+
+function append_structure(nodes: *AutoBuffer, nodes_index, *integer, name: *) {
+    variable structure_data = @cast_*NodeStructureData(append_node_data(nodes, nodes_index, NODE_STRUCTURE));
+    NodeStructureData<-name(structure_data, name);
+    NodeStructureData<-item_names(structure_data, &(empty));
+    NodeStructureData<-item_types(structure_data, &(empty));
 };
 
 function parse_constant(tokens: *AutoBuffer, index_pointer: *integer, nodes: *AutoBuffer, nodes_index: *integer, allocator: *BumpAllocator) {
@@ -600,10 +607,10 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
         index = integer+(index, 1);
     };
 
-    variable structure_node = append_node(nodes, nodes_index, NODE_STRUCTURE);
-    *<-(@cast_**(+(structure_node, 8)), name);
-    *<-(@cast_**(+(structure_node, 16)), member_names_pointer);
-    *<-(@cast_**(+(structure_node, 24)), member_types_pointer);
+    variable structure_data = @cast_*NodeStructureData(append_node_data(nodes, nodes_index, NODE_STRUCTURE));
+    NodeStructureData<-name(structure_data, name);
+    NodeStructureData<-item_names(structure_data, member_names_pointer);
+    NodeStructureData<-item_types(structure_data, member_types_pointer);
 
     index = integer+(index, 2);
 
@@ -616,8 +623,8 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Au
     variable name_token_pointer = tokens_get_pointer(tokens, integer+(index, 1));
     variable name = *->(@cast_**(+(name_token_pointer, 8)));
 
-    variable function_node = append_node(nodes, nodes_index, NODE_FUNCTION);
-    *<-(@cast_**(+(function_node, 8)), name);
+    variable function_data = @cast_*NodeFunctionData(append_node_data(nodes, nodes_index, NODE_FUNCTION));
+    NodeFunctionData<-name(function_data, name);
 
     index = @cast_integer(+(index, 3));
 
@@ -667,9 +674,9 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Au
 
     variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
 
-    *<-(@cast_**(+(function_node, 16)), AutoBuffer->buffer(&(parameter_names_pointer)));
-    *<-(@cast_**(+(function_node, 24)), AutoBuffer->buffer(&(parameter_types_pointer)));
-    *<-(@cast_**(+(function_node, 32)), AutoBuffer->buffer(&(returns_pointer)));
+    NodeFunctionData<-argument_names(function_data, AutoBuffer->buffer(&(parameter_names_pointer)));
+    NodeFunctionData<-argument_types(function_data, AutoBuffer->buffer(&(parameter_types_pointer)));
+    NodeFunctionData<-returns(function_data, AutoBuffer->buffer(&(returns_pointer)));
 
     index = @cast_integer(+(index, 1));
 
@@ -1052,9 +1059,9 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: integer)
     variable i = 0;
     while <(i, node_count) {
         if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
-            variable pointer = nodes_get_pointer(nodes, i);
-            variable name = *->(@cast_**(+(pointer, 8)));
-            variable member_types = *->(@cast_**(+(pointer, 24)));
+            variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
+            variable name = NodeStructureData->name(pointer);
+            variable member_types = NodeStructureData->item_types(pointer);
             if string=(type, name) {
                 variable size = get_size_multiple_linux_x86-64(member_types, 999, nodes, node_count);
                 autoarray8_set(&(cached_types), cached_index, type);
@@ -1141,16 +1148,14 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
         variable pointer = nodes_get_pointer(nodes, i);
+        variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         if =(id, NODE_FUNCTION) {
-            variable function_name = *->(@cast_**(+(pointer, 8)));
-            autoarray8_set(&(functions), index, function_name);
-            variable function_argument_names2 = *->(@cast_**(+(pointer, 16)));
-            autoarray8_set(&(function_argument_names), index, function_argument_names2);
-            variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
-            autoarray8_set(&(function_arguments), index, function_arguments2);
-            variable function_returns2 = *->(@cast_**(+(pointer, 32)));
-            autoarray8_set(&(function_returns), index, function_returns2);
+            variable function_data = @cast_*NodeFunctionData(pointer_data);
+            autoarray8_set(&(functions), index, NodeFunctionData->name(function_data));
+            autoarray8_set(&(function_argument_names), index, NodeFunctionData->argument_names(function_data));
+            autoarray8_set(&(function_arguments), index, NodeFunctionData->argument_types(function_data));
+            autoarray8_set(&(function_returns), index, NodeFunctionData->returns(function_data));
 
             index = integer+(index, 1);
         };
@@ -1192,8 +1197,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer, allocator: *BumpAll
         variable done_anything = false;
 
         if =(id, NODE_FUNCTION) {
-            variable function_name = *->(@cast_**(+(pointer, 8)));
-            current_function = function_name;
+            current_function = NodeFunctionData->name(@cast_*NodeFunctionData(nodes_get_pointer_data(nodes, i)));
             variable_index = 0;
             done_anything = true;
         };
@@ -1530,6 +1534,10 @@ function nodes_get_pointer(nodes: *AutoBuffer, index: integer): * {
     return autobuffer_get(nodes, integer*(index, NODE_SIZE));
 };
 
+function nodes_get_pointer_data(nodes: *AutoBuffer, index: integer): * {
+    return autobuffer_get(nodes, integer+(integer*(index, NODE_SIZE), 8));
+};
+
 function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, allocator: *BumpAllocator) {
     variable buffer = autobuffer_new(8388608);
     variable buffer_index = 0;
@@ -1576,16 +1584,14 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
         variable pointer = nodes_get_pointer(nodes, i);
+        variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         if =(id, NODE_FUNCTION) {
-            variable function_name = *->(@cast_**(+(pointer, 8)));
-            autoarray8_set(&(functions), index, function_name);
-            variable function_argument_names2 = *->(@cast_**(+(pointer, 16)));
-            autoarray8_set(&(function_argument_names), index, function_argument_names2);
-            variable function_arguments2 = *->(@cast_**(+(pointer, 24)));
-            autoarray8_set(&(function_arguments), index, function_arguments2);
-            variable function_returns2 = *->(@cast_**(+(pointer, 32)));
-            autoarray8_set(&(function_returns), index, function_returns2);
+            variable function_data = @cast_*NodeFunctionData(pointer_data);
+            autoarray8_set(&(functions), index, NodeFunctionData->name(function_data));
+            autoarray8_set(&(function_argument_names), index, NodeFunctionData->argument_names(function_data));
+            autoarray8_set(&(function_arguments), index, NodeFunctionData->argument_types(function_data));
+            autoarray8_set(&(function_returns), index, NodeFunctionData->returns(function_data));
 
             variable total = 16;
             variable j = i;
@@ -1625,7 +1631,7 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
             constant_index = integer+(constant_index, 1);
         };
         if =(id, NODE_STRUCTURE) {
-            variable structure_name = *->(@cast_**(+(nodes_get_pointer(nodes, i), 8)));
+            variable structure_name = NodeStructureData->name(@cast_*NodeStructureData(nodes_get_pointer_data(nodes, i)));
 
             // Setter for whole value
             variable allocated = bump_allocate(allocator, integer+(length(structure_name), 3));
@@ -1997,14 +2003,16 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *, a
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
         variable pointer = nodes_get_pointer(nodes, i);
+        variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         variable done_anything = false;
 
         if =(id, NODE_FUNCTION) {
+            variable function_data = @cast_*NodeFunctionData(pointer_data);
             variable next_id = nodes_get_id(nodes, integer+(i, 1));
 
             if !(=(next_id, NODE_ENDFUNCTION)) {
-                variable function_name = *->(@cast_**(+(pointer, 8)));
+                variable function_name = NodeFunctionData->name(function_data)
                 autopush_string(&(buffer), &(buffer_index), make_valid_linux_x86-64(function_name));
                 autopush_string_with_newline(&(buffer), &(buffer_index), ":");
                 autopush_string_with_newline(&(buffer), &(buffer_index), "push rbp");
