@@ -1,5 +1,6 @@
 include "core.barely";
 include "lib/syscall_linux.barely";
+include "lib/autobuffer.barely";
 
 global target_id: integer;
 
@@ -1394,7 +1395,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
                 variable found_function = false;
                 variable j = 0;
                 while <(j, index) {
-                    if string=(@cast_*(autoarray8_get(&(functions), j)), function_name) {
+                    if &&(!(found_function), string=(@cast_*(autoarray8_get(&(functions), j)), function_name)) {
                         variable arguments = @cast_*(autoarray8_get(&(function_arguments), j));
                         variable returns = @cast_*(autoarray8_get(&(function_returns), j));
 
@@ -3046,12 +3047,20 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
                     autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 8)));
                     autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
+                        done_anything_assign = true;
+                    };
+
+                    if !(done_anything_assign) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                        done_anything_assign = true;
+                    };
                     autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
                     j = integer+(j, 8);
-                    done_anything_assign = true;
                 };
                 if &&(>(-(returns_size, j), 3), !(done_anything_assign)) {
                     k = @cast_integer(-(k, 4));
@@ -3059,12 +3068,21 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
                     autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 4)));
                     autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
+                        done_anything_assign = true;
+                    };
+
+                    if !(done_anything_assign) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                        done_anything_assign = true;
+                    };
+
                     autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
                     j = integer+(j, 4);
-                    done_anything_assign = true;
                 };
                 if &&(>(-(returns_size, j), 1), !(done_anything_assign)) {
                     k = @cast_integer(-(k, 2));
@@ -3072,12 +3090,20 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
                     autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 2)));
                     autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
+                        done_anything_assign = true;
+                    };
+
+                    if !(done_anything_assign) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                        done_anything_assign = true;
+                    };
                     autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                     j = integer+(j, 2);
-                    done_anything_assign = true;
                 };
                 if &&(>(-(returns_size, j), 0), !(done_anything_assign)) {
                     k = @cast_integer(-(k, 1));
@@ -3085,20 +3111,39 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
                     autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 1)));
                     autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded)));
+                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
+                        done_anything_assign = true;
+                    };
+
+                    if !(done_anything_assign) {
+                        autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
+                        autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                        done_anything_assign = true;
+                    };
                     autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 
                     j = integer+(j, 1);
-                    done_anything_assign = true;
                 };
+            };
+
+            autopush_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
+
+            variable done_anything_post_assign = false;
+            if >(+(16, -(arguments_size, returns_size)), 999) {
+                autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
+                autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
+                done_anything_post_assign = true;
+            };
+
+            if !(done_anything_post_assign) {
+                autopush_string(&(buffer), &(buffer_index), "add rsp, ");
+                autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
             };
 
             returns_size = @cast_integer(-(returns_size, 8));
 
-            autopush_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
-            autopush_string(&(buffer), &(buffer_index), "add rsp, ");
-            autopush_integer(&(buffer), &(buffer_index), integer+(16, @cast_integer(-(arguments_size, returns_size))));
             autopush_string_with_newline(&(buffer), &(buffer_index), "");
             autopush_string_with_newline(&(buffer), &(buffer_index), "push rdx");
             autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
@@ -3385,33 +3430,6 @@ function indexof(string: *, character: any_1, start: integer): integer {
     return 999;
 };
 
-function string_length=(string1: *, string2: *, length: integer): boolean {
-    variable i = 0;
-    while <(i, length) {
-        variable string1_character = *1(@cast_*(+(string1, i)));
-        variable string2_character = *1(@cast_*(+(string2, i)));
-
-        if !(=1(string1_character, string2_character)) {
-            return false;
-        };
-
-        i = @cast_integer(+(i, 1));
-    };
-
-    return true;
-};
-
-function string=(string1: *, string2: *): boolean {
-    variable string1_length = length(string1);
-    variable string2_length = length(string2);
-
-    if !(=(string1_length, string2_length)) {
-        return false;
-    };
-
-    return string_length=(string1, string2, string1_length);
-};
-
 function length(string: *): integer {
     variable length = 0;
 
@@ -3432,28 +3450,6 @@ function integer-(value1: integer, value2: integer): integer {
 
 function integer*(value1: integer, value2: integer): integer {
     return @cast_integer(*(value1, value2));
-};
-
-global FOO: integer;
-
-function copy(from: *, to: *, size: integer) {
-    variable i = 0;
-
-    while <(i, size) {
-        variable done_anything = false;
-        if <(+(i, 8), size) {
-            any_8<-(@cast_*any_8(+(to, i)), any_8->(@cast_*any_8(+(from, i))));
-            i = integer+(i, 8);
-            done_anything = true;
-        };
-
-        if !(done_anything) {
-            any_1<-(@cast_*any_1(+(to, i)), any_1->(@cast_*any_1(+(from, i))));
-            i = integer+(i, 1);
-        };
-
-        FOO = integer+(FOO, 1);
-    };
 };
 
 function print(string: *) {
@@ -3519,80 +3515,6 @@ function brk_allocate(size: integer): * {
     variable _ = sys_brk(@cast_*(+(current_break, size)));
 
     return current_break;
-};
-
-structure AutoBuffer {
-    buffer: *;
-    size: integer;
-    increment: integer;
-};
-
-function autobuffer_new(size: integer): AutoBuffer {
-    variable auto_buffer: AutoBuffer;
-
-    AutoBuffer<-size(&(auto_buffer), size);
-    AutoBuffer<-increment(&(auto_buffer), size);
-
-    variable allocated = brk_allocate(size);
-    AutoBuffer<-buffer(&(auto_buffer), allocated);
-
-    return auto_buffer;
-};
-
-function autobuffer_reset(buffer: *AutoBuffer) {
-    variable i = 0;
-    while <(i, AutoBuffer->size(buffer)) {
-        any_1<-(@cast_*any_1(+(AutoBuffer->buffer(buffer), i)), byte(0));
-        i = integer+(i, 1);
-    };
-};
-
-function autobuffer_set_boolean(buffer: *AutoBuffer, value: boolean, to: integer) {
-    autobuffer_set(buffer, &(value), to, 1);
-};
-
-function autobuffer_set_any_1(buffer: *AutoBuffer, value: any_1, to: integer) {
-    autobuffer_set(buffer, &(value), to, 1);
-};
-
-function autobuffer_set_*(buffer: *AutoBuffer, value: *, to: integer) {
-    autobuffer_set(buffer, &(value), to, 8);
-};
-
-function autobuffer_set_integer(buffer: *AutoBuffer, value: integer, to: integer) {
-    autobuffer_set(buffer, &(value), to, 8);
-};
-
-function autobuffer_register(buffer: *AutoBuffer, location: integer, size: integer) {
-    while >(+(location, size), AutoBuffer->size(buffer)) {
-        variable previous_buffer = AutoBuffer->buffer(buffer);
-        variable previous_size = AutoBuffer->size(buffer);
-        variable new_buffer_size = @cast_integer(+(AutoBuffer->size(buffer), AutoBuffer->increment(buffer)));
-        variable allocated = brk_allocate(new_buffer_size);
-        AutoBuffer<-buffer(buffer, allocated);
-        AutoBuffer<-size(buffer, new_buffer_size);
-        copy(previous_buffer, allocated, previous_size);
-        //println("reallocating");
-    };
-};
-
-function autobuffer_set(buffer: *AutoBuffer, from: *, to: integer, size: integer) {
-    autobuffer_register(buffer, to, size);
-    variable to_pointer = @cast_*(+(AutoBuffer->buffer(buffer), to));
-
-    copy(from, to_pointer, size);
-};
-
-function autobuffer_get(buffer: *AutoBuffer, location: integer): * {
-    return @cast_*(+(AutoBuffer->buffer(buffer), location));
-};
-
-function autobuffer_get_integer(buffer: *AutoBuffer, location: integer): integer {
-    return integer->(@cast_*integer(autobuffer_get(buffer, location)));
-};
-
-function autobuffer_get_*(buffer: *AutoBuffer, location: integer): * {
-    return *->(@cast_**(autobuffer_get(buffer, location)));
 };
 
 function autoarray8_set(buffer: *AutoBuffer, index: integer, value: any_8) {
