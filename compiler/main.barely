@@ -3169,15 +3169,13 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
             variable name3 = NodeConstantData->name(constant_data);
             variable type2 = NodeConstantData->type(constant_data);
             //TODO: reassigning locals should warn
-            variable value2 = any_8->(@cast_*any_8(+(pointer, 24)));
+            variable value2 = NodeConstantData->value(constant_data);
 
-            variable global_name = brk_allocate(integer+(length(name3), 2));
-            copy("_", global_name, 1);
-            copy(name3, @cast_*(+(global_name, 1)), length(name3));
+            variable constant_name = brk_allocate(integer+(length(name3), 2));
+            copy("_", constant_name, 1);
+            copy(name3, @cast_*(+(constant_name, 1)), length(name3));
             
-            variable size = get_size_linux_x86-64(type, nodes, node_count);
-
-            autopush_string(&(data_buffer), &(data_buffer_index), global_name);
+            autopush_string(&(data_buffer), &(data_buffer_index), constant_name);
             autopush_string(&(data_buffer), &(data_buffer_index), ": dq ");
             autopush_integer(&(data_buffer), &(data_buffer_index), @cast_integer(value2));
             autopush_string_with_newline(&(data_buffer), &(data_buffer_index), "");
@@ -3317,7 +3315,7 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
         output_directory_index = indexof(name_new, byte(ASCII_SLASH), integer+(output_directory_index, 1));
 
         if !(=(output_directory_index, 999)) {
-            variable directory_new = brk_allocate(output_directory_index);
+            variable directory_new = brk_allocate(integer+(output_directory_index, 1));
             copy(name_new, directory_new, output_directory_index);
 
             variable asm_output_directory = autobuffer_new(32);
