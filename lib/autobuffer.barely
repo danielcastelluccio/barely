@@ -1,0 +1,75 @@
+include "lib/miscellaneous.barely";
+
+structure AutoBuffer {
+    buffer: *;
+    size: integer;
+    increment: integer;
+};
+
+function autobuffer_new(size: integer): AutoBuffer {
+    variable auto_buffer: AutoBuffer;
+
+    AutoBuffer<-size(&(auto_buffer), size);
+    AutoBuffer<-increment(&(auto_buffer), size);
+
+    variable allocated = brk_allocate(size);
+    AutoBuffer<-buffer(&(auto_buffer), allocated);
+
+    return auto_buffer;
+};
+
+function autobuffer_reset(buffer: *AutoBuffer) {
+    variable i = 0;
+    while <(i, AutoBuffer->size(buffer)) {
+        any_1<-(@cast_*any_1(+(AutoBuffer->buffer(buffer), i)), byte(0));
+        i = integer+(i, 1);
+    };
+};
+
+function autobuffer_set_boolean(buffer: *AutoBuffer, value: boolean, to: integer) {
+    autobuffer_set(buffer, &(value), to, 1);
+};
+
+function autobuffer_set_any_1(buffer: *AutoBuffer, value: any_1, to: integer) {
+    autobuffer_set(buffer, &(value), to, 1);
+};
+
+function autobuffer_set_*(buffer: *AutoBuffer, value: *, to: integer) {
+    autobuffer_set(buffer, &(value), to, 8);
+};
+
+function autobuffer_set_integer(buffer: *AutoBuffer, value: integer, to: integer) {
+    autobuffer_set(buffer, &(value), to, 8);
+};
+
+function autobuffer_register(buffer: *AutoBuffer, location: integer, size: integer) {
+    while >(+(location, size), AutoBuffer->size(buffer)) {
+        variable previous_buffer = AutoBuffer->buffer(buffer);
+        variable previous_size = AutoBuffer->size(buffer);
+        variable new_buffer_size = @cast_integer(+(AutoBuffer->size(buffer), AutoBuffer->increment(buffer)));
+        variable allocated = brk_allocate(new_buffer_size);
+        AutoBuffer<-buffer(buffer, allocated);
+        AutoBuffer<-size(buffer, new_buffer_size);
+        copy(previous_buffer, allocated, previous_size);
+        //println("reallocating");
+    };
+};
+
+function autobuffer_set(buffer: *AutoBuffer, from: *, to: integer, size: integer) {
+    autobuffer_register(buffer, to, size);
+    variable to_pointer = @cast_*(+(AutoBuffer->buffer(buffer), to));
+
+    copy(from, to_pointer, size);
+};
+
+function autobuffer_get(buffer: *AutoBuffer, location: integer): * {
+    return @cast_*(+(AutoBuffer->buffer(buffer), location));
+};
+
+function autobuffer_get_integer(buffer: *AutoBuffer, location: integer): integer {
+    return integer->(@cast_*integer(autobuffer_get(buffer, location)));
+};
+
+function autobuffer_get_*(buffer: *AutoBuffer, location: integer): * {
+    return *->(@cast_**(autobuffer_get(buffer, location)));
+};
