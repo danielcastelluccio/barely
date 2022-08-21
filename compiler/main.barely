@@ -22,6 +22,8 @@ function main(arguments: **, argument_count: integer) {
     append_structure(&(nodes), &(nodes_index), "integer");
     append_structure(&(nodes), &(nodes_index), "*");
     append_structure(&(nodes), &(nodes_index), "any_1");
+    append_structure(&(nodes), &(nodes_index), "any_2");
+    append_structure(&(nodes), &(nodes_index), "any_4");
     append_structure(&(nodes), &(nodes_index), "any_8");
 
     cached_types = autobuffer_new(131072);
@@ -90,7 +92,6 @@ function main(arguments: **, argument_count: integer) {
             NodeFunctionData<-returns(pointer_store_node, allocated_returns);
 
             variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
-
 
             variable member_names = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 16)));
             variable member_types = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 24)));
@@ -2376,6 +2377,22 @@ function output_linux_x86-64(nodes: *AutoBuffer, node_count: integer, name: *) {
                 done_anything_invoke = true;
             };
 
+            if string=(function_name, "short_to_integer") {
+                autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 0");
+                autopush_string_with_newline(&(buffer), &(buffer_index), "mov ax, [rsp]");
+                autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 2");
+                autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
+                done_anything_invoke = true;
+            };
+
+            if string=(function_name, "medium_to_integer") {
+                autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 0");
+                autopush_string_with_newline(&(buffer), &(buffer_index), "mov eax, [rsp]");
+                autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 2");
+                autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
+                done_anything_invoke = true;
+            };
+
             if string=(function_name, "*8") {
                 autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
                 autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, [rax]");
@@ -3580,6 +3597,7 @@ function autobuffer_get_*(buffer: *AutoBuffer, location: integer): * {
 
 function autoarray8_set(buffer: *AutoBuffer, index: integer, value: any_8) {
     autobuffer_set_integer(buffer, @cast_integer(value), integer*(index, 8));
+    autobuffer_register(buffer, integer+(integer*(index, 8), 8), 8);
 };
 
 function autoarray8_get(buffer: *AutoBuffer, index: integer): any_8 {
