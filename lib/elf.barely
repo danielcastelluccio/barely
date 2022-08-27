@@ -1,0 +1,1571 @@
+include "core.barely";
+include "lib/syscall_linux.barely";
+include "lib/autobuffer.barely";
+
+structure Register1 {
+    value: integer;
+};
+
+structure Register2 {
+    value: integer;
+};
+
+structure Register4 {
+    value: integer;
+};
+
+structure Register8 {
+    value: integer;
+};
+
+constant AL: Register1 = 0;
+constant CL: Register1 = 1;
+constant DL: Register1 = 2;
+constant BL: Register1 = 3;
+constant SPL: Register1 = 4;
+constant BPL: Register1 = 5;
+
+constant AX: Register2 = 0;
+constant CX: Register2 = 1;
+constant DX: Register2 = 2;
+constant BX: Register2 = 3;
+constant SPX: Register2 = 4;
+constant BPX: Register2 = 5;
+
+constant EAX: Register4 = 0;
+constant ECX: Register4 = 1;
+constant EDX: Register4 = 2;
+constant EBX: Register4 = 3;
+constant ESP: Register4 = 4;
+constant EBp: Register4 = 5;
+
+constant RAX: Register8 = 0;
+constant RCX: Register8 = 1;
+constant RDX: Register8 = 2;
+constant RBX: Register8 = 3;
+constant RSP: Register8 = 4;
+constant RBP: Register8 = 5;
+constant RSI: Register8 = 6;
+constant RDI: Register8 = 7;
+constant R8: Register8 = 8;
+constant R9: Register8 = 9;
+constant R10: Register8 = 10;
+constant R11: Register8 = 11;
+constant R12: Register8 = 12;
+constant R13: Register8 = 13;
+constant R14: Register8 = 14;
+constant R15: Register8 = 15;
+
+structure DataIndex {
+    value: integer;
+};
+
+structure BssIndex {
+    value: integer;
+};
+
+structure InstructionIndex {
+    value: integer;
+};
+
+function autopush_jmp_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(233));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function autopush_je_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(15));
+    autopush_byte(instructions, instruction_index_pointer, byte(132));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function autopush_jne_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(15));
+    autopush_byte(instructions, instruction_index_pointer, byte(133));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function set_jmp(instructions: *AutoBuffer, instruction_index_pointer: *integer, jump: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(jump, 1)));
+};
+
+function set_jmp_value(instructions: *AutoBuffer, jump: InstructionIndex, value: InstructionIndex) {
+    variable offset = -4(integer_to_medium(@cast_integer(value)), integer_to_medium(@cast_integer(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(jump, 1)));
+};
+
+function autopush_call_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(232));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function autopush_ret(instructions: *AutoBuffer, instruction_index_pointer: *integer) {
+    autopush_byte(instructions, instruction_index_pointer, byte(195));
+};
+
+function set_call(instructions: *AutoBuffer, instruction_index_pointer: *integer, call: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(call, 1)));
+};
+
+function set_call_value(instructions: *AutoBuffer, call: InstructionIndex, value: InstructionIndex) {
+    variable offset = -4(integer_to_medium(@cast_integer(value)), integer_to_medium(@cast_integer(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(call, 1)));
+};
+
+function set_je(instructions: *AutoBuffer, instruction_index_pointer: *integer, je: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(je, 2)));
+};
+
+function set_je_value(instructions: *AutoBuffer, je: InstructionIndex, value: InstructionIndex) {
+    variable offset = -4(integer_to_medium(@cast_integer(value)), integer_to_medium(@cast_integer(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(je, 2)));
+};
+
+function set_jne(instructions: *AutoBuffer, instruction_index_pointer: *integer, jne: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(jne, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(jne, 2)));
+};
+
+//function autopush_jmp_register(instructions: *AutoBuffer, instruction_index_pointer: *integer, register: Register8) {
+//    if >(register, 7) {
+//        autopush_byte(instructions, instruction_index_pointer, byte(65));
+//        autopush_byte(instructions, instruction_index_pointer, byte(255));
+//
+//        autopush_byte(instructions, instruction_index_pointer, byte(+(register, 24)));
+//
+//        return;
+//    };
+//
+//    autopush_byte(instructions, instruction_index_pointer, byte(255));
+//
+//    autopush_byte(instructions, instruction_index_pointer, byte(+(register, 24)));
+//};
+
+function autopush_data_string(data: *AutoBuffer, data_index_pointer: *integer, string: *): DataIndex {
+    variable index = integer->(data_index_pointer);
+
+    autopush_string(data, data_index_pointer, string);
+    increment_integer_pointer(data_index_pointer, 1);
+
+    return @cast_DataIndex(index);
+};
+
+function autopush_data_integer(data: *AutoBuffer, data_index_pointer: *integer, integer: integer): DataIndex {
+    variable index = integer->(data_index_pointer);
+
+    variable buffer_index = integer->(data_index_pointer);
+
+    autobuffer_set(data, &(integer), buffer_index, 8);
+
+    integer<-(data_index_pointer, @cast_integer(+(8, integer->(data_index_pointer))));
+
+    return @cast_DataIndex(index);
+};
+
+function get_instruction(instructions: *AutoBuffer, instructions_index_pointer: *integer): InstructionIndex {
+    variable index = integer->(instructions_index_pointer);
+
+    return @cast_InstructionIndex(index);
+};
+
+function autopush_mov_data_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, register: Register8, data_index: DataIndex) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+};
+
+function autopush_mov_data_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, register: Register8, data_index: DataIndex, offset: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(+(data_index, offset))));
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+};
+
+function autopush_push_data(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, data_index: DataIndex) {
+    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+};
+
+function autopush_push_bss(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, bss_index: BssIndex) {
+    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(bss_index)));
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+};
+
+function autoarray8_set(buffer: *AutoBuffer, index: integer, value: any_8) {
+    autobuffer_set_integer(buffer, @cast_integer(value), @cast_integer(*(index, 8)));
+    autobuffer_register(buffer, @cast_integer(+(*(index, 8), 8)), 8);
+};
+
+function autoarray8_get(buffer: *AutoBuffer, index: integer): any_8 {
+    return autobuffer_get_integer(buffer, @cast_integer(*(index, 8)));
+};
+
+function autopush_mov_integer_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8, value: integer) {
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(73));
+        autopush_byte(buffer, buffer_index_pointer, byte(199));
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 184)));
+        autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_lea_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, register_to: Register8) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(141));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(value));
+};
+
+function autopush_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, offset: integer, register_to: Register8) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(141));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_from, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_data_offset_pointer_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: DataIndex, offset: integer, register: Register8) {
+    variable instruction = 72;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_data_offset_pointer_register4(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: DataIndex, offset: integer, register: Register4) {
+    variable instruction = 64;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_data_offset_pointer_register2(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: DataIndex, offset: integer, register: Register2) {
+    variable instruction = 64;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_data_offset_pointer_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: DataIndex, offset: integer, register: Register1) {
+    variable instruction = 64;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(138));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_bss_offset_pointer_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: BssIndex, offset: integer, register: Register8) {
+    variable instruction = 72;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_bss_offset_pointer_register4(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: BssIndex, offset: integer, register: Register4) {
+    variable instruction = 64;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_bss_offset_pointer_register2(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: BssIndex, offset: integer, register: Register2) {
+    variable instruction = 64;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_bss_offset_pointer_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, data_index: BssIndex, offset: integer, register: Register1) {
+    variable instruction = 64;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(138));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(data_index)));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_register8_bss_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *integer, register: Register8, data_index: BssIndex, offset: integer) {
+    variable instruction = 72;
+
+    if >(register, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register, 7) {
+        value = @cast_integer(+(value, *(-(register, 8), 8)));
+    };
+
+    if <(register, 8) {
+        value = @cast_integer(+(value, *(register, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
+
+    autoarray8_set(indexes_to_adjust_relative, integer->(indexes_to_adjust_relative_index), integer->(buffer_index_pointer));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(@cast_integer(+(data_index, offset))));
+
+    integer<-(indexes_to_adjust_relative_index, @cast_integer(+(1, integer->(indexes_to_adjust_relative_index))));
+};
+
+function autopush_mov_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, register_to: Register8) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_cmp_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register8, register2: Register8) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(57));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_cmove_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register8, register2: Register8) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(15));
+    autopush_byte(buffer, buffer_index_pointer, byte(68));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, *(-(register1, 8), 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, *(register1, 8)));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, -(register2, 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, register2));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_cmova_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register8, register2: Register8) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(15));
+    autopush_byte(buffer, buffer_index_pointer, byte(71));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, *(-(register1, 8), 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, *(register1, 8)));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, -(register2, 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, register2));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register8, register2: Register8) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(15));
+    autopush_byte(buffer, buffer_index_pointer, byte(66));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, *(-(register1, 8), 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, *(register1, 8)));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, -(register2, 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, register2));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register1, register2: Register1) {
+    variable instruction = 64;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(56));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, offset: integer, register_to: Register8) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_from, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, offset: integer, register_to: Register4) {
+    variable instruction = 64;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_from, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register8_pointer_offset_register2(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, offset: integer, register_to: Register2) {
+    variable instruction = 64;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_from, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8, offset: integer, register_to: Register1) {
+    variable instruction = 64;
+    variable instruction2 = 138;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+        instruction2 = @cast_integer(+(instruction2, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+        instruction2 = @cast_integer(+(instruction2, 1));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction2));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_from, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register1, register_to: Register8, offset: integer) {
+    variable instruction = 64;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(136));
+
+    variable value = 0;
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_to, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register2,  register_to: Register8, offset: integer) {
+    variable instruction = 64;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_to, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register4,  register_to: Register8, offset: integer) {
+    variable instruction = 64;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_to, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register8_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register8,  register_to: Register8, offset: integer) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    if =(register_to, RSP) {
+        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    };
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_add_register8_integer(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8, value: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(129));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_mul_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8) {
+    variable instruction = 72;
+    if >(register, 7) {
+        instruction = 73;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(247));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(216, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(224, register))));
+};
+
+function autopush_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8) {
+    variable instruction = 72;
+    if >(register, 7) {
+        instruction = 73;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(247));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(232, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(240, register))));
+};
+
+function autopush_add_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register8, register2: Register8) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(1));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_or_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register1, register2: Register1) {
+    variable instruction = 64;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(8));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_and_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register1, register2: Register1) {
+    variable instruction = 64;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(32));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_sub_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register8, register2: Register8) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(41));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_sub_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register4, register2: Register4) {
+    variable instruction = 64;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(41));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_sub_register8_integer(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8, value: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(129));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 232)));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_push_integer(buffer: *AutoBuffer, buffer_index_pointer: *integer, value: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_pop_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8) {
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(65));
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 80)));
+        return;
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 88)));
+};
+
+function autopush_push_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8) {
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(65));
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 72)));
+        return;
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 80)));
+};
+
+function autopush_syscall(buffer: *AutoBuffer, buffer_index_pointer: *integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(15));
+    autopush_byte(buffer, buffer_index_pointer, byte(5));
+};
+
+function autopush_byte(buffer: *AutoBuffer, buffer_index_pointer: *integer, byte: any_1) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(byte), buffer_index, 1);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(1, integer->(buffer_index_pointer))));
+};
+
+function autopush_medium(buffer: *AutoBuffer, buffer_index_pointer: *integer, medium: any_4) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(medium), buffer_index, 4);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(4, integer->(buffer_index_pointer))));
+};
+
+function autopush_short(buffer: *AutoBuffer, buffer_index_pointer: *integer, short: any_2) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(short), buffer_index, 2);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(2, integer->(buffer_index_pointer))));
+};
+
+function autopush_string(buffer: *AutoBuffer, buffer_index_pointer: *integer, string: *) {
+    variable length = length(string);
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, string, buffer_index, length);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(length, integer->(buffer_index_pointer))));
+};
+
+function autopush_pointer(buffer: *AutoBuffer, buffer_index_pointer: *integer, pointer: *, length: integer) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, pointer, buffer_index, length);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(length, integer->(buffer_index_pointer))));
+};
+
+function autopush_zeros(buffer: *AutoBuffer, buffer_index_pointer: *integer, count: integer) {
+    variable i = 0;
+    while <(i, count) {
+        autopush_byte(buffer, buffer_index_pointer, byte(0));
+        i = @cast_integer(+(i, 1));
+    };
+};
+
+function new_elf64_file_header(): ELF64FileHeader {
+    variable header: ELF64FileHeader;
+
+    variable _ = integer_to_medium(2);
+    ELF64FileHeader<-magic(&(header), integer_to_medium(1179403647));
+    ELF64FileHeader<-header_size(&(header), integer_to_short(64));
+    ELF64FileHeader<-program_header_size(&(header), integer_to_short(56));
+    ELF64FileHeader<-section_header_size(&(header), integer_to_short(64));
+    ELF64FileHeader<-version(&(header), byte(1));
+    ELF64FileHeader<-version2(&(header), integer_to_medium(1));
+
+    return header;
+};
+
+function integer_to_medium(integer: integer): any_4 {
+    variable medium: any_4;
+
+    copy(&(integer), &(medium), 4);
+
+    return medium;
+};
+
+function integer_to_short(integer: integer): any_2 {
+    variable short: any_2;
+
+    copy(&(integer), &(short), 2);
+
+    return short;
+};
+
+structure ELF64FileHeader {
+    magic: any_4;
+    format: any_1;
+    endianness: any_1;
+    version: any_1;
+    abi: any_1;
+    abi_version: any_1;
+    padding: any_7;
+    object_file_type: any_2;
+    machine: any_2;
+    version2: any_4;
+    entry_point: any_8;
+    program_header_table: any_8;
+    section_header_table: any_8;
+    flags: any_4;
+    header_size: any_2;
+    program_header_size: any_2;
+    program_header_count: any_2;
+    section_header_size: any_2;
+    section_header_count: any_2;
+    section_names: any_2;
+};
+
+structure ELF64ProgramHeader {
+    type: any_4;
+    flags: any_4;
+    location: any_8;
+    virtual_address: any_8;
+    physical_address: any_8;
+    size_file: any_8;
+    size_memory: any_8;
+    alignment: any_8;
+};
+
+function get_byte(pointer: *, offset: integer): any_1 {
+    return any_1->(@cast_*any_1(+(pointer, offset)));
+};
+
+function get_short(pointer: *, offset: integer): any_2 {
+    return any_2->(@cast_*any_2(+(pointer, offset)));
+};
+
+function get_medium(pointer: *, offset: integer): any_4 {
+    return any_4->(@cast_*any_4(+(pointer, offset)));
+};
+
+function get_integer(pointer: *, offset: integer): any_8 {
+    return any_8->(@cast_*any_8(+(pointer, offset)));
+};
+
+function brk_allocate(size: integer): * {
+    variable allocated = sys_brk(@cast_*(0));
+    sys_brk(@cast_*(+(allocated, size)));
+    return allocated;
+};
+
+function print_byte(byte: any_1) {
+    @print_integer(byte_to_integer(byte));
+};
+
+function print_short(short: any_2) {
+    @print_integer(short_to_integer(short));
+};
+
+function print_medium(medium: any_4) {
+    @print_integer(medium_to_integer(medium));
+};
+
+function print_integer(integer: any_8) {
+    @print_integer(integer);
+};
+
+function length(string: *): integer {
+    variable length = 0;
+
+    while !(=1(byte(0), *1(+(string, length)))) {
+        length = @cast_integer(+(length, 1));
+    };
+
+    return length;
+};
+
+function integer+(value1: integer, value2: integer): integer {
+    return @cast_integer(+(value1, value2));
+};

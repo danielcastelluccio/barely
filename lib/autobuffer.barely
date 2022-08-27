@@ -34,6 +34,10 @@ function autobuffer_set_any_1(buffer: *AutoBuffer, value: any_1, to: integer) {
     autobuffer_set(buffer, &(value), to, 1);
 };
 
+function autobuffer_set_any_4(buffer: *AutoBuffer, value: any_4, to: integer) {
+    autobuffer_set(buffer, &(value), to, 4);
+};
+
 function autobuffer_set_*(buffer: *AutoBuffer, value: *, to: integer) {
     autobuffer_set(buffer, &(value), to, 8);
 };
@@ -72,4 +76,12 @@ function autobuffer_get_integer(buffer: *AutoBuffer, location: integer): integer
 
 function autobuffer_get_*(buffer: *AutoBuffer, location: integer): * {
     return *->(@cast_**(autobuffer_get(buffer, location)));
+};
+
+function autobuffer_get_any_1(buffer: *AutoBuffer, location: integer): any_1 {
+    return any_1->(@cast_*any_1(autobuffer_get(buffer, location)));
+};
+
+function autobuffer_get_any_4(buffer: *AutoBuffer, location: integer): any_4 {
+    return any_4->(@cast_*any_4(autobuffer_get(buffer, location)));
 };

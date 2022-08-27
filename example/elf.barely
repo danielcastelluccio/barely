@@ -1,0 +1,796 @@
+include "core.barely";
+include "lib/syscall_linux.barely";
+include "lib/autobuffer.barely";
+
+function main(arguments: **, argument_count: integer) {
+    variable first_argument = @cast_*(any_8->(@cast_*any_8(+(arguments, 8))));
+    variable second_argument = @cast_*(any_8->(@cast_*any_8(+(arguments, 16))));
+
+    if string=(first_argument, "parse") {
+        parse_elf(second_argument);
+    };
+
+    if string=(first_argument, "create") {
+        create_elf(second_argument);
+    };
+};
+
+function parse_elf(file_name: *) {
+    variable descriptor = sys_open(file_name, 0, O_RDONLY);
+    variable stat: Stat;
+    sys_fstat(descriptor, &(stat));
+
+    variable allocated = brk_allocate(Stat->size(&(stat)));
+    sys_read(descriptor, allocated, Stat->size(&(stat)));
+
+    variable file_header = @cast_*ELF64FileHeader(allocated);
+
+    print(" - 32/64 Bit: "); print_byte(ELF64FileHeader->format(file_header));
+    print(" - Little/Big Endian: "); print_byte(ELF64FileHeader->endianness(file_header));
+    print(" - ELF Version: "); print_byte(ELF64FileHeader->version(file_header));
+    print(" - ABI: "); print_byte(ELF64FileHeader->abi(file_header));
+    print(" - ABI Version: "); print_byte(ELF64FileHeader->abi_version(file_header));
+    print(" - Object File Type: "); print_short(ELF64FileHeader->object_file_type(file_header));
+    print(" - Machine: "); print_short(ELF64FileHeader->machine(file_header));
+    print(" - ELF Version: "); print_medium(ELF64FileHeader->version2(file_header));
+    print(" - Entry Point: "); print_integer(ELF64FileHeader->entry_point(file_header));
+
+    variable program_header_table = ELF64FileHeader->program_header_table(file_header);
+    variable program_header_size = ELF64FileHeader->program_header_size(file_header)
+    variable program_header_count = ELF64FileHeader->program_header_count(file_header);
+
+    variable i = 0;
+    while <(i, short_to_integer(program_header_count)) {
+        variable program_header = @cast_*ELF64ProgramHeader(+(allocated, +(program_header_table, *(short_to_integer(program_header_size), i))));
+        println("Program Header:");
+        print(" - Type: "); print_medium(ELF64ProgramHeader->type(program_header));
+        print(" - Location: "); print_integer(ELF64ProgramHeader->location(program_header));
+        print(" - Virtual Address: "); print_integer(ELF64ProgramHeader->virtual_address(program_header));
+        print(" - Physical Address: "); print_integer(ELF64ProgramHeader->physical_address(program_header));
+        print(" - File Size: "); print_integer(ELF64ProgramHeader->size_file(program_header));
+        print(" - Memory Size: "); print_integer(ELF64ProgramHeader->size_memory(program_header));
+        print(" - Flags: "); print_medium(ELF64ProgramHeader->flags(program_header));
+        print(" - Alignment: "); print_integer(ELF64ProgramHeader->alignment(program_header));
+        i = integer+(i, 1);
+    };
+
+    variable section_header_table = ELF64FileHeader->section_header_table(file_header);
+    variable section_header_size = ELF64FileHeader->section_header_size(file_header)
+    variable section_header_count = ELF64FileHeader->section_header_count(file_header);
+
+    //print_short(section_header_count);
+
+    variable i = 0;
+    while <(i, short_to_integer(section_header_count)) {
+        println("tset");
+        //variable program_header = @cast_*ELF64ProgramHeader(+(allocated, +(program_header_table, *(short_to_integer(program_header_size), i))));
+        //println("Program Header:");
+        //print(" - Type: "); print_medium(ELF64ProgramHeader->type(program_header));
+        //print(" - Location: "); print_integer(ELF64ProgramHeader->location(program_header));
+        //print(" - Virtual Address: "); print_integer(ELF64ProgramHeader->virtual_address(program_header));
+        //print(" - Physical Address: "); print_integer(ELF64ProgramHeader->physical_address(program_header));
+        //print(" - File Size: "); print_integer(ELF64ProgramHeader->size_file(program_header));
+        //print(" - Memory Size: "); print_integer(ELF64ProgramHeader->size_memory(program_header));
+        i = integer+(i, 1);
+    };
+
+    println("Instructions: ");
+
+    variable i = 232;
+    while <(i, 400) {
+        variable byte = get_byte(allocated, i);
+        print_byte(byte);
+        i = integer+(i, 1);
+    };
+};
+
+function create_elf(file_name: *) {
+    variable output = autobuffer_new(512);
+
+    variable file_header = new_elf64_file_header();
+    ELF64FileHeader<-format(&(file_header), byte(2));
+    ELF64FileHeader<-endianness(&(file_header), byte(1));
+    ELF64FileHeader<-abi(&(file_header), byte(3));
+    ELF64FileHeader<-object_file_type(&(file_header), integer_to_short(2));
+    ELF64FileHeader<-machine(&(file_header), integer_to_short(62));
+    ELF64FileHeader<-entry_point(&(file_header), 4194480);
+    ELF64FileHeader<-program_header_table(&(file_header), 64);
+    ELF64FileHeader<-program_header_count(&(file_header), integer_to_short(2));
+
+    variable data_buffer = autobuffer_new(512);
+    variable data_index = 0;
+
+    variable instructions_buffer = autobuffer_new(512);
+    variable instructions_index = 0;
+
+    variable indexes_to_adjust = autobuffer_new(512);
+    variable indexes_to_adjust_index = 0;
+
+    variable tset = autopush_data_string(&(data_buffer), &(data_index), "tset");
+
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RAX, 0);
+    autopush_cmp_register_register(&(instructions_buffer), &(instructions_index), RAX, RBX);
+    variable je_instruction = autopush_jne_near(&(instructions_buffer), &(instructions_index));
+
+    variable call_instruction = autopush_call_near(&(instructions_buffer), &(instructions_index));
+    variable jump_instruction = autopush_jmp_near(&(instructions_buffer), &(instructions_index));
+
+    set_call(&(instructions_buffer), &(instructions_index), call_instruction);
+    autopush_ret(&(instructions_buffer), &(instructions_index));
+
+    set_jmp(&(instructions_buffer), &(instructions_index), jump_instruction);
+
+    autopush_push_integer(&(instructions_buffer), &(instructions_index), 4);
+    autopush_pop_register(&(instructions_buffer), &(instructions_index), R10));
+    autopush_mov_register_register(&(instructions_buffer), &(instructions_index), R10, R8);
+    autopush_mov_register_register(&(instructions_buffer), &(instructions_index), R8, RDX);
+
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RAX, 1);
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RDI, 1);
+    autopush_mov_data_offset_register(&(instructions_buffer), &(instructions_index), &(indexes_to_adjust), &(indexes_to_adjust_index), RSI, tset, 0);
+    autopush_syscall(&(instructions_buffer), &(instructions_index));
+
+    set_jne(&(instructions_buffer), &(instructions_index), je_instruction);
+
+    variable hell_world = autopush_data_string(&(data_buffer), &(data_index), "Hello World!");
+
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RAX, 1);
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RDX, 12);
+    autopush_push_data(&(instructions_buffer), &(instructions_index), &(indexes_to_adjust), &(indexes_to_adjust_index), hell_world);
+    autopush_pop_register(&(instructions_buffer), &(instructions_index), RSI);
+    autopush_syscall(&(instructions_buffer), &(instructions_index));
+
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RAX, 60);
+    autopush_mov_integer_register(&(instructions_buffer), &(instructions_index), RDI, 1);
+    autopush_syscall(&(instructions_buffer), &(instructions_index));
+
+
+    variable i = 0;
+    while <(i, indexes_to_adjust_index) {
+        variable index = @cast_integer(autoarray8_get(&(indexes_to_adjust), i));
+        variable value_new = @cast_integer(+(byte_to_integer(autobuffer_get_any_1(&(instructions_buffer), index)), +(instructions_index, 176)));
+        autobuffer_set_any_4(&(instructions_buffer), integer_to_medium(value_new), index);
+
+        autobuffer_set_any_1(&(instructions_buffer), byte(+(byte_to_integer(autobuffer_get_any_1(&(instructions_buffer), @cast_integer(+(index, 1)))), 16)), @cast_integer(+(index, 1)));
+        autobuffer_set_any_1(&(instructions_buffer), byte(+(byte_to_integer(autobuffer_get_any_1(&(instructions_buffer), @cast_integer(+(index, 2)))), 64)), @cast_integer(+(index, 2)));
+        i = @cast_integer(+(i, 1));
+    };
+
+    variable i = 0;
+    while <(i, instructions_index) {
+        print_byte(autobuffer_get_any_1(&(instructions_buffer), i));
+        i = @cast_integer(+(i, 1));
+    };
+
+    autobuffer_set(&(output), AutoBuffer->buffer(&(instructions_buffer)), 176, instructions_index);
+    autobuffer_set(&(output), AutoBuffer->buffer(&(data_buffer)), @cast_integer(+(176, instructions_index)), data_index);
+
+    variable program_header: ELF64ProgramHeader;
+    ELF64ProgramHeader<-type(&(program_header), integer_to_medium(1));
+    ELF64ProgramHeader<-location(&(program_header), 0);
+    ELF64ProgramHeader<-virtual_address(&(program_header), 4194304);
+    ELF64ProgramHeader<-physical_address(&(program_header), 4194304);
+    ELF64ProgramHeader<-size_file(&(program_header), @cast_integer(+(instructions_index, 176)));
+    ELF64ProgramHeader<-size_memory(&(program_header), @cast_integer(+(instructions_index, 176)));
+    ELF64ProgramHeader<-flags(&(program_header), integer_to_medium(5));
+    ELF64ProgramHeader<-alignment(&(program_header), 4096);
+
+    variable program_header2: ELF64ProgramHeader;
+    ELF64ProgramHeader<-type(&(program_header2), integer_to_medium(1));
+    ELF64ProgramHeader<-location(&(program_header2), @cast_integer(+(instructions_index, 176)));
+    ELF64ProgramHeader<-virtual_address(&(program_header2), @cast_integer(+(176, +(instructions_index, 4198400))));
+    ELF64ProgramHeader<-physical_address(&(program_header2), @cast_integer(+(176, +(instructions_index, 4198400))));
+    ELF64ProgramHeader<-size_file(&(program_header2), data_index);
+    ELF64ProgramHeader<-size_memory(&(program_header2), data_index);
+    ELF64ProgramHeader<-flags(&(program_header2), integer_to_medium(4));
+    ELF64ProgramHeader<-alignment(&(program_header2), 4096);
+
+    autobuffer_set(&(output), &(file_header), 0, 64);
+    autobuffer_set(&(output), &(program_header), 64, 56);
+    autobuffer_set(&(output), &(program_header2), 120, 56);
+
+    variable output_file = sys_open(file_name, @cast_integer(+(+(O_WRONLY, O_CREAT), O_TRUNC)), 388);
+    sys_write(output_file, AutoBuffer->buffer(&(output)), AutoBuffer->size(&(output)));
+    sys_close(output_file);
+};
+
+structure Register {
+    value: integer;
+};
+
+constant RAX: Register = 0;
+constant RCX: Register = 1;
+constant RDX: Register = 2;
+constant RBX: Register = 3;
+constant RSP: Register = 4;
+constant RBP: Register = 5;
+constant RSI: Register = 6;
+constant RDI: Register = 7;
+constant R8: Register = 8;
+constant R9: Register = 9;
+constant R10: Register = 10;
+constant R11: Register = 11;
+constant R12: Register = 12;
+constant R13: Register = 13;
+constant R14: Register = 14;
+constant R15: Register = 15;
+
+structure DataIndex {
+    value: integer;
+};
+
+structure InstructionIndex {
+    value: integer;
+};
+
+structure BssIndex {
+    value: integer;
+};
+
+function autopush_jmp_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(233));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function autopush_je_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(15));
+    autopush_byte(instructions, instruction_index_pointer, byte(132));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function autopush_jne_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(15));
+    autopush_byte(instructions, instruction_index_pointer, byte(133));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function set_jmp(instructions: *AutoBuffer, instruction_index_pointer: *integer, jump: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(jump, 1)));
+};
+
+function autopush_call_near(instructions: *AutoBuffer, instruction_index_pointer: *integer): InstructionIndex {
+    variable current_instruction = integer->(instruction_index_pointer);
+
+    autopush_byte(instructions, instruction_index_pointer, byte(232));
+
+    autopush_medium(instructions, instruction_index_pointer, integer_to_medium(0));
+
+    return @cast_InstructionIndex(current_instruction);
+};
+
+function autopush_ret(instructions: *AutoBuffer, instruction_index_pointer: *integer) {
+    autopush_byte(instructions, instruction_index_pointer, byte(195));
+};
+
+function set_call(instructions: *AutoBuffer, instruction_index_pointer: *integer, call: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(call, 1)));
+};
+
+function set_je(instructions: *AutoBuffer, instruction_index_pointer: *integer, je: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(je, 2)));
+};
+
+function set_jne(instructions: *AutoBuffer, instruction_index_pointer: *integer, jne: InstructionIndex) {
+    variable offset = -4(integer_to_medium(integer->(instruction_index_pointer)), integer_to_medium(@cast_integer(+(jne, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_integer(+(jne, 2)));
+};
+
+//function autopush_jmp_register(instructions: *AutoBuffer, instruction_index_pointer: *integer, register: Register) {
+//    if >(register, 7) {
+//        autopush_byte(instructions, instruction_index_pointer, byte(65));
+//        autopush_byte(instructions, instruction_index_pointer, byte(255));
+//
+//        autopush_byte(instructions, instruction_index_pointer, byte(+(register, 24)));
+//
+//        return;
+//    };
+//
+//    autopush_byte(instructions, instruction_index_pointer, byte(255));
+//
+//    autopush_byte(instructions, instruction_index_pointer, byte(+(register, 24)));
+//};
+
+function autopush_data_string(data: *AutoBuffer, data_index_pointer: *integer, string: *): DataIndex {
+    variable index = integer->(data_index_pointer);
+
+    autopush_string(data, data_index_pointer, string);
+
+    return @cast_DataIndex(index);
+};
+
+function get_instruction(instructions: *AutoBuffer, instructions_index_pointer: *integer): InstructionIndex {
+    variable index = integer->(instructions_index_pointer);
+
+    return @cast_InstructionIndex(index);
+};
+
+function autopush_mov_data_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, register: Register, data_index: DataIndex) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_byte(buffer, buffer_index_pointer, byte(data_index));
+    autopush_byte(buffer, buffer_index_pointer, byte(16));
+    autopush_byte(buffer, buffer_index_pointer, byte(64));
+    autopush_zeros(buffer, buffer_index_pointer, 1);
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+
+    if >(+(222, data_index), 255) {
+        println("Moving reference over byte limit!");
+    };
+};
+
+function autopush_mov_bss_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, register: Register, bss_index: BssIndex) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_byte(buffer, buffer_index_pointer, integer_to_medium(bss_index));
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+};
+
+function autopush_mov_data_offset_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, register: Register, data_index: DataIndex, offset: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(data_index, offset)));
+    autopush_byte(buffer, buffer_index_pointer, byte(16));
+    autopush_byte(buffer, buffer_index_pointer, byte(64));
+    autopush_zeros(buffer, buffer_index_pointer, 1);
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+
+    if >(+(222, data_index), 255) {
+        println("Moving reference over byte limit!");
+    };
+};
+
+function autopush_push_data(buffer: *AutoBuffer, buffer_index_pointer: *integer, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *integer, data_index: DataIndex) {
+    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autoarray8_set(indexes_to_adjust, integer->(indexes_to_adjust_index), integer->(buffer_index_pointer));
+    autopush_byte(buffer, buffer_index_pointer, byte(data_index));
+    autopush_byte(buffer, buffer_index_pointer, byte(16));
+    autopush_byte(buffer, buffer_index_pointer, byte(64));
+    autopush_zeros(buffer, buffer_index_pointer, 1);
+
+    integer<-(indexes_to_adjust_index, @cast_integer(+(1, integer->(indexes_to_adjust_index))));
+
+    if >(+(222, data_index), 255) {
+        println("Moving reference over byte limit!");
+    };
+};
+
+function autoarray8_set(buffer: *AutoBuffer, index: integer, value: any_8) {
+    autobuffer_set_integer(buffer, @cast_integer(value), @cast_integer(*(index, 8)));
+    autobuffer_register(buffer, @cast_integer(+(*(index, 8), 8)), 8);
+};
+
+function autoarray8_get(buffer: *AutoBuffer, index: integer): any_8 {
+    return autobuffer_get_integer(buffer, @cast_integer(*(index, 8)));
+};
+
+function autopush_mov_integer_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register, value: integer) {
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(73));
+        autopush_byte(buffer, buffer_index_pointer, byte(199));
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 184)));
+        autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(199));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_lea_register_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register, register_to: Register) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(141));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(value));
+};
+
+function autopush_mov_register_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register, register_to: Register) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_cmp_register_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register, register2: Register) {
+    variable instruction = 72;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(57));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_mov_register_pointer_offset_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register, offset: integer, register_to: Register) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(139));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, *(-(register_to, 8), 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, *(register_to, 8)));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, -(register_from, 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, register_from));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_mov_register_register_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *integer, register_from: Register,  register_to: Register, offset: integer) {
+    variable instruction = 72;
+
+    if >(register_to, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register_from, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    autopush_byte(buffer, buffer_index_pointer, byte(137));
+
+    variable value = 0;
+
+    if >(register_to, 7) {
+        value = @cast_integer(+(value, -(register_to, 8)));
+    };
+
+    if <(register_to, 8) {
+        value = @cast_integer(+(value, register_to));
+    };
+
+    if >(register_from, 7) {
+        value = @cast_integer(+(value, *(-(register_from, 8), 8)));
+    };
+
+    if <(register_from, 8) {
+        value = @cast_integer(+(value, *(register_from, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
+
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(offset));
+};
+
+function autopush_add_register_integer(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register, value: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(129));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_sub_register_integer(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register, value: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(72));
+    autopush_byte(buffer, buffer_index_pointer, byte(129));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 232)));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_push_integer(buffer: *AutoBuffer, buffer_index_pointer: *integer, value: integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autopush_medium(buffer, buffer_index_pointer, integer_to_medium(value));
+};
+
+function autopush_pop_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register) {
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(65));
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 80)));
+        return;
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 88)));
+};
+
+function autopush_push_register(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register) {
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(65));
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 72)));
+        return;
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 80)));
+};
+
+function autopush_syscall(buffer: *AutoBuffer, buffer_index_pointer: *integer) {
+    autopush_byte(buffer, buffer_index_pointer, byte(15));
+    autopush_byte(buffer, buffer_index_pointer, byte(5));
+};
+
+function autopush_byte(buffer: *AutoBuffer, buffer_index_pointer: *integer, byte: any_1) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(byte), buffer_index, 1);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(1, integer->(buffer_index_pointer))));
+};
+
+function autopush_medium(buffer: *AutoBuffer, buffer_index_pointer: *integer, medium: any_4) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(medium), buffer_index, 4);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(4, integer->(buffer_index_pointer))));
+};
+
+function autopush_short(buffer: *AutoBuffer, buffer_index_pointer: *integer, short: any_2) {
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(short), buffer_index, 2);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(2, integer->(buffer_index_pointer))));
+};
+
+function autopush_string(buffer: *AutoBuffer, buffer_index_pointer: *integer, string: *) {
+    variable length = length(string);
+    variable buffer_index = integer->(buffer_index_pointer);
+
+    autobuffer_set(buffer, string, buffer_index, length);
+
+    integer<-(buffer_index_pointer, @cast_integer(+(length, integer->(buffer_index_pointer))));
+};
+
+function autopush_zeros(buffer: *AutoBuffer, buffer_index_pointer: *integer, count: integer) {
+    variable i = 0;
+    while <(i, count) {
+        autopush_byte(buffer, buffer_index_pointer, byte(0));
+        i = @cast_integer(+(i, 1));
+    };
+};
+
+function new_elf64_file_header(): ELF64FileHeader {
+    variable header: ELF64FileHeader;
+
+    variable _ = integer_to_medium(2);
+    ELF64FileHeader<-magic(&(header), integer_to_medium(1179403647));
+    ELF64FileHeader<-header_size(&(header), integer_to_short(64));
+    ELF64FileHeader<-program_header_size(&(header), integer_to_short(56));
+    ELF64FileHeader<-section_header_size(&(header), integer_to_short(64));
+    ELF64FileHeader<-version(&(header), byte(1));
+    ELF64FileHeader<-version2(&(header), integer_to_medium(1));
+
+    return header;
+};
+
+function integer_to_medium(integer: integer): any_4 {
+    variable medium: any_4;
+
+    copy(&(integer), &(medium), 4);
+
+    return medium;
+};
+
+function integer_to_short(integer: integer): any_2 {
+    variable short: any_2;
+
+    copy(&(integer), &(short), 2);
+
+    return short;
+};
+
+structure ELF64FileHeader {
+    magic: any_4;
+    format: any_1;
+    endianness: any_1;
+    version: any_1;
+    abi: any_1;
+    abi_version: any_1;
+    padding: any_7;
+    object_file_type: any_2;
+    machine: any_2;
+    version2: any_4;
+    entry_point: any_8;
+    program_header_table: any_8;
+    section_header_table: any_8;
+    flags: any_4;
+    header_size: any_2;
+    program_header_size: any_2;
+    program_header_count: any_2;
+    section_header_size: any_2;
+    section_header_count: any_2;
+    section_names: any_2;
+};
+
+structure ELF64ProgramHeader {
+    type: any_4;
+    flags: any_4;
+    location: any_8;
+    virtual_address: any_8;
+    physical_address: any_8;
+    size_file: any_8;
+    size_memory: any_8;
+    alignment: any_8;
+};
+
+function get_byte(pointer: *, offset: integer): any_1 {
+    return any_1->(@cast_*any_1(+(pointer, offset)));
+};
+
+function get_short(pointer: *, offset: integer): any_2 {
+    return any_2->(@cast_*any_2(+(pointer, offset)));
+};
+
+function get_medium(pointer: *, offset: integer): any_4 {
+    return any_4->(@cast_*any_4(+(pointer, offset)));
+};
+
+function get_integer(pointer: *, offset: integer): any_8 {
+    return any_8->(@cast_*any_8(+(pointer, offset)));
+};
+
+function brk_allocate(size: integer): * {
+    variable allocated = sys_brk(@cast_*(0));
+    sys_brk(@cast_*(+(allocated, size)));
+    return allocated;
+};
+
+function print_byte(byte: any_1) {
+    @print_integer(byte_to_integer(byte));
+};
+
+function print_short(short: any_2) {
+    @print_integer(short_to_integer(short));
+};
+
+function print_medium(medium: any_4) {
+    @print_integer(medium_to_integer(medium));
+};
+
+function print_integer(integer: any_8) {
+    @print_integer(integer);
+};
+
+function println(pointer: *) {
+    print(pointer);
+
+    variable new_line = 10;
+    sys_write(STDOUT, &(new_line), 1);
+};
+
+function print(pointer: *) {
+    sys_write(STDOUT, pointer, length(pointer));
+};
+
+function length(string: *): integer {
+    variable length = 0;
+
+    while !(=1(byte(0), *1(+(string, length)))) {
+        length = @cast_integer(+(length, 1));
+    };
+
+    return length;
+};
+
+function integer+(value1: integer, value2: integer): integer {
+    return @cast_integer(+(value1, value2));
+};

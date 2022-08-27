@@ -1,3 +1,5 @@
+include "lib/syscall_linux.barely";
+
 global FILE_CONTENTS: any_2048;
 
 function main() {
@@ -6,7 +8,7 @@ function main() {
     sys_read(descriptor, &(FILE_CONTENTS), 2047);
 
     print(&(FILE_CONTENTS));
-
+    
     variable stat: Stat;
     sys_fstat(descriptor, &(stat));
 
