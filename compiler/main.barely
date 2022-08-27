@@ -3463,19 +3463,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
     variable bss_buffer = autobuffer_new(131072);
     variable bss_buffer_index = 0;
 
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "format ELF64 executable");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "entry start");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "segment readable executable");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "start:");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "lea rax, [rsp+8]");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "push rbx");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "call main");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 60");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdi, 0");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-
     autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RSP, 8, RAX);
     autopush_mov_register8_register8(&(instructions_buffer), &(instructions_index), RAX, R12);
     autopush_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, R13);
@@ -3611,13 +3598,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             autopush_add_register8_integer(allocated_contents03, &(contents_index2), RSP, size);
             autopush_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP , 0, RAX);
             autopush_sub_register8_integer(allocated_contents03, &(contents_index2), RSP, size);
-            //autopush_string(allocated_contents01, &(contents_index), "add rsp, ");
-            //autopush_integer(allocated_contents01, &(contents_index), size);
-            //autopush_string_with_newline(allocated_contents01, &(contents_index), "");
-            //autopush_string_with_newline(allocated_contents01, &(contents_index), "mov rax, [rsp]");
-            //autopush_string(allocated_contents01, &(contents_index), "sub rsp, ");
-            //autopush_integer(allocated_contents01, &(contents_index), size);
-            //autopush_string_with_newline(allocated_contents01, &(contents_index), "");
 
             variable j = 0;
             while <(j, size) {
@@ -3626,13 +3606,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if >(-(size, j), 7) {
                     autopush_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP, j, RBX);
                     autopush_mov_register8_register8_pointer_offset(allocated_contents03, &(contents_index2), RBX, RAX, j);
-                    //autopush_string(allocated_contents01, &(contents_index), "mov rbx, [rsp+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents01, &(contents_index), "mov [rax+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "], rbx");
 
                     j = integer+(j, 8);
                     done_anything_structure = true;
@@ -3640,13 +3613,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, j), 3), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register4(allocated_contents03, &(contents_index2), RSP, j, EBX);
                     autopush_mov_register4_register8_pointer_offset(allocated_contents03, &(contents_index2), EBX, RAX, j);
-                    //autopush_string(allocated_contents01, &(contents_index), "mov ebx, [rsp+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents01, &(contents_index), "mov [rax+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "], ebx");
 
                     j = integer+(j, 4);
                     done_anything_structure = true;
@@ -3654,13 +3620,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, j), 1), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register2(allocated_contents03, &(contents_index2), RSP, j, BX);
                     autopush_mov_register2_register8_pointer_offset(allocated_contents03, &(contents_index2), BX, RAX, j);
-                    //autopush_string(allocated_contents01, &(contents_index), "mov bx, [rsp+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents01, &(contents_index), "mov [rax+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "], bx");
 
                     j = integer+(j, 2);
                     done_anything_structure = true;
@@ -3668,13 +3627,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, j), 0), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register1(allocated_contents03, &(contents_index2), RSP, j, BL);
                     autopush_mov_register1_register8_pointer_offset(allocated_contents03, &(contents_index2), BL, RAX, j);
-                    //autopush_string(allocated_contents01, &(contents_index), "mov bl, [rsp+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents01, &(contents_index), "mov [rax+");
-                    //autopush_integer(allocated_contents01, &(contents_index), j);
-                    //autopush_string_with_newline(allocated_contents01, &(contents_index), "], bl");
 
                     j = integer+(j, 1);
                     done_anything_structure = true;
@@ -3682,9 +3634,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             };
 
             autopush_add_register8_integer(allocated_contents03, &(contents_index2), RSP, integer+(size, 8));
-            //autopush_string(allocated_contents01, &(contents_index), "add rsp, ");
-            //autopush_integer(allocated_contents01, &(contents_index), integer+(size, 8));
-            //autopush_string_with_newline(allocated_contents01, &(contents_index), "");
 
             autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents01));
             autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents03));
@@ -3709,11 +3658,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             autopush_pop_register8(allocated_contents13, &(contents_index2), RAX);
             autopush_sub_register8_integer(allocated_contents13, &(contents_index2), RSP, size);
 
-            //autopush_string_with_newline(allocated_contents11, &(contents_index), "pop rax");
-            //autopush_string(allocated_contents11, &(contents_index), "sub rsp, ");
-            //autopush_integer(allocated_contents11, &(contents_index), size);
-            //autopush_string_with_newline(allocated_contents11, &(contents_index), "");
-
             variable k = 0;
             while <(k, size) {
                 variable done_anything_structure = false;
@@ -3721,13 +3665,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if >(-(size, k), 7) {
                     autopush_mov_register8_pointer_offset_register8(allocated_contents13, &(contents_index2), RAX, k, RBX);
                     autopush_mov_register8_register8_pointer_offset(allocated_contents13, &(contents_index2), RBX, RSP, k);
-                    //autopush_string(allocated_contents11, &(contents_index), "mov rbx, [rax+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents11, &(contents_index), "mov [rsp+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "], rbx");
 
                     k = integer+(k, 8);
                     done_anything_structure = true;
@@ -3735,13 +3672,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, k), 3), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register4(allocated_contents13, &(contents_index2), RAX, k, EBX);
                     autopush_mov_register4_register8_pointer_offset(allocated_contents13, &(contents_index2), EBX, RSP, k);
-                    //autopush_string(allocated_contents11, &(contents_index), "mov ebx, [rax+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents11, &(contents_index), "mov [rsp+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "], ebx");
 
                     k = integer+(k, 4);
                     done_anything_structure = true;
@@ -3749,13 +3679,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, k), 1), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register2(allocated_contents13, &(contents_index2), RAX, k, BX);
                     autopush_mov_register2_register8_pointer_offset(allocated_contents13, &(contents_index2), BX, RSP, k);
-                    //autopush_string(allocated_contents11, &(contents_index), "mov bx, [rax+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents11, &(contents_index), "mov [rsp+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "], bx");
 
                     k = integer+(k, 2);
                     done_anything_structure = true;
@@ -3763,13 +3686,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, k), 0), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register1(allocated_contents13, &(contents_index2), RAX, k, BL);
                     autopush_mov_register1_register8_pointer_offset(allocated_contents13, &(contents_index2), BL, RSP, k);
-                    //autopush_string(allocated_contents11, &(contents_index), "mov bl, [rax+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "]");
-
-                    //autopush_string(allocated_contents11, &(contents_index), "mov [rsp+");
-                    //autopush_integer(allocated_contents11, &(contents_index), k);
-                    //autopush_string_with_newline(allocated_contents11, &(contents_index), "], bl");
 
                     k = integer+(k, 1);
                     done_anything_structure = true;
@@ -3810,11 +3726,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(allocated_contents43, &(contents_index2), RAX);
                 autopush_add_register8_integer(allocated_contents43, &(contents_index2), RAX, location);
                 autopush_push_register8(allocated_contents43, &(contents_index2), RAX);
-                //autopush_string_with_newline(allocated_contents41, &(contents_index), "pop rax");
-                //autopush_string(allocated_contents41, &(contents_index), "add rax, ");
-                //autopush_integer(allocated_contents41, &(contents_index), location);
-                //autopush_string_with_newline(allocated_contents41, &(contents_index), "");
-                //autopush_string_with_newline(allocated_contents41, &(contents_index), "push rax");
 
                 autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents41));
                 autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents43));
@@ -3842,13 +3753,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_add_register8_integer(allocated_contents23, &(contents_index2), RSP, size);
                 autopush_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, 0, RAX);
                 autopush_sub_register8_integer(allocated_contents23, &(contents_index2), RSP, size);
-                //autopush_string(allocated_contents21, &(contents_index), "add rsp, ");
-                //autopush_integer(allocated_contents21, &(contents_index), size);
-                //autopush_string_with_newline(allocated_contents21, &(contents_index), "");
-                //autopush_string_with_newline(allocated_contents21, &(contents_index), "mov rax, [rsp]");
-                //autopush_string(allocated_contents21, &(contents_index), "sub rsp, ");
-                //autopush_integer(allocated_contents21, &(contents_index), size);
-                //autopush_string_with_newline(allocated_contents21, &(contents_index), "");
 
                 variable k = 0;
                 while <(k, size) {
@@ -3857,13 +3761,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if >(-(size, k), 7) {
                         autopush_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, k, RBX);
                         autopush_mov_register8_register8_pointer_offset(allocated_contents23, &(contents_index2), RBX, RAX, integer+(k, location));
-                        //autopush_string(allocated_contents21, &(contents_index), "mov rbx, [rsp+");
-                        //autopush_integer(allocated_contents21, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-                        //autopush_integer(allocated_contents21, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "], rbx");
 
                         k = integer+(k, 8);
                         done_anything_structure = true;
@@ -3871,13 +3768,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, k), 3), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register4(allocated_contents23, &(contents_index2), RSP, k, EBX);
                         autopush_mov_register4_register8_pointer_offset(allocated_contents23, &(contents_index2), EBX, RAX, integer+(k, location));
-                        //autopush_string(allocated_contents21, &(contents_index), "mov ebx, [rsp+");
-                        //autopush_integer(allocated_contents21, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-                        //autopush_integer(allocated_contents21, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "], ebx");
 
                         k = integer+(k, 4);
                         done_anything_structure = true;
@@ -3885,13 +3775,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, k), 1), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register2(allocated_contents23, &(contents_index2), RSP, k, BX);
                         autopush_mov_register2_register8_pointer_offset(allocated_contents23, &(contents_index2), BX, RAX, integer+(k, location));
-                        //autopush_string(allocated_contents21, &(contents_index), "mov bx, [rsp+");
-                        //autopush_integer(allocated_contents21, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-                        //autopush_integer(allocated_contents21, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "], bx");
 
                         k = integer+(k, 2);
                         done_anything_structure = true;
@@ -3899,13 +3782,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, k), 0), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register1(allocated_contents23, &(contents_index2), RSP, k, BL);
                         autopush_mov_register1_register8_pointer_offset(allocated_contents23, &(contents_index2), BL, RAX, integer+(k, location));
-                        //autopush_string(allocated_contents21, &(contents_index), "mov bl, [rsp+");
-                        //autopush_integer(allocated_contents21, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-                        //autopush_integer(allocated_contents21, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents21, &(contents_index), "], bl");
 
                         k = integer+(k, 1);
                         done_anything_structure = true;
@@ -3913,9 +3789,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 };
 
                 autopush_add_register8_integer(allocated_contents23, &(contents_index2), RSP, integer+(size, 8));
-                //autopush_string(allocated_contents21, &(contents_index), "add rsp, ");
-                //autopush_integer(allocated_contents21, &(contents_index), integer+(size, 8));
-                //autopush_string_with_newline(allocated_contents21, &(contents_index), "");
 
                 autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents21));
                 autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents23));
@@ -3943,10 +3816,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
 
                 autopush_pop_register8(allocated_contents33, &(contents_index2), RAX);
                 autopush_sub_register8_integer(allocated_contents33, &(contents_index2), RSP, size);
-                //autopush_string_with_newline(allocated_contents31, &(contents_index), "pop rax");
-                //autopush_string(allocated_contents31, &(contents_index), "sub rsp, ");
-                //autopush_integer(allocated_contents31, &(contents_index), size);
-                //autopush_string_with_newline(allocated_contents31, &(contents_index), "");
 
                 variable k = 0;
                 while <(k, size) {
@@ -3955,14 +3824,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if >(-(size, k), 7) {
                         autopush_mov_register8_pointer_offset_register8(allocated_contents33, &(contents_index2), RAX, integer+(k, location), RBX);
                         autopush_mov_register8_register8_pointer_offset(allocated_contents33, &(contents_index2), RBX, RSP, k);
-                        //autopush_string(allocated_contents31, &(contents_index), "mov rbx, [rax+");
-                        //autopush_integer(allocated_contents31, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
-
-                        //autopush_mov_register8_register8(allocated_contents33, &(contents_index2), I
-                        //autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
-                        //autopush_integer(allocated_contents31, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "], rbx");
 
                         k = integer+(k, 8);
                         done_anything_structure = true;
@@ -3970,13 +3831,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, k), 3), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register4(allocated_contents33, &(contents_index2), RAX, integer+(k, location), EBX);
                         autopush_mov_register4_register8_pointer_offset(allocated_contents33, &(contents_index2), EBX, RSP, k);
-                        //autopush_string(allocated_contents31, &(contents_index), "mov ebx, [rax+");
-                        //autopush_integer(allocated_contents31, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
-                        //autopush_integer(allocated_contents31, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "], ebx");
 
                         k = integer+(k, 4);
                         done_anything_structure = true;
@@ -3984,13 +3838,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, k), 1), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register2(allocated_contents33, &(contents_index2), RAX, integer+(k, location), BX);
                         autopush_mov_register2_register8_pointer_offset(allocated_contents33, &(contents_index2), BX, RSP, k);
-                        //autopush_string(allocated_contents31, &(contents_index), "mov bx, [rax+");
-                        //autopush_integer(allocated_contents31, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
-                        //autopush_integer(allocated_contents31, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "], bx");
 
                         k = integer+(k, 2);
                         done_anything_structure = true;
@@ -3998,13 +3845,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, k), 0), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register1(allocated_contents33, &(contents_index2), RAX, integer+(k, location), BL);
                         autopush_mov_register1_register8_pointer_offset(allocated_contents33, &(contents_index2), BL, RSP, k);
-                        //autopush_string(allocated_contents31, &(contents_index), "mov bl, [rax+");
-                        //autopush_integer(allocated_contents31, &(contents_index), integer+(k, location));
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
-
-                        //autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
-                        //autopush_integer(allocated_contents31, &(contents_index), k);
-                        //autopush_string_with_newline(allocated_contents31, &(contents_index), "], bl");
 
                         k = integer+(k, 1);
                         done_anything_structure = true;
@@ -4014,8 +3854,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents31));
                 autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents33));
                 autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
-                //println(allocated);
-                //@print_integer(contents_index2);
 
                 memory_function_index = integer+(memory_function_index, 1);
 
@@ -4059,9 +3897,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 variable locals_size = @cast_integer(autostringarraymap_get(&(functions), &(function_local_sizes), function_name, index));
 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, integer+(locals_size, 16));
-                //autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-                //autopush_integer(&(buffer), &(buffer_index), integer+(locals_size, 16));
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "");
 
                 current_function = function_name;
 
@@ -4076,9 +3911,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             variable value_integer = NodeIntegerData->value(integer_data);
 
             autopush_push_integer(&(instructions_buffer), &(instructions_index), value_integer);
-            //autopush_string(&(buffer), &(buffer_index), "push ");
-            //autopush_integer(&(buffer), &(buffer_index), value_integer);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
             done_anything = true;
         };
 
@@ -4087,19 +3919,16 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             variable value_boolean = NodeBooleanData->value(boolean_data);
 
             autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
 
             if @cast_boolean(value_boolean) {
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], byte 1");
                 done_anything = true;
             };
 
             if !(done_anything) {
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], byte 0");
                 done_anything = true;
             };
         };
@@ -4122,9 +3951,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 variable contents = autostringarraymap_get(&(memory_functions), &(memory_function_instructions), function_name, memory_function_index);
                 variable contents_size = @cast_integer(autostringarraymap_get(&(memory_functions), &(memory_function_instruction_sizes), function_name, memory_function_index));
                 autopush_pointer(&(instructions_buffer), &(instructions_index), contents, contents_size);
-                //println(function_name);
-                //println(contents);
-                //autopush_string(&(buffer), &(buffer_index), contents);
                 done_anything_invoke = true;
             };
 
@@ -4141,14 +3967,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_cmove_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp rax, rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rcx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmove rcx, rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
                 done_anything_invoke = true;
             };
 
@@ -4171,16 +3989,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov bl, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp al, bl");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rcx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmove rcx, rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
                 done_anything_invoke = true;
             };
 
@@ -4194,14 +4002,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp rbx, rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rcx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmovb rcx, rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
                 done_anything_invoke = true;
             };
 
@@ -4215,14 +4015,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp rbx, rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rcx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmova rcx, rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
                 done_anything_invoke = true;
             };
 
@@ -4239,14 +4031,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp al, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov cx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov bx, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmove cx, bx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], cl");
                 done_anything_invoke = true;
             };
             
@@ -4255,10 +4039,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
                 autopush_add_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rax, rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4267,10 +4047,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
                 autopush_sub_register8_register8(&(instructions_buffer), &(instructions_index), RBX, RAX);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RBX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rbx, rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rbx");
                 done_anything_invoke = true;
             };
 
@@ -4282,13 +4058,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register4_register4(&(instructions_buffer), &(instructions_index), EBX, EAX);
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
                 autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EBX, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov eax, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 4");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov ebx, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 4");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub ebx, eax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 4");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], ebx");
                 done_anything_invoke = true;
             };
 
@@ -4297,10 +4066,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
                 autopush_mul_register8(&(instructions_buffer), &(instructions_index), RBX);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mul rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4310,11 +4075,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 autopush_div_register8(&(instructions_buffer), &(instructions_index), RBX);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "div rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4324,11 +4084,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 autopush_div_register8(&(instructions_buffer), &(instructions_index), RBX);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RDX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "div rbx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rdx");
                 done_anything_invoke = true;
             };
 
@@ -4336,9 +4091,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], al");
                 done_anything_invoke = true;
             };
 
@@ -4347,10 +4099,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
                 autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4359,10 +4107,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
                 autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov ax, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 2");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4371,10 +4115,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
                 autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov eax, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 2");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4382,9 +4122,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RAX, 0, RBX);
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RBX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, [rax]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rbx");
                 done_anything_invoke = true;
             };
 
@@ -4395,11 +4132,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BL, RSP, 0);
 
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rbx, 0");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov bl, [rax]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], bl");
                 done_anything_invoke = true;
             };
 
@@ -4411,13 +4143,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_or_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov bl, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "or al, bl");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], al");
                 done_anything_invoke = true;
             };
 
@@ -4429,13 +4154,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autopush_and_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov bl, [rsp]");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "and al, bl");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 1");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "mov [rsp], al");
                 done_anything_invoke = true;
             };
 
@@ -4443,9 +4161,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_syscall(&(instructions_buffer), &(instructions_index));
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4454,10 +4169,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_syscall(&(instructions_buffer), &(instructions_index));
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4467,12 +4178,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_syscall(&(instructions_buffer), &(instructions_index));
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //println(current_function);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4483,12 +4188,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_syscall(&(instructions_buffer), &(instructions_index));
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
@@ -4501,21 +4200,10 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autopush_syscall(&(instructions_buffer), &(instructions_index));
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop r8");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop r10");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdx");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
                 done_anything_invoke = true;
             };
 
             if !(done_anything_invoke) {
-                //autopush_string(&(buffer), &(buffer_index), "call ");
-                //autopush_string_with_newline(&(buffer), &(buffer_index), make_valid_linux_x86-64(function_name));
-
                 variable call_instruction = autopush_call_near(&(instructions_buffer), &(instructions_index));
                 autoarray8_set(&(calls), call_index, call_instruction);
                 autoarray8_set(&(call_targets), call_index, function_name);
@@ -4537,17 +4225,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             variable string_data_index = autopush_data_string(&(data_buffer), &(data_buffer_index), string_value);
 
             autopush_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), string_data_index);
-
-            //autopush_string(&(buffer), &(buffer_index), "push _");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), &(id_string));
-
-            //autopush_string(&(data_buffer), &(data_buffer_index), "_");
-            //autopush_string(&(data_buffer), &(data_buffer_index), &(id_string));
-            //autopush_string(&(data_buffer), &(data_buffer_index), ": db ");
-            //autopush_character(&(data_buffer), &(data_buffer_index), byte(34));
-            //autopush_string(&(data_buffer), &(data_buffer_index), string_value);
-            //autopush_character(&(data_buffer), &(data_buffer_index), byte(34));
-            //autopush_string_with_newline(&(data_buffer), &(data_buffer_index), ", 0");
 
             done_anything = true;
         };
@@ -4587,13 +4264,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if >(-(size, j), 7) {
                         autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
                         autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, integer-(0, @cast_integer(-(+(size, location), j))));
-                        //autopush_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
-                        //autopush_integer(&(buffer), &(buffer_index), j);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
                         j = integer+(j, 8);
                         done_anything_assign = true;
@@ -4601,13 +4271,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
                         autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, j, EAX);
                         autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, integer-(0, @cast_integer(-(+(size, location), j))));
-                        //autopush_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
-                        //autopush_integer(&(buffer), &(buffer_index), j);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
                         j = integer+(j, 4);
                         done_anything_assign = true;
@@ -4615,13 +4278,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
                         autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, j, AX);
                         autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, integer-(0, @cast_integer(-(+(size, location), j))));
-                        //autopush_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
-                        //autopush_integer(&(buffer), &(buffer_index), j);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                         j = integer+(j, 2);
                         done_anything_assign = true;
@@ -4629,13 +4285,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
                         autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, j, AL);
                         autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, integer-(0, @cast_integer(-(+(size, location), j))));
-                        //autopush_string(&(buffer), &(buffer_index), "mov al, [rsp+");
-                        //autopush_integer(&(buffer), &(buffer_index), j);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 
                         j = integer+(j, 1);
                         done_anything_assign = true;
@@ -4643,9 +4292,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 };
                 
                 autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-                //autopush_string(&(buffer), &(buffer_index), "add rsp, ");
-                //autopush_integer(&(buffer), &(buffer_index), size);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "");
             };
 
             if =(variable_type, 0) {
@@ -4658,30 +4304,13 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
 
                 variable global_location = @cast_BssIndex(autostringarraymap_get(&(globals), &(global_locations), variable_name, global_index));
 
-                //println(variable_name);
                 variable j = 0;
                 while <(j, size) {
                     variable done_anything_assign = false;
 
                     if >(-(size, j), 7) {
-                        //variable thing = instructions_index;
                         autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
                         autopush_mov_register8_bss_pointer_offset(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index), RAX, global_location, j);
-                        //variable thing2 = 0;
-                        //while <(thing2, 40) {
-                        //    print_byte(autobuffer_get_any_1(&(instructions_buffer), integer+(thing, thing2)));
-                        //    thing2 = integer+(thing2, 1);
-                        //};
-
-                        //autopush_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
-                        //autopush_integer(&(buffer), &(buffer_index), j);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                        //autopush_string(&(buffer), &(buffer_index), "mov [");
-                        //autopush_string(&(buffer), &(buffer_index), global_name);
-                        //autopush_string(&(buffer), &(buffer_index), "+");
-                        //autopush_integer(&(buffer), &(buffer_index), j);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
                         j = integer+(j, 8);
                         done_anything_assign = true;
@@ -4734,9 +4363,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 };
 
                 autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-                //autopush_string(&(buffer), &(buffer_index), "add rsp, ");
-                //autopush_integer(&(buffer), &(buffer_index), size);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "");
             };
 
             done_anything = true;
@@ -4763,24 +4389,11 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, integer-(0, integer+(size, location)), RAX);
                     autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
 
-                    //variable thing2 = 0;
-                    //while <(thing2, 40) {
-                    //    print_byte(autobuffer_get_any_1(&(instructions_buffer), integer+(thing, thing2)));
-                    //    thing2 = integer+(thing2, 1);
-                    //};
-                    //autopush_string(&(buffer), &(buffer_index), "lea rax, [rbp-");
-                    //autopush_integer(&(buffer), &(buffer_index), integer+(size, location));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
-
                     is_pointer = true;
                 };
 
                 if !(is_pointer) {
                     autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-                    //autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-                    //autopush_integer(&(buffer), &(buffer_index), size);
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "");
 
                     variable j = 0;
                     while <(j, size) {
@@ -4789,41 +4402,18 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         if >(-(size, j), 7) {
                             autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(-(0, -(+(size, location), j))), RAX);
                             autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                            //autopush_string(&(buffer), &(buffer_index), "mov rax, [rbp-");
-                            //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                            //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                            //autopush_integer(&(buffer), &(buffer_index), j);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-
                             j = integer+(j, 8);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 3), !(done_anything_assign)) {
                             autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(-(0, -(+(size, location), j))), EAX);
                             autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                            //autopush_string(&(buffer), &(buffer_index), "mov eax, [rbp-");
-                            //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                            //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                            //autopush_integer(&(buffer), &(buffer_index), j);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
-
                             j = integer+(j, 4);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 1), !(done_anything_assign)) {
                             autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(-(0, -(+(size, location), j))), AX);
                             autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                            //autopush_string(&(buffer), &(buffer_index), "mov ax, [rbp-");
-                            //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                            //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                            //autopush_integer(&(buffer), &(buffer_index), j);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                             j = integer+(j, 2);
                             done_anything_assign = true;
@@ -4831,13 +4421,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         if &&(>(-(size, j), 0), !(done_anything_assign)) {
                             autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(-(0, -(+(size, location), j))), AL);
                             autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                            //autopush_string(&(buffer), &(buffer_index), "mov al, [rbp-");
-                            //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(+(size, location), j)));
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                            //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                            //autopush_integer(&(buffer), &(buffer_index), j);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 
                             j = integer+(j, 1);
                             done_anything_assign = true;
@@ -4861,19 +4444,12 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     if =(next_id, NODE_POINTER) {
                         autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, integer+(16, location), RAX);
                         autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                        //autopush_string(&(buffer), &(buffer_index), "lea rax, [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), integer+(16, location));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
 
                         is_pointer = true;
                     };
 
                     if !(is_pointer) {
                         autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-                        //autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-                        //autopush_integer(&(buffer), &(buffer_index), size);
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "");
 
                         variable j = 0;
                         while <(j, size) {
@@ -4881,56 +4457,24 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                             if >(-(size, j), 7) {
                                 autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(+(+(16, location), j)), RAX);
                                 autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                //autopush_string(&(buffer), &(buffer_index), "mov rax, [rbp+");
-                                //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                //autopush_integer(&(buffer), &(buffer_index), j);
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-
                                 j = integer+(j, 8);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 3), !(done_anything_assign)) {
                                 autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(+(+(16, location), j)), EAX);
                                 autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                //autopush_string(&(buffer), &(buffer_index), "mov eax, [rbp+");
-                                //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                //autopush_integer(&(buffer), &(buffer_index), j);
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
-
                                 j = integer+(j, 4);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 1), !(done_anything_assign)) {
                                 autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(+(+(16, location), j)), AX);
                                 autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                //autopush_string(&(buffer), &(buffer_index), "mov ax, [rbp+");
-                                //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                //autopush_integer(&(buffer), &(buffer_index), j);
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
-
                                 j = integer+(j, 2);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 0), !(done_anything_assign)) {
                                 autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, @cast_integer(+(+(16, location), j)), AL);
                                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                //autopush_string(&(buffer), &(buffer_index), "mov al, [rbp+");
-                                //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, location), j)));
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                //autopush_integer(&(buffer), &(buffer_index), j);
-                                //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
-
                                 j = integer+(j, 1);
                                 done_anything_assign = true;
                             };
@@ -4953,84 +4497,35 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         variable is_pointer = false;
                         if =(next_id, NODE_POINTER) {
                             autopush_push_bss(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_index), global_index2);
-                            //autopush_push_bss(&(instructions_buffer), &(instructions_buffer), );
-                            //autopush_string(&(buffer), &(buffer_index), "lea rax, [");
-                            //autopush_string(&(buffer), &(buffer_index), global_name);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
-
                             is_pointer = true;
                         };
 
                         if !(is_pointer) {
                             autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-                            //autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-                            //autopush_integer(&(buffer), &(buffer_index), size);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
 
                             variable j = 0;
                             while <(j, size) {
                                 if >(-(size, j), 7) {
                                     autopush_mov_bss_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, RAX);
                                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov rax, [");
-                                    //autopush_string(&(buffer), &(buffer_index), global_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-
                                     j = integer+(j, 8);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
                                     autopush_mov_bss_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, EAX);
                                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov eax, [");
-                                    //autopush_string(&(buffer), &(buffer_index), global_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
-
                                     j = integer+(j, 4);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
                                     autopush_mov_bss_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AX);
                                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov ax, [");
-                                    //autopush_string(&(buffer), &(buffer_index), global_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
-
                                     j = integer+(j, 2);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
                                     autopush_mov_bss_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AL);
                                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov al, [");
-                                    //autopush_string(&(buffer), &(buffer_index), global_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
-
                                     j = integer+(j, 1);
                                     done_anything_assign = true;
                                 };
@@ -5052,20 +4547,11 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         variable is_pointer = false;
                         if =(next_id, NODE_POINTER) {
                             autopush_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), constant_location);
-                            //autopush_string(&(buffer), &(buffer_index), "lea rax, [");
-                            //autopush_string(&(buffer), &(buffer_index), constant_name);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
-
                             is_pointer = true;
                         };
 
                         if !(is_pointer) {
                             autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-
-                            //autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-                            //autopush_integer(&(buffer), &(buffer_index), size);
-                            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
 
                             variable j = 0;
                             while <(j, size) {
@@ -5073,64 +4559,24 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                                 if >(-(size, j), 7) {
                                     autopush_mov_data_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, RAX);
                                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov rax, [");
-                                    //autopush_string(&(buffer), &(buffer_index), constant_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-
                                     j = integer+(j, 8);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
                                     autopush_mov_data_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, EAX);
                                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov eax, [");
-                                    //autopush_string(&(buffer), &(buffer_index), constant_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
-
                                     j = integer+(j, 4);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
                                     autopush_mov_data_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AX);
                                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov ax, [");
-                                    //autopush_string(&(buffer), &(buffer_index), constant_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
-
                                     j = integer+(j, 2);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
                                     autopush_mov_data_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AL);
                                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                    //autopush_string(&(buffer), &(buffer_index), "mov al, [");
-                                    //autopush_string(&(buffer), &(buffer_index), constant_name);
-                                    //autopush_string(&(buffer), &(buffer_index), "+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                                    //autopush_integer(&(buffer), &(buffer_index), j);
-                                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
-
                                     j = integer+(j, 1);
                                     done_anything_assign = true;
                                 };
@@ -5159,8 +4605,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             variable thing = instructions_index;
             autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 8, RCX);
             autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 0, RDX);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rcx, [rbp+8]");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdx, [rbp]");
 
             returns_size = integer+(returns_size, 8);
 
@@ -5170,166 +4614,38 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if >(-(returns_size, j), 7) {
                     k = @cast_integer(-(k, 8));
 
-                    //autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RAX, 1);
                     autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, @cast_integer(-(-(returns_size, j), 8)), RAX);
-                    //autopush_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 8)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                        autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-
-                    if !(done_anything_assign) {
-                        autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
+                    autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
 
                     j = integer+(j, 8);
                 };
                 if &&(>(-(returns_size, j), 3), !(done_anything_assign)) {
                     k = @cast_integer(-(k, 4));
 
-                    //autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RAX, 1);
                     autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, @cast_integer(-(-(returns_size, j), 4)), EAX);
-                    //autopush_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 8)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                        autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-
-                    if !(done_anything_assign) {
-                        autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-
-                    //autopush_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 4)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    //if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                    //    autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                    //    autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
-                    //    done_anything_assign = true;
-                    //};
-
-                    //if !(done_anything_assign) {
-                    //    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    //    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                    //    done_anything_assign = true;
-                    //};
-
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
 
                     j = integer+(j, 4);
                 };
                 if &&(>(-(returns_size, j), 1), !(done_anything_assign)) {
                     k = @cast_integer(-(k, 2));
 
-                    //autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RAX, 1);
                     autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, @cast_integer(-(-(returns_size, j), 2)), AX);
-                    //autopush_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 8)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                        autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-
-                    if !(done_anything_assign) {
-                        autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-
-                    //autopush_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 2)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    //if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                    //    autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                    //    autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
-                    //    done_anything_assign = true;
-                    //};
-
-                    //if !(done_anything_assign) {
-                    //    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    //    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                    //    done_anything_assign = true;
-                    //};
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
 
                     j = integer+(j, 2);
                 };
                 if &&(>(-(returns_size, j), 0), !(done_anything_assign)) {
                     k = @cast_integer(-(k, 1));
 
-                    //autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RAX, 1);
                     autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, @cast_integer(-(-(returns_size, j), 1)), AL);
-                    //autopush_string(&(buffer), &(buffer_index), "mov rax, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 8)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                        autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-
-                    if !(done_anything_assign) {
-                        autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                        //autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
-                        done_anything_assign = true;
-                    };
-                    //autopush_string(&(buffer), &(buffer_index), "mov al, [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(-(returns_size, j), 1)));
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
-
-                    //if >(+(+(24, -(-(arguments_size, returns_size), j)), returns_size_rounded), 999) {
-                    //    autopush_string(&(buffer), &(buffer_index), "mov [rbp-");
-                    //    autopush_integer(&(buffer), &(buffer_index), @cast_integer(-(0, +(+(16, +(-(arguments_size, returns_size), k)), 0))));
-                    //    done_anything_assign = true;
-                    //};
-
-                    //if !(done_anything_assign) {
-                    //    autopush_string(&(buffer), &(buffer_index), "mov [rbp+");
-                    //    autopush_integer(&(buffer), &(buffer_index), @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
-                    //    done_anything_assign = true;
-                    //};
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
+                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
 
                     j = integer+(j, 1);
                 };
             };
 
             autopush_mov_register8_register8(&(instructions_buffer), &(instructions_index), RBP, RSP);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rsp, rbp");
 
             autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, @cast_integer(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
 
@@ -5339,11 +4655,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBP);
             autopush_push_register8(&(instructions_buffer), &(instructions_index), RCX);
             autopush_ret(&(instructions_buffer), &(instructions_index));
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "push rdx");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rbp");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "push rcx");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "ret");
                 
             done_anything = true;
         };
@@ -5360,20 +4671,16 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
             autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
             autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "mov al, [rsp]");
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 1");
             autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
             autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RCX, 1);
 
             if @cast_boolean(conditional) {
                 autopush_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RCX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp al, 1");
                 done_anything = true;
             };
 
             if !(done_anything) {
                 autopush_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
-                //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp al, 0");
                 done_anything = true;
             };
 
@@ -5383,9 +4690,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
 
             je_index = integer+(je_index, 1);
 
-            //autopush_string(&(buffer), &(buffer_index), "je target_");
-            //autopush_integer(&(buffer), &(buffer_index), target);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
         };
 
         if =(id, NODE_JUMP) {
@@ -5397,10 +4701,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             autoarray8_set(&(jmp_targets), jmp_index, target);
 
             jmp_index = integer+(jmp_index, 1);
-            //autopush_string(&(buffer), &(buffer_index), "jmp target_");
-            //autopush_integer(&(buffer), &(buffer_index), target);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
-
             done_anything = true;
         };
 
@@ -5409,10 +4709,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             variable target = NodeTargetData->id(target_data);
             
             autoarray8_set(&(targets), target, get_instruction(&(instructions_buffer), &(instructions_index)));
-            //autopush_string(&(buffer), &(buffer_index), "target_");
-            //autopush_integer(&(buffer), &(buffer_index), target);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), ":");
-
             done_anything = true;
         };
 
@@ -5453,11 +4749,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             copy("_", constant_name, 1);
             copy(name3, @cast_*(+(constant_name, 1)), length(name3));
 
-            //autopush_string(&(data_buffer), &(data_buffer_index), constant_name);
-            //autopush_string(&(data_buffer), &(data_buffer_index), ": dq ");
-            //autopush_integer(&(data_buffer), &(data_buffer_index), @cast_integer(value2));
-            //autopush_string_with_newline(&(data_buffer), &(data_buffer_index), "");
-            
             done_anything = true;
         };
 
@@ -5468,9 +4759,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             variable size = get_size_linux_x86-64(type2, nodes, node_count);
 
             autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-            //autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-            //autopush_integer(&(buffer), &(buffer_index), size);
-            //autopush_string_with_newline(&(buffer), &(buffer_index), "");
 
             variable j = 0;
             while <(j, size) {
@@ -5479,11 +4767,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if >(-(size, j), 7) {
                     autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 0");
-
-                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), j);
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 
                     j = integer+(j, 8);
                     done_anything_assign = true;
@@ -5491,9 +4774,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
                     autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), j);
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], dword 0");
 
                     j = integer+(j, 4);
                     done_anything_assign = true;
@@ -5501,9 +4781,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
                     autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), j);
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], word 0");
 
                     j = integer+(j, 2);
                     done_anything_assign = true;
@@ -5511,9 +4788,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
                     autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                    //autopush_string(&(buffer), &(buffer_index), "mov [rsp+");
-                    //autopush_integer(&(buffer), &(buffer_index), j);
-                    //autopush_string_with_newline(&(buffer), &(buffer_index), "], byte 0");
 
                     j = integer+(j, 1);
                     done_anything_assign = true;
@@ -5662,53 +4936,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
     autopush_byte(&(instructions_buffer), &(instructions_index), byte(80));
     autopush_byte(&(instructions_buffer), &(instructions_index), byte(195));
 
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "@print_integer:");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rsi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rdi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "push rdi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "push rsi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov r9, -3689348814741910323");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rsp, 40");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov BYTE [rsp+31], 10");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "lea rcx, [rsp+30]");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), ".L2:");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, rdi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "lea r8, [rsp+32]");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mul r9");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, rdi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "sub r8, rcx");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "shr rdx, 3");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "lea rsi, [rdx+rdx*4]");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsi, rsi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rax, rsi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "add eax, 48");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov BYTE [rcx], al");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, rdi");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdi, rdx");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdx, rcx");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rcx, 1");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "cmp rax, 9");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "ja .L2");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "lea rax, [rsp+32]");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov edi, 1");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "sub rdx, rax");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "xor eax, eax");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "lea rsi, [rsp+32+rdx]");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdx, r8");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "mov rax, 1");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "syscall");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 40");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "pop rax");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "add rsp, 8");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "ret");
-
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "segment readable");
-    //autopush_string(&(buffer), &(buffer_index), AutoBuffer->buffer(&(data_buffer)));
-
-    //autopush_string_with_newline(&(buffer), &(buffer_index), "segment readable writable");
-    //autopush_string(&(buffer), &(buffer_index), AutoBuffer->buffer(&(bss_buffer)));
-
     variable main_index = autostringarraymap_get(&(functions), &(function_locations), "main", index);
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
 
@@ -5795,12 +5022,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
         variable value_new = @cast_integer(+(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index)), +(instructions_index, data_buffer_index)));
         variable actual_value = @cast_integer(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index)));
         autobuffer_set_any_4(&(instructions_buffer), integer_to_medium(integer+(integer-(value_new, integer+(index, 4)), 8192)), index);
-        i = @cast_integer(+(i, 1));
-    };
-
-    variable i = 0;
-    while <(i, instructions_index) {
-        //print_byte(autobuffer_get_any_1(&(instructions_buffer), i));
         i = @cast_integer(+(i, 1));
     };
 
