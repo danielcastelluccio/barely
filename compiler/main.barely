@@ -4020,6 +4020,14 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
 
                 if =(size, 8) {
                     autopush_push_integer(&(instructions_buffer), &(instructions_index), value_integer);
+                } else if =(size, 4) {
+                    autopush_mov_medium_register4(&(instructions_buffer), &(instructions_index), EAX, integer_to_medium(value_integer));
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                } else if =(size, 2) {
+                    autopush_mov_short_register2(&(instructions_buffer), &(instructions_index), AX, integer_to_short(value_integer));
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
                 } else if =(size, 1) {
                     autopush_mov_byte_register1(&(instructions_buffer), &(instructions_index), AL, byte(value_integer));
                     autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
@@ -4164,13 +4172,27 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     k = integer+(k, 1);
                 };
 
-                @print_integer(size);
-
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
                     autopush_add_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
                     autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                } else if =(size, 4) {
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_add_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                } else if =(size, 2) {
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_add_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
                 } else if =(size, 1) {
                     autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
                     autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
@@ -4179,10 +4201,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     autopush_add_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
                     autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                    //autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    //autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    //autopush_add_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
-                    //autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 };
                 done_anything_invoke = true;
             };
@@ -4349,7 +4367,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             };
 
             if !(done_anything_invoke) {
-                println(function_name);
                 variable call_instruction = autopush_call_near(&(instructions_buffer), &(instructions_index));
                 autoarray8_set(&(calls), call_index, call_instruction);
                 autoarray8_set(&(call_targets), call_index, function_name);
