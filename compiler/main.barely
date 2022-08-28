@@ -294,6 +294,9 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
     if string=(buffer, "if") {
         is_keyword = true;
     };
+    if string=(buffer, "else") {
+        is_keyword = true;
+    };
     if string=(buffer, "while") {
         is_keyword = true;
     };
@@ -1038,25 +1041,57 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
     if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, integer->(index_pointer))));
         if string=(name_value, "if") {
-            increment_integer_pointer(index_pointer, 1);
+            //increment_integer_pointer(index_pointer, 1);
 
-            variable target = get_target_id();
+            variable end_target = get_target_id();
 
-            parse_expression(tokens, index_pointer, nodes, nodes_index);
-            variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
-            NodeJumpConditionalData<-target_id(conditional_jump_data, target);
-            NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+            while =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
+                variable target = get_target_id();
+                variable token_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, integer->(index_pointer)));
+                variable token_index = integer->(index_pointer);
 
-            increment_integer_pointer(index_pointer, 1);
+                if string=(TokenKeywordData->keyword(token_data), "if") {
+                    increment_integer_pointer(index_pointer, 1);
 
-            while !(=(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
-                parse_statement(tokens, index_pointer, nodes, nodes_index);
+                    parse_expression(tokens, index_pointer, nodes, nodes_index);
+                    variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+                    NodeJumpConditionalData<-target_id(conditional_jump_data, target);
+                    NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+
+                    increment_integer_pointer(index_pointer, 1);
+                };
+                if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, integer+(token_index, 1)), TOKEN_KEYWORD)) {
+                    increment_integer_pointer(index_pointer, 2);
+
+                    parse_expression(tokens, index_pointer, nodes, nodes_index);
+                    variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+                    NodeJumpConditionalData<-target_id(conditional_jump_data, target);
+                    NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+
+                    increment_integer_pointer(index_pointer, 1);
+                };
+                if &&(string=(TokenKeywordData->keyword(token_data), "else"), !(=(tokens_get_id(tokens, integer+(token_index, 1)), TOKEN_KEYWORD))) {
+                    increment_integer_pointer(index_pointer, 2);
+                };
+
+                while !(=(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
+                    parse_statement(tokens, index_pointer, nodes, nodes_index);
+                };
+
+                variable jump_data = @cast_*NodeJumpData(append_node_data(nodes, nodes_index, NODE_JUMP));
+                NodeJumpData<-target_id(jump_data, end_target);
+
+                variable target_node_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+                NodeTargetData<-id(target_node_data, target);
+
+                increment_integer_pointer(index_pointer, 1);
             };
 
             variable target_node_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
-            NodeTargetData<-id(target_node_data, target);
+            NodeTargetData<-id(target_node_data, end_target);
  
             increment_integer_pointer(index_pointer, 1);
+
             done_anything = true;
             return;
         };
