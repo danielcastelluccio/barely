@@ -1508,6 +1508,90 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+            } else if string=(function_name, "-") {
+                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+
+                if !(string=(first, second)) {
+                    print("TYPECHECK: ");
+                    print(current_function);
+                    print(": Invoke of '-' wants matching arguments, given '");
+                    print(first);
+                    print("' and '");
+                    print(second);
+                    print("'");
+                };
+
+                autostack8_push(&(stack), &(stack_pointer), first);
+
+                variable new_+_name = autobuffer_new(16);
+                autobuffer_set(&(new_+_name), "-_", 0, 2);
+                autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+            } else if string=(function_name, "*") {
+                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+
+                if !(string=(first, second)) {
+                    print("TYPECHECK: ");
+                    print(current_function);
+                    print(": Invoke of '*' wants matching arguments, given '");
+                    print(first);
+                    print("' and '");
+                    print(second);
+                    print("'");
+                };
+
+                autostack8_push(&(stack), &(stack_pointer), first);
+
+                variable new_+_name = autobuffer_new(16);
+                autobuffer_set(&(new_+_name), "*_", 0, 2);
+                autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+            } else if string=(function_name, "/") {
+                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+
+                if !(string=(first, second)) {
+                    print("TYPECHECK: ");
+                    print(current_function);
+                    print(": Invoke of '*' wants matching arguments, given '");
+                    print(first);
+                    print("' and '");
+                    print(second);
+                    print("'");
+                };
+
+                autostack8_push(&(stack), &(stack_pointer), first);
+
+                variable new_+_name = autobuffer_new(16);
+                autobuffer_set(&(new_+_name), "/_", 0, 2);
+                autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+            } else if string=(function_name, "%") {
+                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+
+                if !(string=(first, second)) {
+                    print("TYPECHECK: ");
+                    print(current_function);
+                    print(": Invoke of '%' wants matching arguments, given '");
+                    print(first);
+                    print("' and '");
+                    print(second);
+                    print("'");
+                };
+
+                autostack8_push(&(stack), &(stack_pointer), first);
+
+                variable new_+_name = autobuffer_new(16);
+                autobuffer_set(&(new_+_name), "%_", 0, 2);
+                autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else {
                 variable found_function = false;
                 variable j = 0;
@@ -4205,48 +4289,203 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 done_anything_invoke = true;
             };
 
-            if string=(function_name, "-") {
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_sub_register8_register8(&(instructions_buffer), &(instructions_index), RBX, RAX);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RBX);
+            if string_length=(function_name, "-", 1) {
+                variable size = 0;
+                variable underscore_count = 0;
+
+                variable k = 0;
+                while <(k, length(function_name)) {
+                    variable character = @cast_integer(byte_to_integer(any_1->(@cast_*any_1(+(function_name, k)))));
+                    if =(character, 95) {
+                        underscore_count = integer+(underscore_count, 1);
+                    } else if =(underscore_count, 2) {
+                        size = integer-(character, 48);
+                    };
+
+                    k = integer+(k, 1);
+                };
+
+                if =(size, 8) {
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_sub_register8_register8(&(instructions_buffer), &(instructions_index), RBX, RAX);
+                    autopush_push_register8(&(instructions_buffer), &(instructions_index), RBX);
+                } else if =(size, 4) {
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_sub_register4_register4(&(instructions_buffer), &(instructions_index), EBX, EAX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EBX, RSP, 0);
+                } else if =(size, 2) {
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_sub_register2_register2(&(instructions_buffer), &(instructions_index), BX, AX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BX, RSP, 0);
+                } else if =(size, 1) {
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_sub_register1_register1(&(instructions_buffer), &(instructions_index), BL, AL);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BL, RSP, 0);
+                };
                 done_anything_invoke = true;
             };
 
-            if string=(function_name, "-4") {
-                autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
-                autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
-                autopush_sub_register4_register4(&(instructions_buffer), &(instructions_index), EBX, EAX);
-                autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
-                autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EBX, RSP, 0);
+            if string_length=(function_name, "*", 1) {
+                variable size = 0;
+                variable underscore_count = 0;
+
+                variable k = 0;
+                while <(k, length(function_name)) {
+                    variable character = @cast_integer(byte_to_integer(any_1->(@cast_*any_1(+(function_name, k)))));
+                    if =(character, 95) {
+                        underscore_count = integer+(underscore_count, 1);
+                    } else if =(underscore_count, 2) {
+                        size = integer-(character, 48);
+                    };
+
+                    k = integer+(k, 1);
+                };
+
+                if =(size, 8) {
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_mul_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                } else if =(size, 4) {
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mul_register4(&(instructions_buffer), &(instructions_index), EBX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                } else if =(size, 2) {
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mul_register2(&(instructions_buffer), &(instructions_index), BX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+                } else if =(size, 1) {
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mul_register1(&(instructions_buffer), &(instructions_index), BL);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                };
                 done_anything_invoke = true;
             };
 
-            if string=(function_name, "*") {
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_mul_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                done_anything_invoke = true;
-            };
+            if string_length=(function_name, "/", 1) {
+                variable size = 0;
+                variable underscore_count = 0;
 
-            if string=(function_name, "/") {
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                variable k = 0;
+                while <(k, length(function_name)) {
+                    variable character = @cast_integer(byte_to_integer(any_1->(@cast_*any_1(+(function_name, k)))));
+                    if =(character, 95) {
+                        underscore_count = integer+(underscore_count, 1);
+                    } else if =(underscore_count, 2) {
+                        size = integer-(character, 48);
+                    };
+
+                    k = integer+(k, 1);
+                };
+
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
-                autopush_div_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                if =(size, 8) {
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autopush_div_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                } else if =(size, 4) {
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_div_register4(&(instructions_buffer), &(instructions_index), EBX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                } else if =(size, 2) {
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_div_register2(&(instructions_buffer), &(instructions_index), BX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+                } else if =(size, 1) {
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_div_register1(&(instructions_buffer), &(instructions_index), BL);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                };
                 done_anything_invoke = true;
             };
 
-            if string=(function_name, "%") {
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+            if string_length=(function_name, "%", 1) {
+                variable size = 0;
+                variable underscore_count = 0;
+
+                variable k = 0;
+                while <(k, length(function_name)) {
+                    variable character = @cast_integer(byte_to_integer(any_1->(@cast_*any_1(+(function_name, k)))));
+                    if =(character, 95) {
+                        underscore_count = integer+(underscore_count, 1);
+                    } else if =(underscore_count, 2) {
+                        size = integer-(character, 48);
+                    };
+
+                    k = integer+(k, 1);
+                };
+
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
-                autopush_div_register8(&(instructions_buffer), &(instructions_index), RBX);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RDX);
+                if =(size, 8) {
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autopush_div_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autopush_push_register8(&(instructions_buffer), &(instructions_index), RDX);
+                } else if =(size, 4) {
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_div_register4(&(instructions_buffer), &(instructions_index), EBX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EDX, RSP, 0);
+                } else if =(size, 2) {
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_div_register2(&(instructions_buffer), &(instructions_index), BX);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), DX, RSP, 0);
+                } else if =(size, 1) {
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_div_register1(&(instructions_buffer), &(instructions_index), BL);
+                    autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AH, RSP, 0);
+                };
                 done_anything_invoke = true;
             };
 

@@ -22,8 +22,9 @@ constant AL: Register1 = 0;
 constant CL: Register1 = 1;
 constant DL: Register1 = 2;
 constant BL: Register1 = 3;
-constant SPL: Register1 = 4;
-constant BPL: Register1 = 5;
+constant AH: Register1 = 4;
+//constant SPL: Register1 = 4;
+//constant BPL: Register1 = 5;
 
 constant AX: Register2 = 0;
 constant CX: Register2 = 1;
@@ -1208,6 +1209,61 @@ function autopush_mul_register8(buffer: *AutoBuffer, buffer_index_pointer: *inte
     autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(224, register))));
 };
 
+function autopush_mul_register4(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register4) {
+    variable instruction = 64;
+    if >(register, 7) {
+        instruction = 65;
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(247));
+
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(216, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(224, register))));
+};
+
+function autopush_mul_register2(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register2) {
+    variable instruction = 64;
+    if >(register, 7) {
+        instruction = 65;
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, byte(247));
+
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(216, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(224, register))));
+};
+
+function autopush_mul_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register1) {
+    variable instruction = 64;
+    if >(register, 7) {
+        instruction = 65;
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(246));
+
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(216, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(224, register))));
+};
+
 function autopush_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register8) {
     variable instruction = 72;
     if >(register, 7) {
@@ -1215,6 +1271,61 @@ function autopush_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *inte
     };
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     autopush_byte(buffer, buffer_index_pointer, byte(247));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(232, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(240, register))));
+};
+
+function autopush_div_register4(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register4) {
+    variable instruction = 64;
+    if >(register, 7) {
+        instruction = 65;
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(247));
+
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(232, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(240, register))));
+};
+
+function autopush_div_register2(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register2) {
+    variable instruction = 64;
+    if >(register, 7) {
+        instruction = 65;
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, byte(247));
+
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(232, register))));
+        return;
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(240, register))));
+};
+
+function autopush_div_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register: Register1) {
+    variable instruction = 64;
+    if >(register, 7) {
+        instruction = 65;
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(246));
+
     if >(register, 7) {
         autopush_byte(buffer, buffer_index_pointer, byte(@cast_integer(+(232, register))));
         return;
@@ -1493,6 +1604,81 @@ function autopush_sub_register4_register4(buffer: *AutoBuffer, buffer_index_poin
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
     autopush_byte(buffer, buffer_index_pointer, byte(41));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_sub_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register2, register2: Register2) {
+    variable instruction = 64;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, byte(41));
+
+    variable value = 0;
+
+    if >(register1, 7) {
+        value = @cast_integer(+(value, -(register1, 8)));
+    };
+
+    if <(register1, 8) {
+        value = @cast_integer(+(value, register1));
+    };
+
+    if >(register2, 7) {
+        value = @cast_integer(+(value, *(-(register2, 8), 8)));
+    };
+
+    if <(register2, 8) {
+        value = @cast_integer(+(value, *(register2, 8)));
+    };
+
+    autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
+};
+
+function autopush_sub_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *integer, register1: Register1, register2: Register1) {
+    variable instruction = 64;
+
+    if >(register1, 7) {
+        instruction = @cast_integer(+(instruction, 1));
+    };
+
+    if >(register2, 7) {
+        instruction = @cast_integer(+(instruction, 4));
+    };
+
+    if !(=(instruction, 64)) {
+        autopush_byte(buffer, buffer_index_pointer, byte(instruction));
+    };
+    autopush_byte(buffer, buffer_index_pointer, byte(40));
 
     variable value = 0;
 
