@@ -750,9 +750,7 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
             if seen_name {
                 autoarray8_set(&(member_types), member_index, name_name);
                 member_index = integer+(member_index, 1);
-            };
-
-            if !(seen_name) {
+            } else {
                 autoarray8_set(&(member_names), member_index, name_name);
             };
 
@@ -795,13 +793,9 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *integer, nodes: *Au
         if =(id, TOKEN_NAME) {
             variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
 
-            variable done_anything = false;
             if =(%(parameters_index, 2), 0) {
                 autoarray8_set(&(parameter_names_pointer), parameters_index2, token_name);
-                done_anything = true;
-            };
-
-            if !(done_anything) {
+            } else {
                 autoarray8_set(&(parameter_types_pointer), parameters_index2, token_name);
                 parameters_index2 = @cast_integer(+(parameters_index2, 1));
             };
@@ -868,26 +862,18 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *integer, nodes: *
             index = @cast_integer(+(index, 2));
 
             while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
-                variable done_anything_loop = false;
-
                 if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
                     index = @cast_integer(+(index, 1));
-                    done_anything_loop = true;
-                };
-
-                if !(done_anything_loop) {
+                } else {
                     parse_expression(tokens, &(index), nodes, nodes_index);
                 };
             };
 
             index = @cast_integer(+(index, 1));
 
-            variable is_pointer = false;
             if string=(function_name, "&") {
                 variable invoke_pointer = append_node(nodes, nodes_index, NODE_POINTER);
-                is_pointer = true;
-            };
-            if !(is_pointer) {
+            } else {
                 variable invoke_pointer_data = @cast_*NodeInvokeData(append_node_data(nodes, nodes_index, NODE_INVOKE));
                 NodeInvokeData<-name(invoke_pointer_data, function_name);
             };
@@ -965,9 +951,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                     variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
                     if seen_name {
                         autoarray8_set(&(types), name_index, name_value);
-                    };
-
-                    if !(seen_name) {
+                    } else {
                         autoarray8_set(&(names), name_index, name_value);
                         autoarray8_set(&(types), name_index, "");
                         seen_name = true;
@@ -1001,9 +985,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
             if parse_expression {
                 index = integer+(index, 1);
                 parse_expression(tokens, &(index), nodes, nodes_index);
-            };
-
-            if !(parse_expression) {
+            } else {
                 variable i = 0;
                 while !(=(autoarray8_get(&(names), i), 0)) {
                     variable node_data = @cast_*NodeZeroData(append_node_data(nodes, nodes_index, NODE_ZERO));
@@ -1041,8 +1023,6 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
     if =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, integer->(index_pointer))));
         if string=(name_value, "if") {
-            //increment_integer_pointer(index_pointer, 1);
-
             variable end_target = get_target_id();
 
             while =(tokens_get_id(tokens, integer->(index_pointer)), TOKEN_KEYWORD) {
@@ -1059,8 +1039,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                     NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
 
                     increment_integer_pointer(index_pointer, 1);
-                };
-                if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, integer+(token_index, 1)), TOKEN_KEYWORD)) {
+                } else if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, integer+(token_index, 1)), TOKEN_KEYWORD)) {
                     increment_integer_pointer(index_pointer, 2);
 
                     parse_expression(tokens, index_pointer, nodes, nodes_index);
@@ -1069,8 +1048,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *integer, nodes: *A
                     NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
 
                     increment_integer_pointer(index_pointer, 1);
-                };
-                if &&(string=(TokenKeywordData->keyword(token_data), "else"), !(=(tokens_get_id(tokens, integer+(token_index, 1)), TOKEN_KEYWORD))) {
+                } else {
                     increment_integer_pointer(index_pointer, 2);
                 };
 
@@ -1419,15 +1397,10 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
             variable invoke_data = @cast_*NodeInvokeData(pointer_data);
             variable function_name = NodeInvokeData->name(invoke_data);
 
-            variable matched_internal = false;
-
             if string_length=(function_name, "@cast_", 6) {
                 variable _ = autostack8_pop(&(stack), &(stack_pointer));
                 autostack8_push(&(stack), &(stack_pointer), @cast_*(+(function_name, 6)));
-                matched_internal = true;
-            };
-
-            if !(matched_internal) {
+            } else {
                 variable found_function = false;
                 variable j = 0;
                 while <(j, index) {
@@ -1501,9 +1474,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
                 autoarray8_set(&(variable_types), variable_index, variable_type);
                 autoarray8_set(&(variable_declares), variable_index, i);
                 variable_index = integer+(variable_index, 1);
-            };
-
-            if !(=(temp_variable_index, 999)) {
+            } else {
                 autoarray8_set(&(variable_types), temp_variable_index, variable_type);
                 autoarray8_set(&(variable_declares), temp_variable_index, i);
             };
@@ -1541,9 +1512,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
                     println("'");
                     sys_exit(1);
                 };
-            };
-
-            if =(variable_type, 0) {
+            } else {
                 variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
 
                 if !(string=(variable_type, popped_stack)) {
@@ -1568,9 +1537,7 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
             variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
             if !(=(variable_type, 0)) {
                 autostack8_push(&(stack), &(stack_pointer), variable_type);
-            };
-
-            if =(variable_type, 0) {
+            } else {
                 variable function_argument_names2 = autostringarraymap_get(&(functions), &(function_argument_names), current_function, index);
                 variable function_arguments2 = autostringarraymap_get(&(functions), &(function_arguments), current_function, index);
 
@@ -1578,22 +1545,16 @@ function type_check(nodes: *AutoBuffer, node_count: integer) {
 
                 if !(=(variable_type, 0)) {
                     autostack8_push(&(stack), &(stack_pointer), variable_type);
-                };
-
-                if =(variable_type, 0) {
+                } else {
                     variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
                     if !(=(variable_type, 0)) {
                         autostack8_push(&(stack), &(stack_pointer), variable_type);
-                    };
-
-                    if =(variable_type, 0) {
+                    } else {
                         variable_type = autostringarraymap_get(&(constants), &(constant_types), variable_name, constant_index);
 
                         if !(=(variable_type, 0)) {
                             autostack8_push(&(stack), &(stack_pointer), variable_type);
-                        };
-
-                        if =(variable_type, 0) {
+                        } else {
                             println(variable_name);
                             println(current_function);
                             println("cannot find way to access variable");
@@ -3958,14 +3919,12 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             if @cast_boolean(value_boolean) {
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 1);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                done_anything = true;
-            };
-
-            if !(done_anything) {
+            } else {
                 autopush_mov_integer_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                done_anything = true;
             };
+
+            done_anything = true;
         };
 
         if =(id, NODE_INVOKE) {
@@ -4327,9 +4286,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                 };
                 
                 autopush_add_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
-            };
-
-            if =(variable_type, 0) {
+            } else {
                 variable global_name = brk_allocate(integer+(length(variable_name), 2));
                 copy("_", global_name, 1);
                 copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
@@ -4351,7 +4308,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                        println("brrrr");
                         autopush_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
                         autopush_integer(&(buffer), &(buffer_index), j);
                         autopush_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -4366,7 +4322,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                        println("brrrr");
                         autopush_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
                         autopush_integer(&(buffer), &(buffer_index), j);
                         autopush_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -4381,7 +4336,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                        println("brrrr");
                         autopush_string(&(buffer), &(buffer_index), "mov al, [rsp+");
                         autopush_integer(&(buffer), &(buffer_index), j);
                         autopush_string_with_newline(&(buffer), &(buffer_index), "]");
@@ -4418,16 +4372,11 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     j = integer+(j, 1);
                 };
 
-                variable is_pointer = false;
                 if =(next_id, NODE_POINTER) {
                     variable thing = instructions_index;
                     autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, integer-(0, integer+(size, location)), RAX);
                     autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-
-                    is_pointer = true;
-                };
-
-                if !(is_pointer) {
+                } else {
                     autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
 
                     variable j = 0;
@@ -4463,9 +4412,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     };
                 };
 
-            };
-            
-            if =(variable_type, 0) {
+            } else {
                 variable function_argument_names2 = autostringarraymap_get(&(functions), &(function_argument_names), current_function, index);
                 variable function_arguments2 = autostringarraymap_get(&(functions), &(function_arguments), current_function, index);
 
@@ -4475,15 +4422,10 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                     variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
                     variable location = get_size_multiple_reversed_linux_x86-64(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes, node_count);
 
-                    variable is_pointer = false;
                     if =(next_id, NODE_POINTER) {
                         autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, integer+(16, location), RAX);
                         autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-
-                        is_pointer = true;
-                    };
-
-                    if !(is_pointer) {
+                    } else {
                         autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
 
                         variable j = 0;
@@ -4515,9 +4457,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                             };
                         };
                     };
-                };
-
-                if =(variable_type, 0) {
+                } else {
                     variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
 
                     if !(=(variable_type, 0)) {
@@ -4529,13 +4469,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
 
                         variable global_index2 = @cast_BssIndex(autostringarraymap_get(&(globals), &(global_locations), variable_name, global_index));
 
-                        variable is_pointer = false;
                         if =(next_id, NODE_POINTER) {
                             autopush_push_bss(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_index), global_index2);
-                            is_pointer = true;
-                        };
-
-                        if !(is_pointer) {
+                        } else {
                             autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
 
                             variable j = 0;
@@ -4566,9 +4502,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
                                 };
                             };
                         };
-                    };
-
-                    if =(variable_type, 0) {
+                    } else {
                         variable_type = autostringarraymap_get(&(constants), &(constant_types), variable_name, constant_index);
 
                         variable constant_name = brk_allocate(integer+(length(variable_name), 2));
@@ -4579,13 +4513,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
 
                         variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
 
-                        variable is_pointer = false;
                         if =(next_id, NODE_POINTER) {
                             autopush_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), constant_location);
-                            is_pointer = true;
-                        };
-
-                        if !(is_pointer) {
+                        } else {
                             autopush_sub_register8_integer(&(instructions_buffer), &(instructions_index), RSP, size);
 
                             variable j = 0;
@@ -4712,11 +4642,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             if @cast_boolean(conditional) {
                 autopush_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RCX);
                 done_anything = true;
-            };
-
-            if !(done_anything) {
+            } else {
                 autopush_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
-                done_anything = true;
             };
 
             variable jump_instruction = autopush_je_near(&(instructions_buffer), &(instructions_index));
@@ -4724,7 +4651,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: integer, name: 
             autoarray8_set(&(je_targets), je_index, target);
 
             je_index = integer+(je_index, 1);
-
+            done_anything = true;
         };
 
         if =(id, NODE_JUMP) {
