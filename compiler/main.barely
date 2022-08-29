@@ -1517,8 +1517,20 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable function_name = NodeInvokeData->name(invoke_data);
 
             if string_length=(function_name, "@cast_", 6) {
-                variable _ = autostack8_pop(&(stack), &(stack_pointer));
-                autostack8_push(&(stack), &(stack_pointer), @cast_*(+(function_name, 6)));
+                variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable to_push = @cast_*(+(function_name, 6));
+
+                if !(=(get_size_linux_x86-64(popped, nodes, node_count), get_size_linux_x86-64(to_push, nodes, node_count))) {
+                    print("TYPECHECK: ");
+                    print(current_function);
+                    print(": Cast wants equal sized types, given '");
+                    print(popped);
+                    print("' and casts to '");
+                    print(to_push);
+                    println("'");
+                };
+
+                autostack8_push(&(stack), &(stack_pointer), to_push);
             } else if string=(function_name, "+") {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
