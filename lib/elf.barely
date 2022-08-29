@@ -72,7 +72,7 @@ structure InstructionIndex {
 function autopush_jmp_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
     variable current_instruction = whole_8->(instruction_index_pointer);
 
-    autopush_byte(instructions, instruction_index_pointer, byte(233));
+    autopush_byte(instructions, instruction_index_pointer, 233_whole_1);
 
     autopush_medium(instructions, instruction_index_pointer, whole_8_to_medium(0));
 
@@ -82,8 +82,8 @@ function autopush_jmp_near(instructions: *AutoBuffer, instruction_index_pointer:
 function autopush_je_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
     variable current_instruction = whole_8->(instruction_index_pointer);
 
-    autopush_byte(instructions, instruction_index_pointer, byte(15));
-    autopush_byte(instructions, instruction_index_pointer, byte(132));
+    autopush_byte(instructions, instruction_index_pointer, 15_whole_1);
+    autopush_byte(instructions, instruction_index_pointer, 132_whole_1);
 
     autopush_medium(instructions, instruction_index_pointer, whole_8_to_medium(0));
 
@@ -93,8 +93,8 @@ function autopush_je_near(instructions: *AutoBuffer, instruction_index_pointer: 
 function autopush_jne_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
     variable current_instruction = whole_8->(instruction_index_pointer);
 
-    autopush_byte(instructions, instruction_index_pointer, byte(15));
-    autopush_byte(instructions, instruction_index_pointer, byte(133));
+    autopush_byte(instructions, instruction_index_pointer, 15_whole_1);
+    autopush_byte(instructions, instruction_index_pointer, 133_whole_1);
 
     autopush_medium(instructions, instruction_index_pointer, whole_8_to_medium(0));
 
@@ -102,67 +102,67 @@ function autopush_jne_near(instructions: *AutoBuffer, instruction_index_pointer:
 };
 
 function set_jmp(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jump: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(jump), 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(jump), 1)));
+    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
 };
 
 function set_jmp_value(instructions: *AutoBuffer, jump: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(@cast_whole_8(value)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(jump), 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(jump), 1)));
+    variable offset = -(whole_8_to_medium(@cast_whole_8(value)), whole_8_to_medium(@cast_whole_8(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
 };
 
 function autopush_call_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
     variable current_instruction = whole_8->(instruction_index_pointer);
 
-    autopush_byte(instructions, instruction_index_pointer, byte(232));
+    autopush_byte(instructions, instruction_index_pointer, 232_whole_1);
 
-    autopush_medium(instructions, instruction_index_pointer, whole_8_to_medium(0));
+    autopush_medium(instructions, instruction_index_pointer, 0_whole_4);
 
     return @cast_InstructionIndex(current_instruction);
 };
 
 function autopush_ret(instructions: *AutoBuffer, instruction_index_pointer: *whole_8) {
-    autopush_byte(instructions, instruction_index_pointer, byte(195));
+    autopush_byte(instructions, instruction_index_pointer, 195_whole_1);
 };
 
 function set_call(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, call: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(call), 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(call), 1)));
+    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(call, 1)));
 };
 
 function set_call_value(instructions: *AutoBuffer, call: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(@cast_whole_8(value)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(call), 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(call), 1)));
+    variable offset = -(whole_8_to_medium(@cast_whole_8(value)), whole_8_to_medium(@cast_whole_8(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(call, 1)));
 };
 
 function set_je(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, je: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(je), 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(je), 2)));
+    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(je, 2)));
 };
 
 function set_je_value(instructions: *AutoBuffer, je: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(@cast_whole_8(value)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(je), 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(je), 2)));
+    variable offset = -(whole_8_to_medium(@cast_whole_8(value)), whole_8_to_medium(@cast_whole_8(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(je, 2)));
 };
 
 function set_jne(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jne: InstructionIndex) {
-    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(jne), 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(@cast_whole_8(jne), 2)));
+    variable offset = -(whole_8_to_medium(whole_8->(instruction_index_pointer)), whole_8_to_medium(@cast_whole_8(+(jne, 6))));
+    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jne, 2)));
 };
 
 //function autopush_jmp_register(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, register: Register8) {
-//    if >(@cast_whole_8(register), 7) {
-//        autopush_byte(instructions, instruction_index_pointer, byte(65));
+//    if >(register, 7) {
+//        autopush_byte(instructions, instruction_index_pointer, 65_whole_1);
 //        autopush_byte(instructions, instruction_index_pointer, byte(255));
 //
-//        autopush_byte(instructions, instruction_index_pointer, byte(+(@cast_whole_8(register), 24)));
+//        autopush_byte(instructions, instruction_index_pointer, byte(+(register, 24)));
 //
 //        return;
 //    };
 //
 //    autopush_byte(instructions, instruction_index_pointer, byte(255));
 //
-//    autopush_byte(instructions, instruction_index_pointer, byte(+(@cast_whole_8(register), 24)));
+//    autopush_byte(instructions, instruction_index_pointer, byte(+(register, 24)));
 //};
 
 function autopush_data_string(data: *AutoBuffer, data_index_pointer: *whole_8, string: *): DataIndex {
@@ -193,9 +193,9 @@ function get_instruction(instructions: *AutoBuffer, instructions_index_pointer: 
 };
 
 function autopush_mov_data_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, register: Register8, data_index: DataIndex) {
-    autopush_byte(buffer, buffer_index_pointer, byte(72));
-    autopush_byte(buffer, buffer_index_pointer, byte(199));
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 192)));
+    autopush_byte(buffer, buffer_index_pointer, 72_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 199_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
     autoarray8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(@cast_whole_8(data_index)));
 
@@ -203,17 +203,17 @@ function autopush_mov_data_register8(buffer: *AutoBuffer, buffer_index_pointer: 
 };
 
 function autopush_mov_data_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, register: Register8, data_index: DataIndex, offset: whole_8) {
-    autopush_byte(buffer, buffer_index_pointer, byte(72));
-    autopush_byte(buffer, buffer_index_pointer, byte(199));
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 192)));
+    autopush_byte(buffer, buffer_index_pointer, 72_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 199_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
     autoarray8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
-    autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(@cast_whole_8(+(@cast_whole_8(data_index), offset))));
+    autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(@cast_whole_8(+(data_index, offset))));
 
     whole_8<-(indexes_to_adjust_index, @cast_whole_8(+(1, whole_8->(indexes_to_adjust_index))));
 };
 
 function autopush_push_data(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, data_index: DataIndex) {
-    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autopush_byte(buffer, buffer_index_pointer, 104_whole_1);
     autoarray8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(@cast_whole_8(data_index)));
 
@@ -221,7 +221,7 @@ function autopush_push_data(buffer: *AutoBuffer, buffer_index_pointer: *whole_8,
 };
 
 function autopush_push_bss(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, bss_index: BssIndex) {
-    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autopush_byte(buffer, buffer_index_pointer, 104_whole_1);
     autoarray8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(@cast_whole_8(bss_index)));
 
@@ -238,58 +238,58 @@ function autoarray8_get(buffer: *AutoBuffer, index: whole_8): any_8 {
 };
 
 function autopush_mov_whole_8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(73));
-        autopush_byte(buffer, buffer_index_pointer, byte(199));
-        autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 184)));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, 73_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, 199_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 184)));
         autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(value));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(72));
-    autopush_byte(buffer, buffer_index_pointer, byte(199));
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 192)));
+    autopush_byte(buffer, buffer_index_pointer, 72_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 199_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(value));
 };
 
 function autopush_mov_medium_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4, value: any_4) {
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(65));
-        autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 176)));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, 65_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 176)));
         autopush_medium(buffer, buffer_index_pointer, value);
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 184)));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 184)));
     autopush_medium(buffer, buffer_index_pointer, value);
 };
 
 function autopush_mov_short_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2, value: any_2) {
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(65));
-        autopush_byte(buffer, buffer_index_pointer, byte(102));
-        autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 176)));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, 65_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 176)));
         autopush_short(buffer, buffer_index_pointer, value);
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 184)));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 184)));
     autopush_short(buffer, buffer_index_pointer, value);
 };
 
 function autopush_mov_byte_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1, value: any_1) {
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(65));
-        autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 168)));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, 65_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 168)));
         autopush_byte(buffer, buffer_index_pointer, value);
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 176)));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 176)));
     autopush_byte(buffer, buffer_index_pointer, value);
 };
 
 function autopush_lea_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, register_to: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
@@ -298,16 +298,16 @@ function autopush_lea_register8_register8(buffer: *AutoBuffer, buffer_index_poin
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(141));
+    autopush_byte(buffer, buffer_index_pointer, 141_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register_to), 8), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, *(-(register_to, 8), 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register_to), 8)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, *(register_to, 8)));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -315,7 +315,7 @@ function autopush_lea_register8_register8(buffer: *AutoBuffer, buffer_index_poin
     };
 
     if <(@cast_whole_8(register_from), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_from)));
+        value = @cast_whole_8(+(value, register_from));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(value));
@@ -324,7 +324,7 @@ function autopush_lea_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 function autopush_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
@@ -333,16 +333,16 @@ function autopush_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_ind
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(141));
+    autopush_byte(buffer, buffer_index_pointer, 141_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register_to), 8), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, *(-(register_to, 8), 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register_to), 8)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, *(register_to, 8)));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -350,13 +350,13 @@ function autopush_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_ind
     };
 
     if <(@cast_whole_8(register_from), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_from)));
+        value = @cast_whole_8(+(value, register_from));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
     if =(@cast_whole_8(register_from), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -365,21 +365,21 @@ function autopush_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_ind
 function autopush_mov_data_offset_pointer_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -393,23 +393,23 @@ function autopush_mov_data_offset_pointer_register8(buffer: *AutoBuffer, buffer_
 function autopush_mov_data_offset_pointer_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register4) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -423,24 +423,24 @@ function autopush_mov_data_offset_pointer_register4(buffer: *AutoBuffer, buffer_
 function autopush_mov_data_offset_pointer_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register2) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -454,23 +454,23 @@ function autopush_mov_data_offset_pointer_register2(buffer: *AutoBuffer, buffer_
 function autopush_mov_data_offset_pointer_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(138));
+    autopush_byte(buffer, buffer_index_pointer, 138_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -484,21 +484,21 @@ function autopush_mov_data_offset_pointer_register1(buffer: *AutoBuffer, buffer_
 function autopush_mov_bss_offset_pointer_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -512,23 +512,23 @@ function autopush_mov_bss_offset_pointer_register8(buffer: *AutoBuffer, buffer_i
 function autopush_mov_bss_offset_pointer_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register4) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -542,24 +542,24 @@ function autopush_mov_bss_offset_pointer_register4(buffer: *AutoBuffer, buffer_i
 function autopush_mov_bss_offset_pointer_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register2) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -573,23 +573,23 @@ function autopush_mov_bss_offset_pointer_register2(buffer: *AutoBuffer, buffer_i
 function autopush_mov_bss_offset_pointer_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(138));
+    autopush_byte(buffer, buffer_index_pointer, 138_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -603,21 +603,21 @@ function autopush_mov_bss_offset_pointer_register1(buffer: *AutoBuffer, buffer_i
 function autopush_mov_register8_bss_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, register: Register8, data_index: BssIndex, offset: whole_8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(137));
+    autopush_byte(buffer, buffer_index_pointer, 137_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register), 8), 8)));
+    if >(register, 7) {
+        value = @cast_whole_8(+(value, *(-(register, 8), 8)));
     };
 
-    if <(@cast_whole_8(register), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register), 8)));
+    if <(register, 8) {
+        value = @cast_whole_8(+(value, *(register, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(value, 5)));
@@ -631,7 +631,7 @@ function autopush_mov_register8_bss_pointer_offset(buffer: *AutoBuffer, buffer_i
 function autopush_mov_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, register_to: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
@@ -640,16 +640,16 @@ function autopush_mov_register8_register8(buffer: *AutoBuffer, buffer_index_poin
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(137));
+    autopush_byte(buffer, buffer_index_pointer, 137_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register_to), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, -(register_to, 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_to)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, register_to));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -666,33 +666,33 @@ function autopush_mov_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 function autopush_cmp_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(57));
+    autopush_byte(buffer, buffer_index_pointer, 57_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -701,35 +701,35 @@ function autopush_cmp_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 function autopush_cmp_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register4, register2: Register4) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(57));
+    autopush_byte(buffer, buffer_index_pointer, 57_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -738,36 +738,36 @@ function autopush_cmp_register4_register4(buffer: *AutoBuffer, buffer_index_poin
 function autopush_cmp_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register2, register2: Register2) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
-    autopush_byte(buffer, buffer_index_pointer, byte(57));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 57_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -776,35 +776,35 @@ function autopush_cmp_register2_register2(buffer: *AutoBuffer, buffer_index_poin
 function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(56));
+    autopush_byte(buffer, buffer_index_pointer, 56_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -813,34 +813,34 @@ function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 function autopush_cmove_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(15));
-    autopush_byte(buffer, buffer_index_pointer, byte(68));
+    autopush_byte(buffer, buffer_index_pointer, 15_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 68_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register1), 8), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, *(-(register1, 8), 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register1), 8)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, *(register1, 8)));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register2), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, -(register2, 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register2)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, register2));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -849,34 +849,34 @@ function autopush_cmove_register8_register8(buffer: *AutoBuffer, buffer_index_po
 function autopush_cmova_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(15));
-    autopush_byte(buffer, buffer_index_pointer, byte(71));
+    autopush_byte(buffer, buffer_index_pointer, 15_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 71_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register1), 8), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, *(-(register1, 8), 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register1), 8)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, *(register1, 8)));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register2), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, -(register2, 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register2)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, register2));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -885,34 +885,34 @@ function autopush_cmova_register8_register8(buffer: *AutoBuffer, buffer_index_po
 function autopush_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(15));
-    autopush_byte(buffer, buffer_index_pointer, byte(66));
+    autopush_byte(buffer, buffer_index_pointer, 15_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 66_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register1), 8), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, *(-(register1, 8), 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register1), 8)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, *(register1, 8)));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register2), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, -(register2, 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register2)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, register2));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -921,35 +921,35 @@ function autopush_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_po
 function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(56));
+    autopush_byte(buffer, buffer_index_pointer, 56_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -958,7 +958,7 @@ function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
@@ -967,16 +967,16 @@ function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, bu
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register_to), 8), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, *(-(register_to, 8), 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register_to), 8)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, *(register_to, 8)));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -984,13 +984,13 @@ function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, bu
     };
 
     if <(@cast_whole_8(register_from), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_from)));
+        value = @cast_whole_8(+(value, register_from));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
     if =(@cast_whole_8(register_from), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -999,7 +999,7 @@ function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, bu
 function autopush_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register4) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
@@ -1010,16 +1010,16 @@ function autopush_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, bu
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register_to), 8), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, *(-(register_to, 8), 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register_to), 8)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, *(register_to, 8)));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -1027,13 +1027,13 @@ function autopush_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, bu
     };
 
     if <(@cast_whole_8(register_from), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_from)));
+        value = @cast_whole_8(+(value, register_from));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
     if =(@cast_whole_8(register_from), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -1042,7 +1042,7 @@ function autopush_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, bu
 function autopush_mov_register8_pointer_offset_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register2) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
@@ -1050,20 +1050,20 @@ function autopush_mov_register8_pointer_offset_register2(buffer: *AutoBuffer, bu
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(139));
+    autopush_byte(buffer, buffer_index_pointer, 139_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register_to), 8), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, *(-(register_to, 8), 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register_to), 8)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, *(register_to, 8)));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -1071,13 +1071,13 @@ function autopush_mov_register8_pointer_offset_register2(buffer: *AutoBuffer, bu
     };
 
     if <(@cast_whole_8(register_from), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_from)));
+        value = @cast_whole_8(+(value, register_from));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
     if =(@cast_whole_8(register_from), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -1087,7 +1087,7 @@ function autopush_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, bu
     variable instruction = 64;
     variable instruction2 = 138;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
         instruction2 = @cast_whole_8(+(instruction2, 1));
     };
@@ -1104,12 +1104,12 @@ function autopush_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, bu
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register_to), 8), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, *(-(register_to, 8), 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register_to), 8)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, *(register_to, 8)));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -1117,13 +1117,13 @@ function autopush_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, bu
     };
 
     if <(@cast_whole_8(register_from), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_from)));
+        value = @cast_whole_8(+(value, register_from));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
     if =(@cast_whole_8(register_from), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -1132,7 +1132,7 @@ function autopush_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, bu
 function autopush_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register1, register_to: Register8, offset: whole_8) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
@@ -1143,7 +1143,7 @@ function autopush_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, bu
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(136));
+    autopush_byte(buffer, buffer_index_pointer, 136_whole_1);
 
     variable value = 0;
 
@@ -1155,18 +1155,18 @@ function autopush_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, bu
         value = @cast_whole_8(+(value, *(@cast_whole_8(register_from), 8)));
     };
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register_to), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, -(register_to, 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_to)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, register_to));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
-    if =(@cast_whole_8(register_to), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    if =(register_to, @cast_whole_8(RSP)) {
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -1175,7 +1175,7 @@ function autopush_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, bu
 function autopush_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register2,  register_to: Register8, offset: whole_8) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
@@ -1183,20 +1183,20 @@ function autopush_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, bu
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(137));
+    autopush_byte(buffer, buffer_index_pointer, 137_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register_to), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, -(register_to, 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_to)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, register_to));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -1209,8 +1209,8 @@ function autopush_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
-    if =(@cast_whole_8(register_to), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    if =(register_to, @cast_whole_8(RSP)) {
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -1219,7 +1219,7 @@ function autopush_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, bu
 function autopush_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register4,  register_to: Register8, offset: whole_8) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
@@ -1230,16 +1230,16 @@ function autopush_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, bu
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(137));
+    autopush_byte(buffer, buffer_index_pointer, 137_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register_to), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, -(register_to, 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_to)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, register_to));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -1252,8 +1252,8 @@ function autopush_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
-    if =(@cast_whole_8(register_to), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    if =(register_to, @cast_whole_8(RSP)) {
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
@@ -1262,7 +1262,7 @@ function autopush_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, bu
 function autopush_mov_register8_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8,  register_to: Register8, offset: whole_8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register_to), 7) {
+    if >(register_to, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
@@ -1271,16 +1271,16 @@ function autopush_mov_register8_register8_pointer_offset(buffer: *AutoBuffer, bu
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(137));
+    autopush_byte(buffer, buffer_index_pointer, 137_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register_to), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register_to), 8)));
+    if >(register_to, 7) {
+        value = @cast_whole_8(+(value, -(register_to, 8)));
     };
 
-    if <(@cast_whole_8(register_to), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register_to)));
+    if <(register_to, 8) {
+        value = @cast_whole_8(+(value, register_to));
     };
 
     if >(@cast_whole_8(register_from), 7) {
@@ -1293,188 +1293,188 @@ function autopush_mov_register8_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(128, value)));
 
-    if =(@cast_whole_8(register_to), @cast_whole_8(RSP)) {
-        autopush_byte(buffer, buffer_index_pointer, byte(36));
+    if =(register_to, @cast_whole_8(RSP)) {
+        autopush_byte(buffer, buffer_index_pointer, 36_whole_1);
     };
 
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(offset));
 };
 
 function autopush_add_register8_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
-    autopush_byte(buffer, buffer_index_pointer, byte(72));
-    autopush_byte(buffer, buffer_index_pointer, byte(129));
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 192)));
+    autopush_byte(buffer, buffer_index_pointer, 72_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 129_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 192)));
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(value));
 };
 
 function autopush_mul_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
     variable instruction = 72;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 73;
     };
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(247));
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, 247_whole_1);
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, register))));
 };
 
 function autopush_mul_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
     variable instruction = 64;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 65;
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(247));
+    autopush_byte(buffer, buffer_index_pointer, 247_whole_1);
 
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, @cast_whole_8(register)))));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, register))));
 };
 
 function autopush_mul_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
     variable instruction = 64;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 65;
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
-    autopush_byte(buffer, buffer_index_pointer, byte(247));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 247_whole_1);
 
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, @cast_whole_8(register)))));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, register))));
 };
 
 function autopush_mul_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
     variable instruction = 64;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 65;
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(246));
+    autopush_byte(buffer, buffer_index_pointer, 246_whole_1);
 
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, @cast_whole_8(register)))));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(216, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(224, register))));
 };
 
 function autopush_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
     variable instruction = 72;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 73;
     };
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(247));
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, 247_whole_1);
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, register))));
 };
 
 function autopush_div_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
     variable instruction = 64;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 65;
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(247));
+    autopush_byte(buffer, buffer_index_pointer, 247_whole_1);
 
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, @cast_whole_8(register)))));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, register))));
 };
 
 function autopush_div_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
     variable instruction = 64;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 65;
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
-    autopush_byte(buffer, buffer_index_pointer, byte(247));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 247_whole_1);
 
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, @cast_whole_8(register)))));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, register))));
 };
 
 function autopush_div_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
     variable instruction = 64;
-    if >(@cast_whole_8(register), 7) {
+    if >(register, 7) {
         instruction = 65;
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(246));
+    autopush_byte(buffer, buffer_index_pointer, 246_whole_1);
 
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, @cast_whole_8(register)))));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(232, register))));
         return;
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, @cast_whole_8(register)))));
+    autopush_byte(buffer, buffer_index_pointer, byte(@cast_whole_8(+(240, register))));
 };
 
 function autopush_add_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(1));
+    autopush_byte(buffer, buffer_index_pointer, 1_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1483,35 +1483,35 @@ function autopush_add_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 function autopush_add_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register4, register2: Register4) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(1));
+    autopush_byte(buffer, buffer_index_pointer, 1_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1520,36 +1520,36 @@ function autopush_add_register4_register4(buffer: *AutoBuffer, buffer_index_poin
 function autopush_add_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register2, register2: Register2) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
-    autopush_byte(buffer, buffer_index_pointer, byte(1));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 1_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1558,35 +1558,35 @@ function autopush_add_register2_register2(buffer: *AutoBuffer, buffer_index_poin
 function autopush_add_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(0));
+    autopush_byte(buffer, buffer_index_pointer, 0_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1595,35 +1595,35 @@ function autopush_add_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 function autopush_or_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(8));
+    autopush_byte(buffer, buffer_index_pointer, 8_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1632,35 +1632,35 @@ function autopush_or_register1_register1(buffer: *AutoBuffer, buffer_index_point
 function autopush_and_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(32));
+    autopush_byte(buffer, buffer_index_pointer, 32_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1669,33 +1669,33 @@ function autopush_and_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 function autopush_sub_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(instruction));
-    autopush_byte(buffer, buffer_index_pointer, byte(41));
+    autopush_byte(buffer, buffer_index_pointer, 41_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1704,35 +1704,35 @@ function autopush_sub_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 function autopush_sub_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register4, register2: Register4) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(41));
+    autopush_byte(buffer, buffer_index_pointer, 41_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1741,36 +1741,36 @@ function autopush_sub_register4_register4(buffer: *AutoBuffer, buffer_index_poin
 function autopush_sub_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register2, register2: Register2) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(102));
-    autopush_byte(buffer, buffer_index_pointer, byte(41));
+    autopush_byte(buffer, buffer_index_pointer, 102_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 41_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
@@ -1779,75 +1779,75 @@ function autopush_sub_register2_register2(buffer: *AutoBuffer, buffer_index_poin
 function autopush_sub_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
     variable instruction = 64;
 
-    if >(@cast_whole_8(register1), 7) {
+    if >(register1, 7) {
         instruction = @cast_whole_8(+(instruction, 1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
+    if >(register2, 7) {
         instruction = @cast_whole_8(+(instruction, 4));
     };
 
     if !(=(instruction, 64)) {
         autopush_byte(buffer, buffer_index_pointer, byte(instruction));
     };
-    autopush_byte(buffer, buffer_index_pointer, byte(40));
+    autopush_byte(buffer, buffer_index_pointer, 40_whole_1);
 
     variable value = 0;
 
-    if >(@cast_whole_8(register1), 7) {
-        value = @cast_whole_8(+(value, -(@cast_whole_8(register1), 8)));
+    if >(register1, 7) {
+        value = @cast_whole_8(+(value, -(register1, 8)));
     };
 
-    if <(@cast_whole_8(register1), 8) {
-        value = @cast_whole_8(+(value, @cast_whole_8(register1)));
+    if <(register1, 8) {
+        value = @cast_whole_8(+(value, register1));
     };
 
-    if >(@cast_whole_8(register2), 7) {
-        value = @cast_whole_8(+(value, *(-(@cast_whole_8(register2), 8), 8)));
+    if >(register2, 7) {
+        value = @cast_whole_8(+(value, *(-(register2, 8), 8)));
     };
 
-    if <(@cast_whole_8(register2), 8) {
-        value = @cast_whole_8(+(value, *(@cast_whole_8(register2), 8)));
+    if <(register2, 8) {
+        value = @cast_whole_8(+(value, *(register2, 8)));
     };
 
     autopush_byte(buffer, buffer_index_pointer, byte(+(192, value)));
 };
 
 function autopush_sub_register8_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
-    autopush_byte(buffer, buffer_index_pointer, byte(72));
-    autopush_byte(buffer, buffer_index_pointer, byte(129));
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 232)));
+    autopush_byte(buffer, buffer_index_pointer, 72_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 129_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 232)));
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(value));
 };
 
 function autopush_push_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, value: whole_8) {
-    autopush_byte(buffer, buffer_index_pointer, byte(104));
+    autopush_byte(buffer, buffer_index_pointer, 104_whole_1);
     autopush_medium(buffer, buffer_index_pointer, whole_8_to_medium(value));
 };
 
 function autopush_pop_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(65));
-        autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 80)));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, 65_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 80)));
         return;
     };
 
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 88)));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 88)));
 };
 
 function autopush_push_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    if >(@cast_whole_8(register), 7) {
-        autopush_byte(buffer, buffer_index_pointer, byte(65));
-        autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 72)));
+    if >(register, 7) {
+        autopush_byte(buffer, buffer_index_pointer, 65_whole_1);
+        autopush_byte(buffer, buffer_index_pointer, byte(+(register, 72)));
         return;
     };
 
-    autopush_byte(buffer, buffer_index_pointer, byte(+(@cast_whole_8(register), 80)));
+    autopush_byte(buffer, buffer_index_pointer, byte(+(register, 80)));
 };
 
 function autopush_syscall(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
-    autopush_byte(buffer, buffer_index_pointer, byte(15));
-    autopush_byte(buffer, buffer_index_pointer, byte(5));
+    autopush_byte(buffer, buffer_index_pointer, 15_whole_1);
+    autopush_byte(buffer, buffer_index_pointer, 5_whole_1);
 };
 
 function autopush_byte(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, byte: any_1) {
@@ -1894,7 +1894,7 @@ function autopush_pointer(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, p
 function autopush_zeros(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, count: whole_8) {
     variable i = 0;
     while <(i, count) {
-        autopush_byte(buffer, buffer_index_pointer, byte(0));
+        autopush_byte(buffer, buffer_index_pointer, 0_whole_1);
         i = @cast_whole_8(+(i, 1));
     };
 };
@@ -1907,7 +1907,7 @@ function new_elf64_file_header(): ELF64FileHeader {
     ELF64FileHeader<-header_size(&(header), whole_8_to_short(64));
     ELF64FileHeader<-program_header_size(&(header), whole_8_to_short(56));
     ELF64FileHeader<-section_header_size(&(header), whole_8_to_short(64));
-    ELF64FileHeader<-version(&(header), byte(1));
+    ELF64FileHeader<-version(&(header), 1_whole_1);
     ELF64FileHeader<-version2(&(header), whole_8_to_medium(1));
 
     return header;
@@ -2004,7 +2004,7 @@ function print_whole_8(whole_8: any_8) {
 function length(string: *): whole_8 {
     variable length = 0;
 
-    while !(=(byte(0), *1(+(string, length)))) {
+    while !(=(0_whole_1, *1(+(string, length)))) {
         length = @cast_whole_8(+(length, 1));
     };
 
