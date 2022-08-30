@@ -1808,7 +1808,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                     *<-(@cast_**(+(variable_declare, 16)), variable_type);
                 };
 
-                if !(string=(variable_type, popped_stack)) {
+                if !(is_type(variable_type, popped_stack, nodes, node_count)) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Assign of ");
@@ -1823,7 +1823,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             } else {
                 variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
 
-                if !(string=(variable_type, popped_stack)) {
+                if !(is_type(variable_type, popped_stack, nodes, node_count)) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Assign of ");
