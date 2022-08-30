@@ -46,7 +46,7 @@ function main(arguments: **, argument_count: whole_8) {
 
         include_file(pointer, &(nodes), &(nodes_index), &(already_included), &(already_included_index));
 
-        i = @cast_whole_8(+(i, 1));
+        i = +(i, 1);
 
     };
 
@@ -58,11 +58,11 @@ function main(arguments: **, argument_count: whole_8) {
             variable name = NodeStructureData->name(pointer);
 
             // Setter for whole value
-            variable allocated = brk_allocate(whole_8+(length(name), 3));
+            variable allocated = brk_allocate(+(length(name), 3));
             copy(name, allocated, length(name));
             copy("<-", @cast_*(+(allocated, length(name))), 2);
 
-            variable allocated_pointer = brk_allocate(whole_8+(length(name), 2));
+            variable allocated_pointer = brk_allocate(+(length(name), 2));
             copy("*", allocated_pointer, 1);
             copy(name, @cast_*(+(allocated_pointer, 1)), length(name));
 
@@ -81,7 +81,7 @@ function main(arguments: **, argument_count: whole_8) {
             variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
 
             // Getter for whole value
-            variable allocated = brk_allocate(whole_8+(length(name), 3));
+            variable allocated = brk_allocate(+(length(name), 3));
             copy(name, allocated, length(name));
             copy("->", @cast_*(+(allocated, length(name))), 2);
 
@@ -108,7 +108,7 @@ function main(arguments: **, argument_count: whole_8) {
                 variable member_type = @cast_*(array8_get(member_types, j));
 
                 // Setter for individual members
-                variable allocated = brk_allocate(whole_8+(length(name), whole_8+(length(member_name), 3)));
+                variable allocated = brk_allocate(+(length(name), +(length(member_name), 3)));
                 copy(name, allocated, length(name));
                 copy("<-", @cast_*(+(allocated, length(name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(name), 2))), length(member_name));
@@ -128,7 +128,7 @@ function main(arguments: **, argument_count: whole_8) {
                 variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
 
                 // Getter for individual members
-                variable allocated = brk_allocate(whole_8+(length(name), whole_8+(length(member_name), 3)));
+                variable allocated = brk_allocate(+(length(name), +(length(member_name), 3)));
                 copy(name, allocated, length(name));
                 copy("->", @cast_*(+(allocated, length(name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(name), 2))), length(member_name));
@@ -147,10 +147,10 @@ function main(arguments: **, argument_count: whole_8) {
 
                 variable end_node = append_node(&(nodes), &(nodes_index), NODE_ENDFUNCTION);
 
-                j = whole_8+(j, 1);
+                j = +(j, 1);
             };
         };
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     println("Checking...");
@@ -188,7 +188,7 @@ function include_file(file_name: *, nodes: *AutoBuffer, nodes_index: *whole_8, a
                 if string=(@cast_*(autoarray8_get(already_included, j)), path) {
                     included = true;
                 };
-                j = whole_8+(j, 1);
+                j = +(j, 1);
             };
 
             if !(included) {
@@ -196,7 +196,7 @@ function include_file(file_name: *, nodes: *AutoBuffer, nodes_index: *whole_8, a
             };
         };
 
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 };
 
@@ -205,21 +205,21 @@ function is_number(string: *): boolean {
 
     variable i = 0;
     while <(i, length) {
-        variable character = any_1->(@cast_*any_1(+(string, i)));
+        variable character = whole_1->(@cast_*whole_1(+(string, i)));
 
-        if =(@cast_whole_8(byte_to_integer(character)), 95) {
+        if =(character, 95_whole_1) {
             i = 999;
-            character = byte(48);
+            character = 48_whole_1;
         };
 
-        if <(@cast_whole_8(byte_to_integer(character)), 48) {
+        if <(character, 48_whole_1) {
             return false;
         };
 
-        if >(@cast_whole_8(byte_to_integer(character)), 57) {
+        if >(character, 57_whole_1) {
             return false;
         };
-        i = @cast_whole_8(+(i, 1));
+        i = +(i, 1);
     };
 
     return true;
@@ -232,14 +232,14 @@ function to_number(string: *): whole_8 {
 
     variable i = 0;
     while <(i, length) {
-        variable character = @cast_whole_8(byte_to_integer(any_1->(@cast_*any_1(+(string, i)))));
+        variable character = whole_1->(@cast_*whole_1(+(string, i)));
 
-        if =(character, 95) {
+        if =(character, 95_whole_1) {
             i = 999;
         } else {
-            whole_8 = @cast_whole_8(*(whole_8, 10));
-            whole_8 = @cast_whole_8(+(whole_8, -(character, 48)));
-            i = @cast_whole_8(+(i, 1));
+            whole_8 = *(whole_8, 10);
+            whole_8 = +(whole_8, byte_to_integer(-(character, 48_whole_1)));
+            i = +(i, 1);
         };
     };
 
@@ -250,23 +250,23 @@ function whole_8_to_string(whole_8: whole_8, buffer: *) {
     variable whole_82 = whole_8;
 
     if =(whole_8, 0) {
-        any_1<-(@cast_*any_1(buffer), byte(48));
+        any_1<-(@cast_*any_1(buffer), 48_whole_1);
     };
 
     variable length = 0;
     while !(=(whole_82, 0)) {
-        whole_82 = @cast_whole_8(/(whole_82, 10));
-        length = @cast_whole_8(+(length, 1));
+        whole_82 = /(whole_82, 10);
+        length = +(length, 1);
     };
 
     whole_82 = whole_8;
 
     variable i = 0;
     while !(=(whole_82, 0)) {
-        variable number = @cast_whole_8(%(whole_82, 10));
-        any_1<-(@cast_*any_1(+(buffer, -(-(length, 1), i))), byte(+(number, 48)));
-        whole_82 = @cast_whole_8(/(whole_82, 10));
-        i = @cast_whole_8(+(i, 1));
+        variable number = byte(%(whole_82, 10));
+        any_1<-(@cast_*any_1(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
+        whole_82 = /(whole_82, 10);
+        i = +(i, 1);
     };
 };
 
@@ -275,10 +275,10 @@ function append_token_data(tokens: *AutoBuffer, tokens_index: *whole_8, id: whol
 };
 
 function append_token(tokens: *AutoBuffer, tokens_index: *whole_8, id: whole_8): * {
-    autobuffer_register(tokens, whole_8*(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
-    variable to_return = autobuffer_get(tokens, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+    autobuffer_register(tokens, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
+    variable to_return = autobuffer_get(tokens, *(whole_8->(tokens_index), TOKEN_SIZE));
 
-    autobuffer_set_whole_8(tokens, id, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+    autobuffer_set_whole_8(tokens, id, *(whole_8->(tokens_index), TOKEN_SIZE));
 
     increment_whole_8_pointer(tokens_index, 1);
 
@@ -326,7 +326,7 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
     };
 
     if is_keyword {
-        variable allocated = brk_allocate(@cast_whole_8(+(buffer_length, 1)));
+        variable allocated = brk_allocate(+(buffer_length, 1));
         copy(buffer, allocated, buffer_length);
 
         variable keyword_data = @cast_*TokenKeywordData(append_token_data(tokens, tokens_index, TOKEN_KEYWORD));
@@ -346,16 +346,16 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
 
         variable j = 0;
         while <(j, length(buffer)) {
-            variable character = @cast_whole_8(byte_to_integer(any_1->(@cast_*any_1(+(buffer, j)))));
-            if =(character, 95) {
-                stage = whole_8+(stage, 1);
+            variable character = whole_1->(@cast_*whole_1(+(buffer, j)));
+            if =(character, 95_whole_1) {
+                stage = +(stage, 1);
             } else if =(stage, 1) {
-                autopush_byte(&(type_buffer), &(type_buffer_index), byte(character));
+                autopush_byte(&(type_buffer), &(type_buffer_index), character);
             } else if =(stage, 2) {
-                autopush_byte(&(size_buffer), &(size_buffer_index), byte(character));
+                autopush_byte(&(size_buffer), &(size_buffer_index), character);
             };
             
-            j = whole_8+(j, 1);
+            j = +(j, 1);
         };
 
         if =(length(AutoBuffer->buffer(&(type_buffer))), 0) {
@@ -385,25 +385,25 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
         return;
     };
     
-    variable allocated = brk_allocate(@cast_whole_8(+(buffer_length, 1)));
+    variable allocated = brk_allocate(+(buffer_length, 1));
     copy(buffer, allocated, buffer_length);
 
     variable name_data = @cast_*TokenNameData(append_token_data(tokens, tokens_index, TOKEN_NAME));
     TokenNameData<-name(name_data, allocated);
 };
 
-constant ASCII_SPACE: whole_8 = 32;
-constant ASCII_OPEN_PARENTHESIS: whole_8 = 40;
-constant ASCII_CLOSED_PARENTHESIS: whole_8 = 41;
-constant ASCII_OPEN_CURLY_BRACKETS: whole_8 = 123;
-constant ASCII_CLOSED_CURLY_BRACKETS: whole_8 = 125;
-constant ASCII_COMMA: whole_8 = 44;
-constant ASCII_SEMICOLON: whole_8 = 59;
-constant ASCII_COLON: whole_8 = 58;
-constant ASCII_TAB: whole_8 = 9;
-constant ASCII_LINE_FEED: whole_8 = 10;
-constant ASCII_QUOTATION: whole_8 = 34;
-constant ASCII_SLASH: whole_8 = 47;
+constant ASCII_SPACE: whole_1 = 32;
+constant ASCII_OPEN_PARENTHESIS: whole_1 = 40;
+constant ASCII_CLOSED_PARENTHESIS: whole_1 = 41;
+constant ASCII_OPEN_CURLY_BRACKETS: whole_1 = 123;
+constant ASCII_CLOSED_CURLY_BRACKETS: whole_1 = 125;
+constant ASCII_COMMA: whole_1 = 44;
+constant ASCII_SEMICOLON: whole_1 = 59;
+constant ASCII_COLON: whole_1 = 58;
+constant ASCII_TAB: whole_1 = 9;
+constant ASCII_LINE_FEED: whole_1 = 10;
+constant ASCII_QUOTATION: whole_1 = 34;
+constant ASCII_SLASH: whole_1 = 47;
 
 constant TOKEN_OPEN_PARENTHESIS: whole_8 = 0;
 constant TOKEN_CLOSED_PARENTHESIS: whole_8 = 1;
@@ -464,83 +464,83 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
 
         if !(in_quotes) {
             if !(in_comment) {
-                if =(*1(character_pointer), byte(ASCII_SPACE)) {
+                if =(*1(character_pointer), ASCII_SPACE) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
                 };
-                if =(*1(character_pointer), byte(ASCII_OPEN_PARENTHESIS)) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_PARENTHESIS, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
-                };
-                if =(*1(character_pointer), byte(ASCII_CLOSED_PARENTHESIS)) {
+                if =(*1(character_pointer), ASCII_OPEN_PARENTHESIS) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_PARENTHESIS, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_PARENTHESIS, *(whole_8->(tokens_index), TOKEN_SIZE));
                     increment_whole_8_pointer(tokens_index, 1);
                 };
-                if =(*1(character_pointer), byte(ASCII_OPEN_CURLY_BRACKETS)) {
+                if =(*1(character_pointer), ASCII_CLOSED_PARENTHESIS) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_CURLY_BRACKETS, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_PARENTHESIS, *(whole_8->(tokens_index), TOKEN_SIZE));
                     increment_whole_8_pointer(tokens_index, 1);
                 };
-                if =(*1(character_pointer), byte(ASCII_CLOSED_CURLY_BRACKETS)) {
+                if =(*1(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_CURLY_BRACKETS, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_CURLY_BRACKETS, *(whole_8->(tokens_index), TOKEN_SIZE));
                     increment_whole_8_pointer(tokens_index, 1);
                 };
-                if =(*1(character_pointer), byte(ASCII_COMMA)) {
+                if =(*1(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_COMMA, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_CURLY_BRACKETS, *(whole_8->(tokens_index), TOKEN_SIZE));
                     increment_whole_8_pointer(tokens_index, 1);
                 };
-                if =(*1(character_pointer), byte(ASCII_SEMICOLON)) {
+                if =(*1(character_pointer), ASCII_COMMA) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_SEMICOLON, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+                    autobuffer_set_whole_8(tokens, TOKEN_COMMA, *(whole_8->(tokens_index), TOKEN_SIZE));
                     increment_whole_8_pointer(tokens_index, 1);
                 };
-                if =(*1(character_pointer), byte(ASCII_COLON)) {
+                if =(*1(character_pointer), ASCII_SEMICOLON) {
                     tokenize_inner(&(buffer), tokens, tokens_index);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_COLON, whole_8*(whole_8->(tokens_index), TOKEN_SIZE));
+                    autobuffer_set_whole_8(tokens, TOKEN_SEMICOLON, *(whole_8->(tokens_index), TOKEN_SIZE));
                     increment_whole_8_pointer(tokens_index, 1);
                 };
-                if =(*1(character_pointer), byte(ASCII_TAB)) {
+                if =(*1(character_pointer), ASCII_COLON) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_COLON, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_TAB) {
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
                 };
             };
 
-            if =(*1(character_pointer), byte(ASCII_LINE_FEED)) {
+            if =(*1(character_pointer), ASCII_LINE_FEED) {
                 in_comment = false;
                 done_anything = true;
                 autobuffer_reset(&(buffer));
@@ -548,10 +548,10 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
             };
         };
         if !(in_comment) {
-            if =(*1(character_pointer), byte(ASCII_QUOTATION)) {
+            if =(*1(character_pointer), ASCII_QUOTATION) {
                 if in_quotes {
                     variable buffer_length = length(AutoBuffer->buffer(&(buffer)));
-                    variable allocated = brk_allocate(@cast_whole_8(+(buffer_length, 1)));
+                    variable allocated = brk_allocate(+(buffer_length, 1));
                     copy(AutoBuffer->buffer(&(buffer)), allocated, buffer_length);
 
                     variable string_pointer_data = @cast_*TokenStringData(append_token_data(tokens, tokens_index, TOKEN_STRING));
@@ -565,8 +565,8 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
                 done_anything = true;
             };
         };
-        if =(*1(character_pointer), byte(ASCII_SLASH)) {
-            if =(*1(character_pointer_next), byte(ASCII_SLASH)) {
+        if =(*1(character_pointer), ASCII_SLASH) {
+            if =(*1(character_pointer_next), ASCII_SLASH) {
                 in_comment = true;
                 done_anything = true;
             };
@@ -576,11 +576,11 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
             if !(in_comment) {
                 autobuffer_set_any_1(&(buffer), any_1->(@cast_*any_1(character_pointer)), buffer_index);
 
-                buffer_index = whole_8+(buffer_index, 1);
+                buffer_index = +(buffer_index, 1);
             };
         };
 
-        index = @cast_whole_8(+(index, 1));
+        index = +(index, 1);
     };
 };
 
@@ -702,23 +702,23 @@ structure NodeIncludeData {
 constant NODE_SIZE: whole_8 = 48;
 
 function tokens_get_id(tokens: *AutoBuffer, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(tokens, whole_8*(index, TOKEN_SIZE));
+    return autobuffer_get_whole_8(tokens, *(index, TOKEN_SIZE));
 };
 
 function tokens_get_pointer(tokens: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(tokens, whole_8*(index, TOKEN_SIZE));
+    return autobuffer_get(tokens, *(index, TOKEN_SIZE));
 };
 
 function tokens_get_pointer_data(tokens: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(tokens, whole_8+(whole_8*(index, TOKEN_SIZE), 8));
+    return autobuffer_get(tokens, +(*(index, TOKEN_SIZE), 8));
 };
 
 function increment_whole_8_pointer(pointer: *whole_8, amount: whole_8) {
-    whole_8<-(pointer, @cast_whole_8(+(whole_8->(pointer), amount)));
+    whole_8<-(pointer, +(whole_8->(pointer), amount));
 };
 
 function decrement_whole_8_pointer(pointer: *whole_8, amount: whole_8) {
-    whole_8<-(pointer, @cast_whole_8(-(whole_8->(pointer), amount)));
+    whole_8<-(pointer, -(whole_8->(pointer), amount));
 };
 
 function append_node_data(nodes: *AutoBuffer, nodes_index: *whole_8, id: whole_8): * {
@@ -726,10 +726,10 @@ function append_node_data(nodes: *AutoBuffer, nodes_index: *whole_8, id: whole_8
 };
 
 function append_node(nodes: *AutoBuffer, nodes_index: *whole_8, id: whole_8): * {
-    autobuffer_register(nodes, whole_8*(whole_8->(nodes_index), NODE_SIZE), NODE_SIZE);
-    variable to_return = autobuffer_get(nodes, whole_8*(whole_8->(nodes_index), NODE_SIZE));
+    autobuffer_register(nodes, *(whole_8->(nodes_index), NODE_SIZE), NODE_SIZE);
+    variable to_return = autobuffer_get(nodes, *(whole_8->(nodes_index), NODE_SIZE));
 
-    autobuffer_set_whole_8(nodes, id, whole_8*(whole_8->(nodes_index), NODE_SIZE));
+    autobuffer_set_whole_8(nodes, id, *(whole_8->(nodes_index), NODE_SIZE));
 
     increment_whole_8_pointer(nodes_index, 1);
 
@@ -745,11 +745,11 @@ function append_structure(nodes: *AutoBuffer, nodes_index, *whole_8, name: *) {
 
 function parse_constant(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
     variable index = whole_8->(index_pointer);
-    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 1)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
-    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 3)));
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
     variable type = TokenNameData->name(type_token_pointer_data);
-    variable value_token_pointer_data = @cast_*TokenNumberData(tokens_get_pointer_data(tokens, whole_8+(index, 5)));
+    variable value_token_pointer_data = @cast_*TokenNumberData(tokens_get_pointer_data(tokens, +(index, 5)));
     variable value = TokenNumberData->value(value_token_pointer_data);
 
     variable constant_node_data = @cast_*NodeConstantData(append_node_data(nodes, nodes_index, NODE_CONSTANT));
@@ -762,9 +762,9 @@ function parse_constant(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Au
 
 function parse_global(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
     variable index = whole_8->(index_pointer);
-    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 1)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
-    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 3)));
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
     variable type = TokenNameData->name(type_token_pointer_data);
 
     variable global_node_data = @cast_*NodeGlobalData(append_node_data(nodes, nodes_index, NODE_GLOBAL));
@@ -776,7 +776,7 @@ function parse_global(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Auto
 
 function parse_include(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
     variable index = whole_8->(index_pointer);
-    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 1)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
 
     variable include_node_data = @cast_*NodeIncludeData(append_node_data(nodes, nodes_index, NODE_INCLUDE));
@@ -787,14 +787,14 @@ function parse_include(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Aut
 
 function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
     variable index = whole_8->(index_pointer);
-    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 1)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
 
     variable member_names = autobuffer_new(40);
     variable member_types = autobuffer_new(40);
     variable member_index = 0;
 
-    index = whole_8+(index, 3);
+    index = +(index, 3);
 
     variable seen_name = false;
 
@@ -807,7 +807,7 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
 
             if seen_name {
                 autoarray8_set(&(member_types), member_index, name_name);
-                member_index = whole_8+(member_index, 1);
+                member_index = +(member_index, 1);
             } else {
                 autoarray8_set(&(member_names), member_index, name_name);
             };
@@ -815,7 +815,7 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
             seen_name = !(seen_name);
         };
 
-        index = whole_8+(index, 1);
+        index = +(index, 1);
     };
 
     variable structure_data = @cast_*NodeStructureData(append_node_data(nodes, nodes_index, NODE_STRUCTURE));
@@ -823,7 +823,7 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
     NodeStructureData<-item_names(structure_data, AutoBuffer->buffer(&(member_names)));
     NodeStructureData<-item_types(structure_data, AutoBuffer->buffer(&(member_types)));
 
-    index = whole_8+(index, 2);
+    index = +(index, 2);
 
     whole_8<-(index_pointer, index);
 };
@@ -831,13 +831,13 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
 function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
     variable index = whole_8->(index_pointer);
 
-    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8+(index, 1)));
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
 
     variable function_data = @cast_*NodeFunctionData(append_node_data(nodes, nodes_index, NODE_FUNCTION));
     NodeFunctionData<-name(function_data, name);
 
-    index = @cast_whole_8(+(index, 3));
+    index = +(index, 3);
 
     variable parameter_names_pointer = autobuffer_new(40);
     variable parameter_types_pointer = autobuffer_new(40);
@@ -855,16 +855,16 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Au
                 autoarray8_set(&(parameter_names_pointer), parameters_index2, token_name);
             } else {
                 autoarray8_set(&(parameter_types_pointer), parameters_index2, token_name);
-                parameters_index2 = @cast_whole_8(+(parameters_index2, 1));
+                parameters_index2 = +(parameters_index2, 1);
             };
 
-            parameters_index = @cast_whole_8(+(parameters_index, 1));
+            parameters_index = +(parameters_index, 1);
         };
 
-        index = @cast_whole_8(+(index, 1));
+        index = +(index, 1);
     };
     
-    index = @cast_whole_8(+(index, 1));
+    index = +(index, 1);
 
     variable returns_index = 0;
     while &&(!(=(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS)), !(=(tokens_get_id(tokens, index), TOKEN_SEMICOLON))) {
@@ -876,7 +876,7 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Au
             autoarray8_set(&(returns_pointer), returns_index, token_name);
         };
 
-        index = @cast_whole_8(+(index, 1));
+        index = +(index, 1);
     };
 
     variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
@@ -885,17 +885,17 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Au
     NodeFunctionData<-argument_types(function_data, AutoBuffer->buffer(&(parameter_types_pointer)));
     NodeFunctionData<-returns(function_data, AutoBuffer->buffer(&(returns_pointer)));
 
-    index = @cast_whole_8(+(index, 1));
+    index = +(index, 1);
 
     if has_body {
         while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
             parse_statement(tokens, &(index), nodes, nodes_index);
         };
 
-        index = whole_8+(index, 2);
+        index = +(index, 2);
     };
 
-    if !(=(nodes_get_id(nodes, whole_8-(whole_8->(nodes_index), 1)), NODE_RETURN)) {
+    if !(=(nodes_get_id(nodes, -(whole_8->(nodes_index), 1)), NODE_RETURN)) {
         if has_body {
             variable _ = append_node(nodes, nodes_index, NODE_RETURN);
         };
@@ -914,20 +914,20 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *
 
     if =(id, TOKEN_NAME) {
         variable done_anything_name = false;
-        if =(tokens_get_id(tokens, @cast_whole_8(+(index, 1))), TOKEN_OPEN_PARENTHESIS) {
+        if =(tokens_get_id(tokens, +(index, 1)), TOKEN_OPEN_PARENTHESIS) {
             variable function_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
 
-            index = @cast_whole_8(+(index, 2));
+            index = +(index, 2);
 
             while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
                 if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
-                    index = @cast_whole_8(+(index, 1));
+                    index = +(index, 1);
                 } else {
                     parse_expression(tokens, &(index), nodes, nodes_index);
                 };
             };
 
-            index = @cast_whole_8(+(index, 1));
+            index = +(index, 1);
 
             if string=(function_name, "&") {
                 variable invoke_pointer = append_node(nodes, nodes_index, NODE_POINTER);
@@ -944,7 +944,7 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *
             variable retrieve_pointer_data = @cast_*NodeRetrieveData(append_node_data(nodes, nodes_index, NODE_RETRIEVE));
             NodeRetrieveData<-name(retrieve_pointer_data, retrieve_name);
 
-            index = @cast_whole_8(+(index, 1));
+            index = +(index, 1);
         };
     };
 
@@ -953,7 +953,7 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *
         variable string_pointer_data = @cast_*NodeStringData(append_node_data(nodes, nodes_index, NODE_STRING));
         NodeStringData<-value(string_pointer_data, string_value);
 
-        index = @cast_whole_8(+(index, 1));
+        index = +(index, 1);
     };
 
     if =(id, TOKEN_NUMBER) {
@@ -963,7 +963,7 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *
         NodeNumberData<-type(whole_8_pointer_data, TokenNumberData->type(whole_8_data));
         NodeNumberData<-size(whole_8_pointer_data, TokenNumberData->size(whole_8_data));
 
-        index = @cast_whole_8(+(index, 1));
+        index = +(index, 1);
     };
 
     if =(id, TOKEN_BOOLEAN) {
@@ -971,7 +971,7 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *
         variable boolean_pointer_data = @cast_*NodeBooleanData(append_node_data(nodes, nodes_index, NODE_BOOLEAN));
         NodeBooleanData<-value(boolean_pointer_data, @cast_boolean(boolean_value));
 
-        index = @cast_whole_8(+(index, 1));
+        index = +(index, 1);
     };
 
     whole_8<-(index_pointer, index);
@@ -979,7 +979,7 @@ function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *
 
 function get_target_id(): whole_8 {
     variable return_ = target_id;
-    target_id = whole_8+(target_id, 1);
+    target_id = +(target_id, 1);
 
     return return_;
 };
@@ -991,7 +991,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
         if string=(TokenKeywordData->keyword(@cast_*TokenKeywordData(tokens_get_pointer_data(tokens, whole_8->(index_pointer)))), "variable") {
             variable variable_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
             variable index = whole_8->(index_pointer);
-            index = whole_8+(index, 1);
+            index = +(index, 1);
 
             variable names = autobuffer_new(40);
             variable types = autobuffer_new(40);
@@ -1003,7 +1003,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
             while running {
                 variable id = tokens_get_id(tokens, index);
                 if =(id, TOKEN_COMMA) {
-                    name_index = whole_8+(name_index, 1);
+                    name_index = +(name_index, 1);
                     seen_name = false;
                 };
 
@@ -1018,7 +1018,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
                     };
                 };
 
-                index = whole_8+(index, 1);
+                index = +(index, 1);
 
                 if =(tokens_get_id(tokens, index), TOKEN_NAME) {
                     variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
@@ -1039,11 +1039,11 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
                 NodeDeclareData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
                 NodeDeclareData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
 
-                i = whole_8+(i, 1);
+                i = +(i, 1);
             };
 
             if parse_expression {
-                index = whole_8+(index, 1);
+                index = +(index, 1);
                 parse_expression(tokens, &(index), nodes, nodes_index);
             } else {
                 variable i = 0;
@@ -1052,7 +1052,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
                     NodeZeroData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
                     NodeZeroData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
 
-                    i = whole_8+(i, 1);
+                    i = +(i, 1);
                 };
             };
 
@@ -1061,7 +1061,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
                 variable node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
                 NodeAssignData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
 
-                i = whole_8+(i, 1);
+                i = +(i, 1);
             };
 
             whole_8<-(index_pointer, index);
@@ -1099,7 +1099,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
                     NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
 
                     increment_whole_8_pointer(index_pointer, 1);
-                } else if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, whole_8+(token_index, 1)), TOKEN_KEYWORD)) {
+                } else if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, +(token_index, 1)), TOKEN_KEYWORD)) {
                     increment_whole_8_pointer(index_pointer, 2);
 
                     parse_expression(tokens, index_pointer, nodes, nodes_index);
@@ -1168,7 +1168,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
             return;
         };
     };
-    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, whole_8+(whole_8->(index_pointer), 1)), TOKEN_NAME)) {
+    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, +(whole_8->(index_pointer), 1)), TOKEN_NAME)) {
         variable names = autobuffer_new(40);
         variable name_index = 0;
 
@@ -1176,10 +1176,10 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
         while !(string=(TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index))), "=")) {
             variable name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
             autostack8_push(&(names), &(name_index), name);
-            index = whole_8+(index, 1);
+            index = +(index, 1);
         };
 
-        index = whole_8+(index, 1);
+        index = +(index, 1);
 
         parse_expression(tokens, &(index), nodes, nodes_index);
 
@@ -1187,7 +1187,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
         while !(=(@cast_whole_8(autoarray8_get(&(names), i)), 0)) {
             variable assign_node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
             NodeAssignData<-name(assign_node_data, @cast_*(autoarray8_get(&(names), i)));
-            i = whole_8+(i, 1);
+            i = +(i, 1);
         };
 
         whole_8<-(index_pointer, index);
@@ -1205,7 +1205,7 @@ function parse(tokens: *AutoBuffer, tokens_count: whole_8, nodes: *AutoBuffer, n
     variable index = 0;
     
     while <(index, tokens_count) {
-        variable id = autobuffer_get_whole_8(tokens, whole_8*(index, TOKEN_SIZE));
+        variable id = autobuffer_get_whole_8(tokens, *(index, TOKEN_SIZE));
 
         if =(id, TOKEN_KEYWORD) {
             variable keyword_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, index));
@@ -1235,7 +1235,7 @@ function parse(tokens: *AutoBuffer, tokens_count: whole_8, nodes: *AutoBuffer, n
 };
 
 function make_valid_linux_x86-64(name: *): * {
-    variable to_return = brk_allocate(whole_8*(length(name), 2));
+    variable to_return = brk_allocate(*(length(name), 2));
     variable i = 0;
     variable j = 0;
     while <(i, length(name)) {
@@ -1243,23 +1243,23 @@ function make_valid_linux_x86-64(name: *): * {
         variable buffer: any_8;
         any_1<-(@cast_*any_1(&(buffer)), byte);
 
-        if =(byte, byte(43)) {
+        if =(byte, 43_whole_1) {
             whole_8_to_string(43, &(buffer));
         };
-        if =(byte, byte(61)) {
+        if =(byte, 61_whole_1) {
             whole_8_to_string(61, &(buffer));
         };
-        if =(byte, byte(42)) {
+        if =(byte, 42_whole_1) {
             whole_8_to_string(42, &(buffer));
         };
-        if =(byte, byte(45)) {
+        if =(byte, 45_whole_1) {
             whole_8_to_string(45, &(buffer));
         };
 
         copy(&(buffer), @cast_*(+(to_return, j)), length(&(buffer)));
-        j = whole_8+(j, length(&(buffer)));
+        j = +(j, length(&(buffer)));
 
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     return to_return;
@@ -1290,7 +1290,7 @@ function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
                 return is_signed(@cast_*(array8_get(member_types, 0)), nodes, node_count);
             };
         };
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     return 0;
@@ -1309,14 +1309,14 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
         if string=(@cast_*(autoarray8_get(&(cached_types), i)), type) {
             return @cast_whole_8(autoarray8_get(&(cached_sizes), i));
         };
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     if string_length=(type, "any", 3) {
         variable number = to_number(@cast_*(+(type, 4)));
         autoarray8_set(&(cached_types), cached_index, type);
         autoarray8_set(&(cached_sizes), cached_index, number);
-        cached_index = whole_8+(cached_index, 1);
+        cached_index = +(cached_index, 1);
 
         return number;
     };
@@ -1325,7 +1325,7 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
         variable number = to_number(@cast_*(+(type, 6)));
         autoarray8_set(&(cached_types), cached_index, type);
         autoarray8_set(&(cached_sizes), cached_index, number);
-        cached_index = whole_8+(cached_index, 1);
+        cached_index = +(cached_index, 1);
 
         return number;
     };
@@ -1334,7 +1334,7 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
         variable number = to_number(@cast_*(+(type, 8)));
         autoarray8_set(&(cached_types), cached_index, type);
         autoarray8_set(&(cached_sizes), cached_index, number);
-        cached_index = whole_8+(cached_index, 1);
+        cached_index = +(cached_index, 1);
 
         return number;
     };
@@ -1349,11 +1349,11 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
                 variable size = get_size_multiple_linux_x86-64(member_types, 999, nodes, node_count);
                 autoarray8_set(&(cached_types), cached_index, type);
                 autoarray8_set(&(cached_sizes), cached_index, size);
-                cached_index = whole_8+(cached_index, 1);
+                cached_index = +(cached_index, 1);
                 return size;
             };
         };
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     print("unknown type ");
@@ -1370,21 +1370,21 @@ function get_size_multiple_linux_x86-64(array: *, count: whole_8, nodes: *AutoBu
         if =(@cast_whole_8(array8_get(array, i)), 0) {
             return total;
         };
-        total = whole_8+(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
-        i = whole_8+(i, 1);
+        total = +(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
+        i = +(i, 1);
     };
 
     return total;
 };
 
 function get_size_multiple_reversed_linux_x86-64(array: *, count: whole_8, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
-    variable i = whole_8-(array8_length(array), 1);
+    variable i = -(array8_length(array), 1);
 
     variable total = 0;
 
     while >(i, count) {
-        total = whole_8+(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
-        i = whole_8-(i, 1);
+        total = +(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
+        i = -(i, 1);
     };
 
     return total;
@@ -1440,7 +1440,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             autoarray8_set(&(function_arguments), index, NodeFunctionData->argument_types(function_data));
             autoarray8_set(&(function_returns), index, NodeFunctionData->returns(function_data));
 
-            index = whole_8+(index, 1);
+            index = +(index, 1);
         };
 
         if =(id, NODE_GLOBAL) {
@@ -1451,7 +1451,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             autoarray8_set(&(globals), global_index, global_name);
             autoarray8_set(&(global_types), global_index, global_type);
 
-            global_index = whole_8+(global_index, 1);
+            global_index = +(global_index, 1);
         };
 
         if =(id, NODE_CONSTANT) {
@@ -1462,10 +1462,10 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             autoarray8_set(&(constants), constant_index, constant_name);
             autoarray8_set(&(constant_types), constant_index, constant_type);
 
-            constant_index = whole_8+(constant_index, 1);
+            constant_index = +(constant_index, 1);
         };
 
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     variable current_function: *;
@@ -1720,7 +1720,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                         variable k = 0;
                         while !(=(@cast_whole_8(array8_get(arguments, k)), 0)) {
                             variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                            variable wanted = @cast_*(array8_get(arguments, @cast_whole_8(-(-(length, k), 1))));
+                            variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
                             if !(is_type(wanted, given, nodes, node_count)) {
                                 print("TYPECHECK: ");
                                 print(current_function);
@@ -1734,7 +1734,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                                 exit(1);
                             };
 
-                            k = whole_8+(k, 1);
+                            k = +(k, 1);
                         };
 
                         variable k = 0;
@@ -1742,12 +1742,12 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                             variable return_value = @cast_*(array8_get(returns, k));
                             autostack8_push(&(stack), &(stack_pointer), return_value);
 
-                            k = whole_8+(k, 1);
+                            k = +(k, 1);
                         };
                         
                         found_function = true;
                     };
-                    j = whole_8+(j, 1);
+                    j = +(j, 1);
                 };
 
                 if !(found_function) {
@@ -1774,14 +1774,14 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 if string=(temp_variable_name, variable_name) {
                     temp_variable_index = k;
                 };
-                k = whole_8+(k, 1);
+                k = +(k, 1);
             };
 
             if =(temp_variable_index, 999) {
                 autoarray8_set(&(variable_names), variable_index, variable_name);
                 autoarray8_set(&(variable_types), variable_index, variable_type);
                 autoarray8_set(&(variable_declares), variable_index, i);
-                variable_index = whole_8+(variable_index, 1);
+                variable_index = +(variable_index, 1);
             } else {
                 autoarray8_set(&(variable_types), temp_variable_index, variable_type);
                 autoarray8_set(&(variable_declares), temp_variable_index, i);
@@ -1892,14 +1892,14 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                     exit(1);
                 };
 
-                j = whole_8+(j, 1);
+                j = +(j, 1);
             };
 
             done_anything = true;
         };
         if =(id, NODE_POINTER) {
             variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-            variable allocated = brk_allocate(whole_8+(length(popped), 2));
+            variable allocated = brk_allocate(+(length(popped), 2));
             copy("*", allocated, 1);
             copy(popped, @cast_*(+(allocated, 1)), length(popped));
             autostack8_push(&(stack), &(stack_pointer), allocated);
@@ -1951,7 +1951,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             @print_integer(id);
         };
 
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 };
 
@@ -1961,7 +1961,7 @@ function stringarraymap_get(keys: *, values: *, wanted: *, size: whole_8): * {
         if string=(@cast_*(array8_get(keys, j)), wanted) {
             return @cast_*(array8_get(values, j));
         };
-        j = whole_8+(j, 1);
+        j = +(j, 1);
     };
 
     return @cast_*(0);
@@ -1973,7 +1973,7 @@ function stringarraymap_get_index(keys: *, wanted: *, size: whole_8): whole_8 {
         if string=(@cast_*(array8_get(keys, j)), wanted) {
             return j;
         };
-        j = whole_8+(j, 1);
+        j = +(j, 1);
     };
 
     return 999;
@@ -1998,15 +1998,15 @@ function autopush_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, w
 };
 
 function nodes_get_id(nodes: *AutoBuffer, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(nodes, whole_8*(index, NODE_SIZE));
+    return autobuffer_get_whole_8(nodes, *(index, NODE_SIZE));
 };
 
 function nodes_get_pointer(nodes: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(nodes, whole_8*(index, NODE_SIZE));
+    return autobuffer_get(nodes, *(index, NODE_SIZE));
 };
 
 function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(nodes, whole_8+(whole_8*(index, NODE_SIZE), 8));
+    return autobuffer_get(nodes, +(*(index, NODE_SIZE), 8));
 };
 
 //function output_linux_x86-64_fasm(nodes: *AutoBuffer, node_count: whole_8, name: *) {
@@ -2075,15 +2075,15 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    variable declare_data = @cast_*NodeDeclareData(pointer_data);
 //                    variable declare_name = NodeDeclareData->name(declare_data);
 //                    variable declare_type = NodeDeclareData->type(declare_data);
-//                    total = whole_8+(total, get_size_linux_x86-64(declare_type, nodes, node_count));
+//                    total = +(total, get_size_linux_x86-64(declare_type, nodes, node_count));
 //                };
 //
-//                j = whole_8+(j, 1);
+//                j = +(j, 1);
 //            };
 //
 //            autoarray8_set(&(function_local_sizes), index, total);
 //
-//            index = whole_8+(index, 1);
+//            index = +(index, 1);
 //        };
 //        if =(id, NODE_GLOBAL) {
 //            variable global_data = @cast_*NodeGlobalData(pointer_data);
@@ -2093,7 +2093,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            autoarray8_set(&(globals), global_index, global_name);
 //            autoarray8_set(&(global_types), global_index, global_type);
 //
-//            global_index = whole_8+(global_index, 1);
+//            global_index = +(global_index, 1);
 //        };
 //        if =(id, NODE_CONSTANT) {
 //            variable constant_data = @cast_*NodeConstantData(pointer_data);
@@ -2103,13 +2103,13 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            autoarray8_set(&(constants), constant_index, constant_name);
 //            autoarray8_set(&(constant_types), constant_index, constant_type);
 //
-//            constant_index = whole_8+(constant_index, 1);
+//            constant_index = +(constant_index, 1);
 //        };
 //        if =(id, NODE_STRUCTURE) {
 //            variable structure_name = NodeStructureData->name(@cast_*NodeStructureData(nodes_get_pointer_data(nodes, i)));
 //
 //            // Setter for whole value
-//            variable allocated = brk_allocate(whole_8+(length(structure_name), 3));
+//            variable allocated = brk_allocate(+(length(structure_name), 3));
 //            copy(structure_name, allocated, length(structure_name));
 //            copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
 //
@@ -2142,7 +2142,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents01, &(contents_index), j);
 //                    autopush_string_with_newline(allocated_contents01, &(contents_index), "], rbx");
 //
-//                    j = whole_8+(j, 8);
+//                    j = +(j, 8);
 //                    done_anything_structure = true;
 //                };
 //                if &&(>(-(size, j), 3), !(done_anything_structure)) {
@@ -2154,7 +2154,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents01, &(contents_index), j);
 //                    autopush_string_with_newline(allocated_contents01, &(contents_index), "], ebx");
 //
-//                    j = whole_8+(j, 4);
+//                    j = +(j, 4);
 //                    done_anything_structure = true;
 //                };
 //                if &&(>(-(size, j), 1), !(done_anything_structure)) {
@@ -2166,7 +2166,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents01, &(contents_index), j);
 //                    autopush_string_with_newline(allocated_contents01, &(contents_index), "], bx");
 //
-//                    j = whole_8+(j, 2);
+//                    j = +(j, 2);
 //                    done_anything_structure = true;
 //                };
 //                if &&(>(-(size, j), 0), !(done_anything_structure)) {
@@ -2178,21 +2178,21 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents01, &(contents_index), j);
 //                    autopush_string_with_newline(allocated_contents01, &(contents_index), "], bl");
 //
-//                    j = whole_8+(j, 1);
+//                    j = +(j, 1);
 //                    done_anything_structure = true;
 //                };
 //            };
 //
 //            autopush_string(allocated_contents01, &(contents_index), "add rsp, ");
-//            autopush_whole_8(allocated_contents01, &(contents_index), whole_8+(size, 8));
+//            autopush_whole_8(allocated_contents01, &(contents_index), +(size, 8));
 //            autopush_string_with_newline(allocated_contents01, &(contents_index), "");
 //
 //            autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents01));
 //
-//            memory_function_index = whole_8+(memory_function_index, 1);
+//            memory_function_index = +(memory_function_index, 1);
 //
 //            // Getter for whole value
-//            variable allocated = brk_allocate(whole_8+(length(structure_name), 3));
+//            variable allocated = brk_allocate(+(length(structure_name), 3));
 //            copy(structure_name, allocated, length(structure_name));
 //            copy("->", @cast_*(+(allocated, length(structure_name))), 2);
 //
@@ -2220,7 +2220,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents11, &(contents_index), k);
 //                    autopush_string_with_newline(allocated_contents11, &(contents_index), "], rbx");
 //
-//                    k = whole_8+(k, 8);
+//                    k = +(k, 8);
 //                    done_anything_structure = true;
 //                };
 //                if &&(>(-(size, k), 3), !(done_anything_structure)) {
@@ -2232,7 +2232,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents11, &(contents_index), k);
 //                    autopush_string_with_newline(allocated_contents11, &(contents_index), "], ebx");
 //
-//                    k = whole_8+(k, 4);
+//                    k = +(k, 4);
 //                    done_anything_structure = true;
 //                };
 //                if &&(>(-(size, k), 1), !(done_anything_structure)) {
@@ -2244,7 +2244,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents11, &(contents_index), k);
 //                    autopush_string_with_newline(allocated_contents11, &(contents_index), "], bx");
 //
-//                    k = whole_8+(k, 2);
+//                    k = +(k, 2);
 //                    done_anything_structure = true;
 //                };
 //                if &&(>(-(size, k), 0), !(done_anything_structure)) {
@@ -2256,14 +2256,14 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(allocated_contents11, &(contents_index), k);
 //                    autopush_string_with_newline(allocated_contents11, &(contents_index), "], bl");
 //
-//                    k = whole_8+(k, 1);
+//                    k = +(k, 1);
 //                    done_anything_structure = true;
 //                };
 //            };
 //
 //            autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents11));
 //
-//            memory_function_index = whole_8+(memory_function_index, 1);
+//            memory_function_index = +(memory_function_index, 1);
 //
 //            variable member_names = *->(@cast_**(+(nodes_get_pointer(nodes, i), 16)));
 //            variable member_types = *->(@cast_**(+(nodes_get_pointer(nodes, i), 24)));
@@ -2275,7 +2275,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //                variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, node_count);
 //
-//                variable allocated = brk_allocate(whole_8+(length(structure_name), whole_8+(length(member_name), 4)));
+//                variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 4)));
 //                copy("*", allocated, 1);
 //                copy(structure_name, @cast_*(+(allocated, 1)), length(structure_name));
 //                copy("->", @cast_*(+(+(allocated, length(structure_name)), 1)), 2);
@@ -2294,10 +2294,10 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //                autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents41));
 //
-//                memory_function_index = whole_8+(memory_function_index, 1);
+//                memory_function_index = +(memory_function_index, 1);
 //
 //                // Setter for individual members
-//                variable allocated = brk_allocate(whole_8+(length(structure_name), whole_8+(length(member_name), 3)));
+//                variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
 //                copy(structure_name, allocated, length(structure_name));
 //                copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
 //                copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
@@ -2328,10 +2328,10 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-//                        autopush_whole_8(allocated_contents21, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents21, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "], rbx");
 //
-//                        k = whole_8+(k, 8);
+//                        k = +(k, 8);
 //                        done_anything_structure = true;
 //                    };
 //                    if &&(>(-(size, k), 3), !(done_anything_structure)) {
@@ -2340,10 +2340,10 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-//                        autopush_whole_8(allocated_contents21, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents21, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "], ebx");
 //
-//                        k = whole_8+(k, 4);
+//                        k = +(k, 4);
 //                        done_anything_structure = true;
 //                    };
 //                    if &&(>(-(size, k), 1), !(done_anything_structure)) {
@@ -2352,10 +2352,10 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-//                        autopush_whole_8(allocated_contents21, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents21, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "], bx");
 //
-//                        k = whole_8+(k, 2);
+//                        k = +(k, 2);
 //                        done_anything_structure = true;
 //                    };
 //                    if &&(>(-(size, k), 0), !(done_anything_structure)) {
@@ -2364,24 +2364,24 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents21, &(contents_index), "mov [rax+");
-//                        autopush_whole_8(allocated_contents21, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents21, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents21, &(contents_index), "], bl");
 //
-//                        k = whole_8+(k, 1);
+//                        k = +(k, 1);
 //                        done_anything_structure = true;
 //                    };
 //                };
 //
 //                autopush_string(allocated_contents21, &(contents_index), "add rsp, ");
-//                autopush_whole_8(allocated_contents21, &(contents_index), whole_8+(size, 8));
+//                autopush_whole_8(allocated_contents21, &(contents_index), +(size, 8));
 //                autopush_string_with_newline(allocated_contents21, &(contents_index), "");
 //
 //                autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents21));
 //
-//                memory_function_index = whole_8+(memory_function_index, 1);
+//                memory_function_index = +(memory_function_index, 1);
 //
 //                // Getter for indivudal members
-//                variable allocated = brk_allocate(whole_8+(length(structure_name), whole_8+(length(member_name), 3)));
+//                variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
 //                copy(structure_name, allocated, length(structure_name));
 //                copy("->", @cast_*(+(allocated, length(structure_name))), 2);
 //                copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
@@ -2406,63 +2406,63 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //                    if >(-(size, k), 7) {
 //                        autopush_string(allocated_contents31, &(contents_index), "mov rbx, [rax+");
-//                        autopush_whole_8(allocated_contents31, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents31, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
 //                        autopush_whole_8(allocated_contents31, &(contents_index), k);
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "], rbx");
 //
-//                        k = whole_8+(k, 8);
+//                        k = +(k, 8);
 //                        done_anything_structure = true;
 //                    };
 //                    if &&(>(-(size, k), 3), !(done_anything_structure)) {
 //                        autopush_string(allocated_contents31, &(contents_index), "mov ebx, [rax+");
-//                        autopush_whole_8(allocated_contents31, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents31, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
 //                        autopush_whole_8(allocated_contents31, &(contents_index), k);
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "], ebx");
 //
-//                        k = whole_8+(k, 4);
+//                        k = +(k, 4);
 //                        done_anything_structure = true;
 //                    };
 //                    if &&(>(-(size, k), 1), !(done_anything_structure)) {
 //                        autopush_string(allocated_contents31, &(contents_index), "mov bx, [rax+");
-//                        autopush_whole_8(allocated_contents31, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents31, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
 //                        autopush_whole_8(allocated_contents31, &(contents_index), k);
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "], bx");
 //
-//                        k = whole_8+(k, 2);
+//                        k = +(k, 2);
 //                        done_anything_structure = true;
 //                    };
 //                    if &&(>(-(size, k), 0), !(done_anything_structure)) {
 //                        autopush_string(allocated_contents31, &(contents_index), "mov bl, [rax+");
-//                        autopush_whole_8(allocated_contents31, &(contents_index), whole_8+(k, location));
+//                        autopush_whole_8(allocated_contents31, &(contents_index), +(k, location));
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "]");
 //
 //                        autopush_string(allocated_contents31, &(contents_index), "mov [rsp+");
 //                        autopush_whole_8(allocated_contents31, &(contents_index), k);
 //                        autopush_string_with_newline(allocated_contents31, &(contents_index), "], bl");
 //
-//                        k = whole_8+(k, 1);
+//                        k = +(k, 1);
 //                        done_anything_structure = true;
 //                    };
 //                };
 //
 //                autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents31));
 //
-//                memory_function_index = whole_8+(memory_function_index, 1);
+//                memory_function_index = +(memory_function_index, 1);
 //
-//                j = whole_8+(j, 1);
+//                j = +(j, 1);
 //            };
 //        };
 //
-//        i = whole_8+(i, 1);
+//        i = +(i, 1);
 //    };
 //
 //    variable current_function: *;
@@ -2484,7 +2484,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //        if =(id, NODE_FUNCTION) {
 //            variable function_data = @cast_*NodeFunctionData(pointer_data);
-//            variable next_id = nodes_get_id(nodes, whole_8+(i, 1));
+//            variable next_id = nodes_get_id(nodes, +(i, 1));
 //
 //            if !(=(next_id, NODE_ENDFUNCTION)) {
 //                variable function_name = NodeFunctionData->name(function_data);
@@ -2495,7 +2495,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //                variable locals_size = @cast_whole_8(autostringarraymap_get(&(functions), &(function_local_sizes), function_name, index));
 //                autopush_string(&(buffer), &(buffer_index), "sub rsp, ");
-//                autopush_whole_8(&(buffer), &(buffer_index), whole_8+(locals_size, 16));
+//                autopush_whole_8(&(buffer), &(buffer_index), +(locals_size, 16));
 //                autopush_string_with_newline(&(buffer), &(buffer_index), "");
 //
 //                current_function = function_name;
@@ -2537,10 +2537,10 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //        if =(id, NODE_INVOKE) {
 //            variable invoke_data = @cast_*NodeInvokeData(pointer_data);
 //            variable function_name = NodeInvokeData->name(invoke_data);
-//            variable next_id = nodes_get_id(nodes, whole_8+(i, 1));
+//            variable next_id = nodes_get_id(nodes, +(i, 1));
 //
 //            if =(next_id, NODE_POINTER) {
-//                variable function_name_new = brk_allocate(whole_8+(length(function_name), 2));
+//                variable function_name_new = brk_allocate(+(length(function_name), 2));
 //                copy("*", function_name_new, 1);
 //                copy(function_name, @cast_*(+(function_name_new, 1)), length(function_name));
 //                function_name = function_name_new;
@@ -2826,7 +2826,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            autoarray8_set(&(variable_names), variable_index, variable_name);
 //            autoarray8_set(&(variable_types), variable_index, variable_type);
 //            autoarray8_set(&(variable_sizes), variable_index, get_size_linux_x86-64(variable_type, nodes, node_count));
-//            variable_index = whole_8+(variable_index, 1);
+//            variable_index = +(variable_index, 1);
 //
 //            done_anything = true;
 //        };
@@ -2843,7 +2843,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                variable j = 0;
 //                while <(j, variable_index_thing) {
 //                    location = @cast_whole_8(+(location, autoarray8_get(&(variable_sizes), j)));
-//                    j = whole_8+(j, 1);
+//                    j = +(j, 1);
 //                };
 //
 //                variable j = 0;
@@ -2859,7 +2859,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), @cast_whole_8(-(+(size, location), j)));
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                        j = whole_8+(j, 8);
+//                        j = +(j, 8);
 //                        done_anything_assign = true;
 //                    };
 //                    if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -2871,7 +2871,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), @cast_whole_8(-(+(size, location), j)));
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                        j = whole_8+(j, 4);
+//                        j = +(j, 4);
 //                        done_anything_assign = true;
 //                    };
 //                    if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -2883,7 +2883,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), @cast_whole_8(-(+(size, location), j)));
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                        j = whole_8+(j, 2);
+//                        j = +(j, 2);
 //                        done_anything_assign = true;
 //                    };
 //                    if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -2895,7 +2895,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), @cast_whole_8(-(+(size, location), j)));
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                        j = whole_8+(j, 1);
+//                        j = +(j, 1);
 //                        done_anything_assign = true;
 //                    };
 //                };
@@ -2906,7 +2906,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            };
 //
 //            if =(variable_type, 0) {
-//                variable global_name = brk_allocate(whole_8+(length(variable_name), 2));
+//                variable global_name = brk_allocate(+(length(variable_name), 2));
 //                copy("_", global_name, 1);
 //                copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 //
@@ -2928,7 +2928,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), j);
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                        j = whole_8+(j, 8);
+//                        j = +(j, 8);
 //                        done_anything_assign = true;
 //                    };
 //                    if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -2942,7 +2942,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), j);
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                        j = whole_8+(j, 4);
+//                        j = +(j, 4);
 //                        done_anything_assign = true;
 //                    };
 //                    if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -2956,7 +2956,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), j);
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                        j = whole_8+(j, 2);
+//                        j = +(j, 2);
 //                        done_anything_assign = true;
 //                    };
 //                    if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -2970,7 +2970,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                        autopush_whole_8(&(buffer), &(buffer_index), j);
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                        j = whole_8+(j, 1);
+//                        j = +(j, 1);
 //                        done_anything_assign = true;
 //                    };
 //                };
@@ -2985,7 +2985,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //        };
 //
 //        if =(id, NODE_RETRIEVE) {
-//            variable next_id = nodes_get_id(nodes, whole_8+(i, 1));
+//            variable next_id = nodes_get_id(nodes, +(i, 1));
 //
 //            variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
 //            variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
@@ -2996,13 +2996,13 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                variable j = 0;
 //                while <(j, variable_index_thing) {
 //                    location = @cast_whole_8(+(location, autoarray8_get(&(variable_sizes), j)));
-//                    j = whole_8+(j, 1);
+//                    j = +(j, 1);
 //                };
 //
 //                variable is_pointer = false;
 //                if =(next_id, NODE_POINTER) {
 //                    autopush_string(&(buffer), &(buffer_index), "lea rax, [rbp-");
-//                    autopush_whole_8(&(buffer), &(buffer_index), whole_8+(size, location));
+//                    autopush_whole_8(&(buffer), &(buffer_index), +(size, location));
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
 //
@@ -3027,7 +3027,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                            autopush_whole_8(&(buffer), &(buffer_index), j);
 //                            autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                            j = whole_8+(j, 8);
+//                            j = +(j, 8);
 //                            done_anything_assign = true;
 //                        };
 //                        if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -3039,7 +3039,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                            autopush_whole_8(&(buffer), &(buffer_index), j);
 //                            autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                            j = whole_8+(j, 4);
+//                            j = +(j, 4);
 //                            done_anything_assign = true;
 //                        };
 //                        if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -3051,7 +3051,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                            autopush_whole_8(&(buffer), &(buffer_index), j);
 //                            autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                            j = whole_8+(j, 2);
+//                            j = +(j, 2);
 //                            done_anything_assign = true;
 //                        };
 //                        if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -3063,7 +3063,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                            autopush_whole_8(&(buffer), &(buffer_index), j);
 //                            autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                            j = whole_8+(j, 1);
+//                            j = +(j, 1);
 //                            done_anything_assign = true;
 //                        };
 //                    };
@@ -3084,7 +3084,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    variable is_pointer = false;
 //                    if =(next_id, NODE_POINTER) {
 //                        autopush_string(&(buffer), &(buffer_index), "lea rax, [rbp+");
-//                        autopush_whole_8(&(buffer), &(buffer_index), whole_8+(16, location));
+//                        autopush_whole_8(&(buffer), &(buffer_index), +(16, location));
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 //                        autopush_string_with_newline(&(buffer), &(buffer_index), "push rax");
 //
@@ -3108,7 +3108,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                                j = whole_8+(j, 8);
+//                                j = +(j, 8);
 //                                done_anything_assign = true;
 //                            };
 //                            if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -3120,7 +3120,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                                j = whole_8+(j, 4);
+//                                j = +(j, 4);
 //                                done_anything_assign = true;
 //                            };
 //                            if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -3132,7 +3132,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                                j = whole_8+(j, 2);
+//                                j = +(j, 2);
 //                                done_anything_assign = true;
 //                            };
 //                            if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -3144,7 +3144,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                                j = whole_8+(j, 1);
+//                                j = +(j, 1);
 //                                done_anything_assign = true;
 //                            };
 //                        };
@@ -3155,7 +3155,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
 //
 //                    if !(=(variable_type, 0)) {
-//                        variable global_name = brk_allocate(whole_8+(length(variable_name), 2));
+//                        variable global_name = brk_allocate(+(length(variable_name), 2));
 //                        copy("_", global_name, 1);
 //                        copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 //
@@ -3189,7 +3189,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                                    j = whole_8+(j, 8);
+//                                    j = +(j, 8);
 //                                    done_anything_assign = true;
 //                                };
 //                                if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -3203,7 +3203,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                                    j = whole_8+(j, 4);
+//                                    j = +(j, 4);
 //                                    done_anything_assign = true;
 //                                };
 //                                if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -3217,7 +3217,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                                    j = whole_8+(j, 2);
+//                                    j = +(j, 2);
 //                                    done_anything_assign = true;
 //                                };
 //                                if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -3231,7 +3231,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                                    j = whole_8+(j, 1);
+//                                    j = +(j, 1);
 //                                    done_anything_assign = true;
 //                                };
 //                            };
@@ -3241,7 +3241,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    if =(variable_type, 0) {
 //                        variable_type = autostringarraymap_get(&(constants), &(constant_types), variable_name, constant_index);
 //
-//                        variable constant_name = brk_allocate(whole_8+(length(variable_name), 2));
+//                        variable constant_name = brk_allocate(+(length(variable_name), 2));
 //                        copy("_", constant_name, 1);
 //                        copy(variable_name, @cast_*(+(constant_name, 1)), length(variable_name));
 //
@@ -3276,7 +3276,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                                    j = whole_8+(j, 8);
+//                                    j = +(j, 8);
 //                                    done_anything_assign = true;
 //                                };
 //                                if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -3290,7 +3290,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                                    j = whole_8+(j, 4);
+//                                    j = +(j, 4);
 //                                    done_anything_assign = true;
 //                                };
 //                                if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -3304,7 +3304,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                                    j = whole_8+(j, 2);
+//                                    j = +(j, 2);
 //                                    done_anything_assign = true;
 //                                };
 //                                if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -3318,7 +3318,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                                    autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                                    j = whole_8+(j, 1);
+//                                    j = +(j, 1);
 //                                    done_anything_assign = true;
 //                                };
 //                            };
@@ -3337,16 +3337,16 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            variable returns_size = get_size_multiple_linux_x86-64(autostringarraymap_get(&(functions), &(function_returns), current_function, index), 999, nodes, node_count);
 //            variable returns_size_rounded = returns_size;
 //            if !(=(%(returns_size_rounded, 8), 0)) {
-//                returns_size_rounded = whole_8+(returns_size_rounded, @cast_whole_8(-(8, %(returns_size, 8))));
+//                returns_size_rounded = +(returns_size_rounded, @cast_whole_8(-(8, %(returns_size, 8))));
 //            };
 //
 //            variable j = 8;
-//            variable k = whole_8+(returns_size, 8);
+//            variable k = +(returns_size, 8);
 //
 //            autopush_string_with_newline(&(buffer), &(buffer_index), "mov rcx, [rbp+8]");
 //            autopush_string_with_newline(&(buffer), &(buffer_index), "mov rdx, [rbp]");
 //
-//            returns_size = whole_8+(returns_size, 8);
+//            returns_size = +(returns_size, 8);
 //
 //            while <(j, returns_size) {
 //                variable done_anything_assign = false;
@@ -3370,7 +3370,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    };
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                    j = whole_8+(j, 8);
+//                    j = +(j, 8);
 //                };
 //                if &&(>(-(returns_size, j), 3), !(done_anything_assign)) {
 //                    k = @cast_whole_8(-(k, 4));
@@ -3392,7 +3392,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 //
-//                    j = whole_8+(j, 4);
+//                    j = +(j, 4);
 //                };
 //                if &&(>(-(returns_size, j), 1), !(done_anything_assign)) {
 //                    k = @cast_whole_8(-(k, 2));
@@ -3413,7 +3413,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    };
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 //
-//                    j = whole_8+(j, 2);
+//                    j = +(j, 2);
 //                };
 //                if &&(>(-(returns_size, j), 0), !(done_anything_assign)) {
 //                    k = @cast_whole_8(-(k, 1));
@@ -3434,7 +3434,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    };
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 //
-//                    j = whole_8+(j, 1);
+//                    j = +(j, 1);
 //                };
 //            };
 //
@@ -3522,7 +3522,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            variable global_data = @cast_*NodeGlobalData(pointer_data);
 //            variable name2 = NodeGlobalData->name(global_data);
 //            variable type = NodeGlobalData->type(global_data);
-//            variable global_name = brk_allocate(whole_8+(length(name2), 2));
+//            variable global_name = brk_allocate(+(length(name2), 2));
 //            copy("_", global_name, 1);
 //            copy(name2, @cast_*(+(global_name, 1)), length(name2));
 //            
@@ -3543,7 +3543,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            //TODO: reassigning locals should warn
 //            variable value2 = NodeConstantData->value(constant_data);
 //
-//            variable constant_name = brk_allocate(whole_8+(length(name3), 2));
+//            variable constant_name = brk_allocate(+(length(name3), 2));
 //            copy("_", constant_name, 1);
 //            copy(name3, @cast_*(+(constant_name, 1)), length(name3));
 //            
@@ -3576,7 +3576,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], rax");
 //
-//                    j = whole_8+(j, 8);
+//                    j = +(j, 8);
 //                    done_anything_assign = true;
 //                };
 //                if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -3584,7 +3584,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], dword 0");
 //
-//                    j = whole_8+(j, 4);
+//                    j = +(j, 4);
 //                    done_anything_assign = true;
 //                };
 //                if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -3592,7 +3592,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], word 0");
 //
-//                    j = whole_8+(j, 2);
+//                    j = +(j, 2);
 //                    done_anything_assign = true;
 //                };
 //                if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -3600,7 +3600,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //                    autopush_whole_8(&(buffer), &(buffer_index), j);
 //                    autopush_string_with_newline(&(buffer), &(buffer_index), "], byte 0");
 //
-//                    j = whole_8+(j, 1);
+//                    j = +(j, 1);
 //                    done_anything_assign = true;
 //                };
 //            };
@@ -3684,10 +3684,10 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //    variable output_directory_index = 0;
 //    while !(=(output_directory_index, 999)) {
-//        output_directory_index = indexof(name_new, byte(ASCII_SLASH), whole_8+(output_directory_index, 1));
+//        output_directory_index = indexof(name_new, byte(ASCII_SLASH), +(output_directory_index, 1));
 //
 //        if !(=(output_directory_index, 999)) {
-//            variable directory_new = brk_allocate(whole_8+(output_directory_index, 1));
+//            variable directory_new = brk_allocate(+(output_directory_index, 1));
 //            copy(name_new, directory_new, output_directory_index);
 //
 //            variable asm_output_directory = autobuffer_new(32);
@@ -3730,9 +3730,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     variable output = autobuffer_new(512);
 
     variable file_header = new_elf64_file_header();
-    ELF64FileHeader<-format(&(file_header), byte(2));
-    ELF64FileHeader<-endianness(&(file_header), byte(1));
-    ELF64FileHeader<-abi(&(file_header), byte(3));
+    ELF64FileHeader<-format(&(file_header), 2_whole_1);
+    ELF64FileHeader<-endianness(&(file_header), 1_whole_1);
+    ELF64FileHeader<-abi(&(file_header), 3_whole_1);
     ELF64FileHeader<-object_file_type(&(file_header), whole_8_to_short(2));
     ELF64FileHeader<-machine(&(file_header), whole_8_to_short(62));
     ELF64FileHeader<-entry_point(&(file_header), 4194536);
@@ -3842,15 +3842,15 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     variable declare_data = @cast_*NodeDeclareData(pointer_data);
                     variable declare_name = NodeDeclareData->name(declare_data);
                     variable declare_type = NodeDeclareData->type(declare_data);
-                    total = whole_8+(total, get_size_linux_x86-64(declare_type, nodes, node_count));
+                    total = +(total, get_size_linux_x86-64(declare_type, nodes, node_count));
                 };
 
-                j = whole_8+(j, 1);
+                j = +(j, 1);
             };
 
             autoarray8_set(&(function_local_sizes), index, total);
 
-            index = whole_8+(index, 1);
+            index = +(index, 1);
         };
         if =(id, NODE_GLOBAL) {
             variable global_data = @cast_*NodeGlobalData(pointer_data);
@@ -3863,9 +3863,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable global_location = bss_index;
             autoarray8_set(&(global_locations), global_index, global_location);
 
-            bss_index = whole_8+(bss_index, get_size_linux_x86-64(global_type, nodes, node_count));
+            bss_index = +(bss_index, get_size_linux_x86-64(global_type, nodes, node_count));
 
-            global_index = whole_8+(global_index, 1);
+            global_index = +(global_index, 1);
         };
         if =(id, NODE_CONSTANT) {
             variable constant_data = @cast_*NodeConstantData(pointer_data);
@@ -3879,13 +3879,13 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             autoarray8_set(&(constant_locations), constant_index, constant_location);
 
-            constant_index = whole_8+(constant_index, 1);
+            constant_index = +(constant_index, 1);
         };
         if =(id, NODE_STRUCTURE) {
             variable structure_name = NodeStructureData->name(@cast_*NodeStructureData(nodes_get_pointer_data(nodes, i)));
 
             // Setter for whole value
-            variable allocated = brk_allocate(whole_8+(length(structure_name), 3));
+            variable allocated = brk_allocate(+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
 
@@ -3912,42 +3912,42 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     autopush_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP, j, RBX);
                     autopush_mov_register8_register8_pointer_offset(allocated_contents03, &(contents_index2), RBX, RAX, j);
 
-                    j = whole_8+(j, 8);
+                    j = +(j, 8);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, j), 3), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register4(allocated_contents03, &(contents_index2), RSP, j, EBX);
                     autopush_mov_register4_register8_pointer_offset(allocated_contents03, &(contents_index2), EBX, RAX, j);
 
-                    j = whole_8+(j, 4);
+                    j = +(j, 4);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, j), 1), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register2(allocated_contents03, &(contents_index2), RSP, j, BX);
                     autopush_mov_register2_register8_pointer_offset(allocated_contents03, &(contents_index2), BX, RAX, j);
 
-                    j = whole_8+(j, 2);
+                    j = +(j, 2);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, j), 0), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register1(allocated_contents03, &(contents_index2), RSP, j, BL);
                     autopush_mov_register1_register8_pointer_offset(allocated_contents03, &(contents_index2), BL, RAX, j);
 
-                    j = whole_8+(j, 1);
+                    j = +(j, 1);
                     done_anything_structure = true;
                 };
             };
 
-            autopush_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, whole_8+(size, 8));
+            autopush_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, +(size, 8));
 
             autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents01));
             autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents03));
             autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
 
-            memory_function_index = whole_8+(memory_function_index, 1);
+            memory_function_index = +(memory_function_index, 1);
 
             // Getter for whole value
-            variable allocated = brk_allocate(whole_8+(length(structure_name), 3));
+            variable allocated = brk_allocate(+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("->", @cast_*(+(allocated, length(structure_name))), 2);
 
@@ -3971,28 +3971,28 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     autopush_mov_register8_pointer_offset_register8(allocated_contents13, &(contents_index2), RAX, k, RBX);
                     autopush_mov_register8_register8_pointer_offset(allocated_contents13, &(contents_index2), RBX, RSP, k);
 
-                    k = whole_8+(k, 8);
+                    k = +(k, 8);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 3), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register4(allocated_contents13, &(contents_index2), RAX, k, EBX);
                     autopush_mov_register4_register8_pointer_offset(allocated_contents13, &(contents_index2), EBX, RSP, k);
 
-                    k = whole_8+(k, 4);
+                    k = +(k, 4);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 1), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register2(allocated_contents13, &(contents_index2), RAX, k, BX);
                     autopush_mov_register2_register8_pointer_offset(allocated_contents13, &(contents_index2), BX, RSP, k);
 
-                    k = whole_8+(k, 2);
+                    k = +(k, 2);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 0), !(done_anything_structure)) {
                     autopush_mov_register8_pointer_offset_register1(allocated_contents13, &(contents_index2), RAX, k, BL);
                     autopush_mov_register1_register8_pointer_offset(allocated_contents13, &(contents_index2), BL, RSP, k);
 
-                    k = whole_8+(k, 1);
+                    k = +(k, 1);
                     done_anything_structure = true;
                 };
             };
@@ -4001,7 +4001,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents13));
             autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
 
-            memory_function_index = whole_8+(memory_function_index, 1);
+            memory_function_index = +(memory_function_index, 1);
 
             variable member_names = *->(@cast_**(+(nodes_get_pointer(nodes, i), 16)));
             variable member_types = *->(@cast_**(+(nodes_get_pointer(nodes, i), 24)));
@@ -4013,7 +4013,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                 variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, node_count);
 
-                variable allocated = brk_allocate(whole_8+(length(structure_name), whole_8+(length(member_name), 4)));
+                variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 4)));
                 copy("*", allocated, 1);
                 copy(structure_name, @cast_*(+(allocated, 1)), length(structure_name));
                 copy("->", @cast_*(+(+(allocated, length(structure_name)), 1)), 2);
@@ -4036,10 +4036,10 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents43));
                 autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
 
-                memory_function_index = whole_8+(memory_function_index, 1);
+                memory_function_index = +(memory_function_index, 1);
 
                 // Setter for individual members
-                variable allocated = brk_allocate(whole_8+(length(structure_name), whole_8+(length(member_name), 3)));
+                variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
                 copy(structure_name, allocated, length(structure_name));
                 copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
@@ -4065,44 +4065,44 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                     if >(-(size, k), 7) {
                         autopush_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, k, RBX);
-                        autopush_mov_register8_register8_pointer_offset(allocated_contents23, &(contents_index2), RBX, RAX, whole_8+(k, location));
+                        autopush_mov_register8_register8_pointer_offset(allocated_contents23, &(contents_index2), RBX, RAX, +(k, location));
 
-                        k = whole_8+(k, 8);
+                        k = +(k, 8);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 3), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register4(allocated_contents23, &(contents_index2), RSP, k, EBX);
-                        autopush_mov_register4_register8_pointer_offset(allocated_contents23, &(contents_index2), EBX, RAX, whole_8+(k, location));
+                        autopush_mov_register4_register8_pointer_offset(allocated_contents23, &(contents_index2), EBX, RAX, +(k, location));
 
-                        k = whole_8+(k, 4);
+                        k = +(k, 4);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 1), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register2(allocated_contents23, &(contents_index2), RSP, k, BX);
-                        autopush_mov_register2_register8_pointer_offset(allocated_contents23, &(contents_index2), BX, RAX, whole_8+(k, location));
+                        autopush_mov_register2_register8_pointer_offset(allocated_contents23, &(contents_index2), BX, RAX, +(k, location));
 
-                        k = whole_8+(k, 2);
+                        k = +(k, 2);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 0), !(done_anything_structure)) {
                         autopush_mov_register8_pointer_offset_register1(allocated_contents23, &(contents_index2), RSP, k, BL);
-                        autopush_mov_register1_register8_pointer_offset(allocated_contents23, &(contents_index2), BL, RAX, whole_8+(k, location));
+                        autopush_mov_register1_register8_pointer_offset(allocated_contents23, &(contents_index2), BL, RAX, +(k, location));
 
-                        k = whole_8+(k, 1);
+                        k = +(k, 1);
                         done_anything_structure = true;
                     };
                 };
 
-                autopush_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, whole_8+(size, 8));
+                autopush_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, +(size, 8));
 
                 autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents21));
                 autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents23));
                 autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
 
-                memory_function_index = whole_8+(memory_function_index, 1);
+                memory_function_index = +(memory_function_index, 1);
 
                 // Getter for indivudal members
-                variable allocated = brk_allocate(whole_8+(length(structure_name), whole_8+(length(member_name), 3)));
+                variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
                 copy(structure_name, allocated, length(structure_name));
                 copy("->", @cast_*(+(allocated, length(structure_name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
@@ -4127,31 +4127,31 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     variable done_anything_structure = false;
 
                     if >(-(size, k), 7) {
-                        autopush_mov_register8_pointer_offset_register8(allocated_contents33, &(contents_index2), RAX, whole_8+(k, location), RBX);
+                        autopush_mov_register8_pointer_offset_register8(allocated_contents33, &(contents_index2), RAX, +(k, location), RBX);
                         autopush_mov_register8_register8_pointer_offset(allocated_contents33, &(contents_index2), RBX, RSP, k);
 
-                        k = whole_8+(k, 8);
+                        k = +(k, 8);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 3), !(done_anything_structure)) {
-                        autopush_mov_register8_pointer_offset_register4(allocated_contents33, &(contents_index2), RAX, whole_8+(k, location), EBX);
+                        autopush_mov_register8_pointer_offset_register4(allocated_contents33, &(contents_index2), RAX, +(k, location), EBX);
                         autopush_mov_register4_register8_pointer_offset(allocated_contents33, &(contents_index2), EBX, RSP, k);
 
-                        k = whole_8+(k, 4);
+                        k = +(k, 4);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 1), !(done_anything_structure)) {
-                        autopush_mov_register8_pointer_offset_register2(allocated_contents33, &(contents_index2), RAX, whole_8+(k, location), BX);
+                        autopush_mov_register8_pointer_offset_register2(allocated_contents33, &(contents_index2), RAX, +(k, location), BX);
                         autopush_mov_register2_register8_pointer_offset(allocated_contents33, &(contents_index2), BX, RSP, k);
 
-                        k = whole_8+(k, 2);
+                        k = +(k, 2);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 0), !(done_anything_structure)) {
-                        autopush_mov_register8_pointer_offset_register1(allocated_contents33, &(contents_index2), RAX, whole_8+(k, location), BL);
+                        autopush_mov_register8_pointer_offset_register1(allocated_contents33, &(contents_index2), RAX, +(k, location), BL);
                         autopush_mov_register1_register8_pointer_offset(allocated_contents33, &(contents_index2), BL, RSP, k);
 
-                        k = whole_8+(k, 1);
+                        k = +(k, 1);
                         done_anything_structure = true;
                     };
                 };
@@ -4160,13 +4160,13 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents33));
                 autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
 
-                memory_function_index = whole_8+(memory_function_index, 1);
+                memory_function_index = +(memory_function_index, 1);
 
-                j = whole_8+(j, 1);
+                j = +(j, 1);
             };
         };
 
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     variable current_function: *;
@@ -4188,7 +4188,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
         if =(id, NODE_FUNCTION) {
             variable function_data = @cast_*NodeFunctionData(pointer_data);
-            variable next_id = nodes_get_id(nodes, whole_8+(i, 1));
+            variable next_id = nodes_get_id(nodes, +(i, 1));
 
             if !(=(next_id, NODE_ENDFUNCTION)) {
                 variable function_name = NodeFunctionData->name(function_data);
@@ -4201,7 +4201,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                 variable locals_size = @cast_whole_8(autostringarraymap_get(&(functions), &(function_local_sizes), function_name, index));
 
-                autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, whole_8+(locals_size, 16));
+                autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
 
                 current_function = function_name;
 
@@ -4258,10 +4258,10 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         if =(id, NODE_INVOKE) {
             variable invoke_data = @cast_*NodeInvokeData(pointer_data);
             variable function_name = NodeInvokeData->name(invoke_data);
-            variable next_id = nodes_get_id(nodes, whole_8+(i, 1));
+            variable next_id = nodes_get_id(nodes, +(i, 1));
 
             if =(next_id, NODE_POINTER) {
-                variable function_name_new = brk_allocate(whole_8+(length(function_name), 2));
+                variable function_name_new = brk_allocate(+(length(function_name), 2));
                 copy("*", function_name_new, 1);
                 copy(function_name, @cast_*(+(function_name_new, 1)), length(function_name));
                 function_name = function_name_new;
@@ -4518,22 +4518,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             if string_length=(function_name, "/_", 2) {
-                variable size = 0;
-                variable underscore_count = 0;
-
-                variable k = 0;
-                while <(k, length(function_name)) {
-                    variable character = @cast_whole_8(byte_to_integer(any_1->(@cast_*any_1(+(function_name, k)))));
-                    if =(character, 95) {
-                        underscore_count = whole_8+(underscore_count, 1);
-                    } else if &&(=(character, 42), =(underscore_count, 1)) {
-                        size = 8;
-                    } else if =(underscore_count, 2) {
-                        size = whole_8-(character, 48);
-                    };
-
-                    k = whole_8+(k, 1);
-                };
+                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
 
                 autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 if =(size, 8) {
@@ -4571,22 +4556,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             if string_length=(function_name, "%_", 2) {
-                variable size = 0;
-                variable underscore_count = 0;
-
-                variable k = 0;
-                while <(k, length(function_name)) {
-                    variable character = @cast_whole_8(byte_to_integer(any_1->(@cast_*any_1(+(function_name, k)))));
-                    if =(character, 95) {
-                        underscore_count = whole_8+(underscore_count, 1);
-                    } else if &&(=(character, 42), =(underscore_count, 1)) {
-                        size = 8;
-                    } else if =(underscore_count, 2) {
-                        size = whole_8-(character, 48);
-                    };
-
-                    k = whole_8+(k, 1);
-                };
+                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
 
                 autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 if =(size, 8) {
@@ -4744,7 +4714,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 autoarray8_set(&(calls), call_index, call_instruction);
                 autoarray8_set(&(call_targets), call_index, function_name);
 
-                call_index = whole_8+(call_index, 1);
+                call_index = +(call_index, 1);
             };
             done_anything = true;
         };
@@ -4753,7 +4723,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable string_data = @cast_*NodeStringData(pointer_data);
             variable string_value = NodeStringData->value(string_data);
             variable string_id = program_constant_index;
-            program_constant_index = @cast_whole_8(+(program_constant_index, 1));
+            program_constant_index = +(program_constant_index, 1);
 
             variable id_string: any_24;
             whole_8_to_string(string_id, &(id_string));
@@ -4773,7 +4743,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autoarray8_set(&(variable_names), variable_index, variable_name);
             autoarray8_set(&(variable_types), variable_index, variable_type);
             autoarray8_set(&(variable_sizes), variable_index, get_size_linux_x86-64(variable_type, nodes, node_count));
-            variable_index = whole_8+(variable_index, 1);
+            variable_index = +(variable_index, 1);
 
             done_anything = true;
         };
@@ -4789,8 +4759,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable location = 0;
                 variable j = 0;
                 while <(j, variable_index_thing) {
-                    location = @cast_whole_8(+(location, @cast_whole_8(autoarray8_get(&(variable_sizes), j))));
-                    j = whole_8+(j, 1);
+                    location = +(location, autoarray8_get(&(variable_sizes), j));
+                    j = +(j, 1);
                 };
 
                 variable j = 0;
@@ -4799,37 +4769,37 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                     if >(-(size, j), 7) {
                         autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
-                        autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, whole_8-(0, @cast_whole_8(-(+(size, location), j))));
+                        autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, -(0, -(+(size, location), j)));
 
-                        j = whole_8+(j, 8);
+                        j = +(j, 8);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
                         autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, j, EAX);
-                        autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, whole_8-(0, @cast_whole_8(-(+(size, location), j))));
+                        autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, -(0, -(+(size, location), j)));
 
-                        j = whole_8+(j, 4);
+                        j = +(j, 4);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
                         autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, j, AX);
-                        autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, whole_8-(0, @cast_whole_8(-(+(size, location), j))));
+                        autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, -(0, -(+(size, location), j)));
 
-                        j = whole_8+(j, 2);
+                        j = +(j, 2);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
                         autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, j, AL);
-                        autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, whole_8-(0, @cast_whole_8(-(+(size, location), j))));
+                        autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, -(0, -(+(size, location), j)));
 
-                        j = whole_8+(j, 1);
+                        j = +(j, 1);
                         done_anything_assign = true;
                     };
                 };
                 
                 autopush_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
             } else {
-                variable global_name = brk_allocate(whole_8+(length(variable_name), 2));
+                variable global_name = brk_allocate(+(length(variable_name), 2));
                 copy("_", global_name, 1);
                 copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
@@ -4846,7 +4816,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
                         autopush_mov_register8_bss_pointer_offset(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index), RAX, global_location, j);
 
-                        j = whole_8+(j, 8);
+                        j = +(j, 8);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
@@ -4860,7 +4830,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         autopush_whole_8(&(buffer), &(buffer_index), j);
                         autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
-                        j = whole_8+(j, 4);
+                        j = +(j, 4);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
@@ -4874,7 +4844,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         autopush_whole_8(&(buffer), &(buffer_index), j);
                         autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
-                        j = whole_8+(j, 2);
+                        j = +(j, 2);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
@@ -4888,7 +4858,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         autopush_whole_8(&(buffer), &(buffer_index), j);
                         autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 
-                        j = whole_8+(j, 1);
+                        j = +(j, 1);
                         done_anything_assign = true;
                     };
                 };
@@ -4900,7 +4870,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         };
 
         if =(id, NODE_RETRIEVE) {
-            variable next_id = nodes_get_id(nodes, whole_8+(i, 1));
+            variable next_id = nodes_get_id(nodes, +(i, 1));
 
             variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
             variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
@@ -4910,13 +4880,13 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable location = 0;
                 variable j = 0;
                 while <(j, variable_index_thing) {
-                    location = @cast_whole_8(+(location, @cast_whole_8(autoarray8_get(&(variable_sizes), j))));
-                    j = whole_8+(j, 1);
+                    location = +(location, @cast_whole_8(autoarray8_get(&(variable_sizes), j)));
+                    j = +(j, 1);
                 };
 
                 if =(next_id, NODE_POINTER) {
                     variable thing = instructions_index;
-                    autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, whole_8-(0, whole_8+(size, location)), RAX);
+                    autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, -(0, +(size, location)), RAX);
                     autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 } else {
                     autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
@@ -4926,29 +4896,29 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         variable done_anything_assign = false;
 
                         if >(-(size, j), 7) {
-                            autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(-(0, -(+(size, location), j))), RAX);
+                            autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), RAX);
                             autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                            j = whole_8+(j, 8);
+                            j = +(j, 8);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                            autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(-(0, -(+(size, location), j))), EAX);
+                            autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), EAX);
                             autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                            j = whole_8+(j, 4);
+                            j = +(j, 4);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                            autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(-(0, -(+(size, location), j))), AX);
+                            autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), AX);
                             autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
 
-                            j = whole_8+(j, 2);
+                            j = +(j, 2);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                            autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(-(0, -(+(size, location), j))), AL);
+                            autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), AL);
                             autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
 
-                            j = whole_8+(j, 1);
+                            j = +(j, 1);
                             done_anything_assign = true;
                         };
                     };
@@ -4965,7 +4935,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     variable location = get_size_multiple_reversed_linux_x86-64(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes, node_count);
 
                     if =(next_id, NODE_POINTER) {
-                        autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, whole_8+(16, location), RAX);
+                        autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(16, location), RAX);
                         autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                     } else {
                         autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
@@ -4974,27 +4944,27 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         while <(j, size) {
                             variable done_anything_assign = false;
                             if >(-(size, j), 7) {
-                                autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(+(+(16, location), j)), RAX);
+                                autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), RAX);
                                 autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                j = whole_8+(j, 8);
+                                j = +(j, 8);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                                autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(+(+(16, location), j)), EAX);
+                                autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), EAX);
                                 autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                j = whole_8+(j, 4);
+                                j = +(j, 4);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                                autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(+(+(16, location), j)), AX);
+                                autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), AX);
                                 autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                j = whole_8+(j, 2);
+                                j = +(j, 2);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                                autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, @cast_whole_8(+(+(16, location), j)), AL);
+                                autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), AL);
                                 autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                j = whole_8+(j, 1);
+                                j = +(j, 1);
                                 done_anything_assign = true;
                             };
                         };
@@ -5003,7 +4973,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
 
                     if !(=(variable_type, 0)) {
-                        variable global_name = brk_allocate(whole_8+(length(variable_name), 2));
+                        variable global_name = brk_allocate(+(length(variable_name), 2));
                         copy("_", global_name, 1);
                         copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
@@ -5021,25 +4991,25 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                                 if >(-(size, j), 7) {
                                     autopush_mov_bss_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, RAX);
                                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                    j = whole_8+(j, 8);
+                                    j = +(j, 8);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
                                     autopush_mov_bss_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, EAX);
                                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                    j = whole_8+(j, 4);
+                                    j = +(j, 4);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
                                     autopush_mov_bss_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AX);
                                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                    j = whole_8+(j, 2);
+                                    j = +(j, 2);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
                                     autopush_mov_bss_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AL);
                                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                    j = whole_8+(j, 1);
+                                    j = +(j, 1);
                                     done_anything_assign = true;
                                 };
                             };
@@ -5047,7 +5017,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     } else {
                         variable_type = autostringarraymap_get(&(constants), &(constant_types), variable_name, constant_index);
 
-                        variable constant_name = brk_allocate(whole_8+(length(variable_name), 2));
+                        variable constant_name = brk_allocate(+(length(variable_name), 2));
                         copy("_", constant_name, 1);
                         copy(variable_name, @cast_*(+(constant_name, 1)), length(variable_name));
 
@@ -5066,25 +5036,25 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                                 if >(-(size, j), 7) {
                                     autopush_mov_data_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, RAX);
                                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                    j = whole_8+(j, 8);
+                                    j = +(j, 8);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
                                     autopush_mov_data_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, EAX);
                                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                    j = whole_8+(j, 4);
+                                    j = +(j, 4);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
                                     autopush_mov_data_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AX);
                                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                    j = whole_8+(j, 2);
+                                    j = +(j, 2);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
                                     autopush_mov_data_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AL);
                                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                    j = whole_8+(j, 1);
+                                    j = +(j, 1);
                                     done_anything_assign = true;
                                 };
                             };
@@ -5103,60 +5073,60 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable returns_size = get_size_multiple_linux_x86-64(autostringarraymap_get(&(functions), &(function_returns), current_function, index), 999, nodes, node_count);
             variable returns_size_rounded = returns_size;
             if !(=(%(returns_size_rounded, 8), 0)) {
-                returns_size_rounded = whole_8+(returns_size_rounded, @cast_whole_8(-(8, %(returns_size, 8))));
+                returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
             };
 
             variable j = 8;
-            variable k = whole_8+(returns_size, 8);
+            variable k = +(returns_size, 8);
 
             variable thing = instructions_index;
             autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 8, RCX);
             autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 0, RDX);
 
-            returns_size = whole_8+(returns_size, 8);
+            returns_size = +(returns_size, 8);
 
             while <(j, returns_size) {
                 variable done_anything_assign = false;
 
                 if >(-(returns_size, j), 7) {
-                    k = @cast_whole_8(-(k, 8));
+                    k = -(k, 8);
 
-                    autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, @cast_whole_8(-(-(returns_size, j), 8)), RAX);
-                    autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, @cast_whole_8(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                    autopush_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 8), RAX);
+                    autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
-                    j = whole_8+(j, 8);
+                    j = +(j, 8);
                 };
                 if &&(>(-(returns_size, j), 3), !(done_anything_assign)) {
-                    k = @cast_whole_8(-(k, 4));
+                    k = -(k, 4);
 
-                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, @cast_whole_8(-(-(returns_size, j), 4)), EAX);
-                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, @cast_whole_8(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                    autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 4), EAX);
+                    autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
-                    j = whole_8+(j, 4);
+                    j = +(j, 4);
                 };
                 if &&(>(-(returns_size, j), 1), !(done_anything_assign)) {
-                    k = @cast_whole_8(-(k, 2));
+                    k = -(k, 2);
 
-                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, @cast_whole_8(-(-(returns_size, j), 2)), AX);
-                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, @cast_whole_8(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                    autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 2), AX);
+                    autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
-                    j = whole_8+(j, 2);
+                    j = +(j, 2);
                 };
                 if &&(>(-(returns_size, j), 0), !(done_anything_assign)) {
-                    k = @cast_whole_8(-(k, 1));
+                    k = -(k, 1);
 
-                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, @cast_whole_8(-(-(returns_size, j), 1)), AL);
-                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, @cast_whole_8(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+                    autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 1), AL);
+                    autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
-                    j = whole_8+(j, 1);
+                    j = +(j, 1);
                 };
             };
 
             autopush_mov_register8_register8(&(instructions_buffer), &(instructions_index), RBP, RSP);
 
-            autopush_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, @cast_whole_8(+(+(16, +(-(arguments_size, returns_size), k)), 0)));
+            autopush_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
-            returns_size = @cast_whole_8(-(returns_size, 8));
+            returns_size = -(returns_size, 8);
 
             autopush_push_register8(&(instructions_buffer), &(instructions_index), RDX);
             autopush_pop_register8(&(instructions_buffer), &(instructions_index), RBP);
@@ -5192,7 +5162,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autoarray8_set(&(jes), je_index, jump_instruction);
             autoarray8_set(&(je_targets), je_index, target);
 
-            je_index = whole_8+(je_index, 1);
+            je_index = +(je_index, 1);
             done_anything = true;
         };
 
@@ -5204,7 +5174,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autoarray8_set(&(jmps), jmp_index, jump_instruction);
             autoarray8_set(&(jmp_targets), jmp_index, target);
 
-            jmp_index = whole_8+(jmp_index, 1);
+            jmp_index = +(jmp_index, 1);
             done_anything = true;
         };
 
@@ -5228,7 +5198,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable global_data = @cast_*NodeGlobalData(pointer_data);
             variable name2 = NodeGlobalData->name(global_data);
             variable type = NodeGlobalData->type(global_data);
-            variable global_name = brk_allocate(whole_8+(length(name2), 2));
+            variable global_name = brk_allocate(+(length(name2), 2));
             copy("_", global_name, 1);
             copy(name2, @cast_*(+(global_name, 1)), length(name2));
             
@@ -5249,7 +5219,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             //TODO: reassigning locals should warn
             variable value2 = NodeConstantData->value(constant_data);
 
-            variable constant_name = brk_allocate(whole_8+(length(name3), 2));
+            variable constant_name = brk_allocate(+(length(name3), 2));
             copy("_", constant_name, 1);
             copy(name3, @cast_*(+(constant_name, 1)), length(name3));
 
@@ -5272,28 +5242,28 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
 
-                    j = whole_8+(j, 8);
+                    j = +(j, 8);
                     done_anything_assign = true;
                 };
                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
                     autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
 
-                    j = whole_8+(j, 4);
+                    j = +(j, 4);
                     done_anything_assign = true;
                 };
                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
                     autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
 
-                    j = whole_8+(j, 2);
+                    j = +(j, 2);
                     done_anything_assign = true;
                 };
                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
                     autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
 
-                    j = whole_8+(j, 1);
+                    j = +(j, 1);
                     done_anything_assign = true;
                 };
             };
@@ -5309,136 +5279,136 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             @print_integer(id);
         };
 
-        i = @cast_whole_8(+(i, 1));
+        i = +(i, 1);
     };
 
     variable print_whole_8_index = get_instruction(&(instructions_buffer), &(instructions_index));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(94));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(95));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(87));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(86));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(73));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(185));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(205));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(204));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(131));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(236));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(40));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(198));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(68));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(36));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(31));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(10));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(141));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(76));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(36));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(30));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(137));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(248));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(76));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(141));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(68));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(36));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(32));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(73));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(247));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(225));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(137));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(248));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(73));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(41));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(200));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(193));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(234));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(3));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(141));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(52));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(146));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(1));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(246));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(41));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(240));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(131));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(192));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(48));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(136));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(1));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(137));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(248));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(137));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(215));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(137));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(202));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(131));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(233));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(1));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(131));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(248));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(9));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(119));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(201));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(141));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(68));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(36));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(32));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(191));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(1));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(0));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(0));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(0));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(41));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(194));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(49));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(192));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(141));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(116));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(20));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(32));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(76));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(137));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(194));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(199));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(192));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(1));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(0));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(0));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(0));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(15));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(5));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(131));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(196));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(40));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(88));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(72));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(131));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(196));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(8));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(80));
-    autopush_byte(&(instructions_buffer), &(instructions_index), byte(195));
+    autopush_byte(&(instructions_buffer), &(instructions_index), 94_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 95_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 87_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 86_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 73_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 185_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 205_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 236_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 40_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 198_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 68_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 31_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 10_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 76_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 30_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 76_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 68_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 32_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 73_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 247_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 225_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 73_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 41_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 200_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 193_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 234_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 3_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 14_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 52_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 146_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 246_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 41_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 240_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 192_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 48_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 136_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 215_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 202_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 233_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 9_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 119_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 201_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 68_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 32_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 191_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 41_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 194_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 49_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 192_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 116_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 20_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 32_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 76_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 194_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 199_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 192_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 15_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 5_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 196_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 40_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 88_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 196_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 8_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 80_whole_1);
+    autopush_byte(&(instructions_buffer), &(instructions_index), 195_whole_1);
 
     variable main_index = autostringarraymap_get(&(functions), &(function_locations), "main", index);
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
@@ -5459,7 +5429,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         };
 
         set_call_value(&(instructions_buffer), call_instruction2, function_index);
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     variable i = 0;
@@ -5468,7 +5438,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         variable jmp_target = @cast_whole_8(autoarray8_get(&(jmp_targets), i));
         variable target_location = autoarray8_get(&(targets), jmp_target);
         set_jmp_value(&(instructions_buffer), jmp_instruction2, @cast_InstructionIndex(target_location));
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     variable i = 0;
@@ -5477,7 +5447,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         variable jmp_target = @cast_whole_8(autoarray8_get(&(je_targets), i));
         variable target_location = autoarray8_get(&(targets), jmp_target);
         set_je_value(&(instructions_buffer), jmp_instruction2, @cast_InstructionIndex(target_location));
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     if =(name, 0) {
@@ -5485,8 +5455,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         exit(1);
     };
 
-    variable name_new = brk_allocate(whole_8-(length(name), 6));
-    copy(name, name_new, whole_8-(length(name), 7));
+    variable name_new = brk_allocate(-(length(name), 6));
+    copy(name, name_new, -(length(name), 7));
 
     variable asm_output = autobuffer_new(32);
     variable asm_output_length: whole_8 = 0;
@@ -5498,55 +5468,55 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     variable i = 0;
     while <(i, data_indexes_to_adjust_index) {
         variable index = @cast_whole_8(autoarray8_get(&(data_indexes_to_adjust), i));
-        variable value_new = @cast_whole_8(+(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(instructions_index, 232)));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(whole_8+(value_new, whole_8+(start_address, 4096))), index);
-        i = @cast_whole_8(+(i, 1));
+        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(instructions_index, 232));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(value_new, +(start_address, 4096))), index);
+        i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_index) {
         variable index = @cast_whole_8(autoarray8_get(&(bss_indexes_to_adjust), i));
-        variable value_new = @cast_whole_8(+(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index)));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(whole_8+(value_new, whole_8+(start_address, 8192))), index);
-        i = @cast_whole_8(+(i, 1));
+        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(value_new, +(start_address, 8192))), index);
+        i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_relative_index) {
         variable index = @cast_whole_8(autoarray8_get(&(data_indexes_to_adjust_relative), i));
-        variable value_new = @cast_whole_8(+(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), instructions_index));
+        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), instructions_index);
         variable actual_value = @cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index)));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(whole_8+(whole_8-(value_new, whole_8+(index, 4)), 4096)), index);
-        i = @cast_whole_8(+(i, 1));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(-(value_new, +(index, 4)), 4096)), index);
+        i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_relative_index) {
         variable index = @cast_whole_8(autoarray8_get(&(bss_indexes_to_adjust_relative), i));
-        variable value_new = @cast_whole_8(+(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index)));
+        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
         variable actual_value = @cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index)));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(whole_8+(whole_8-(value_new, whole_8+(index, 4)), 8192)), index);
-        i = @cast_whole_8(+(i, 1));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(-(value_new, +(index, 4)), 8192)), index);
+        i = +(i, 1);
     };
 
     autobuffer_set(&(output), AutoBuffer->buffer(&(instructions_buffer)), 232, instructions_index);
-    autobuffer_set(&(output), AutoBuffer->buffer(&(data_buffer)), @cast_whole_8(+(232, instructions_index)), data_buffer_index);
+    autobuffer_set(&(output), AutoBuffer->buffer(&(data_buffer)), +(232, instructions_index), data_buffer_index);
 
     variable program_header: ELF64ProgramHeader;
     ELF64ProgramHeader<-type(&(program_header), whole_8_to_medium(1));
     ELF64ProgramHeader<-location(&(program_header), 0);
     ELF64ProgramHeader<-virtual_address(&(program_header), start_address);
     ELF64ProgramHeader<-physical_address(&(program_header), start_address);
-    ELF64ProgramHeader<-size_file(&(program_header), @cast_whole_8(+(instructions_index, 232)));
-    ELF64ProgramHeader<-size_memory(&(program_header), @cast_whole_8(+(instructions_index, 232)));
+    ELF64ProgramHeader<-size_file(&(program_header), +(instructions_index, 232));
+    ELF64ProgramHeader<-size_memory(&(program_header), +(instructions_index, 232));
     ELF64ProgramHeader<-flags(&(program_header), whole_8_to_medium(5));
     ELF64ProgramHeader<-alignment(&(program_header), 4096);
 
     variable program_header2: ELF64ProgramHeader;
     ELF64ProgramHeader<-type(&(program_header2), whole_8_to_medium(1));
-    ELF64ProgramHeader<-location(&(program_header2), @cast_whole_8(+(instructions_index, 232)));
-    ELF64ProgramHeader<-virtual_address(&(program_header2), @cast_whole_8(+(232, +(instructions_index, +(start_address, 4096)))));
-    ELF64ProgramHeader<-physical_address(&(program_header2), @cast_whole_8(+(232, +(instructions_index, +(start_address, 4096)))));
+    ELF64ProgramHeader<-location(&(program_header2), +(instructions_index, 232));
+    ELF64ProgramHeader<-virtual_address(&(program_header2), +(232, +(instructions_index, +(start_address, 4096))));
+    ELF64ProgramHeader<-physical_address(&(program_header2), +(232, +(instructions_index, +(start_address, 4096))));
     ELF64ProgramHeader<-size_file(&(program_header2), data_buffer_index);
     ELF64ProgramHeader<-size_memory(&(program_header2), data_buffer_index);
     ELF64ProgramHeader<-flags(&(program_header2), whole_8_to_medium(4));
@@ -5554,9 +5524,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
     variable program_header3: ELF64ProgramHeader;
     ELF64ProgramHeader<-type(&(program_header3), whole_8_to_medium(1));
-    ELF64ProgramHeader<-location(&(program_header3), @cast_whole_8(+(instructions_index, +(data_buffer_index, 232))));
-    ELF64ProgramHeader<-virtual_address(&(program_header3), @cast_whole_8(+(232, +(instructions_index, +(+(start_address, 8192), data_buffer_index)))));
-    ELF64ProgramHeader<-physical_address(&(program_header3), @cast_whole_8(+(232, +(instructions_index, +(+(start_address, 8192), data_buffer_index)))));
+    ELF64ProgramHeader<-location(&(program_header3), +(instructions_index, +(data_buffer_index, 232)));
+    ELF64ProgramHeader<-virtual_address(&(program_header3), +(232, +(instructions_index, +(+(start_address, 8192), data_buffer_index))));
+    ELF64ProgramHeader<-physical_address(&(program_header3), +(232, +(instructions_index, +(+(start_address, 8192), data_buffer_index))));
     ELF64ProgramHeader<-size_file(&(program_header3), 0);
     ELF64ProgramHeader<-size_memory(&(program_header3), bss_index);
     ELF64ProgramHeader<-flags(&(program_header3), whole_8_to_medium(6));
@@ -5567,7 +5537,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     autobuffer_set(&(output), &(program_header2), 120, 56);
     autobuffer_set(&(output), &(program_header3), 176, 56);
 
-    variable output_file = sys_open(AutoBuffer->buffer(&(asm_output)), @cast_whole_8(+(+(O_WRONLY, O_CREAT), O_TRUNC)), 452);
+    variable output_file = sys_open(AutoBuffer->buffer(&(asm_output)), +(+(O_WRONLY, O_CREAT), O_TRUNC), 452);
     sys_write(output_file, AutoBuffer->buffer(&(output)), AutoBuffer->size(&(output)));
     sys_close(output_file);
 };
@@ -5580,18 +5550,10 @@ function indexof(string: *, character: any_1, start: whole_8): whole_8 {
         if =(any_1->(@cast_*any_1(+(string, i))), character) {
             return i;
         };
-        i = whole_8+(i, 1);
+        i = +(i, 1);
     };
 
     return 999;
-};
-
-function whole_8-(value1: whole_8, value2: whole_8): whole_8 {
-    return @cast_whole_8(-(value1, value2));
-};
-
-function whole_8*(value1: whole_8, value2: whole_8): whole_8 {
-    return @cast_whole_8(*(value1, value2));
 };
 
 function print(string: *) {
@@ -5611,7 +5573,7 @@ function get_contents(name: *): * {
     variable stat: Stat;
     sys_fstat(descriptor, &(stat));
 
-    variable contents = brk_allocate(whole_8+(Stat->size(&(stat)), 1));
+    variable contents = brk_allocate(+(Stat->size(&(stat)), 1));
 
     sys_read(descriptor, contents, Stat->size(&(stat)));
 
@@ -5635,7 +5597,7 @@ function array8_get(array: *, index: whole_8): any_8 {
 function array8_length(array: *): whole_8 {
     variable k = 0;
     while !(=(@cast_whole_8(array8_get(array, k)), 0)) {
-        k = whole_8+(k, 1);
+        k = +(k, 1);
     };
     return k;
 };
@@ -5653,13 +5615,13 @@ function stack8_pop(stack: *, stack_pointer: *whole_8): any_8 {
 };
 
 function autostack8_push(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, @cast_whole_8(value), whole_8*(whole_8->(stack_pointer), 8));
+    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(whole_8->(stack_pointer), 8));
     increment_whole_8_pointer(stack_pointer, 1);
 };
 
 function autostack8_pop(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
     decrement_whole_8_pointer(stack_pointer, 1);
-    variable index_pointer = @cast_*any_8(autobuffer_get(buffer, whole_8*(whole_8->(stack_pointer), 8)));
+    variable index_pointer = @cast_*any_8(autobuffer_get(buffer, *(whole_8->(stack_pointer), 8)));
     return any_8->(index_pointer);
 };
 
@@ -5669,7 +5631,7 @@ function autostringarraymap_get(keys: *AutoBuffer, values: *AutoBuffer, wanted: 
         if string=(@cast_*(autoarray8_get(keys, j)), wanted) {
             return @cast_*(autoarray8_get(values, j));
         };
-        j = whole_8+(j, 1);
+        j = +(j, 1);
     };
 
     return @cast_*(0);
@@ -5681,7 +5643,7 @@ function autostringarraymap_get_index(keys: *AutoBuffer, wanted: *, size: whole_
         if string=(@cast_*(autoarray8_get(keys, j)), wanted) {
             return j;
         };
-        j = whole_8+(j, 1);
+        j = +(j, 1);
     };
 
     return 999;
