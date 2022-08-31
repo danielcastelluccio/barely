@@ -238,7 +238,7 @@ function to_number(string: *): whole_8 {
             i = 999;
         } else {
             whole_8 = *(whole_8, 10);
-            whole_8 = +(whole_8, byte_to_integer(-(character, 48_whole_1)));
+            whole_8 = +(whole_8, whole_1_to_whole_8(-(character, 48_whole_1)));
             i = +(i, 1);
         };
     };
@@ -263,7 +263,7 @@ function whole_8_to_string(whole_8: whole_8, buffer: *) {
 
     variable i = 0;
     while !(=(whole_82, 0)) {
-        variable number = byte(%(whole_82, 10));
+        variable number = whole_8_to_whole_1(%(whole_82, 10));
         any_1<-(@cast_*any_1(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
         whole_82 = /(whole_82, 10);
         i = +(i, 1);
@@ -350,9 +350,9 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
             if =(character, 95_whole_1) {
                 stage = +(stage, 1);
             } else if =(stage, 1) {
-                autopush_byte(&(type_buffer), &(type_buffer_index), character);
+                autopush_whole_1(&(type_buffer), &(type_buffer_index), character);
             } else if =(stage, 2) {
-                autopush_byte(&(size_buffer), &(size_buffer_index), character);
+                autopush_whole_1(&(size_buffer), &(size_buffer_index), character);
             };
             
             j = +(j, 1);
@@ -2810,9 +2810,9 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //            autopush_string(&(data_buffer), &(data_buffer_index), "_");
 //            autopush_string(&(data_buffer), &(data_buffer_index), &(id_string));
 //            autopush_string(&(data_buffer), &(data_buffer_index), ": db ");
-//            autopush_character(&(data_buffer), &(data_buffer_index), byte(34));
+//            autopush_character(&(data_buffer), &(data_buffer_index), whole_8_to_whole_1(34));
 //            autopush_string(&(data_buffer), &(data_buffer_index), string_value);
-//            autopush_character(&(data_buffer), &(data_buffer_index), byte(34));
+//            autopush_character(&(data_buffer), &(data_buffer_index), whole_8_to_whole_1(34));
 //            autopush_string_with_newline(&(data_buffer), &(data_buffer_index), ", 0");
 //
 //            done_anything = true;
@@ -3684,7 +3684,7 @@ function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
 //
 //    variable output_directory_index = 0;
 //    while !(=(output_directory_index, 999)) {
-//        output_directory_index = indexof(name_new, byte(ASCII_SLASH), +(output_directory_index, 1));
+//        output_directory_index = indexof(name_new, whole_8_to_whole_1(ASCII_SLASH), +(output_directory_index, 1));
 //
 //        if !(=(output_directory_index, 999)) {
 //            variable directory_new = brk_allocate(+(output_directory_index, 1));
@@ -3733,11 +3733,11 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     ELF64FileHeader<-format(&(file_header), 2_whole_1);
     ELF64FileHeader<-endianness(&(file_header), 1_whole_1);
     ELF64FileHeader<-abi(&(file_header), 3_whole_1);
-    ELF64FileHeader<-object_file_type(&(file_header), whole_8_to_short(2));
-    ELF64FileHeader<-machine(&(file_header), whole_8_to_short(62));
+    ELF64FileHeader<-object_file_type(&(file_header), whole_8_to_whole_2(2));
+    ELF64FileHeader<-machine(&(file_header), whole_8_to_whole_2(62));
     ELF64FileHeader<-entry_point(&(file_header), 4194536);
     ELF64FileHeader<-program_header_table(&(file_header), 64);
-    ELF64FileHeader<-program_header_count(&(file_header), whole_8_to_short(3));
+    ELF64FileHeader<-program_header_count(&(file_header), whole_8_to_whole_2(3));
 
     variable data_buffer = autobuffer_new(512);
     variable data_index = 0;
@@ -4221,15 +4221,15 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 if =(size, 8) {
                     autopush_push_whole_8(&(instructions_buffer), &(instructions_index), value_whole_8);
                 } else if =(size, 4) {
-                    autopush_mov_medium_register4(&(instructions_buffer), &(instructions_index), EAX, whole_8_to_medium(value_whole_8));
+                    autopush_mov_whole_4_register4(&(instructions_buffer), &(instructions_index), EAX, whole_8_to_whole_4(value_whole_8));
                     autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
                     autopush_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
                 } else if =(size, 2) {
-                    autopush_mov_short_register2(&(instructions_buffer), &(instructions_index), AX, whole_8_to_short(value_whole_8));
+                    autopush_mov_whole_2_register2(&(instructions_buffer), &(instructions_index), AX, whole_8_to_whole_2(value_whole_8));
                     autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
                     autopush_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
                 } else if =(size, 1) {
-                    autopush_mov_byte_register1(&(instructions_buffer), &(instructions_index), AL, byte(value_whole_8));
+                    autopush_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, @cast_whole_1(whole_8_to_whole_1(value_whole_8)));
                     autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                 };
@@ -4590,37 +4590,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
                     autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AH, RSP, 0);
                 };
-                done_anything_invoke = true;
-            };
-
-            if string=(function_name, "byte") {
-                autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                autopush_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                done_anything_invoke = true;
-            };
-
-            if string=(function_name, "byte_to_integer") {
-                autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                autopush_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                autopush_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                done_anything_invoke = true;
-            };
-
-            if string=(function_name, "short_to_integer") {
-                autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                autopush_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                autopush_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-                done_anything_invoke = true;
-            };
-
-            if string=(function_name, "medium_to_integer") {
-                autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                autopush_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                autopush_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                autopush_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             };
 
@@ -5283,132 +5252,132 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     };
 
     variable print_whole_8_index = get_instruction(&(instructions_buffer), &(instructions_index));
-    autopush_byte(&(instructions_buffer), &(instructions_index), 94_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 95_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 87_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 86_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 73_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 185_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 205_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 236_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 40_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 198_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 68_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 31_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 10_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 76_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 30_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 76_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 68_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 32_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 73_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 247_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 225_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 73_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 41_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 200_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 193_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 234_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 3_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 14_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 52_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 146_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 246_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 41_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 240_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 192_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 48_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 136_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 215_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 202_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 233_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 9_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 119_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 201_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 68_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 32_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 191_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 41_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 194_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 49_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 192_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 116_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 20_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 32_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 76_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 194_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 199_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 192_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 15_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 5_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 196_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 40_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 88_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 196_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 8_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 80_whole_1);
-    autopush_byte(&(instructions_buffer), &(instructions_index), 195_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 94_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 95_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 87_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 86_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 73_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 185_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 205_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 236_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 40_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 198_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 68_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 31_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 10_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 76_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 30_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 76_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 68_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 32_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 73_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 247_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 225_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 73_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 41_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 200_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 193_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 234_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 3_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 14_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 52_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 146_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 246_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 41_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 240_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 192_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 48_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 136_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 215_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 202_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 233_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 9_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 119_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 201_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 68_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 32_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 191_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 41_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 194_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 49_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 192_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 116_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 20_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 32_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 76_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 194_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 199_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 192_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 15_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 5_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 196_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 40_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 88_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 196_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 8_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 80_whole_1);
+    autopush_whole_1(&(instructions_buffer), &(instructions_index), 195_whole_1);
 
     variable main_index = autostringarraymap_get(&(functions), &(function_locations), "main", index);
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
@@ -5468,34 +5437,34 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     variable i = 0;
     while <(i, data_indexes_to_adjust_index) {
         variable index = @cast_whole_8(autoarray8_get(&(data_indexes_to_adjust), i));
-        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(instructions_index, 232));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(value_new, +(start_address, 4096))), index);
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, 232));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 4096))), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_index) {
         variable index = @cast_whole_8(autoarray8_get(&(bss_indexes_to_adjust), i));
-        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(value_new, +(start_address, 8192))), index);
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 8192))), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_relative_index) {
         variable index = @cast_whole_8(autoarray8_get(&(data_indexes_to_adjust_relative), i));
-        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), instructions_index);
-        variable actual_value = @cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index)));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(-(value_new, +(index, 4)), 4096)), index);
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), instructions_index);
+        variable actual_value = @cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 4096)), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_relative_index) {
         variable index = @cast_whole_8(autoarray8_get(&(bss_indexes_to_adjust_relative), i));
-        variable value_new = +(@cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
-        variable actual_value = @cast_whole_8(medium_to_integer(autobuffer_get_any_4(&(instructions_buffer), index)));
-        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_medium(+(-(value_new, +(index, 4)), 8192)), index);
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
+        variable actual_value = @cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 8192)), index);
         i = +(i, 1);
     };
 
@@ -5503,33 +5472,33 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     autobuffer_set(&(output), AutoBuffer->buffer(&(data_buffer)), +(232, instructions_index), data_buffer_index);
 
     variable program_header: ELF64ProgramHeader;
-    ELF64ProgramHeader<-type(&(program_header), whole_8_to_medium(1));
+    ELF64ProgramHeader<-type(&(program_header), whole_8_to_whole_4(1));
     ELF64ProgramHeader<-location(&(program_header), 0);
     ELF64ProgramHeader<-virtual_address(&(program_header), start_address);
     ELF64ProgramHeader<-physical_address(&(program_header), start_address);
     ELF64ProgramHeader<-size_file(&(program_header), +(instructions_index, 232));
     ELF64ProgramHeader<-size_memory(&(program_header), +(instructions_index, 232));
-    ELF64ProgramHeader<-flags(&(program_header), whole_8_to_medium(5));
+    ELF64ProgramHeader<-flags(&(program_header), whole_8_to_whole_4(5));
     ELF64ProgramHeader<-alignment(&(program_header), 4096);
 
     variable program_header2: ELF64ProgramHeader;
-    ELF64ProgramHeader<-type(&(program_header2), whole_8_to_medium(1));
+    ELF64ProgramHeader<-type(&(program_header2), whole_8_to_whole_4(1));
     ELF64ProgramHeader<-location(&(program_header2), +(instructions_index, 232));
     ELF64ProgramHeader<-virtual_address(&(program_header2), +(232, +(instructions_index, +(start_address, 4096))));
     ELF64ProgramHeader<-physical_address(&(program_header2), +(232, +(instructions_index, +(start_address, 4096))));
     ELF64ProgramHeader<-size_file(&(program_header2), data_buffer_index);
     ELF64ProgramHeader<-size_memory(&(program_header2), data_buffer_index);
-    ELF64ProgramHeader<-flags(&(program_header2), whole_8_to_medium(4));
+    ELF64ProgramHeader<-flags(&(program_header2), whole_8_to_whole_4(4));
     ELF64ProgramHeader<-alignment(&(program_header2), 4096);
 
     variable program_header3: ELF64ProgramHeader;
-    ELF64ProgramHeader<-type(&(program_header3), whole_8_to_medium(1));
+    ELF64ProgramHeader<-type(&(program_header3), whole_8_to_whole_4(1));
     ELF64ProgramHeader<-location(&(program_header3), +(instructions_index, +(data_buffer_index, 232)));
     ELF64ProgramHeader<-virtual_address(&(program_header3), +(232, +(instructions_index, +(+(start_address, 8192), data_buffer_index))));
     ELF64ProgramHeader<-physical_address(&(program_header3), +(232, +(instructions_index, +(+(start_address, 8192), data_buffer_index))));
     ELF64ProgramHeader<-size_file(&(program_header3), 0);
     ELF64ProgramHeader<-size_memory(&(program_header3), bss_index);
-    ELF64ProgramHeader<-flags(&(program_header3), whole_8_to_medium(6));
+    ELF64ProgramHeader<-flags(&(program_header3), whole_8_to_whole_4(6));
     ELF64ProgramHeader<-alignment(&(program_header3), 4096);
 
     autobuffer_set(&(output), &(file_header), 0, 64);
