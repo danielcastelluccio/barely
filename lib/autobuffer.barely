@@ -50,12 +50,11 @@ function autobuffer_register(buffer: *AutoBuffer, location: whole_8, size: whole
     while >(+(location, size), AutoBuffer->size(buffer)) {
         variable previous_buffer = AutoBuffer->buffer(buffer);
         variable previous_size = AutoBuffer->size(buffer);
-        variable new_buffer_size = @cast_whole_8(+(AutoBuffer->size(buffer), AutoBuffer->increment(buffer)));
+        variable new_buffer_size = +(AutoBuffer->size(buffer), AutoBuffer->increment(buffer));
         variable allocated = brk_allocate(new_buffer_size);
         AutoBuffer<-buffer(buffer, allocated);
         AutoBuffer<-size(buffer, new_buffer_size);
         copy(previous_buffer, allocated, previous_size);
-        //println("reallocating");
     };
 };
 
