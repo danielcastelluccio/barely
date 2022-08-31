@@ -103,7 +103,7 @@ function main(arguments: **, argument_count: whole_8) {
             variable member_types = *->(@cast_**(+(nodes_get_pointer(&(nodes), i), 24)));
 
             variable j = 0;
-            while !(=(@cast_whole_8(array8_get(member_names, j)), 0)) {
+            while !(=(array8_get(member_names, j), 0)) {
                 variable member_name = @cast_*(array8_get(member_names, j));
                 variable member_type = @cast_*(array8_get(member_types, j));
 
@@ -1034,7 +1034,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
             };
 
             variable i = 0;
-            while !(=(@cast_whole_8(autoarray8_get(&(names), i)), 0)) {
+            while !(=(autoarray8_get(&(names), i), 0)) {
                 variable node_data = @cast_*NodeDeclareData(append_node_data(nodes, nodes_index, NODE_DECLARE));
                 NodeDeclareData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
                 NodeDeclareData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
@@ -1047,7 +1047,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
                 parse_expression(tokens, &(index), nodes, nodes_index);
             } else {
                 variable i = 0;
-                while !(=(@cast_whole_8(autoarray8_get(&(names), i)), 0)) {
+                while !(=(autoarray8_get(&(names), i), 0)) {
                     variable node_data = @cast_*NodeZeroData(append_node_data(nodes, nodes_index, NODE_ZERO));
                     NodeZeroData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
                     NodeZeroData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
@@ -1057,7 +1057,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
             };
 
             variable i = 0;
-            while !(=(@cast_whole_8(autoarray8_get(&(names), i)), 0)) {
+            while !(=(autoarray8_get(&(names), i), 0)) {
                 variable node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
                 NodeAssignData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
 
@@ -1184,7 +1184,7 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *A
         parse_expression(tokens, &(index), nodes, nodes_index);
 
         variable i = 0;
-        while !(=(@cast_whole_8(autoarray8_get(&(names), i)), 0)) {
+        while !(=(autoarray8_get(&(names), i), 0)) {
             variable assign_node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
             NodeAssignData<-name(assign_node_data, @cast_*(autoarray8_get(&(names), i)));
             i = +(i, 1);
@@ -1367,7 +1367,7 @@ function get_size_multiple_linux_x86-64(array: *, count: whole_8, nodes: *AutoBu
 
     variable i = 0;
     while <(i, count) {
-        if =(@cast_whole_8(array8_get(array, i)), 0) {
+        if =(array8_get(array, i), 0) {
             return total;
         };
         total = +(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
@@ -1718,7 +1718,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
 
                         variable length = array8_length(arguments);
                         variable k = 0;
-                        while !(=(@cast_whole_8(array8_get(arguments, k)), 0)) {
+                        while !(=(array8_get(arguments, k), 0)) {
                             variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                             variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
                             if !(is_type(wanted, given, nodes, node_count)) {
@@ -1738,7 +1738,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                         };
 
                         variable k = 0;
-                        while !(=(@cast_whole_8(array8_get(returns, k)), 0)) {
+                        while !(=(array8_get(returns, k), 0)) {
                             variable return_value = @cast_*(array8_get(returns, k));
                             autostack8_push(&(stack), &(stack_pointer), return_value);
 
@@ -1877,7 +1877,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable function_returns2 = autostringarraymap_get(&(functions), &(function_returns), current_function, index);
 
             variable j = 0;
-            while !(=(@cast_whole_8(array8_get(function_returns2, j)), 0)) {
+            while !(=(array8_get(function_returns2, j), 0)) {
                 variable function_return = @cast_*(array8_get(function_returns2, j));
                 variable stack_popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 
@@ -4007,7 +4007,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable member_types = *->(@cast_**(+(nodes_get_pointer(nodes, i), 24)));
 
             variable j = 0;
-            while !(=(@cast_whole_8(array8_get(member_names, j)), 0)) {
+            while !(=(array8_get(member_names, j), 0)) {
                 variable member_name = @cast_*(array8_get(member_names, j));
                 variable member_type = @cast_*(array8_get(member_types, j));
 
@@ -4880,7 +4880,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable location = 0;
                 variable j = 0;
                 while <(j, variable_index_thing) {
-                    location = +(location, @cast_whole_8(autoarray8_get(&(variable_sizes), j)));
+                    location = +(location, autoarray8_get(&(variable_sizes), j));
                     j = +(j, 1);
                 };
 
@@ -5596,7 +5596,7 @@ function array8_get(array: *, index: whole_8): any_8 {
 
 function array8_length(array: *): whole_8 {
     variable k = 0;
-    while !(=(@cast_whole_8(array8_get(array, k)), 0)) {
+    while !(=(array8_get(array, k), 0)) {
         k = +(k, 1);
     };
     return k;
