@@ -21,7 +21,7 @@ function autobuffer_new(size: whole_8): AutoBuffer {
 function autobuffer_reset(buffer: *AutoBuffer) {
     variable i = 0;
     while <(i, AutoBuffer->size(buffer)) {
-        any_1<-(@cast_*any_1(+(AutoBuffer->buffer(buffer), i)), whole_8_to_whole_1(0));
+        any_1<-(@cast_*any_1(+(AutoBuffer->buffer(buffer), i)), 0_whole_1);
         i = +(i, 1);
     };
 };
@@ -83,4 +83,8 @@ function autobuffer_get_any_1(buffer: *AutoBuffer, location: whole_8): any_1 {
 
 function autobuffer_get_whole_4(buffer: *AutoBuffer, location: whole_8): whole_4 {
     return whole_4->(@cast_*whole_4(autobuffer_get(buffer, location)));
+};
+
+function increment_whole_8_pointer(pointer: *whole_8, amount: whole_8) {
+    whole_8<-(pointer, +(whole_8->(pointer), amount));
 };

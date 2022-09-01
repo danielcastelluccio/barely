@@ -1234,37 +1234,6 @@ function parse(tokens: *AutoBuffer, tokens_count: whole_8, nodes: *AutoBuffer, n
     };
 };
 
-function make_valid_linux_x86-64(name: *): * {
-    variable to_return = brk_allocate(*(length(name), 2));
-    variable i = 0;
-    variable j = 0;
-    while <(i, length(name)) {
-        variable byte = any_1->(@cast_*any_1(+(name, i)));
-        variable buffer: any_8;
-        any_1<-(@cast_*any_1(&(buffer)), byte);
-
-        if =(byte, 43_whole_1) {
-            whole_8_to_string(43, &(buffer));
-        };
-        if =(byte, 61_whole_1) {
-            whole_8_to_string(61, &(buffer));
-        };
-        if =(byte, 42_whole_1) {
-            whole_8_to_string(42, &(buffer));
-        };
-        if =(byte, 45_whole_1) {
-            whole_8_to_string(45, &(buffer));
-        };
-
-        copy(&(buffer), @cast_*(+(to_return, j)), length(&(buffer)));
-        j = +(j, length(&(buffer)));
-
-        i = +(i, 1);
-    };
-
-    return to_return;
-};
-
 function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
     if string_length=(type, "*", 1) {
         return 0;
