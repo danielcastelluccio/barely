@@ -1898,30 +1898,6 @@ function new_elf64_file_header(): ELF64FileHeader {
     return header;
 };
 
-function whole_8_to_whole_4(whole_8: whole_8): whole_4 {
-    variable whole_4: whole_4;
-
-    copy(&(whole_8), &(whole_4), 4);
-
-    return whole_4;
-};
-
-function whole_8_to_whole_2(whole_8: whole_8): whole_2 {
-    variable whole_2: whole_2;
-
-    copy(&(whole_8), &(whole_2), 2);
-
-    return whole_2;
-};
-
-function whole_8_to_whole_1(whole_8: whole_8): whole_1 {
-    variable whole_1: whole_1;
-
-    copy(&(whole_8), &(whole_1), 2);
-
-    return whole_1;
-};
-
 structure ELF64FileHeader {
     magic: any_4;
     format: any_1;
@@ -1978,12 +1954,3 @@ function brk_allocate(size: whole_8): * {
     return allocated;
 };
 
-function length(string: *): whole_8 {
-    variable length = 0;
-
-    while !(=(0_whole_1, *1(+(string, length)))) {
-        length = +(length, 1);
-    };
-
-    return length;
-};
