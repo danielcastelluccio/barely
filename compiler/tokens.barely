@@ -1,0 +1,54 @@
+constant TOKEN_OPEN_PARENTHESIS: whole_8 = 0;
+constant TOKEN_CLOSED_PARENTHESIS: whole_8 = 1;
+constant TOKEN_OPEN_CURLY_BRACKETS: whole_8 = 2;
+constant TOKEN_CLOSED_CURLY_BRACKETS: whole_8 = 3;
+constant TOKEN_COMMA: whole_8 = 4;
+constant TOKEN_SEMICOLON: whole_8 = 5;
+constant TOKEN_KEYWORD: whole_8 = 6;
+
+structure TokenKeywordData {
+    keyword: *;
+};
+
+constant TOKEN_NAME: whole_8 = 7;
+
+structure TokenNameData {
+    name: *;
+};
+
+constant TOKEN_STRING: whole_8 = 8;
+
+structure TokenStringData {
+    value: *;
+};
+
+constant TOKEN_NUMBER: whole_8 = 9;
+
+structure TokenNumberData {
+    value: whole_8;
+    type: whole_8;
+    size: whole_8;
+};
+
+constant TOKEN_COLON: whole_8 = 10;
+
+constant TOKEN_BOOLEAN: whole_8 = 11;
+
+structure TokenBooleanData {
+    value: boolean;
+};
+
+constant TOKEN_SIZE: whole_8 = 32;
+
+function tokens_get_id(tokens: *AutoBuffer, index: whole_8): whole_8 {
+    return autobuffer_get_whole_8(tokens, *(index, TOKEN_SIZE));
+};
+
+function tokens_get_pointer(tokens: *AutoBuffer, index: whole_8): * {
+    return autobuffer_get(tokens, *(index, TOKEN_SIZE));
+};
+
+function tokens_get_pointer_data(tokens: *AutoBuffer, index: whole_8): * {
+    return autobuffer_get(tokens, +(*(index, TOKEN_SIZE), 8));
+};
+

@@ -1,0 +1,128 @@
+constant NODE_FUNCTION: whole_8 = 0;
+
+structure NodeFunctionData {
+    name: *;
+    argument_names: *;
+    argument_types: *;
+    returns: *;
+};
+
+constant NODE_ENDFUNCTION: whole_8 = 1;
+
+constant NODE_RETRIEVE: whole_8 = 2;
+
+structure NodeRetrieveData {
+    name: *;
+};
+
+constant NODE_STRING: whole_8 = 3;
+
+structure NodeStringData {
+    value: *;
+};
+
+constant NODE_NUMBER: whole_8 = 4;
+
+structure NodeNumberData {
+    value: whole_8;
+    type: whole_8;
+    size: whole_8;
+};
+
+constant NODE_INVOKE: whole_8 = 5;
+
+structure NodeInvokeData {
+    name: *;
+};
+
+constant NODE_DECLARE: whole_8 = 6;
+
+structure NodeDeclareData {
+    name: *;
+    type: *;
+};
+
+constant NODE_ASSIGN: whole_8 = 7;
+
+structure NodeAssignData {
+    name: *;
+};
+
+constant NODE_RETURN: whole_8 = 8;
+
+constant NODE_STRUCTURE: whole_8 = 9;
+
+structure NodeStructureData {
+    name: *;
+    item_names: *;
+    item_types: *;
+};
+
+constant NODE_POINTER: whole_8 = 10;
+
+constant NODE_BOOLEAN: whole_8 = 11;
+
+structure NodeBooleanData {
+    value: boolean;
+};
+
+constant NODE_JUMP_CONDITIONAL: whole_8 = 12;
+
+structure NodeJumpConditionalData {
+    target_id: whole_8;
+    desired_state: boolean;
+};
+
+constant NODE_TARGET: whole_8 = 13;
+
+structure NodeTargetData {
+    id: whole_8;
+};
+
+constant NODE_JUMP: whole_8 = 14;
+
+structure NodeJumpData {
+    target_id: whole_8;
+};
+
+constant NODE_GLOBAL: whole_8 = 15;
+
+structure NodeGlobalData {
+    name: *;
+    type: *;
+};
+
+constant NODE_CONSTANT: whole_8 = 16;
+
+structure NodeConstantData {
+    name: *;
+    type: *;
+    value: any_8;
+};
+
+constant NODE_ZERO: whole_8 = 17;
+
+structure NodeZeroData {
+    name: *;
+    type: *;
+};
+
+constant NODE_INCLUDE: whole_8 = 18;
+
+structure NodeIncludeData {
+    path: *;
+};
+
+constant NODE_SIZE: whole_8 = 48;
+
+function nodes_get_id(nodes: *AutoBuffer, index: whole_8): whole_8 {
+    return autobuffer_get_whole_8(nodes, *(index, NODE_SIZE));
+};
+
+function nodes_get_pointer(nodes: *AutoBuffer, index: whole_8): * {
+    return autobuffer_get(nodes, *(index, NODE_SIZE));
+};
+
+function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
+    return autobuffer_get(nodes, +(*(index, NODE_SIZE), 8));
+};

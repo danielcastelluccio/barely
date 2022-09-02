@@ -1,0 +1,791 @@
+include "compiler/tokens.barely";
+include "compiler/nodes.barely";
+
+function append_token_data(tokens: *AutoBuffer, tokens_index: *whole_8, id: whole_8): * {
+    return @cast_*(+(append_token(tokens, tokens_index, id), 8));
+};
+
+function append_token(tokens: *AutoBuffer, tokens_index: *whole_8, id: whole_8): * {
+    autobuffer_register(tokens, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
+    variable to_return = autobuffer_get(tokens, *(whole_8->(tokens_index), TOKEN_SIZE));
+
+    autobuffer_set_whole_8(tokens, id, *(whole_8->(tokens_index), TOKEN_SIZE));
+
+    increment_whole_8_pointer(tokens_index, 1);
+
+    return to_return;
+};
+
+function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_index: *whole_8) {
+    variable buffer = AutoBuffer->buffer(auto_buffer);
+    variable buffer_length = length(AutoBuffer->buffer(auto_buffer));
+
+    if =(buffer_length, 0) {
+        return;
+    };
+
+    variable is_keyword = false;
+    if string=(buffer, "function") {
+        is_keyword = true;
+    };
+    if string=(buffer, "variable") {
+        is_keyword = true;
+    };
+    if string=(buffer, "return") {
+        is_keyword = true;
+    };
+    if string=(buffer, "structure") {
+        is_keyword = true;
+    };
+    if string=(buffer, "if") {
+        is_keyword = true;
+    };
+    if string=(buffer, "else") {
+        is_keyword = true;
+    };
+    if string=(buffer, "while") {
+        is_keyword = true;
+    };
+    if string=(buffer, "global") {
+        is_keyword = true;
+    };
+    if string=(buffer, "constant") {
+        is_keyword = true;
+    };
+    if string=(buffer, "include") {
+        is_keyword = true;
+    };
+
+    if is_keyword {
+        variable allocated = brk_allocate(+(buffer_length, 1));
+        copy(buffer, allocated, buffer_length);
+
+        variable keyword_data = @cast_*TokenKeywordData(append_token_data(tokens, tokens_index, TOKEN_KEYWORD));
+        TokenKeywordData<-keyword(keyword_data, allocated);
+        return;
+    };
+
+    if is_number(buffer) {
+        variable whole_8_data = @cast_*TokenNumberData(append_token_data(tokens, tokens_index, TOKEN_NUMBER));
+
+        variable stage = 0;
+        variable type_buffer = autobuffer_new(8);
+        variable type_buffer_index = 0;
+
+        variable size_buffer = autobuffer_new(8);
+        variable size_buffer_index = 0;
+
+        variable j = 0;
+        while <(j, length(buffer)) {
+            variable character = whole_1->(@cast_*whole_1(+(buffer, j)));
+            if =(character, 95_whole_1) {
+                stage = +(stage, 1);
+            } else if =(stage, 1) {
+                autopush_whole_1(&(type_buffer), &(type_buffer_index), character);
+            } else if =(stage, 2) {
+                autopush_whole_1(&(size_buffer), &(size_buffer_index), character);
+            };
+            
+            j = +(j, 1);
+        };
+
+        if =(length(AutoBuffer->buffer(&(type_buffer))), 0) {
+            autopush_pointer(&(type_buffer), &(type_buffer_index), "whole", 5);
+        };
+
+        if =(length(AutoBuffer->buffer(&(size_buffer))), 0) {
+            autopush_pointer(&(size_buffer), &(size_buffer_index), "8", 1);
+        };
+
+        if string=(AutoBuffer->buffer(&(type_buffer)), "whole") {
+            TokenNumberData<-type(whole_8_data, 0);
+        } else {
+            TokenNumberData<-type(whole_8_data, 1);
+        };
+
+        TokenNumberData<-size(whole_8_data, to_number(AutoBuffer->buffer(&(size_buffer))));
+        TokenNumberData<-value(whole_8_data, to_number(buffer));
+
+        return;
+    };
+
+    if |(string=(buffer, "true"), string=(buffer, "false")) {
+        variable boolean_data = @cast_*TokenBooleanData(append_token_data(tokens, tokens_index, TOKEN_BOOLEAN));
+        TokenBooleanData<-value(boolean_data, string=(buffer, "true"));
+
+        return;
+    };
+    
+    variable allocated = brk_allocate(+(buffer_length, 1));
+    copy(buffer, allocated, buffer_length);
+
+    variable name_data = @cast_*TokenNameData(append_token_data(tokens, tokens_index, TOKEN_NAME));
+    TokenNameData<-name(name_data, allocated);
+};
+
+constant ASCII_SPACE: whole_1 = 32;
+constant ASCII_OPEN_PARENTHESIS: whole_1 = 40;
+constant ASCII_CLOSED_PARENTHESIS: whole_1 = 41;
+constant ASCII_OPEN_CURLY_BRACKETS: whole_1 = 123;
+constant ASCII_CLOSED_CURLY_BRACKETS: whole_1 = 125;
+constant ASCII_COMMA: whole_1 = 44;
+constant ASCII_SEMICOLON: whole_1 = 59;
+constant ASCII_COLON: whole_1 = 58;
+constant ASCII_TAB: whole_1 = 9;
+constant ASCII_LINE_FEED: whole_1 = 10;
+constant ASCII_QUOTATION: whole_1 = 34;
+constant ASCII_SLASH: whole_1 = 47;
+
+function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
+    variable index = 0;
+    variable contents_length = length(contents);
+
+    variable buffer = autobuffer_new(64);
+    variable buffer_index = 0;
+
+    variable in_quotes = false;
+    variable in_comment = false;
+
+    while <(index, contents_length) {
+        variable character_pointer = @cast_*(+(contents, index));
+        variable character_pointer_next = @cast_*(+(contents, +(index, 1)));
+        variable done_anything = false;
+
+        if !(in_quotes) {
+            if !(in_comment) {
+                if =(*1(character_pointer), ASCII_SPACE) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+                };
+                if =(*1(character_pointer), ASCII_OPEN_PARENTHESIS) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_PARENTHESIS, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_CLOSED_PARENTHESIS) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_PARENTHESIS, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_CURLY_BRACKETS, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_CURLY_BRACKETS, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_COMMA) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_COMMA, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_SEMICOLON) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_SEMICOLON, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_COLON) {
+                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    autobuffer_set_whole_8(tokens, TOKEN_COLON, *(whole_8->(tokens_index), TOKEN_SIZE));
+                    increment_whole_8_pointer(tokens_index, 1);
+                };
+                if =(*1(character_pointer), ASCII_TAB) {
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+                };
+            };
+
+            if =(*1(character_pointer), ASCII_LINE_FEED) {
+                in_comment = false;
+                done_anything = true;
+                autobuffer_reset(&(buffer));
+                buffer_index = 0;
+            };
+        };
+        if !(in_comment) {
+            if =(*1(character_pointer), ASCII_QUOTATION) {
+                if in_quotes {
+                    variable buffer_length = length(AutoBuffer->buffer(&(buffer)));
+                    variable allocated = brk_allocate(+(buffer_length, 1));
+                    copy(AutoBuffer->buffer(&(buffer)), allocated, buffer_length);
+
+                    variable string_pointer_data = @cast_*TokenStringData(append_token_data(tokens, tokens_index, TOKEN_STRING));
+                    TokenStringData<-value(string_pointer_data, allocated);
+
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+                };
+
+                in_quotes = !(in_quotes);
+                done_anything = true;
+            };
+        };
+        if =(*1(character_pointer), ASCII_SLASH) {
+            if =(*1(character_pointer_next), ASCII_SLASH) {
+                in_comment = true;
+                done_anything = true;
+            };
+        };
+
+        if !(done_anything) {
+            if !(in_comment) {
+                autobuffer_set_any_1(&(buffer), any_1->(@cast_*any_1(character_pointer)), buffer_index);
+
+                buffer_index = +(buffer_index, 1);
+            };
+        };
+
+        index = +(index, 1);
+    };
+};
+
+function append_node_data(nodes: *AutoBuffer, nodes_index: *whole_8, id: whole_8): * {
+    return @cast_*(+(append_node(nodes, nodes_index, id), 8));
+};
+
+function append_node(nodes: *AutoBuffer, nodes_index: *whole_8, id: whole_8): * {
+    autobuffer_register(nodes, *(whole_8->(nodes_index), NODE_SIZE), NODE_SIZE);
+    variable to_return = autobuffer_get(nodes, *(whole_8->(nodes_index), NODE_SIZE));
+
+    autobuffer_set_whole_8(nodes, id, *(whole_8->(nodes_index), NODE_SIZE));
+
+    increment_whole_8_pointer(nodes_index, 1);
+
+    return to_return;
+};
+
+function append_structure(nodes: *AutoBuffer, nodes_index, *whole_8, name: *) {
+    variable structure_data = @cast_*NodeStructureData(append_node_data(nodes, nodes_index, NODE_STRUCTURE));
+    NodeStructureData<-name(structure_data, name);
+    NodeStructureData<-item_names(structure_data, &(empty));
+    NodeStructureData<-item_types(structure_data, &(empty));
+};
+
+
+function parse_constant(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable index = whole_8->(index_pointer);
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
+    variable type = TokenNameData->name(type_token_pointer_data);
+    variable value_token_pointer_data = @cast_*TokenNumberData(tokens_get_pointer_data(tokens, +(index, 5)));
+    variable value = TokenNumberData->value(value_token_pointer_data);
+
+    variable constant_node_data = @cast_*NodeConstantData(append_node_data(nodes, nodes_index, NODE_CONSTANT));
+    NodeConstantData<-name(constant_node_data, name);
+    NodeConstantData<-type(constant_node_data, type);
+    NodeConstantData<-value(constant_node_data, value);
+
+    increment_whole_8_pointer(index_pointer, 7);
+};
+
+function parse_global(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable index = whole_8->(index_pointer);
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
+    variable type = TokenNameData->name(type_token_pointer_data);
+
+    variable global_node_data = @cast_*NodeGlobalData(append_node_data(nodes, nodes_index, NODE_GLOBAL));
+    NodeGlobalData<-name(global_node_data, name);
+    NodeGlobalData<-type(global_node_data, type);
+
+    increment_whole_8_pointer(index_pointer, 5);
+};
+
+function parse_include(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable index = whole_8->(index_pointer);
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+
+    variable include_node_data = @cast_*NodeIncludeData(append_node_data(nodes, nodes_index, NODE_INCLUDE));
+    NodeIncludeData<-path(include_node_data, name);
+
+    increment_whole_8_pointer(index_pointer, 3);
+};
+
+function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable index = whole_8->(index_pointer);
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+
+    variable member_names = autobuffer_new(40);
+    variable member_types = autobuffer_new(40);
+    variable member_index = 0;
+
+    index = +(index, 3);
+
+    variable seen_name = false;
+
+    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+        variable id = tokens_get_id(tokens, index);
+
+        if =(id, TOKEN_NAME) {
+            variable token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, index));
+            variable name_name = TokenNameData->name(token_pointer_data);
+
+            if seen_name {
+                autoarray8_set(&(member_types), member_index, name_name);
+                member_index = +(member_index, 1);
+            } else {
+                autoarray8_set(&(member_names), member_index, name_name);
+            };
+
+            seen_name = !(seen_name);
+        };
+
+        index = +(index, 1);
+    };
+
+    variable structure_data = @cast_*NodeStructureData(append_node_data(nodes, nodes_index, NODE_STRUCTURE));
+    NodeStructureData<-name(structure_data, name);
+    NodeStructureData<-item_names(structure_data, AutoBuffer->buffer(&(member_names)));
+    NodeStructureData<-item_types(structure_data, AutoBuffer->buffer(&(member_types)));
+
+    index = +(index, 2);
+
+    whole_8<-(index_pointer, index);
+};
+
+function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable index = whole_8->(index_pointer);
+
+    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
+    variable name = TokenNameData->name(name_token_pointer_data);
+
+    variable function_data = @cast_*NodeFunctionData(append_node_data(nodes, nodes_index, NODE_FUNCTION));
+    NodeFunctionData<-name(function_data, name);
+
+    index = +(index, 3);
+
+    variable parameter_names_pointer = autobuffer_new(40);
+    variable parameter_types_pointer = autobuffer_new(40);
+    variable returns_pointer = autobuffer_new(40);
+
+    variable parameters_index = 0;
+    variable parameters_index2 = 0;
+    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
+        variable id = tokens_get_id(tokens, index);
+
+        if =(id, TOKEN_NAME) {
+            variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+
+            if =(%(parameters_index, 2), 0) {
+                autoarray8_set(&(parameter_names_pointer), parameters_index2, token_name);
+            } else {
+                autoarray8_set(&(parameter_types_pointer), parameters_index2, token_name);
+                parameters_index2 = +(parameters_index2, 1);
+            };
+
+            parameters_index = +(parameters_index, 1);
+        };
+
+        index = +(index, 1);
+    };
+    
+    index = +(index, 1);
+
+    variable returns_index = 0;
+    while &&(!(=(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS)), !(=(tokens_get_id(tokens, index), TOKEN_SEMICOLON))) {
+        variable id = tokens_get_id(tokens, index);
+
+        if =(id, TOKEN_NAME) {
+            variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+
+            autoarray8_set(&(returns_pointer), returns_index, token_name);
+        };
+
+        index = +(index, 1);
+    };
+
+    variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
+
+    NodeFunctionData<-argument_names(function_data, AutoBuffer->buffer(&(parameter_names_pointer)));
+    NodeFunctionData<-argument_types(function_data, AutoBuffer->buffer(&(parameter_types_pointer)));
+    NodeFunctionData<-returns(function_data, AutoBuffer->buffer(&(returns_pointer)));
+
+    index = +(index, 1);
+
+    if has_body {
+        while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+            parse_statement(tokens, &(index), nodes, nodes_index);
+        };
+
+        index = +(index, 2);
+    };
+
+    if !(=(nodes_get_id(nodes, -(whole_8->(nodes_index), 1)), NODE_RETURN)) {
+        if has_body {
+            variable _ = append_node(nodes, nodes_index, NODE_RETURN);
+        };
+    };
+
+    variable _ = append_node(nodes, nodes_index, NODE_ENDFUNCTION);
+
+    whole_8<-(index_pointer, index);
+};
+
+function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable index = whole_8->(index_pointer);
+
+    variable id = tokens_get_id(tokens, index);
+    variable pointer_data = tokens_get_pointer_data(tokens, index);
+
+    if =(id, TOKEN_NAME) {
+        variable done_anything_name = false;
+        if =(tokens_get_id(tokens, +(index, 1)), TOKEN_OPEN_PARENTHESIS) {
+            variable function_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+
+            index = +(index, 2);
+
+            while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
+                if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
+                    index = +(index, 1);
+                } else {
+                    parse_expression(tokens, &(index), nodes, nodes_index);
+                };
+            };
+
+            index = +(index, 1);
+
+            if string=(function_name, "&") {
+                variable invoke_pointer = append_node(nodes, nodes_index, NODE_POINTER);
+            } else {
+                variable invoke_pointer_data = @cast_*NodeInvokeData(append_node_data(nodes, nodes_index, NODE_INVOKE));
+                NodeInvokeData<-name(invoke_pointer_data, function_name);
+            };
+
+            done_anything_name = true;
+        };
+
+        if !(done_anything_name) {
+            variable retrieve_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+            variable retrieve_pointer_data = @cast_*NodeRetrieveData(append_node_data(nodes, nodes_index, NODE_RETRIEVE));
+            NodeRetrieveData<-name(retrieve_pointer_data, retrieve_name);
+
+            index = +(index, 1);
+        };
+    };
+
+    if =(id, TOKEN_STRING) {
+        variable string_value = TokenStringData->value(@cast_*TokenStringData(pointer_data));
+        variable string_pointer_data = @cast_*NodeStringData(append_node_data(nodes, nodes_index, NODE_STRING));
+        NodeStringData<-value(string_pointer_data, string_value);
+
+        index = +(index, 1);
+    };
+
+    if =(id, TOKEN_NUMBER) {
+        variable whole_8_data = @cast_*TokenNumberData(pointer_data);
+        variable whole_8_pointer_data = @cast_*NodeNumberData(append_node_data(nodes, nodes_index, NODE_NUMBER));
+        NodeNumberData<-value(whole_8_pointer_data, TokenNumberData->value(whole_8_data));
+        NodeNumberData<-type(whole_8_pointer_data, TokenNumberData->type(whole_8_data));
+        NodeNumberData<-size(whole_8_pointer_data, TokenNumberData->size(whole_8_data));
+
+        index = +(index, 1);
+    };
+
+    if =(id, TOKEN_BOOLEAN) {
+        variable boolean_value = TokenBooleanData->value(@cast_*TokenBooleanData(pointer_data));
+        variable boolean_pointer_data = @cast_*NodeBooleanData(append_node_data(nodes, nodes_index, NODE_BOOLEAN));
+        NodeBooleanData<-value(boolean_pointer_data, @cast_boolean(boolean_value));
+
+        index = +(index, 1);
+    };
+
+    whole_8<-(index_pointer, index);
+};
+
+global target_id: whole_8;
+
+function get_target_id(): whole_8 {
+    variable return_ = target_id;
+    target_id = +(target_id, 1);
+
+    return return_;
+};
+
+function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
+    variable done_anything = false;
+
+    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+        if string=(TokenKeywordData->keyword(@cast_*TokenKeywordData(tokens_get_pointer_data(tokens, whole_8->(index_pointer)))), "variable") {
+            variable variable_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
+            variable index = whole_8->(index_pointer);
+            index = +(index, 1);
+
+            variable names = autobuffer_new(40);
+            variable types = autobuffer_new(40);
+
+            variable name_index = 0;
+            variable seen_name = false;
+            variable running = true;
+            variable parse_expression = false;
+            while running {
+                variable id = tokens_get_id(tokens, index);
+                if =(id, TOKEN_COMMA) {
+                    name_index = +(name_index, 1);
+                    seen_name = false;
+                };
+
+                if =(id, TOKEN_NAME) {
+                    variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+                    if seen_name {
+                        autoarray8_set(&(types), name_index, name_value);
+                    } else {
+                        autoarray8_set(&(names), name_index, name_value);
+                        autoarray8_set(&(types), name_index, "");
+                        seen_name = true;
+                    };
+                };
+
+                index = +(index, 1);
+
+                if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+                    variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+                    if string=(name_value, "=") {
+                        running = false;
+                        parse_expression = true;
+                    };
+                };
+                if =(tokens_get_id(tokens, index), TOKEN_SEMICOLON) {
+                    running = false;
+                    parse_expression = false;
+                };
+            };
+
+            variable i = 0;
+            while !(=(autoarray8_get(&(names), i), 0)) {
+                variable node_data = @cast_*NodeDeclareData(append_node_data(nodes, nodes_index, NODE_DECLARE));
+                NodeDeclareData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
+                NodeDeclareData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
+
+                i = +(i, 1);
+            };
+
+            if parse_expression {
+                index = +(index, 1);
+                parse_expression(tokens, &(index), nodes, nodes_index);
+            } else {
+                variable i = 0;
+                while !(=(autoarray8_get(&(names), i), 0)) {
+                    variable node_data = @cast_*NodeZeroData(append_node_data(nodes, nodes_index, NODE_ZERO));
+                    NodeZeroData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
+                    NodeZeroData<-type(node_data, @cast_*(autoarray8_get(&(types), i)));
+
+                    i = +(i, 1);
+                };
+            };
+
+            variable i = 0;
+            while !(=(autoarray8_get(&(names), i), 0)) {
+                variable node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
+                NodeAssignData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
+
+                i = +(i, 1);
+            };
+
+            whole_8<-(index_pointer, index);
+            done_anything = true;
+            return;
+        };
+    };
+    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+        variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
+        if string=(name_value, "return") {
+            increment_whole_8_pointer(index_pointer, 1);
+            parse_expression(tokens, index_pointer, nodes, nodes_index);
+
+            variable node = append_node(nodes, nodes_index, NODE_RETURN);
+            done_anything = true;
+            return;
+        };
+    };
+    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+        variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
+        if string=(name_value, "if") {
+            variable end_target = get_target_id();
+
+            while =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+                variable target = get_target_id();
+                variable token_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, whole_8->(index_pointer)));
+                variable token_index = whole_8->(index_pointer);
+
+                if string=(TokenKeywordData->keyword(token_data), "if") {
+                    increment_whole_8_pointer(index_pointer, 1);
+
+                    parse_expression(tokens, index_pointer, nodes, nodes_index);
+                    variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+                    NodeJumpConditionalData<-target_id(conditional_jump_data, target);
+                    NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+
+                    increment_whole_8_pointer(index_pointer, 1);
+                } else if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, +(token_index, 1)), TOKEN_KEYWORD)) {
+                    increment_whole_8_pointer(index_pointer, 2);
+
+                    parse_expression(tokens, index_pointer, nodes, nodes_index);
+                    variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+                    NodeJumpConditionalData<-target_id(conditional_jump_data, target);
+                    NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+
+                    increment_whole_8_pointer(index_pointer, 1);
+                } else {
+                    increment_whole_8_pointer(index_pointer, 2);
+                };
+
+                while !(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
+                    parse_statement(tokens, index_pointer, nodes, nodes_index);
+                };
+
+                variable jump_data = @cast_*NodeJumpData(append_node_data(nodes, nodes_index, NODE_JUMP));
+                NodeJumpData<-target_id(jump_data, end_target);
+
+                variable target_node_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+                NodeTargetData<-id(target_node_data, target);
+
+                increment_whole_8_pointer(index_pointer, 1);
+            };
+
+            variable target_node_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+            NodeTargetData<-id(target_node_data, end_target);
+ 
+            increment_whole_8_pointer(index_pointer, 1);
+
+            done_anything = true;
+            return;
+        };
+    };
+    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+        variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
+        if string=(name_value, "while") {
+            increment_whole_8_pointer(index_pointer, 1);
+
+            variable target1 = get_target_id();
+
+            variable target2 = get_target_id();
+
+            variable target_node1_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+            NodeTargetData<-id(target_node1_data, target1);
+
+            parse_expression(tokens, index_pointer, nodes, nodes_index);
+            variable conditional_jump_data = @cast_*NodeJumpConditionalData(append_node_data(nodes, nodes_index, NODE_JUMP_CONDITIONAL));
+            NodeJumpConditionalData<-target_id(conditional_jump_data, target2);
+            NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+
+            increment_whole_8_pointer(index_pointer, 1);
+
+            while !(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
+                parse_statement(tokens, index_pointer, nodes, nodes_index);
+            };
+
+            variable jump_node_data = @cast_*NodeJumpData(append_node_data(nodes, nodes_index, NODE_JUMP));
+            NodeJumpData<-target_id(jump_node_data, target1);
+
+            variable target_node2_data = @cast_*NodeTargetData(append_node_data(nodes, nodes_index, NODE_TARGET));
+            NodeTargetData<-id(target_node2_data, target2);
+ 
+            increment_whole_8_pointer(index_pointer, 1);
+            done_anything = true;
+            return;
+        };
+    };
+    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, +(whole_8->(index_pointer), 1)), TOKEN_NAME)) {
+        variable names = autobuffer_new(40);
+        variable name_index = 0;
+
+        variable index = whole_8->(index_pointer);
+        while !(string=(TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index))), "=")) {
+            variable name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+            autostack8_push(&(names), &(name_index), name);
+            index = +(index, 1);
+        };
+
+        index = +(index, 1);
+
+        parse_expression(tokens, &(index), nodes, nodes_index);
+
+        variable i = 0;
+        while !(=(autoarray8_get(&(names), i), 0)) {
+            variable assign_node_data = @cast_*NodeAssignData(append_node_data(nodes, nodes_index, NODE_ASSIGN));
+            NodeAssignData<-name(assign_node_data, @cast_*(autoarray8_get(&(names), i)));
+            i = +(i, 1);
+        };
+
+        whole_8<-(index_pointer, index);
+        done_anything = true;
+        return;
+    };
+
+    if !(done_anything) {
+        parse_expression(tokens, index_pointer, nodes, nodes_index);
+        increment_whole_8_pointer(index_pointer, 1);
+    };
+};
+
+function parse(tokens: *AutoBuffer, tokens_count: whole_8, nodes: *AutoBuffer, nodes_index, *whole_8) {
+    variable index = 0;
+    
+    while <(index, tokens_count) {
+        variable id = autobuffer_get_whole_8(tokens, *(index, TOKEN_SIZE));
+
+        if =(id, TOKEN_KEYWORD) {
+            variable keyword_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, index));
+            variable keyword = TokenKeywordData->keyword(keyword_data);
+
+            if string=(keyword, "function") {
+                parse_function(tokens, &(index), nodes, nodes_index);
+            };
+
+            if string=(keyword, "structure") {
+                parse_structure(tokens, &(index), nodes, nodes_index);
+            };
+
+            if string=(keyword, "global") {
+                parse_global(tokens, &(index), nodes, nodes_index);
+            };
+
+            if string=(keyword, "constant") {
+                parse_constant(tokens, &(index), nodes, nodes_index);
+            };
+
+            if string=(keyword, "include") {
+                parse_include(tokens, &(index), nodes, nodes_index);
+            };
+        };
+    };
+};
+
