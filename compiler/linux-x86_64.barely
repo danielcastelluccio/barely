@@ -1872,22 +1872,3 @@ function get_size_multiple_reversed_linux_x86-64(array: *, count: whole_8, nodes
 
     return total;
 };
-
-function is_type(wanted: *, given: *, nodes: *AutoBuffer, node_count: whole_8): boolean {
-    if string=(wanted, given) {
-        return true;
-    };
-
-    if string=(wanted, "*") {
-        if string_length=(given, "*", 1) {
-            return true;
-        };
-    };
-
-    if string_length=(wanted, "any_", 4) {
-        variable size = to_number(@cast_*(+(wanted, 4)));
-        return =(size, get_size_linux_x86-64(given, nodes, node_count));
-    };
-
-    return false;
-};
