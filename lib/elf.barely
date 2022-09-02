@@ -903,43 +903,6 @@ function autopush_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_po
     autopush_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
 };
 
-function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autopush_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autopush_whole_1(buffer, buffer_index_pointer, 56_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autopush_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
 function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register8) {
     variable instruction = 72_whole_1;
 

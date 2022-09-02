@@ -48,7 +48,6 @@ function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
     return 0;
 };
 
-
 function type_check(nodes: *AutoBuffer, node_count: whole_8) {
     variable stack = autobuffer_new(64);
     variable stack_pointer: whole_8;
@@ -75,7 +74,17 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
 
         if =(id, NODE_FUNCTION) {
             variable function_data = @cast_*NodeFunctionData(pointer_data);
-            autoarray8_set(&(functions), index, NodeFunctionData->name(function_data));
+            variable function_name = NodeFunctionData->name(function_data);
+
+            variable function_index_found = autostringarraymap_get_index(&(functions), function_name, index);
+            if !(=(function_index_found, 999)) {
+                print("TYPECHECK: ");
+                print(function_name);
+                println(": Function already defined");
+                exit(1);
+            };
+
+            autoarray8_set(&(functions), index, function_name);
             autoarray8_set(&(function_argument_names), index, NodeFunctionData->argument_names(function_data));
             autoarray8_set(&(function_arguments), index, NodeFunctionData->argument_types(function_data));
             autoarray8_set(&(function_returns), index, NodeFunctionData->returns(function_data));
