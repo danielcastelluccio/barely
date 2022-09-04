@@ -7,9 +7,7 @@ include "compiler/output/linux-x86_64.barely";
 
 global empty: any_8;
 
-global cached_types: AutoBuffer;
-global cached_sizes: AutoBuffer;
-global cached_index: whole_8;
+global cached_sizes_map: HashMap;
 
 function main(arguments: **, argument_count: whole_8) {
     variable i = 1;
@@ -31,8 +29,7 @@ function main(arguments: **, argument_count: whole_8) {
     append_structure(&(nodes), &(nodes_index), "any_4");
     append_structure(&(nodes), &(nodes_index), "any_8");
 
-    cached_types = autobuffer_new(131072);
-    cached_sizes = autobuffer_new(131072);
+    cached_sizes_map = hashmap_new(131072);
 
     variable already_included = autobuffer_new(64);
     variable already_included_index = 0;

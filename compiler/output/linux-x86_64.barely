@@ -1748,37 +1748,28 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
         return 8;
     };
 
-    variable i = 0;
-    while <(i, cached_index) {
-        if string=(@cast_*(autoarray8_get(&(cached_types), i)), type) {
-            return @cast_whole_8(autoarray8_get(&(cached_sizes), i));
-        };
-        i = +(i, 1);
+    variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
+    if !(=(cached_size, 0)) {
+        return cached_size;
     };
 
     if string_length=(type, "any", 3) {
         variable number = to_number(@cast_*(+(type, 4)));
-        autoarray8_set(&(cached_types), cached_index, type);
-        autoarray8_set(&(cached_sizes), cached_index, number);
-        cached_index = +(cached_index, 1);
+        hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
     if string_length=(type, "whole", 5) {
         variable number = to_number(@cast_*(+(type, 6)));
-        autoarray8_set(&(cached_types), cached_index, type);
-        autoarray8_set(&(cached_sizes), cached_index, number);
-        cached_index = +(cached_index, 1);
+        hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
     if string_length=(type, "integer", 7) {
         variable number = to_number(@cast_*(+(type, 8)));
-        autoarray8_set(&(cached_types), cached_index, type);
-        autoarray8_set(&(cached_sizes), cached_index, number);
-        cached_index = +(cached_index, 1);
+        hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
@@ -1791,9 +1782,7 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
             variable member_types = NodeStructureData->item_types(pointer);
             if string=(type, name) {
                 variable size = get_size_multiple_linux_x86-64(member_types, 999, nodes, node_count);
-                autoarray8_set(&(cached_types), cached_index, type);
-                autoarray8_set(&(cached_sizes), cached_index, size);
-                cached_index = +(cached_index, 1);
+                hashmap_string_put(&(cached_sizes_map), type, size);
                 return size;
             };
         };
