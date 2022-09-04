@@ -54,29 +54,21 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDI, 0);
     autopush_syscall(&(instructions_buffer), &(instructions_index));
 
-    variable functions = autobuffer_new(512);
-    variable function_argument_names = autobuffer_new(512);
-    variable function_arguments = autobuffer_new(512);
-    variable function_returns = autobuffer_new(512);
-    variable function_local_sizes = autobuffer_new(512);
-    variable function_locations = autobuffer_new(512);
+    variable function_argument_names_map = hashmap_new(512);
+    variable function_arguments_map = hashmap_new(512);
+    variable function_returns_map = hashmap_new(512);
+    variable function_local_sizes_map = hashmap_new(512);
+    variable function_locations_map = hashmap_new(512);
     variable index = 0;
 
-    variable globals = autobuffer_new(512);
-    variable global_types = autobuffer_new(512);
-    variable global_locations = autobuffer_new(512);
-    variable global_index = 0;
+    variable global_types_map = hashmap_new(512);
+    variable global_locations_map = hashmap_new(512);
 
-    variable constants = autobuffer_new(512);
-    variable constant_types = autobuffer_new(512);
-    variable constant_locations = autobuffer_new(512);
-    variable constant_index = 0;
+    variable constant_types_map = hashmap_new(512);
+    variable constant_locations_map = hashmap_new(512);
 
-    variable memory_functions = autobuffer_new(512);
-    variable memory_function_contents = autobuffer_new(512);
-    variable memory_function_instructions = autobuffer_new(512);
-    variable memory_function_instruction_sizes = autobuffer_new(512);
-    variable memory_function_index = 0;
+    variable memory_function_instructions_map = hashmap_new(512);
+    variable memory_function_instruction_sizes_map = hashmap_new(512);
 
     variable calls = autobuffer_new(512);
     variable call_targets = autobuffer_new(512);
@@ -100,10 +92,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
         if =(id, NODE_FUNCTION) {
             variable function_data = @cast_*NodeFunctionData(pointer_data);
-            autoarray8_set(&(functions), index, NodeFunctionData->name(function_data));
-            autoarray8_set(&(function_argument_names), index, NodeFunctionData->argument_names(function_data));
-            autoarray8_set(&(function_arguments), index, NodeFunctionData->argument_types(function_data));
-            autoarray8_set(&(function_returns), index, NodeFunctionData->returns(function_data));
+            hashmap_string_put(&(function_argument_names_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_names(function_data));
+            hashmap_string_put(&(function_arguments_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_types(function_data));
+            hashmap_string_put(&(function_returns_map), NodeFunctionData->name(function_data), NodeFunctionData->returns(function_data));
 
             variable total = 16;
             variable j = i;
@@ -122,7 +113,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 j = +(j, 1);
             };
 
-            autoarray8_set(&(function_local_sizes), index, total);
+            hashmap_string_put(&(function_local_sizes_map), NodeFunctionData->name(function_data), total);
 
             index = +(index, 1);
         };
@@ -131,29 +122,22 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable global_name = NodeGlobalData->name(global_data);
             variable global_type = NodeGlobalData->type(global_data);
 
-            autoarray8_set(&(globals), global_index, global_name);
-            autoarray8_set(&(global_types), global_index, global_type);
-
+            hashmap_string_put(&(global_types_map), global_name, global_type);
             variable global_location = bss_index;
-            autoarray8_set(&(global_locations), global_index, global_location);
+            hashmap_string_put(&(global_locations_map), global_name, global_location);
 
             bss_index = +(bss_index, get_size_linux_x86-64(global_type, nodes, node_count));
-
-            global_index = +(global_index, 1);
         };
         if =(id, NODE_CONSTANT) {
             variable constant_data = @cast_*NodeConstantData(pointer_data);
             variable constant_name = NodeConstantData->name(constant_data);
             variable constant_type = NodeConstantData->type(constant_data);
 
-            autoarray8_set(&(constants), constant_index, constant_name);
-            autoarray8_set(&(constant_types), constant_index, constant_type);
+            hashmap_string_put(&(constant_types_map), constant_name, constant_type);
 
             variable constant_location = autopush_data_whole_8(&(data_buffer), &(data_buffer_index), @cast_whole_8(NodeConstantData->value(constant_data)));
 
-            autoarray8_set(&(constant_locations), constant_index, constant_location);
-
-            constant_index = +(constant_index, 1);
+            hashmap_string_put(&(constant_locations_map), constant_name, constant_location);
         };
         if =(id, NODE_STRUCTURE) {
             variable structure_name = NodeStructureData->name(@cast_*NodeStructureData(nodes_get_pointer_data(nodes, i)));
@@ -162,8 +146,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable allocated = brk_allocate(+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
-
-            autoarray8_set(&(memory_functions), memory_function_index, allocated);
 
             variable allocated_contents0 = autobuffer_new(8388608);
             variable allocated_contents01 = &(allocated_contents0);
@@ -214,18 +196,13 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             autopush_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, +(size, 8));
 
-            autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents01));
-            autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents03));
-            autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
-
-            memory_function_index = +(memory_function_index, 1);
+            hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents03));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
             // Getter for whole value
             variable allocated = brk_allocate(+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("->", @cast_*(+(allocated, length(structure_name))), 2);
-
-            autoarray8_set(&(memory_functions), memory_function_index, allocated);
 
             variable allocated_contents1 = autobuffer_new(131072);
             variable allocated_contents11 = &(allocated_contents1);
@@ -271,11 +248,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 };
             };
 
-            autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents11));
-            autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents13));
-            autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
-
-            memory_function_index = +(memory_function_index, 1);
+            hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents13));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
             variable member_names = *->(@cast_**(+(nodes_get_pointer(nodes, i), 16)));
             variable member_types = *->(@cast_**(+(nodes_get_pointer(nodes, i), 24)));
@@ -293,8 +267,6 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 copy("->", @cast_*(+(+(allocated, length(structure_name)), 1)), 2);
                 copy(member_name, @cast_*(+(+(allocated, +(length(structure_name), 2)), 1)), length(member_name));
 
-                autoarray8_set(&(memory_functions), memory_function_index, allocated);
-
                 variable allocated_contents4 = autobuffer_new(131072);
                 variable allocated_contents41 = &(allocated_contents4);
                 variable allocated_contents42 = autobuffer_new(131072);
@@ -306,19 +278,14 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 autopush_add_register8_whole_8(allocated_contents43, &(contents_index2), RAX, location);
                 autopush_push_register8(allocated_contents43, &(contents_index2), RAX);
 
-                autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents41));
-                autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents43));
-                autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
-
-                memory_function_index = +(memory_function_index, 1);
+                hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents43));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
                 // Setter for individual members
                 variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
                 copy(structure_name, allocated, length(structure_name));
                 copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
-
-                autoarray8_set(&(memory_functions), memory_function_index, allocated);
 
                 variable allocated_contents2 = autobuffer_new(8388608);
                 variable allocated_contents21 = &(allocated_contents2);
@@ -369,19 +336,14 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                 autopush_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, +(size, 8));
 
-                autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents21));
-                autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents23));
-                autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
-
-                memory_function_index = +(memory_function_index, 1);
+                hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents23));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
                 // Getter for indivudal members
                 variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
                 copy(structure_name, allocated, length(structure_name));
                 copy("->", @cast_*(+(allocated, length(structure_name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
-
-                autoarray8_set(&(memory_functions), memory_function_index, allocated);
 
                 variable allocated_contents3 = autobuffer_new(8388608);
                 variable allocated_contents31 = &(allocated_contents3);
@@ -430,11 +392,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     };
                 };
 
-                autoarray8_set(&(memory_function_contents), memory_function_index, AutoBuffer->buffer(allocated_contents31));
-                autoarray8_set(&(memory_function_instructions), memory_function_index, AutoBuffer->buffer(allocated_contents33));
-                autoarray8_set(&(memory_function_instruction_sizes), memory_function_index, contents_index2);
-
-                memory_function_index = +(memory_function_index, 1);
+                hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents33));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
                 j = +(j, 1);
             };
@@ -445,8 +404,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
     variable current_function: *;
 
+    variable variable_types_map = hashmap_new(2048);
     variable variable_names = autobuffer_new(2048);
-    variable variable_types = autobuffer_new(2048);
     variable variable_sizes = autobuffer_new(2048);
     variable variable_index = 0;
 
@@ -467,17 +426,18 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             if !(=(next_id, NODE_ENDFUNCTION)) {
                 variable function_name = NodeFunctionData->name(function_data);
 
-                variable function_index = autostringarraymap_get_index(&(functions), function_name, index);
-                autoarray8_set(&(function_locations), function_index, instructions_index);
+                hashmap_string_put(&(function_locations_map), function_name, instructions_index);
 
                 autopush_push_register8(&(instructions_buffer), &(instructions_index), RBP);
                 autopush_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, RBP);
 
-                variable locals_size = @cast_whole_8(autostringarraymap_get(&(functions), &(function_local_sizes), function_name, index));
+                variable locals_size = @cast_whole_8(hashmap_string_get(&(function_local_sizes_map), function_name));
 
                 autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
 
                 current_function = function_name;
+
+                autobuffer_reset(&(HashMap->buffer(&(variable_types_map))));
 
                 variable_index = 0;
             };
@@ -543,9 +503,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             variable done_anything_invoke = false;
 
-            if !(=(autostringarraymap_get(&(memory_functions), &(memory_function_instructions), function_name, memory_function_index), 0)) {
-                variable contents = autostringarraymap_get(&(memory_functions), &(memory_function_instructions), function_name, memory_function_index);
-                variable contents_size = @cast_whole_8(autostringarraymap_get(&(memory_functions), &(memory_function_instruction_sizes), function_name, memory_function_index));
+            if !(=(hashmap_string_get(&(memory_function_instructions_map), function_name), 0)) {
+                variable contents = @cast_*(hashmap_string_get(&(memory_function_instructions_map), function_name));
+                variable contents_size = @cast_whole_8(hashmap_string_get(&(memory_function_instruction_sizes_map), function_name));
                 autopush_pointer(&(instructions_buffer), &(instructions_index), contents, contents_size);
                 done_anything_invoke = true;
             };
@@ -983,8 +943,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable variable_name = NodeDeclareData->name(declare_data);
             variable variable_type = NodeDeclareData->type(declare_data);
 
+            hashmap_string_put(&(variable_types_map), variable_name, variable_type);
             autoarray8_set(&(variable_names), variable_index, variable_name);
-            autoarray8_set(&(variable_types), variable_index, variable_type);
             autoarray8_set(&(variable_sizes), variable_index, get_size_linux_x86-64(variable_type, nodes, node_count));
             variable_index = +(variable_index, 1);
 
@@ -994,7 +954,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         if =(id, NODE_ASSIGN) {
             variable assign_data = @cast_*NodeAssignData(pointer_data);
             variable variable_name = NodeAssignData->name(assign_data);
-            variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
@@ -1046,10 +1006,10 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 copy("_", global_name, 1);
                 copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
-                variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
+                variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
                 variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
 
-                variable global_location = @cast_BssIndex(autostringarraymap_get(&(globals), &(global_locations), variable_name, global_index));
+                variable global_location = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
 
                 variable j = 0;
                 while <(j, size) {
@@ -1116,7 +1076,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable next_id = nodes_get_id(nodes, +(i, 1));
 
             variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
-            variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
+
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
                 variable variable_index_thing = autostringarraymap_get_index(&(variable_names), variable_name, variable_index);
@@ -1168,8 +1129,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 };
 
             } else {
-                variable function_argument_names2 = autostringarraymap_get(&(functions), &(function_argument_names), current_function, index);
-                variable function_arguments2 = autostringarraymap_get(&(functions), &(function_arguments), current_function, index);
+                variable function_argument_names2 = @cast_*(hashmap_string_get(&(function_argument_names_map), current_function));
+                variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
 
                 variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
@@ -1213,7 +1174,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         };
                     };
                 } else {
-                    variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
+                    variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
 
                     if !(=(variable_type, 0)) {
                         variable global_name = brk_allocate(+(length(variable_name), 2));
@@ -1222,7 +1183,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                         variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
 
-                        variable global_index2 = @cast_BssIndex(autostringarraymap_get(&(globals), &(global_locations), variable_name, global_index));
+                        variable global_index2 = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
 
                         if =(next_id, NODE_POINTER) {
                             autopush_push_bss(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_index), global_index2);
@@ -1258,13 +1219,13 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                             };
                         };
                     } else {
-                        variable_type = autostringarraymap_get(&(constants), &(constant_types), variable_name, constant_index);
+                        variable_type = @cast_*(hashmap_string_get(&(constant_types_map), variable_name));
 
                         variable constant_name = brk_allocate(+(length(variable_name), 2));
                         copy("_", constant_name, 1);
                         copy(variable_name, @cast_*(+(constant_name, 1)), length(variable_name));
 
-                        variable constant_location = @cast_DataIndex(autostringarraymap_get(&(constants), &(constant_locations), variable_name, constant_index));
+                        variable constant_location = @cast_DataIndex(hashmap_string_get(&(constant_locations_map), variable_name));
 
                         variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
 
@@ -1312,8 +1273,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         };
 
         if =(id, NODE_RETURN) {
-            variable arguments_size = get_size_multiple_linux_x86-64(autostringarraymap_get(&(functions), &(function_arguments), current_function, index), 999, nodes, node_count);
-            variable returns_size = get_size_multiple_linux_x86-64(autostringarraymap_get(&(functions), &(function_returns), current_function, index), 999, nodes, node_count);
+            variable arguments_size = get_size_multiple_linux_x86-64(@cast_*(hashmap_string_get(&(function_arguments_map), current_function)), 999, nodes, node_count);
+            variable returns_size = get_size_multiple_linux_x86-64(@cast_*(hashmap_string_get(&(function_returns_map), current_function)), 999, nodes, node_count);
             variable returns_size_rounded = returns_size;
             if !(=(%(returns_size_rounded, 8), 0)) {
                 returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
@@ -1653,7 +1614,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     autopush_whole_1(&(instructions_buffer), &(instructions_index), 80_whole_1);
     autopush_whole_1(&(instructions_buffer), &(instructions_index), 195_whole_1);
 
-    variable main_index = autostringarraymap_get(&(functions), &(function_locations), "main", index);
+    variable main_index = hashmap_string_get(&(function_locations_map), "main");
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
 
     variable i = 0;
@@ -1663,7 +1624,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
         variable function_index: InstructionIndex;
 
-        function_index = @cast_InstructionIndex(autostringarraymap_get(&(functions), &(function_locations), call_name, index));
+        function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), call_name));
 
         set_call_value(&(instructions_buffer), call_instruction2, function_index);
         i = +(i, 1);
