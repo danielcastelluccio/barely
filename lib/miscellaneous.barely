@@ -29,8 +29,40 @@ function copy(from: *, to: *, size: whole_8) {
     variable i = 0;
 
     while <(i, size) {
-        any_1<-(@cast_*any_1(+(to, i)), any_1->(@cast_*any_1(+(from, i))));
-        i = +(i, 1);
+        variable done_anything = false;
+
+        if &&(<(+(i, 4096), size), !(done_anything)) {
+            any_4096<-(@cast_*any_4096(+(to, i)), any_4096->(@cast_*any_4096(+(from, i))));
+            i = +(i, 4096);
+
+            done_anything = true;
+        };
+
+        if &&(<(+(i, 512), size), !(done_anything)) {
+            any_512<-(@cast_*any_512(+(to, i)), any_512->(@cast_*any_512(+(from, i))));
+            i = +(i, 512);
+
+            done_anything = true;
+        };
+
+        if &&(<(+(i, 64), size), !(done_anything)) {
+            any_64<-(@cast_*any_64(+(to, i)), any_64->(@cast_*any_64(+(from, i))));
+            i = +(i, 64);
+
+            done_anything = true;
+        };
+
+        if &&(<(+(i, 8), size), !(done_anything)) {
+            any_8<-(@cast_*any_8(+(to, i)), any_8->(@cast_*any_8(+(from, i))));
+            i = +(i, 8);
+
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            any_1<-(@cast_*any_1(+(to, i)), any_1->(@cast_*any_1(+(from, i))));
+            i = +(i, 1);
+        };
     };
 };
 
