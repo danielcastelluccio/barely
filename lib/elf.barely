@@ -1911,9 +1911,26 @@ function get_whole_8(pointer: *, offset: whole_8): any_8 {
     return any_8->(@cast_*any_8(+(pointer, offset)));
 };
 
+global BRK: *;
+global REFERENCE_BRK: *;
+
 function brk_allocate(size: whole_8): * {
-    variable allocated = sys_brk(@cast_*(0));
-    sys_brk(@cast_*(+(allocated, size)));
+    if =(BRK, 0) {
+        BRK = sys_brk(@cast_*(0));
+        REFERENCE_BRK = BRK;
+    };
+
+    variable allocated = REFERENCE_BRK;
+    REFERENCE_BRK = @cast_*(+(REFERENCE_BRK, size));
+    
+    if >(REFERENCE_BRK, BRK) {
+        variable increment = 67108864;
+        if >(size, increment) {
+            increment = size;
+        };
+        BRK = @cast_*(+(BRK, increment));
+        sys_brk(BRK);
+    };
     return allocated;
 };
 

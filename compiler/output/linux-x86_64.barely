@@ -116,8 +116,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             hashmap_string_put(&(function_local_sizes_map), NodeFunctionData->name(function_data), total);
 
             index = +(index, 1);
-        };
-        if =(id, NODE_GLOBAL) {
+        } else if =(id, NODE_GLOBAL) {
             variable global_data = @cast_*NodeGlobalData(pointer_data);
             variable global_name = NodeGlobalData->name(global_data);
             variable global_type = NodeGlobalData->type(global_data);
@@ -127,8 +126,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             hashmap_string_put(&(global_locations_map), global_name, global_location);
 
             bss_index = +(bss_index, get_size_linux_x86-64(global_type, nodes, node_count));
-        };
-        if =(id, NODE_CONSTANT) {
+        } else if =(id, NODE_CONSTANT) {
             variable constant_data = @cast_*NodeConstantData(pointer_data);
             variable constant_name = NodeConstantData->name(constant_data);
             variable constant_type = NodeConstantData->type(constant_data);
@@ -138,8 +136,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable constant_location = autopush_data_whole_8(&(data_buffer), &(data_buffer_index), @cast_whole_8(NodeConstantData->value(constant_data)));
 
             hashmap_string_put(&(constant_locations_map), constant_name, constant_location);
-        };
-        if =(id, NODE_STRUCTURE) {
+        } else if =(id, NODE_STRUCTURE) {
             variable structure_name = NodeStructureData->name(@cast_*NodeStructureData(nodes_get_pointer_data(nodes, i)));
 
             // Setter for whole value
@@ -443,9 +440,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             done_anything = true;
-        };
-
-        if =(id, NODE_NUMBER) {
+        } else if =(id, NODE_NUMBER) {
             variable whole_8_data = @cast_*NodeNumberData(pointer_data);
             variable value_whole_8 = NodeNumberData->value(whole_8_data);
 
@@ -470,9 +465,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             done_anything = true;
-        };
-
-        if =(id, NODE_BOOLEAN) {
+        } else if =(id, NODE_BOOLEAN) {
             variable boolean_data = @cast_*NodeBooleanData(pointer_data);
             variable value_boolean = NodeBooleanData->value(boolean_data);
 
@@ -487,9 +480,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             done_anything = true;
-        };
-
-        if =(id, NODE_INVOKE) {
+        } else if =(id, NODE_INVOKE) {
             variable invoke_data = @cast_*NodeInvokeData(pointer_data);
             variable function_name = NodeInvokeData->name(invoke_data);
             variable next_id = nodes_get_id(nodes, +(i, 1));
@@ -920,9 +911,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 call_index = +(call_index, 1);
             };
             done_anything = true;
-        };
-
-        if =(id, NODE_STRING) {
+        } else if =(id, NODE_STRING) {
             variable string_data = @cast_*NodeStringData(pointer_data);
             variable string_value = NodeStringData->value(string_data);
             variable string_id = program_constant_index;
@@ -936,9 +925,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autopush_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), string_data_index);
 
             done_anything = true;
-        };
-
-        if =(id, NODE_DECLARE) {
+        } else if =(id, NODE_DECLARE) {
             variable declare_data = @cast_*NodeDeclareData(pointer_data);
             variable variable_name = NodeDeclareData->name(declare_data);
             variable variable_type = NodeDeclareData->type(declare_data);
@@ -949,9 +936,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable_index = +(variable_index, 1);
 
             done_anything = true;
-        };
-
-        if =(id, NODE_ASSIGN) {
+        } else if =(id, NODE_ASSIGN) {
             variable assign_data = @cast_*NodeAssignData(pointer_data);
             variable variable_name = NodeAssignData->name(assign_data);
             variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
@@ -1023,43 +1008,43 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                        autopush_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
-                        autopush_whole_8(&(buffer), &(buffer_index), j);
-                        autopush_string_with_newline(&(buffer), &(buffer_index), "]");
+                        //autopush_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
+                        //autopush_whole_8(&(buffer), &(buffer_index), j);
+                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                        autopush_string(&(buffer), &(buffer_index), "mov [");
-                        autopush_string(&(buffer), &(buffer_index), global_name);
-                        autopush_string(&(buffer), &(buffer_index), "+");
-                        autopush_whole_8(&(buffer), &(buffer_index), j);
-                        autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
+                        //autopush_string(&(buffer), &(buffer_index), "mov [");
+                        //autopush_string(&(buffer), &(buffer_index), global_name);
+                        //autopush_string(&(buffer), &(buffer_index), "+");
+                        //autopush_whole_8(&(buffer), &(buffer_index), j);
+                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
                         j = +(j, 4);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                        autopush_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
-                        autopush_whole_8(&(buffer), &(buffer_index), j);
-                        autopush_string_with_newline(&(buffer), &(buffer_index), "]");
+                        //autopush_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
+                        //autopush_whole_8(&(buffer), &(buffer_index), j);
+                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                        autopush_string(&(buffer), &(buffer_index), "mov [");
-                        autopush_string(&(buffer), &(buffer_index), global_name);
-                        autopush_string(&(buffer), &(buffer_index), "+");
-                        autopush_whole_8(&(buffer), &(buffer_index), j);
-                        autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
+                        //autopush_string(&(buffer), &(buffer_index), "mov [");
+                        //autopush_string(&(buffer), &(buffer_index), global_name);
+                        //autopush_string(&(buffer), &(buffer_index), "+");
+                        //autopush_whole_8(&(buffer), &(buffer_index), j);
+                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                         j = +(j, 2);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                        autopush_string(&(buffer), &(buffer_index), "mov al, [rsp+");
-                        autopush_whole_8(&(buffer), &(buffer_index), j);
-                        autopush_string_with_newline(&(buffer), &(buffer_index), "]");
+                        //autopush_string(&(buffer), &(buffer_index), "mov al, [rsp+");
+                        //autopush_whole_8(&(buffer), &(buffer_index), j);
+                        //autopush_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                        autopush_string(&(buffer), &(buffer_index), "mov [");
-                        autopush_string(&(buffer), &(buffer_index), global_name);
-                        autopush_string(&(buffer), &(buffer_index), "+");
-                        autopush_whole_8(&(buffer), &(buffer_index), j);
-                        autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
+                        //autopush_string(&(buffer), &(buffer_index), "mov [");
+                        //autopush_string(&(buffer), &(buffer_index), global_name);
+                        //autopush_string(&(buffer), &(buffer_index), "+");
+                        //autopush_whole_8(&(buffer), &(buffer_index), j);
+                        //autopush_string_with_newline(&(buffer), &(buffer_index), "], al");
 
                         j = +(j, 1);
                         done_anything_assign = true;
@@ -1070,9 +1055,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             done_anything = true;
-        };
-
-        if =(id, NODE_RETRIEVE) {
+        } else if =(id, NODE_RETRIEVE) {
             variable next_id = nodes_get_id(nodes, +(i, 1));
 
             variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
@@ -1270,9 +1253,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             done_anything = true;
-        };
-
-        if =(id, NODE_RETURN) {
+        } else if =(id, NODE_RETURN) {
             variable arguments_size = get_size_multiple_linux_x86-64(@cast_*(hashmap_string_get(&(function_arguments_map), current_function)), 999, nodes, node_count);
             variable returns_size = get_size_multiple_linux_x86-64(@cast_*(hashmap_string_get(&(function_returns_map), current_function)), 999, nodes, node_count);
             variable returns_size_rounded = returns_size;
@@ -1338,13 +1319,9 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autopush_ret(&(instructions_buffer), &(instructions_index));
                 
             done_anything = true;
-        };
-
-        if =(id, NODE_POINTER) {
+        } else if =(id, NODE_POINTER) {
             done_anything = true;
-        };
-
-        if =(id, NODE_JUMP_CONDITIONAL) {
+        } else if =(id, NODE_JUMP_CONDITIONAL) {
             variable jump_conditional_data = @cast_*NodeJumpConditionalData(pointer_data);
             variable target = NodeJumpConditionalData->target_id(jump_conditional_data);
             variable conditional = NodeJumpConditionalData->desired_state(jump_conditional_data);
@@ -1368,9 +1345,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             je_index = +(je_index, 1);
             done_anything = true;
-        };
-
-        if =(id, NODE_JUMP) {
+        } else if =(id, NODE_JUMP) {
             variable jump_data = @cast_*NodeJumpData(pointer_data);
             variable target = NodeJumpData->target_id(jump_data);
 
@@ -1380,25 +1355,17 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             jmp_index = +(jmp_index, 1);
             done_anything = true;
-        };
-
-        if =(id, NODE_TARGET) {
+        } else if =(id, NODE_TARGET) {
             variable target_data = @cast_*NodeTargetData(pointer_data);
             variable target = NodeTargetData->id(target_data);
             
             autoarray8_set(&(targets), target, get_instruction(&(instructions_buffer), &(instructions_index)));
             done_anything = true;
-        };
-
-        if =(id, NODE_ENDFUNCTION) {
+        } else if =(id, NODE_ENDFUNCTION) {
             done_anything = true;
-        };
-
-        if =(id, NODE_STRUCTURE) {
+        } else if =(id, NODE_STRUCTURE) {
             done_anything = true;
-        };
-
-        if =(id, NODE_GLOBAL) {
+        } else if =(id, NODE_GLOBAL) {
             variable global_data = @cast_*NodeGlobalData(pointer_data);
             variable name2 = NodeGlobalData->name(global_data);
             variable type = NodeGlobalData->type(global_data);
@@ -1414,9 +1381,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             autopush_string_with_newline(&(bss_buffer), &(bss_buffer_index), "");
             
             done_anything = true;
-        };
-
-        if =(id, NODE_CONSTANT) {
+        } else if =(id, NODE_CONSTANT) {
             variable constant_data = @cast_*NodeConstantData(pointer_data);
             variable name3 = NodeConstantData->name(constant_data);
             variable type2 = NodeConstantData->type(constant_data);
@@ -1428,9 +1393,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             copy(name3, @cast_*(+(constant_name, 1)), length(name3));
 
             done_anything = true;
-        };
-
-        if =(id, NODE_ZERO) {
+        } else if =(id, NODE_ZERO) {
             variable zero_data = @cast_*NodeZeroData(pointer_data);
             variable type2 = NodeZeroData->type(zero_data);
 
@@ -1473,146 +1436,15 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             };
 
             done_anything = true;
-        };
-        if =(id, NODE_INCLUDE) {
+        } else if =(id, NODE_INCLUDE) {
             done_anything = true;
-        };
-
-        if !(done_anything) {
+        } else {
             print("Unhandled ");
             print_whole_8(id);
         };
 
         i = +(i, 1);
     };
-
-    variable print_whole_8_index = get_instruction(&(instructions_buffer), &(instructions_index));
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 94_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 95_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 87_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 86_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 73_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 185_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 205_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 204_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 236_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 40_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 198_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 68_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 31_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 10_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 76_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 30_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 76_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 68_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 32_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 73_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 247_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 225_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 73_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 41_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 200_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 193_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 234_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 3_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 14_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 52_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 146_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 246_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 41_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 240_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 192_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 48_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 136_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 215_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 202_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 233_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 248_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 9_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 119_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 201_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 68_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 36_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 32_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 191_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 41_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 194_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 49_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 192_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 141_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 116_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 20_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 32_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 76_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 137_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 194_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 199_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 192_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 1_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 0_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 15_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 5_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 196_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 40_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 88_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 72_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 131_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 196_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 8_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 80_whole_1);
-    autopush_whole_1(&(instructions_buffer), &(instructions_index), 195_whole_1);
 
     variable main_index = hashmap_string_get(&(function_locations_map), "main");
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
