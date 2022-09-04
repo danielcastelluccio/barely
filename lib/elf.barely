@@ -74,7 +74,7 @@ function autopush_jmp_near(instructions: *AutoBuffer, instruction_index_pointer:
 
     autopush_whole_1(instructions, instruction_index_pointer, 233_whole_1);
 
-    autopush_whole_4(instructions, instruction_index_pointer, whole_8_to_whole_4(0));
+    autopush_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
     return @cast_InstructionIndex(current_instruction);
 };
@@ -85,7 +85,7 @@ function autopush_je_near(instructions: *AutoBuffer, instruction_index_pointer: 
     autopush_whole_1(instructions, instruction_index_pointer, 15_whole_1);
     autopush_whole_1(instructions, instruction_index_pointer, 132_whole_1);
 
-    autopush_whole_4(instructions, instruction_index_pointer, whole_8_to_whole_4(0));
+    autopush_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
     return @cast_InstructionIndex(current_instruction);
 };
@@ -96,7 +96,7 @@ function autopush_jne_near(instructions: *AutoBuffer, instruction_index_pointer:
     autopush_whole_1(instructions, instruction_index_pointer, 15_whole_1);
     autopush_whole_1(instructions, instruction_index_pointer, 133_whole_1);
 
-    autopush_whole_4(instructions, instruction_index_pointer, whole_8_to_whole_4(0));
+    autopush_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
     return @cast_InstructionIndex(current_instruction);
 };
@@ -289,17 +289,13 @@ function autopush_lea_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register_to, 7_whole_1) {
         value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, *(register_to, 8_whole_1));
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, -(register_from, 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, register_from);
     };
 
@@ -324,17 +320,13 @@ function autopush_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_ind
 
     if >(register_to, 7_whole_1) {
         value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, *(register_to, 8_whole_1));
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, -(register_from, 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, register_from);
     };
 
@@ -361,9 +353,7 @@ function autopush_mov_data_offset_pointer_register8(buffer: *AutoBuffer, buffer_
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -391,9 +381,7 @@ function autopush_mov_data_offset_pointer_register4(buffer: *AutoBuffer, buffer_
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -422,9 +410,7 @@ function autopush_mov_data_offset_pointer_register2(buffer: *AutoBuffer, buffer_
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -452,9 +438,7 @@ function autopush_mov_data_offset_pointer_register1(buffer: *AutoBuffer, buffer_
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -480,9 +464,7 @@ function autopush_mov_bss_offset_pointer_register8(buffer: *AutoBuffer, buffer_i
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -510,9 +492,7 @@ function autopush_mov_bss_offset_pointer_register4(buffer: *AutoBuffer, buffer_i
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -541,9 +521,7 @@ function autopush_mov_bss_offset_pointer_register2(buffer: *AutoBuffer, buffer_i
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -571,9 +549,7 @@ function autopush_mov_bss_offset_pointer_register1(buffer: *AutoBuffer, buffer_i
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -599,9 +575,7 @@ function autopush_mov_register8_bss_pointer_offset(buffer: *AutoBuffer, buffer_i
 
     if >(register, 7_whole_1) {
         value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register, 8_whole_1) {
+    } else {
         value = +(value, *(register, 8_whole_1));
     };
 
@@ -631,17 +605,13 @@ function autopush_mov_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register_to, 7_whole_1) {
         value = +(value, -(register_to, 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, register_to);
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, *(register_from, 8_whole_1));
     };
 
@@ -666,17 +636,13 @@ function autopush_cmp_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -703,17 +669,13 @@ function autopush_cmp_register4_register4(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -741,17 +703,13 @@ function autopush_cmp_register2_register2(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -778,17 +736,13 @@ function autopush_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -814,17 +768,13 @@ function autopush_cmove_register8_register8(buffer: *AutoBuffer, buffer_index_po
 
     if >(register1, 7_whole_1) {
         value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, *(register1, 8_whole_1));
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, -(register2, 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, register2);
     };
 
@@ -850,17 +800,13 @@ function autopush_cmova_register8_register8(buffer: *AutoBuffer, buffer_index_po
 
     if >(register1, 7_whole_1) {
         value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, *(register1, 8_whole_1));
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, -(register2, 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, register2);
     };
 
@@ -886,17 +832,13 @@ function autopush_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_po
 
     if >(register1, 7_whole_1) {
         value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, *(register1, 8_whole_1));
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, -(register2, 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, register2);
     };
 
@@ -921,17 +863,13 @@ function autopush_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, *(register_to, 8_whole_1));
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, -(register_from, 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, register_from);
     };
 
@@ -964,17 +902,13 @@ function autopush_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, *(register_to, 8_whole_1));
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, -(register_from, 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, register_from);
     };
 
@@ -1008,17 +942,13 @@ function autopush_mov_register8_pointer_offset_register2(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, *(register_to, 8_whole_1));
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, -(register_from, 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, register_from);
     };
 
@@ -1054,17 +984,13 @@ function autopush_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, *(register_to, 8_whole_1));
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, -(register_from, 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, register_from);
     };
 
@@ -1097,17 +1023,13 @@ function autopush_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     if >(register_from, 7_whole_1) {
         value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, *(register_from, 8_whole_1));
     };
 
     if >(register_to, 7_whole_1) {
         value = +(value, -(register_to, 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, register_to);
     };
 
@@ -1141,17 +1063,13 @@ function autopush_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, -(register_to, 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, register_to);
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, *(register_from, 8_whole_1));
     };
 
@@ -1184,17 +1102,13 @@ function autopush_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, -(register_to, 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, register_to);
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, *(register_from, 8_whole_1));
     };
 
@@ -1225,17 +1139,13 @@ function autopush_mov_register8_register8_pointer_offset(buffer: *AutoBuffer, bu
 
     if >(register_to, 7_whole_1) {
         value = +(value, -(register_to, 8_whole_1));
-    };
-
-    if <(register_to, 8_whole_1) {
+    } else {
         value = +(value, register_to);
     };
 
     if >(register_from, 7_whole_1) {
         value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register_from, 8_whole_1) {
+    } else {
         value = +(value, *(register_from, 8_whole_1));
     };
 
@@ -1264,9 +1174,9 @@ function autopush_mul_register8(buffer: *AutoBuffer, buffer_index_pointer: *whol
     autopush_whole_1(buffer, buffer_index_pointer, 247_whole_1);
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
 };
 
 function autopush_mul_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
@@ -1282,9 +1192,9 @@ function autopush_mul_register4(buffer: *AutoBuffer, buffer_index_pointer: *whol
 
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
 };
 
 function autopush_mul_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
@@ -1301,9 +1211,9 @@ function autopush_mul_register2(buffer: *AutoBuffer, buffer_index_pointer: *whol
 
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
 };
 
 function autopush_mul_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
@@ -1319,9 +1229,9 @@ function autopush_mul_register1(buffer: *AutoBuffer, buffer_index_pointer: *whol
 
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
 };
 
 function autopush_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
@@ -1333,9 +1243,9 @@ function autopush_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *whol
     autopush_whole_1(buffer, buffer_index_pointer, 247_whole_1);
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
 };
 
 function autopush_div_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
@@ -1351,9 +1261,9 @@ function autopush_div_register4(buffer: *AutoBuffer, buffer_index_pointer: *whol
 
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
 };
 
 function autopush_div_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
@@ -1370,9 +1280,9 @@ function autopush_div_register2(buffer: *AutoBuffer, buffer_index_pointer: *whol
 
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
 };
 
 function autopush_div_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
@@ -1388,9 +1298,9 @@ function autopush_div_register1(buffer: *AutoBuffer, buffer_index_pointer: *whol
 
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
     };
-    autopush_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
 };
 
 function autopush_add_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
@@ -1411,17 +1321,13 @@ function autopush_add_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1448,17 +1354,13 @@ function autopush_add_register4_register4(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1486,17 +1388,13 @@ function autopush_add_register2_register2(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1523,17 +1421,13 @@ function autopush_add_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1560,17 +1454,13 @@ function autopush_or_register1_register1(buffer: *AutoBuffer, buffer_index_point
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1597,17 +1487,13 @@ function autopush_and_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1632,17 +1518,13 @@ function autopush_sub_register8_register8(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1669,17 +1551,13 @@ function autopush_sub_register4_register4(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1707,17 +1585,13 @@ function autopush_sub_register2_register2(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1744,17 +1618,13 @@ function autopush_sub_register1_register1(buffer: *AutoBuffer, buffer_index_poin
 
     if >(register1, 7_whole_1) {
         value = +(value, -(register1, 8_whole_1));
-    };
-
-    if <(register1, 8_whole_1) {
+    } else {
         value = +(value, register1);
     };
 
     if >(register2, 7_whole_1) {
         value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    };
-
-    if <(register2, 8_whole_1) {
+    } else {
         value = +(value, *(register2, 8_whole_1));
     };
 
@@ -1777,20 +1647,18 @@ function autopush_pop_register8(buffer: *AutoBuffer, buffer_index_pointer: *whol
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, 65_whole_1);
         autopush_whole_1(buffer, buffer_index_pointer, +(80_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(88_whole_1, register));
     };
-
-    autopush_whole_1(buffer, buffer_index_pointer, +(88_whole_1, register));
 };
 
 function autopush_push_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, 65_whole_1);
         autopush_whole_1(buffer, buffer_index_pointer, +(72_whole_1, register));
-        return;
+    } else {
+        autopush_whole_1(buffer, buffer_index_pointer, +(80_whole_1, register));
     };
-
-    autopush_whole_1(buffer, buffer_index_pointer, +(80_whole_1, register));
 };
 
 function autopush_syscall(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
@@ -1803,7 +1671,7 @@ function autopush_whole_1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, w
 
     autobuffer_set(buffer, &(whole_1), buffer_index, 1);
 
-    whole_8<-(buffer_index_pointer, +(1, whole_8->(buffer_index_pointer)));
+    increment_whole_8_pointer(buffer_index_pointer, 1);
 };
 
 function autopush_whole_4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_4: whole_4) {
@@ -1811,7 +1679,7 @@ function autopush_whole_4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, w
 
     autobuffer_set(buffer, &(whole_4), buffer_index, 4);
 
-    whole_8<-(buffer_index_pointer, +(4, whole_8->(buffer_index_pointer)));
+    increment_whole_8_pointer(buffer_index_pointer, 4);
 };
 
 function autopush_whole_2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_2: whole_2) {
@@ -1819,7 +1687,7 @@ function autopush_whole_2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, w
 
     autobuffer_set(buffer, &(whole_2), buffer_index, 2);
 
-    whole_8<-(buffer_index_pointer, +(2, whole_8->(buffer_index_pointer)));
+    increment_whole_8_pointer(buffer_index_pointer, 2);
 };
 
 function autopush_string(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, string: *) {
