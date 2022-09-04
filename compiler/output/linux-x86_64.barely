@@ -54,11 +54,11 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDI, 0);
     autopush_syscall(&(instructions_buffer), &(instructions_index));
 
-    variable function_argument_names_map = hashmap_new(512);
-    variable function_arguments_map = hashmap_new(512);
-    variable function_returns_map = hashmap_new(512);
-    variable function_local_sizes_map = hashmap_new(512);
-    variable function_locations_map = hashmap_new(512);
+    variable function_argument_names_map = hashmap_new(1024);
+    variable function_arguments_map = hashmap_new(1024);
+    variable function_returns_map = hashmap_new(1024);
+    variable function_local_sizes_map = hashmap_new(1024);
+    variable function_locations_map = hashmap_new(1024);
     variable index = 0;
 
     variable global_types_map = hashmap_new(512);
@@ -67,8 +67,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     variable constant_types_map = hashmap_new(512);
     variable constant_locations_map = hashmap_new(512);
 
-    variable memory_function_instructions_map = hashmap_new(512);
-    variable memory_function_instruction_sizes_map = hashmap_new(512);
+    variable memory_function_instructions_map = hashmap_new(1024);
+    variable memory_function_instruction_sizes_map = hashmap_new(1024);
 
     variable calls = autobuffer_new(512);
     variable call_targets = autobuffer_new(512);
@@ -1741,16 +1741,16 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 };
 
 function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
+    variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
+    if !(=(cached_size, 0)) {
+        return cached_size;
+    };
+
     if string=(type, "boolean") {
         return 1;
     };
     if string_length=(type, "*", 1) {
         return 8;
-    };
-
-    variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
-    if !(=(cached_size, 0)) {
-        return cached_size;
     };
 
     if string_length=(type, "any", 3) {

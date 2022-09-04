@@ -19,10 +19,22 @@ function autobuffer_new(size: whole_8): AutoBuffer {
 };
 
 function autobuffer_reset(buffer: *AutoBuffer) {
+    variable actual_buffer = AutoBuffer->buffer(buffer);
+    variable size = AutoBuffer->size(buffer);
     variable i = 0;
-    while <(i, AutoBuffer->size(buffer)) {
-        any_1<-(@cast_*any_1(+(AutoBuffer->buffer(buffer), i)), 0_whole_1);
-        i = +(i, 1);
+    while <(i, size) {
+        variable done_anything = false;
+        
+        if <(+(i, 8), size) {
+            any_8<-(@cast_*any_8(+(actual_buffer, i)), 0_whole_8);
+            i = +(i, 1);
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            any_1<-(@cast_*any_1(+(actual_buffer, i)), 0_whole_1);
+            i = +(i, 1);
+        };
     };
 };
 
