@@ -295,6 +295,13 @@ function append_structure(nodes: *AutoBuffer, nodes_index, *whole_8, name: *) {
     NodeStructureData<-item_types(structure_data, &(empty));
 };
 
+function append_function(nodes: *AutoBuffer, nodes_index, *whole_8, name: *, arguments: *, returns: *) {
+    variable function_data = @cast_*NodeFunctionData(append_node_data(nodes, nodes_index, NODE_FUNCTION));
+    NodeFunctionData<-name(function_data, name);
+    NodeFunctionData<-argument_types(function_data, arguments);
+    NodeFunctionData<-returns(function_data, returns);
+    variable _ = append_node(nodes, nodes_index, NODE_ENDFUNCTION);
+};
 
 function parse_constant(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *AutoBuffer, nodes_index: *whole_8) {
     variable index = whole_8->(index_pointer);
