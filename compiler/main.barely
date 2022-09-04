@@ -428,3 +428,94 @@ function print_whole_8(whole_8: whole_8) {
     whole_8_to_string(whole_8, &(buffer));
     println(&(buffer));
 };
+
+structure HashMap {
+    buffer: AutoBuffer;
+};
+
+structure BucketData {
+    data: whole_8;
+    hash: whole_8;
+    value: any_8;
+};
+
+function hashmap_new(size: whole_8): HashMap {
+    variable hashmap: HashMap;
+
+    variable buffer = autobuffer_new(size);
+
+    HashMap<-buffer(&(hashmap), buffer);
+
+    return hashmap;
+};
+
+function hashmap_put(hashmap: *HashMap, hash: whole_8, value: any_8) {
+    variable buffer = &(HashMap->buffer(hashmap));
+
+    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    if =(bucket_pointer, 0) {
+        variable allocated_autobuffer = @cast_*AutoBuffer(brk_allocate(24));
+        variable autobuffer = autobuffer_new(48);
+        AutoBuffer<-(allocated_autobuffer, autobuffer);
+
+        bucket_pointer = allocated_autobuffer;
+        autobuffer_set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8));
+    };
+
+    variable searching = true;
+    variable i = 0;
+    while searching {
+        if =(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0) {
+            searching = false;
+        } else if =(autobuffer_get_any_8(bucket_pointer, +(*(i, 24), 8)), hash) {
+            searching = false;
+        } else {
+            i = +(i, 1);
+        };
+    };
+
+    variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+    BucketData<-data(bucket_data, 1);
+    BucketData<-hash(bucket_data, hash);
+    BucketData<-value(bucket_data, value);
+};
+
+function hashmap_get(hashmap: *HashMap, hash: whole_8): any_8 {
+    variable buffer = &(HashMap->buffer(hashmap));
+
+    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    if !(=(bucket_pointer, 0)) {
+        variable i = 0;
+        while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
+            variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+
+            if =(BucketData->hash(bucket_data), hash) {
+                return BucketData->value(bucket_data);
+            };
+
+            i = +(i, 1);
+        };
+    };
+
+    return 0;
+};
+
+function hashmap_string_put(hashmap: *HashMap, string: *, value: any_8) {
+    hashmap_put(hashmap, string_hash(string), value);
+};
+
+function hashmap_string_get(hashmap: *HashMap, string: *): any_8 {
+    return hashmap_get(hashmap, string_hash(string));
+};
+
+function string_hash(string: *): whole_8 {
+    variable hash = 0;
+    variable i = 0;
+    while <(i, length(string)) {
+        variable character = whole_1_to_whole_8(@cast_whole_1(*1(+(string, i))));
+        hash = +(+(+(hash, *(hash, character)), character), i);
+        i = +(i, 1);
+    };
+
+    return hash;
+};

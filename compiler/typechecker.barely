@@ -52,19 +52,12 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
     variable stack = autobuffer_new(64);
     variable stack_pointer: whole_8;
 
-    variable functions = autobuffer_new(512);
-    variable function_argument_names = autobuffer_new(512);
-    variable function_arguments = autobuffer_new(512);
-    variable function_returns = autobuffer_new(512);
-    variable index = 0;
+    variable function_arguments_map = hashmap_new(512);
+    variable function_argument_names_map = hashmap_new(512);
+    variable function_returns_map = hashmap_new(512);
 
-    variable globals = autobuffer_new(512);
-    variable global_types = autobuffer_new(512);
-    variable global_index: whole_8;
-
-    variable constants = autobuffer_new(512);
-    variable constant_types = autobuffer_new(512);
-    variable constant_index: whole_8;
+    variable globals_map = hashmap_new(512);
+    variable constants_map = hashmap_new(512);
     
     variable i = 0;
     while <(i, node_count) {
@@ -76,20 +69,17 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable function_data = @cast_*NodeFunctionData(pointer_data);
             variable function_name = NodeFunctionData->name(function_data);
 
-            variable function_index_found = autostringarraymap_get_index(&(functions), function_name, index);
-            if !(=(function_index_found, 999)) {
+            variable function_index_found = hashmap_string_get(&(function_arguments_map), function_name);
+            if !(=(function_index_found, 0)) {
                 print("TYPECHECK: ");
                 print(function_name);
                 println(": Function already defined");
                 exit(1);
             };
 
-            autoarray8_set(&(functions), index, function_name);
-            autoarray8_set(&(function_argument_names), index, NodeFunctionData->argument_names(function_data));
-            autoarray8_set(&(function_arguments), index, NodeFunctionData->argument_types(function_data));
-            autoarray8_set(&(function_returns), index, NodeFunctionData->returns(function_data));
-
-            index = +(index, 1);
+            hashmap_string_put(&(function_arguments_map), function_name, NodeFunctionData->argument_types(function_data));
+            hashmap_string_put(&(function_argument_names_map), function_name, NodeFunctionData->argument_names(function_data));
+            hashmap_string_put(&(function_returns_map), function_name, NodeFunctionData->returns(function_data));
         };
 
         if =(id, NODE_GLOBAL) {
@@ -97,10 +87,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable global_name = NodeGlobalData->name(global_data);
             variable global_type = NodeGlobalData->type(global_data);
 
-            autoarray8_set(&(globals), global_index, global_name);
-            autoarray8_set(&(global_types), global_index, global_type);
-
-            global_index = +(global_index, 1);
+            hashmap_string_put(&(globals_map), global_name, global_type);
         };
 
         if =(id, NODE_CONSTANT) {
@@ -108,10 +95,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable constant_name = NodeConstantData->name(constant_data);
             variable constant_type = NodeConstantData->type(constant_data);
 
-            autoarray8_set(&(constants), constant_index, constant_name);
-            autoarray8_set(&(constant_types), constant_index, constant_type);
-
-            constant_index = +(constant_index, 1);
+            hashmap_string_put(&(constants_map), constant_name, constant_type);
         };
 
         i = +(i, 1);
@@ -119,10 +103,8 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
 
     variable current_function: *;
 
-    variable variable_names = autobuffer_new(128);
-    variable variable_types = autobuffer_new(128);
-    variable variable_declares = autobuffer_new(128);
-    variable variable_index = 0;
+    variable variable_types_map = hashmap_new(128);
+    variable variable_declares_map = hashmap_new(128);
 
     i = 0;
     while <(i, node_count) {
@@ -133,7 +115,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
 
         if =(id, NODE_FUNCTION) {
             current_function = NodeFunctionData->name(@cast_*NodeFunctionData(nodes_get_pointer_data(nodes, i)));
-            variable_index = 0;
+            autobuffer_reset(&(HashMap->buffer(&(variable_types_map))));
             done_anything = true;
         };
         if =(id, NODE_NUMBER) {
@@ -359,53 +341,46 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else {
                 variable found_function = false;
-                variable j = 0;
-                while <(j, index) {
-                    if &&(!(found_function), string=(@cast_*(autoarray8_get(&(functions), j)), function_name)) {
-                        variable arguments = @cast_*(autoarray8_get(&(function_arguments), j));
-                        variable returns = @cast_*(autoarray8_get(&(function_returns), j));
 
-                        variable length = array8_length(arguments);
-                        variable k = 0;
-                        while !(=(array8_get(arguments, k), 0)) {
-                            variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                            variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
-                            if !(is_type(wanted, given, nodes, node_count)) {
-                                print("TYPECHECK: ");
-                                print(current_function);
-                                print(": Invoke of ");
-                                print(function_name);
-                                print(" wants '");
-                                print(wanted);
-                                print("', given '");
-                                print(given);
-                                println("'");
-                                exit(1);
-                            };
-
-                            k = +(k, 1);
-                        };
-
-                        variable k = 0;
-                        while !(=(array8_get(returns, k), 0)) {
-                            variable return_value = @cast_*(array8_get(returns, k));
-                            autostack8_push(&(stack), &(stack_pointer), return_value);
-
-                            k = +(k, 1);
-                        };
-                        
-                        found_function = true;
-                    };
-                    j = +(j, 1);
-                };
-
-                if !(found_function) {
+                if =(hashmap_string_get(&(function_arguments_map), function_name), 0) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke target '");
                     print(function_name);
                     println("' not found");
                     exit(1);
+                };
+
+                variable arguments = @cast_*(hashmap_string_get(&(function_arguments_map), function_name));
+                variable returns = @cast_*(hashmap_string_get(&(function_returns_map), function_name));
+
+                variable length = array8_length(arguments);
+                variable k = 0;
+                while !(=(array8_get(arguments, k), 0)) {
+                    variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                    variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
+                    if !(is_type(wanted, given, nodes, node_count)) {
+                        print("TYPECHECK: ");
+                        print(current_function);
+                        print(": Invoke of ");
+                        print(function_name);
+                        print(" wants '");
+                        print(wanted);
+                        print("', given '");
+                        print(given);
+                        println("'");
+                        exit(1);
+                    };
+
+                    k = +(k, 1);
+                };
+
+                variable k = 0;
+                while !(=(array8_get(returns, k), 0)) {
+                    variable return_value = @cast_*(array8_get(returns, k));
+                    autostack8_push(&(stack), &(stack_pointer), return_value);
+
+                    k = +(k, 1);
                 };
             };
 
@@ -416,25 +391,8 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable variable_name = NodeDeclareData->name(declare_data);
             variable variable_type = NodeDeclareData->type(declare_data);
 
-            variable temp_variable_index = 999;
-            variable k = 0;
-            while <(k, variable_index) {
-                variable temp_variable_name = @cast_*(autoarray8_get(&(variable_names), k));
-                if string=(temp_variable_name, variable_name) {
-                    temp_variable_index = k;
-                };
-                k = +(k, 1);
-            };
-
-            if =(temp_variable_index, 999) {
-                autoarray8_set(&(variable_names), variable_index, variable_name);
-                autoarray8_set(&(variable_types), variable_index, variable_type);
-                autoarray8_set(&(variable_declares), variable_index, i);
-                variable_index = +(variable_index, 1);
-            } else {
-                autoarray8_set(&(variable_types), temp_variable_index, variable_type);
-                autoarray8_set(&(variable_declares), temp_variable_index, i);
-            };
+            hashmap_string_put(&(variable_types_map), variable_name, variable_type);
+            hashmap_string_put(&(variable_declares_map), variable_name, i);
 
             done_anything = true;
         };
@@ -442,16 +400,15 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             variable assign_data = @cast_*NodeAssignData(pointer_data);
             variable variable_name = NodeAssignData->name(assign_data);
 
-            variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
             variable popped_stack = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
             if !(=(variable_type, 0)) {
                 if string=(variable_type, "") {
-                    variable variable_index2 = autostringarraymap_get_index(&(variable_names), variable_name, variable_index);
-                    autoarray8_set(&(variable_types), variable_index2, popped_stack);
+                    hashmap_string_put(&(variable_types_map), variable_name, popped_stack);
                     variable_type = popped_stack;
 
-                    variable variable_declare = autostringarraymap_get(&(variable_names), &(variable_declares), variable_name, variable_index);
+                    variable variable_declare = hashmap_string_get(&(variable_declares_map), variable_name);
                     variable_declare = nodes_get_pointer(nodes, @cast_whole_8(variable_declare));
 
                     *<-(@cast_**(+(variable_declare, 16)), variable_type);
@@ -470,7 +427,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                     exit(1);
                 };
             } else {
-                variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
+                variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
 
                 if !(is_type(variable_type, popped_stack, nodes, node_count)) {
                     print("TYPECHECK: ");
@@ -491,23 +448,24 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
         if =(id, NODE_RETRIEVE) {
             variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
 
-            variable variable_type = autostringarraymap_get(&(variable_names), &(variable_types), variable_name, variable_index);
+            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
             if !(=(variable_type, 0)) {
                 autostack8_push(&(stack), &(stack_pointer), variable_type);
             } else {
-                variable function_argument_names2 = autostringarraymap_get(&(functions), &(function_argument_names), current_function, index);
-                variable function_arguments2 = autostringarraymap_get(&(functions), &(function_arguments), current_function, index);
+                variable function_argument_names2 = @cast_*(hashmap_string_get(&(function_argument_names_map), current_function));
+                variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
 
                 variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
                 if !(=(variable_type, 0)) {
                     autostack8_push(&(stack), &(stack_pointer), variable_type);
                 } else {
-                    variable_type = autostringarraymap_get(&(globals), &(global_types), variable_name, global_index);
+                    variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
+
                     if !(=(variable_type, 0)) {
                         autostack8_push(&(stack), &(stack_pointer), variable_type);
                     } else {
-                        variable_type = autostringarraymap_get(&(constants), &(constant_types), variable_name, constant_index);
+                        variable_type = @cast_*(hashmap_string_get(&(constants_map), variable_name));
 
                         if !(=(variable_type, 0)) {
                             autostack8_push(&(stack), &(stack_pointer), variable_type);
@@ -526,7 +484,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             done_anything = true;
         };
         if =(id, NODE_RETURN) {
-            variable function_returns2 = autostringarraymap_get(&(functions), &(function_returns), current_function, index);
+            variable function_returns2 = @cast_*(hashmap_string_get(&(function_returns_map), current_function));
 
             variable j = 0;
             while !(=(array8_get(function_returns2, j), 0)) {
