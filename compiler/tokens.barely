@@ -40,15 +40,31 @@ structure TokenBooleanData {
 
 constant TOKEN_SIZE: whole_8 = 32;
 
-function tokens_get_id(tokens: *AutoBuffer, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(tokens, *(index, TOKEN_SIZE));
+function tokens_get_id(tokens: *Tokens, index: whole_8): whole_8 {
+    return autobuffer_get_whole_8(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
-function tokens_get_pointer(tokens: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(tokens, *(index, TOKEN_SIZE));
+function tokens_get_pointer(tokens: *Tokens, index: whole_8): * {
+    return autobuffer_get(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
-function tokens_get_pointer_data(tokens: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(tokens, +(*(index, TOKEN_SIZE), 8));
+function tokens_get_pointer_data(tokens: *Tokens, index: whole_8): * {
+    return autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 8));
 };
 
+function tokens_append_data(tokens: *Tokens, id: whole_8): * {
+    return @cast_*(+(tokens_append(tokens, id), 8));
+};
+
+function tokens_append(tokens: *Tokens, id: whole_8): * {
+    variable tokens_buffer = &(Tokens->buffer(tokens));
+    variable tokens_index = &(Tokens->index(tokens));
+    autobuffer_register(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
+    variable to_return = autobuffer_get(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE));
+
+    autobuffer_set_whole_8(tokens_buffer, id, *(whole_8->(tokens_index), TOKEN_SIZE));
+
+    increment_whole_8_pointer(tokens_index, 1);
+
+    return to_return;
+};

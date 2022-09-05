@@ -54,7 +54,6 @@ function main(arguments: **, argument_count: whole_8) {
         include_file(pointer, &(nodes), &(already_included), &(already_included_index));
 
         i = +(i, 1);
-
     };
 
     variable nodes_index_saved = Nodes->index(&(nodes));
@@ -260,18 +259,31 @@ function add_internal_functions(nodes: *Nodes) {
     nodes_append_function(nodes, "@syscall5", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 };
 
+structure Tokens {
+    buffer: AutoBuffer;
+    index: whole_8;
+};
+
+function tokens_new(): Tokens {
+    variable tokens: Tokens;
+
+    Tokens<-buffer(&(tokens), autobuffer_new(131072));
+    Tokens<-index(&(tokens), 0);
+
+    return tokens;
+};
+
 function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer, already_included_index: *whole_8) {
     variable nodes_index = &(Nodes->index(nodes));
-    variable tokens = autobuffer_new(131072);
-    variable tokens_index = 0;
+    variable tokens = tokens_new();
 
     variable contents = get_contents(file_name);
 
-    tokenize(contents, &(tokens), &(tokens_index));
+    tokenize(contents, &(tokens));
 
     variable previous_index = whole_8->(nodes_index);
 
-    parse(&(tokens), tokens_index, nodes);
+    parse(&(tokens), nodes);
 
     autostack8_push(already_included, already_included_index, file_name);
 

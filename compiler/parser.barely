@@ -1,22 +1,7 @@
 include "compiler/tokens.barely";
 include "compiler/nodes.barely";
 
-function append_token_data(tokens: *AutoBuffer, tokens_index: *whole_8, id: whole_8): * {
-    return @cast_*(+(append_token(tokens, tokens_index, id), 8));
-};
-
-function append_token(tokens: *AutoBuffer, tokens_index: *whole_8, id: whole_8): * {
-    autobuffer_register(tokens, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
-    variable to_return = autobuffer_get(tokens, *(whole_8->(tokens_index), TOKEN_SIZE));
-
-    autobuffer_set_whole_8(tokens, id, *(whole_8->(tokens_index), TOKEN_SIZE));
-
-    increment_whole_8_pointer(tokens_index, 1);
-
-    return to_return;
-};
-
-function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_index: *whole_8) {
+function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens) {
     variable buffer = AutoBuffer->buffer(auto_buffer);
     variable buffer_length = length(AutoBuffer->buffer(auto_buffer));
 
@@ -60,13 +45,13 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
         variable allocated = brk_allocate(+(buffer_length, 1));
         copy(buffer, allocated, buffer_length);
 
-        variable keyword_data = @cast_*TokenKeywordData(append_token_data(tokens, tokens_index, TOKEN_KEYWORD));
+        variable keyword_data = @cast_*TokenKeywordData(tokens_append_data(tokens, TOKEN_KEYWORD));
         TokenKeywordData<-keyword(keyword_data, allocated);
         return;
     };
 
     if is_number(buffer) {
-        variable whole_8_data = @cast_*TokenNumberData(append_token_data(tokens, tokens_index, TOKEN_NUMBER));
+        variable whole_8_data = @cast_*TokenNumberData(tokens_append_data(tokens, TOKEN_NUMBER));
 
         variable stage = 0;
         variable type_buffer = autobuffer_new(8);
@@ -110,7 +95,7 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
     };
 
     if |(string=(buffer, "true"), string=(buffer, "false")) {
-        variable boolean_data = @cast_*TokenBooleanData(append_token_data(tokens, tokens_index, TOKEN_BOOLEAN));
+        variable boolean_data = @cast_*TokenBooleanData(tokens_append_data(tokens, TOKEN_BOOLEAN));
         TokenBooleanData<-value(boolean_data, string=(buffer, "true"));
 
         return;
@@ -119,7 +104,7 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *AutoBuffer, tokens_in
     variable allocated = brk_allocate(+(buffer_length, 1));
     copy(buffer, allocated, buffer_length);
 
-    variable name_data = @cast_*TokenNameData(append_token_data(tokens, tokens_index, TOKEN_NAME));
+    variable name_data = @cast_*TokenNameData(tokens_append_data(tokens, TOKEN_NAME));
     TokenNameData<-name(name_data, allocated);
 };
 
@@ -136,7 +121,7 @@ constant ASCII_LINE_FEED: whole_1 = 10;
 constant ASCII_QUOTATION: whole_1 = 34;
 constant ASCII_SLASH: whole_1 = 47;
 
-function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
+function tokenize(contents: *, tokens: *Tokens) {
     variable index = 0;
     variable contents_length = length(contents);
 
@@ -154,73 +139,66 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
         if !(in_quotes) {
             if !(in_comment) {
                 if =(*1(character_pointer), ASCII_SPACE) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
                 };
                 if =(*1(character_pointer), ASCII_OPEN_PARENTHESIS) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_PARENTHESIS, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_OPEN_PARENTHESIS);
                 };
                 if =(*1(character_pointer), ASCII_CLOSED_PARENTHESIS) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_PARENTHESIS, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_CLOSED_PARENTHESIS);
                 };
                 if =(*1(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_OPEN_CURLY_BRACKETS, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_OPEN_CURLY_BRACKETS);
                 };
                 if =(*1(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_CLOSED_CURLY_BRACKETS, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_CLOSED_CURLY_BRACKETS);
                 };
                 if =(*1(character_pointer), ASCII_COMMA) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_COMMA, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_COMMA);
                 };
                 if =(*1(character_pointer), ASCII_SEMICOLON) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_SEMICOLON, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_SEMICOLON);
                 };
                 if =(*1(character_pointer), ASCII_COLON) {
-                    tokenize_inner(&(buffer), tokens, tokens_index);
+                    tokenize_inner(&(buffer), tokens);
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
-                    autobuffer_set_whole_8(tokens, TOKEN_COLON, *(whole_8->(tokens_index), TOKEN_SIZE));
-                    increment_whole_8_pointer(tokens_index, 1);
+                    variable _ = tokens_append(tokens, TOKEN_COLON);
                 };
                 if =(*1(character_pointer), ASCII_TAB) {
                     done_anything = true;
@@ -243,7 +221,7 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
                     variable allocated = brk_allocate(+(buffer_length, 1));
                     copy(AutoBuffer->buffer(&(buffer)), allocated, buffer_length);
 
-                    variable string_pointer_data = @cast_*TokenStringData(append_token_data(tokens, tokens_index, TOKEN_STRING));
+                    variable string_pointer_data = @cast_*TokenStringData(tokens_append_data(tokens, TOKEN_STRING));
                     TokenStringData<-value(string_pointer_data, allocated);
 
                     autobuffer_reset(&(buffer));
@@ -273,7 +251,7 @@ function tokenize(contents: *, tokens: *AutoBuffer, tokens_index: *whole_8) {
     };
 };
 
-function parse_constant(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_constant(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
@@ -290,7 +268,7 @@ function parse_constant(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *No
     increment_whole_8_pointer(index_pointer, 7);
 };
 
-function parse_global(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_global(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
@@ -304,7 +282,7 @@ function parse_global(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Node
     increment_whole_8_pointer(index_pointer, 5);
 };
 
-function parse_include(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_include(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
@@ -315,7 +293,7 @@ function parse_include(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nod
     increment_whole_8_pointer(index_pointer, 3);
 };
 
-function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_structure(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
@@ -358,8 +336,8 @@ function parse_structure(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *N
     whole_8<-(index_pointer, index);
 };
 
-function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8->(index_pointer);
+function parse_function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    variable index = whole_8->(index_pointer)
 
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
@@ -436,7 +414,7 @@ function parse_function(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *No
     whole_8<-(index_pointer, index);
 };
 
-function parse_expression(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
 
     variable id = tokens_get_id(tokens, index);
@@ -516,7 +494,7 @@ function get_target_id(): whole_8 {
     return return_;
 };
 
-function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable done_anything = false;
 
     if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
@@ -733,11 +711,12 @@ function parse_statement(tokens: *AutoBuffer, index_pointer: *whole_8, nodes: *N
     };
 };
 
-function parse(tokens: *AutoBuffer, tokens_count: whole_8, nodes: *Nodes) {
+function parse(tokens: *Tokens, nodes: *Nodes) {
     variable index = 0;
     
+    variable tokens_count = Tokens->index(tokens);
     while <(index, tokens_count) {
-        variable id = autobuffer_get_whole_8(tokens, *(index, TOKEN_SIZE));
+        variable id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_KEYWORD) {
             variable keyword_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, index));
