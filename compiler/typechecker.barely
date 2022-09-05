@@ -1,4 +1,4 @@
-function is_type(wanted: *, given: *, nodes: *AutoBuffer, node_count: whole_8): boolean {
+function is_type(wanted: *, given: *, nodes: *Nodes): boolean {
     if string=(wanted, given) {
         return true;
     };
@@ -11,13 +11,13 @@ function is_type(wanted: *, given: *, nodes: *AutoBuffer, node_count: whole_8): 
 
     if string_length=(wanted, "any_", 4) {
         variable size = to_number(@cast_*(+(wanted, 4)));
-        return =(size, get_size_linux_x86-64(given, nodes, node_count));
+        return =(size, get_size_linux_x86-642(given, nodes));
     };
 
     return false;
 };
 
-function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
+function is_signed(type: *, nodes: *Nodes): whole_8 {
     variable cached_signedness = @cast_whole_8(hashmap_string_get(&(cached_signedness_map), type));
     if !(=(cached_signedness, 999)) {
         return cached_signedness;
@@ -41,6 +41,7 @@ function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
         return 1;
     };
 
+    variable node_count = Nodes->index(nodes);
     variable i = 0;
     while <(i, node_count) {
         if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
@@ -48,7 +49,7 @@ function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
             variable name = NodeStructureData->name(pointer);
             variable member_types = NodeStructureData->item_types(pointer);
             if string=(type, name) {
-                variable is_signed = is_signed(@cast_*(array8_get(member_types, 0)), nodes, node_count);
+                variable is_signed = is_signed(@cast_*(array8_get(member_types, 0)), nodes);
                 hashmap_string_put(&(cached_signedness_map), type, is_signed);
                 return is_signed;
             };
@@ -59,7 +60,9 @@ function is_signed(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
     return 0;
 };
 
-function type_check(nodes: *AutoBuffer, node_count: whole_8) {
+function type_check(nodes: *Nodes) {
+    variable node_count = Nodes->index(nodes);
+
     variable stack = autobuffer_new(64);
     variable stack_pointer: whole_8;
 
@@ -156,7 +159,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable to_push = @cast_*(+(function_name, 6));
 
-                if !(=(get_size_linux_x86-64(popped, nodes, node_count), get_size_linux_x86-64(to_push, nodes, node_count))) {
+                if !(=(get_size_linux_x86-642(popped, nodes), get_size_linux_x86-642(to_push, nodes))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Cast wants equal sized types, given '");
@@ -172,7 +175,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '+' wants matching arguments, given '");
@@ -194,7 +197,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '-' wants matching arguments, given '");
@@ -216,7 +219,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '*' has incompatable arguments, given '");
@@ -238,7 +241,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '/' has incompatable arguments, given '");
@@ -260,7 +263,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '%' has incompatable arguments, given '");
@@ -282,7 +285,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '=' has incompatable arguments, given '");
@@ -304,7 +307,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '>' has incompatable arguments, given '");
@@ -326,7 +329,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-64(first, nodes, node_count), get_size_linux_x86-64(second, nodes, node_count))), !(=(is_signed(first, nodes, node_count), is_signed(second, nodes, node_count)))) {
+                if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Invoke of '<' has incompatable arguments, given '");
@@ -364,7 +367,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 while <(k, length) {
                     variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                     variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
-                    if !(is_type(wanted, given, nodes, node_count)) {
+                    if !(is_type(wanted, given, nodes)) {
                         print("TYPECHECK: ");
                         print(current_function);
                         print(": Invoke of ");
@@ -417,7 +420,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                     *<-(@cast_**(+(variable_declare, 16)), variable_type);
                 };
 
-                if !(is_type(variable_type, popped_stack, nodes, node_count)) {
+                if !(is_type(variable_type, popped_stack, nodes)) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Assign of ");
@@ -432,7 +435,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
             } else {
                 variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
 
-                if !(is_type(variable_type, popped_stack, nodes, node_count)) {
+                if !(is_type(variable_type, popped_stack, nodes)) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Assign of ");
@@ -492,7 +495,7 @@ function type_check(nodes: *AutoBuffer, node_count: whole_8) {
                 variable function_return = @cast_*(array8_get(function_returns2, j));
                 variable stack_popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 
-                if !(is_type(function_return, stack_popped, nodes, node_count)) {
+                if !(is_type(function_return, stack_popped, nodes)) {
                     print("TYPECHECK: ");
                     print(current_function);
                     print(": Return wants '");

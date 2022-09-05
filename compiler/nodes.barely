@@ -115,14 +115,47 @@ structure NodeIncludeData {
 
 constant NODE_SIZE: whole_8 = 48;
 
-function nodes_get_id(nodes: *AutoBuffer, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(nodes, *(index, NODE_SIZE));
+function nodes_get_id(nodes: *Nodes, index: whole_8): whole_8 {
+    return autobuffer_get_whole_8(&(Nodes->buffer(nodes)), *(index, NODE_SIZE));
 };
 
-function nodes_get_pointer(nodes: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(nodes, *(index, NODE_SIZE));
+function nodes_get_pointer_data(nodes: *Nodes, index: whole_8): * {
+    return autobuffer_get(&(Nodes->buffer(nodes)), +(*(index, NODE_SIZE), 8));
 };
 
-function nodes_get_pointer_data(nodes: *AutoBuffer, index: whole_8): * {
-    return autobuffer_get(nodes, +(*(index, NODE_SIZE), 8));
+function nodes_get_pointer(nodes: *Nodes, index: whole_8): * {
+    return autobuffer_get(&(Nodes->buffer(nodes)), *(index, NODE_SIZE));
 };
+
+function nodes_append_data(nodes: *Nodes, id: whole_8): * {
+    return @cast_*(+(nodes_append(nodes, id), 8));
+};
+
+function nodes_append(nodes: *Nodes, id: whole_8): * {
+    variable nodes_buffer = &(Nodes->buffer(nodes));
+    variable nodes_index = &(Nodes->index(nodes));
+    autobuffer_register(nodes_buffer, *(whole_8->(nodes_index), NODE_SIZE), NODE_SIZE);
+    variable to_return = autobuffer_get(nodes_buffer, *(whole_8->(nodes_index), NODE_SIZE));
+
+    autobuffer_set_whole_8(nodes_buffer, id, *(whole_8->(nodes_index), NODE_SIZE));
+
+    increment_whole_8_pointer(nodes_index, 1);
+
+    return to_return;
+};
+
+function nodes_append_structure(nodes: *Nodes, name: *) {
+    variable structure_data = @cast_*NodeStructureData(nodes_append_data(nodes, NODE_STRUCTURE));
+    NodeStructureData<-name(structure_data, name);
+    NodeStructureData<-item_names(structure_data, &(empty));
+    NodeStructureData<-item_types(structure_data, &(empty));
+};
+
+function nodes_append_function(nodes: *Nodes, name: *, arguments: *, returns: *) {
+    variable function_data = @cast_*NodeFunctionData(nodes_append_data(nodes, NODE_FUNCTION));
+    NodeFunctionData<-name(function_data, name);
+    NodeFunctionData<-argument_types(function_data, arguments);
+    NodeFunctionData<-returns(function_data, returns);
+    variable _ = nodes_append(nodes, NODE_ENDFUNCTION);
+};
+

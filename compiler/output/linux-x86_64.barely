@@ -1,6 +1,6 @@
 include "lib/elf.barely";
 
-function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: *) {
+function output_linux_x86-64_elf(nodes: *Nodes, name: *) {
     variable output = autobuffer_new(512);
 
     variable file_header = new_elf64_file_header();
@@ -84,6 +84,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     variable je_targets = autobuffer_new(512);
     variable je_index = 0;
 
+    variable node_count = Nodes->index(nodes);
     variable i = 0;
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
@@ -107,7 +108,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                     variable declare_data = @cast_*NodeDeclareData(pointer_data);
                     variable declare_name = NodeDeclareData->name(declare_data);
                     variable declare_type = NodeDeclareData->type(declare_data);
-                    total = +(total, get_size_linux_x86-64(declare_type, nodes, node_count));
+                    total = +(total, get_size_linux_x86-642(declare_type, nodes));
                 };
 
                 j = +(j, 1);
@@ -125,7 +126,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable global_location = bss_index;
             hashmap_string_put(&(global_locations_map), global_name, global_location);
 
-            bss_index = +(bss_index, get_size_linux_x86-64(global_type, nodes, node_count));
+            bss_index = +(bss_index, get_size_linux_x86-642(global_type, nodes));
         } else if =(id, NODE_CONSTANT) {
             variable constant_data = @cast_*NodeConstantData(pointer_data);
             variable constant_name = NodeConstantData->name(constant_data);
@@ -151,7 +152,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable contents_index = 0;
             variable contents_index2 = 0;
 
-            variable size = get_size_linux_x86-64(structure_name, nodes, node_count);
+            variable size = get_size_linux_x86-642(structure_name, nodes);
 
             autopush_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, size);
             autopush_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP , 0, RAX);
@@ -256,7 +257,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable member_name = @cast_*(array8_get(member_names, j));
                 variable member_type = @cast_*(array8_get(member_types, j));
 
-                variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, node_count);
+                variable location = get_size_multiple_linux_x86-642(member_types, j, nodes);
 
                 variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 4)));
                 copy("*", allocated, 1);
@@ -291,7 +292,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable contents_index = 0;
                 variable contents_index2 = 0;
 
-                variable size = get_size_linux_x86-64(member_type, nodes, node_count);
+                variable size = get_size_linux_x86-642(member_type, nodes);
 
                 autopush_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, size);
                 autopush_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, 0, RAX);
@@ -349,8 +350,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable contents_index = 0;
                 variable contents_index2 = 0;
 
-                variable size = get_size_linux_x86-64(member_type, nodes, node_count);
-                variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, node_count);
+                variable size = get_size_linux_x86-642(member_type, nodes);
+                variable location = get_size_multiple_linux_x86-642(member_types, j, nodes);
 
                 autopush_pop_register8(allocated_contents33, &(contents_index2), RAX);
                 autopush_sub_register8_whole_8(allocated_contents33, &(contents_index2), RSP, size);
@@ -503,7 +504,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             } else if string_length=(function_name, "@cast_", 6) {
                 done_anything_invoke = true;
             } else if string_length=(function_name, "=_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
@@ -537,7 +538,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                 done_anything_invoke = true;
             } else if string_length=(function_name, ">_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
@@ -571,7 +572,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                 done_anything_invoke = true;
             } else if string_length=(function_name, "<_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
@@ -622,7 +623,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                 done_anything_invoke = true;
             } else if string_length=(function_name, "+_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
@@ -656,7 +657,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 };
                 done_anything_invoke = true;
             } else if string_length=(function_name, "-_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
@@ -690,7 +691,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 };
                 done_anything_invoke = true;
             } else if string_length=(function_name, "*_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
                     autopush_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
@@ -724,7 +725,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 };
                 done_anything_invoke = true;
             } else if string_length=(function_name, "/_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 if =(size, 8) {
@@ -760,7 +761,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 };
                 done_anything_invoke = true;
             } else if string_length=(function_name, "%_", 2) {
-                variable size = get_size_linux_x86-64(+(function_name, 2), nodes, node_count);
+                variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 autopush_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 if =(size, 8) {
@@ -891,7 +892,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             hashmap_string_put(&(variable_types_map), variable_name, variable_type);
             autoarray8_set(&(variable_names), variable_index, variable_name);
-            autoarray8_set(&(variable_sizes), variable_index, get_size_linux_x86-64(variable_type, nodes, node_count));
+            autoarray8_set(&(variable_sizes), variable_index, get_size_linux_x86-642(variable_type, nodes));
             variable_index = +(variable_index, 1);
 
             done_anything = true;
@@ -901,7 +902,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
 
             if !(=(variable_type, 0)) {
-                variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
+                variable size = get_size_linux_x86-642(variable_type, nodes);
                 variable variable_index_thing = autostringarraymap_get_index(&(variable_names), variable_name, variable_index);
                 variable location = 0;
                 variable j = 0;
@@ -951,7 +952,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
                 variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
-                variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
+                variable size = get_size_linux_x86-642(variable_type, nodes);
 
                 variable global_location = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
 
@@ -1021,7 +1022,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
 
             if !(=(variable_type, 0)) {
-                variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
+                variable size = get_size_linux_x86-642(variable_type, nodes);
                 variable variable_index_thing = autostringarraymap_get_index(&(variable_names), variable_name, variable_index);
                 variable location = 0;
                 variable j = 0;
@@ -1077,8 +1078,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                 variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
                 if !(=(variable_type, 0)) {
-                    variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
-                    variable location = get_size_multiple_reversed_linux_x86-64(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes, node_count);
+                    variable size = get_size_linux_x86-642(variable_type, nodes);
+                    variable location = get_size_multiple_reversed_linux_x86-642(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes);
 
                     if =(next_id, NODE_POINTER) {
                         autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(16, location), RAX);
@@ -1123,7 +1124,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
                         copy("_", global_name, 1);
                         copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
-                        variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
+                        variable size = get_size_linux_x86-642(variable_type, nodes);
 
                         variable global_index2 = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
 
@@ -1169,7 +1170,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
                         variable constant_location = @cast_DataIndex(hashmap_string_get(&(constant_locations_map), variable_name));
 
-                        variable size = get_size_linux_x86-64(variable_type, nodes, node_count);
+                        variable size = get_size_linux_x86-642(variable_type, nodes);
 
                         if =(next_id, NODE_POINTER) {
                             autopush_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), constant_location);
@@ -1213,8 +1214,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
 
             done_anything = true;
         } else if =(id, NODE_RETURN) {
-            variable arguments_size = get_size_multiple_linux_x86-64(@cast_*(hashmap_string_get(&(function_arguments_map), current_function)), 999, nodes, node_count);
-            variable returns_size = get_size_multiple_linux_x86-64(@cast_*(hashmap_string_get(&(function_returns_map), current_function)), 999, nodes, node_count);
+            variable arguments_size = get_size_multiple_linux_x86-642(@cast_*(hashmap_string_get(&(function_arguments_map), current_function)), 999, nodes);
+            variable returns_size = get_size_multiple_linux_x86-642(@cast_*(hashmap_string_get(&(function_returns_map), current_function)), 999, nodes);
             variable returns_size_rounded = returns_size;
             if !(=(%(returns_size_rounded, 8), 0)) {
                 returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
@@ -1332,7 +1333,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             copy("_", global_name, 1);
             copy(name2, @cast_*(+(global_name, 1)), length(name2));
             
-            variable size = get_size_linux_x86-64(type, nodes, node_count);
+            variable size = get_size_linux_x86-642(type, nodes);
 
             autopush_string(&(bss_buffer), &(bss_buffer_index), global_name);
             autopush_string(&(bss_buffer), &(bss_buffer_index), ": rb ");
@@ -1356,7 +1357,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
             variable zero_data = @cast_*NodeZeroData(pointer_data);
             variable type2 = NodeZeroData->type(zero_data);
 
-            variable size = get_size_linux_x86-64(type2, nodes, node_count);
+            variable size = get_size_linux_x86-642(type2, nodes);
 
             autopush_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
 
@@ -1398,8 +1399,8 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
         } else if =(id, NODE_INCLUDE) {
             done_anything = true;
         } else {
-            //print("Unhandled ");
-            //print_whole_8(id);
+            print("Unhandled ");
+            print_whole_8(id);
         };
 
         i = +(i, 1);
@@ -1531,7 +1532,7 @@ function output_linux_x86-64_elf(nodes: *AutoBuffer, node_count: whole_8, name: 
     sys_close(output_file);
 };
 
-function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
+function get_size_linux_x86-642(type: *, nodes: *Nodes): whole_8 {
     variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
     if !(=(cached_size, 0)) {
         return cached_size;
@@ -1565,6 +1566,7 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
         return number;
     };
 
+    variable node_count = Nodes->index(nodes);
     variable i = 0;
     while <(i, node_count) {
         if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
@@ -1572,7 +1574,7 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
             variable name = NodeStructureData->name(pointer);
             variable member_types = NodeStructureData->item_types(pointer);
             if string=(type, name) {
-                variable size = get_size_multiple_linux_x86-64(member_types, 999, nodes, node_count);
+                variable size = get_size_multiple_linux_x86-642(member_types, 999, nodes);
                 hashmap_string_put(&(cached_sizes_map), type, size);
                 return size;
             };
@@ -1586,7 +1588,7 @@ function get_size_linux_x86-64(type: *, nodes: *AutoBuffer, node_count: whole_8)
     return 0;
 };
 
-function get_size_multiple_linux_x86-64(array: *, count: whole_8, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
+function get_size_multiple_linux_x86-642(array: *, count: whole_8, nodes: *Nodes): whole_8 {
     variable total = 0;
 
     variable i = 0;
@@ -1594,20 +1596,20 @@ function get_size_multiple_linux_x86-64(array: *, count: whole_8, nodes: *AutoBu
         if =(array8_get(array, i), 0) {
             return total;
         };
-        total = +(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
+        total = +(total, get_size_linux_x86-642(@cast_*(array8_get(array, i)), nodes));
         i = +(i, 1);
     };
 
     return total;
 };
 
-function get_size_multiple_reversed_linux_x86-64(array: *, count: whole_8, nodes: *AutoBuffer, node_count: whole_8): whole_8 {
+function get_size_multiple_reversed_linux_x86-642(array: *, count: whole_8, nodes: *Nodes): whole_8 {
     variable i = -(array8_length(array), 1);
 
     variable total = 0;
 
     while >(i, count) {
-        total = +(total, get_size_linux_x86-64(@cast_*(array8_get(array, i)), nodes, node_count));
+        total = +(total, get_size_linux_x86-642(@cast_*(array8_get(array, i)), nodes));
         i = -(i, 1);
     };
 
