@@ -382,6 +382,7 @@ function parse_function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes)
             variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
 
             autoarray8_set(&(returns_pointer), returns_index, token_name);
+            returns_index = +(returns_index, 1);
         };
 
         index = +(index, 1);
@@ -566,12 +567,13 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
                 };
             };
 
-            variable i = 0;
-            while !(=(autoarray8_get(&(names), i), 0)) {
+            variable temp = autoarray8_length(&(names));
+            variable i = -(autoarray8_length(&(names)), 1);
+            while <(i, temp) {
                 variable node_data = @cast_*NodeAssignData(nodes_append_data(nodes, NODE_ASSIGN));
                 NodeAssignData<-name(node_data, @cast_*(autoarray8_get(&(names), i)));
 
-                i = +(i, 1);
+                i = -(i, 1);
             };
 
             whole_8<-(index_pointer, index);
@@ -583,7 +585,14 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
         if string=(name_value, "return") {
             increment_whole_8_pointer(index_pointer, 1);
-            parse_expression(tokens, index_pointer, nodes);
+
+            while !(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_SEMICOLON)) {
+                if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_COMMA) {
+                    increment_whole_8_pointer(index_pointer, 1);
+                } else {
+                    parse_expression(tokens, index_pointer, nodes);
+                };
+            };
 
             variable node = nodes_append(nodes, NODE_RETURN);
             done_anything = true;

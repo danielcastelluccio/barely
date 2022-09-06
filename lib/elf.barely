@@ -221,6 +221,14 @@ function autoarray8_get(buffer: *AutoBuffer, index: whole_8): any_8 {
     return autobuffer_get_whole_8(buffer, *(index, 8));
 };
 
+function autoarray8_length(buffer: *AutoBuffer): whole_8 {
+    variable k = 0;
+    while !(=(autoarray8_get(buffer, k), 0)) {
+        k = +(k, 1);
+    };
+    return k;
+};
+
 function autopush_mov_whole_8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, 73_whole_1);

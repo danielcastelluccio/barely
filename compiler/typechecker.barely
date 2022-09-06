@@ -501,8 +501,9 @@ function type_check(nodes: *Nodes) {
         } else if =(id, NODE_RETURN) {
             variable function_returns2 = @cast_*(hashmap_string_get(&(function_returns_map), current_function));
 
-            variable j = 0;
-            while !(=(array8_get(function_returns2, j), 0)) {
+            variable temp = array8_length(function_returns2);
+            variable j = -(temp, 1);
+            while <(j, temp) {
                 variable function_return = @cast_*(array8_get(function_returns2, j));
                 variable stack_popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 
@@ -517,7 +518,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                j = +(j, 1);
+                j = -(j, 1);
             };
 
             done_anything = true;
