@@ -88,7 +88,6 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable i = 0;
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
-        variable pointer = nodes_get_pointer(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         if =(id, NODE_FUNCTION) {
@@ -101,7 +100,6 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable j = i;
             while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
                 variable id = nodes_get_id(nodes, j);
-                variable pointer = nodes_get_pointer(nodes, j);
                 variable pointer_data = nodes_get_pointer_data(nodes, j);
                 
                 if =(id, NODE_DECLARE) {
@@ -138,7 +136,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             hashmap_string_put(&(constant_locations_map), constant_name, constant_location);
         } else if =(id, NODE_STRUCTURE) {
-            variable structure_name = NodeStructureData->name(@cast_*NodeStructureData(nodes_get_pointer_data(nodes, i)));
+            variable structure_data = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
+            variable structure_name = NodeStructureData->name(structure_data);
 
             // Setter for whole value
             variable allocated = brk_allocate(+(length(structure_name), 3));
@@ -249,8 +248,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents13));
             hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
-            variable member_names = *->(@cast_**(+(nodes_get_pointer(nodes, i), 16)));
-            variable member_types = *->(@cast_**(+(nodes_get_pointer(nodes, i), 24)));
+            variable member_names = NodeStructureData->item_names(structure_data);
+            variable member_types = NodeStructureData->item_types(structure_data);
 
             variable j = 0;
             while !(=(array8_get(member_names, j), 0)) {
@@ -412,7 +411,6 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable i = 0;
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
-        variable pointer = nodes_get_pointer(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         variable done_anything = false;

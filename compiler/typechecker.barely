@@ -426,9 +426,9 @@ function type_check(nodes: *Nodes) {
                     variable_type = popped_stack;
 
                     variable variable_declare = hashmap_string_get(&(variable_declares_map), variable_name);
-                    variable_declare = nodes_get_pointer(nodes, @cast_whole_8(variable_declare));
+                    variable variable_declare2 = @cast_*NodeDeclareData(nodes_get_pointer_data(nodes, @cast_whole_8(variable_declare)));
 
-                    *<-(@cast_**(+(variable_declare, 16)), variable_type);
+                    NodeDeclareData<-type(variable_declare2, variable_type);
                 };
 
                 if !(is_type(variable_type, popped_stack, nodes)) {
