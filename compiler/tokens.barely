@@ -38,7 +38,13 @@ structure TokenBooleanData {
     value: boolean;
 };
 
-constant TOKEN_SIZE: whole_8 = 32;
+constant TOKEN_SIZE: whole_8 = 56;
+
+structure TokenLocationData {
+    file: *;
+    row: whole_8;
+    column: whole_8;
+};
 
 function tokens_get_id(tokens: *Tokens, index: whole_8): whole_8 {
     return autobuffer_get_whole_8(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
@@ -49,20 +55,27 @@ function tokens_get_pointer(tokens: *Tokens, index: whole_8): * {
 };
 
 function tokens_get_pointer_data(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 8));
+    return autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 32));
 };
 
-function tokens_append_data(tokens: *Tokens, id: whole_8): * {
-    return @cast_*(+(tokens_append(tokens, id), 8));
+function tokens_get_location_data(tokens: *Tokens, index: whole_8): *TokenLocationData {
+    return @cast_*TokenLocationData(autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
 };
 
-function tokens_append(tokens: *Tokens, id: whole_8): * {
+function tokens_append_data(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    return @cast_*(+(tokens_append(tokens, id, file_name, row, column), 32));
+};
+
+function tokens_append(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
     variable tokens_buffer = &(Tokens->buffer(tokens));
     variable tokens_index = &(Tokens->index(tokens));
     autobuffer_register(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
     variable to_return = autobuffer_get(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE));
 
     autobuffer_set_whole_8(tokens_buffer, id, *(whole_8->(tokens_index), TOKEN_SIZE));
+    autobuffer_set_*(tokens_buffer, file_name, +(*(whole_8->(tokens_index), TOKEN_SIZE), 8));
+    autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8->(tokens_index), TOKEN_SIZE), 16));
+    autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8->(tokens_index), TOKEN_SIZE), 24));
 
     increment_whole_8_pointer(tokens_index, 1);
 

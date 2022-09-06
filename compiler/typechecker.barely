@@ -60,6 +60,17 @@ function is_signed(type: *, nodes: *Nodes): whole_8 {
     return 0;
 };
 
+function print_error_beginning(nodes: *Nodes, location: whole_8) {
+    variable location_data = nodes_get_location_data(nodes, location);
+    print("[ERROR] ");
+    print(NodeLocationData->file(location_data));
+    print(":");
+    print_whole_8(NodeLocationData->row(location_data));
+    print(":");
+    print_whole_8(NodeLocationData->column(location_data));
+    print(": ");
+};
+
 function type_check(nodes: *Nodes) {
     variable node_count = Nodes->index(nodes);
 
@@ -86,9 +97,10 @@ function type_check(nodes: *Nodes) {
 
             variable function_index_found = hashmap_string_get(&(function_arguments_map), function_name);
             if !(=(function_index_found, 0)) {
-                print("TYPECHECK: ");
+                print_error_beginning(nodes, i);
+                print("Function '");
                 print(function_name);
-                println(": Function already defined");
+                println("' already defined");
                 exit(1);
             };
 
@@ -121,7 +133,7 @@ function type_check(nodes: *Nodes) {
     };
 
     if !(has_main) {
-        println("TYPECHECK: No 'main' function defined");
+        println("[ERROR] No 'main' function defined");
         exit(1);
     };
 
@@ -171,9 +183,8 @@ function type_check(nodes: *Nodes) {
                 variable to_push = @cast_*(+(function_name, 6));
 
                 if !(=(get_size_linux_x86-642(popped, nodes), get_size_linux_x86-642(to_push, nodes))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Cast wants equal sized types, given '");
+                    print_error_beginning(nodes, i);
+                    print("Cast wants equal sized types, given '");
                     print(popped);
                     print("' and casts to '");
                     print(to_push);
@@ -187,9 +198,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '+' wants matching arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '+' wants matching arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -209,9 +219,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '-' wants matching arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '-' wants matching arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -231,9 +240,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '*' has incompatable arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '*' has incompatable arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -253,9 +261,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '/' has incompatable arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '/' has incompatable arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -275,9 +282,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '%' has incompatable arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '%' has incompatable arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -297,9 +303,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '=' has incompatable arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '=' has incompatable arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -319,9 +324,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '>' has incompatable arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '>' has incompatable arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -341,9 +345,8 @@ function type_check(nodes: *Nodes) {
                 variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke of '<' has incompatable arguments, given '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke of '<' has incompatable arguments, given '");
                     print(first);
                     print("' and '");
                     print(second);
@@ -362,9 +365,8 @@ function type_check(nodes: *Nodes) {
                 variable found_function = false;
 
                 if =(hashmap_string_get(&(function_arguments_map), function_name), 0) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Invoke target '");
+                    print_error_beginning(nodes, i);
+                    print("Invoke target '");
                     print(function_name);
                     println("' not found");
                     exit(1);
@@ -379,9 +381,8 @@ function type_check(nodes: *Nodes) {
                     variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                     variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
                     if !(is_type(wanted, given, nodes)) {
-                        print("TYPECHECK: ");
-                        print(current_function);
-                        print(": Invoke of ");
+                        print_error_beginning(nodes, i);
+                        print("Invoke of ");
                         print(function_name);
                         print(" wants '");
                         print(wanted);
@@ -432,9 +433,8 @@ function type_check(nodes: *Nodes) {
                 };
 
                 if !(is_type(variable_type, popped_stack, nodes)) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Assign of ");
+                    print_error_beginning(nodes, i);
+                    print("Assign of ");
                     print(variable_name);
                     print(" wants '");
                     print(variable_type);
@@ -447,9 +447,8 @@ function type_check(nodes: *Nodes) {
                 variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
 
                 if !(is_type(variable_type, popped_stack, nodes)) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Assign of ");
+                    print_error_beginning(nodes, i);
+                    print("Assign of ");
                     print(variable_name);
                     print(" wants '");
                     print(variable_type);
@@ -486,9 +485,8 @@ function type_check(nodes: *Nodes) {
                         if !(=(variable_type, 0)) {
                             autostack8_push(&(stack), &(stack_pointer), variable_type);
                         } else {
-                            print("TYPECHECK: ");
-                            print(current_function);
-                            print(": Retrieve target '");
+                            print_error_beginning(nodes, i);
+                            print("Retrieve target '");
                             print(variable_name);
                             println("' not found");
                             exit(1);
@@ -508,9 +506,8 @@ function type_check(nodes: *Nodes) {
                 variable stack_popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
                 
                 if !(is_type(function_return, stack_popped, nodes)) {
-                    print("TYPECHECK: ");
-                    print(current_function);
-                    print(": Return wants '");
+                    print_error_beginning(nodes, i);
+                    print("Return wants '");
                     print(function_return);
                     print("', given '");
                     print(stack_popped);
@@ -532,9 +529,8 @@ function type_check(nodes: *Nodes) {
         } else if =(id, NODE_JUMP_CONDITIONAL) {
             variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
             if !(string=(popped, "boolean")) {
-                print("TYPECHECK: ");
-                print(current_function);
-                print(": Conditional Jump (if/while) wants 'boolean', given '");
+                print_error_beginning(nodes, i);
+                print("Conditional Jump (if/while) wants 'boolean', given '");
                 print(popped);
                 println("'");
                 exit(1);
