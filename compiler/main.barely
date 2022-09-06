@@ -10,8 +10,6 @@ global cached_sizes_map: HashMap;
 global cached_signedness_map: HashMap;
 
 function main(arguments: **, argument_count: whole_8) {
-    variable main_name: *;
-
     println("Parsing...");
 
     variable nodes = nodes_new();
@@ -43,17 +41,23 @@ function main(arguments: **, argument_count: whole_8) {
     variable already_included = autobuffer_new(64);
     variable already_included_index = 0;
 
+    variable output_file = "output";
+
     variable i = 1;
     while <(i, argument_count) {
-        variable pointer = @cast_*(*8(@cast_*(+(arguments, *(8, i)))));
+        variable pointer = @cast_*(array8_get(arguments, i));
 
-        if =(i, 1) {
-            main_name = pointer;
+        if string=(pointer, "--output") {
+            variable output = @cast_*(array8_get(arguments, +(i, 1)));
+            output_file = output;
+            
+            i = +(i, 2);
+        } else {
+            include_file(pointer, &(nodes), &(already_included), &(already_included_index));
+
+            i = +(i, 1);
         };
 
-        include_file(pointer, &(nodes), &(already_included), &(already_included_index));
-
-        i = +(i, 1);
     };
 
     variable nodes_index_saved = Nodes->index(&(nodes));
@@ -163,7 +167,7 @@ function main(arguments: **, argument_count: whole_8) {
     type_check(&(nodes));
 
     println("Outputting...");
-    output_linux_x86-64_elf(&(nodes), main_name);
+    output_linux_x86-64_elf(&(nodes), output_file);
 };
 
 structure Nodes {

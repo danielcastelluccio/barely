@@ -72,6 +72,8 @@ function type_check(nodes: *Nodes) {
 
     variable globals_map = hashmap_new(512);
     variable constants_map = hashmap_new(512);
+
+    variable has_main = false;
     
     variable i = 0;
     while <(i, node_count) {
@@ -88,6 +90,10 @@ function type_check(nodes: *Nodes) {
                 print(function_name);
                 println(": Function already defined");
                 exit(1);
+            };
+
+            if string=(function_name, "main") {
+                has_main = true;
             };
 
             hashmap_string_put(&(function_arguments_map), function_name, NodeFunctionData->argument_types(function_data));
@@ -112,6 +118,11 @@ function type_check(nodes: *Nodes) {
         };
 
         i = +(i, 1);
+    };
+
+    if !(has_main) {
+        println("TYPECHECK: No 'main' function defined");
+        exit(1);
     };
 
     variable current_function: *;

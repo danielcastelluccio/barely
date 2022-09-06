@@ -1,6 +1,6 @@
 include "lib/elf.barely";
 
-function output_linux_x86-64_elf(nodes: *Nodes, name: *) {
+function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable output = autobuffer_new(512);
 
     variable file_header = new_elf64_file_header();
@@ -1440,18 +1440,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, name: *) {
         i = +(i, 1);
     };
 
-    if =(name, 0) {
-        println("No input files provided!");
-        exit(1);
-    };
-
-    variable name_new = brk_allocate(-(length(name), 6));
-    copy(name, name_new, -(length(name), 7));
-
     variable asm_output = autobuffer_new(32);
     variable asm_output_length: whole_8 = 0;
-    autopush_string(&(asm_output), &(asm_output_length), "build/");
-    autopush_string(&(asm_output), &(asm_output_length), name_new);
+    autopush_string(&(asm_output), &(asm_output_length), output_file);
 
     variable start_address = 4194304;
 
