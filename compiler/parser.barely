@@ -1,7 +1,7 @@
 include "compiler/tokens.barely";
 include "compiler/nodes.barely";
 
-function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: whole_8, column: whole_8) {
+function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
     variable buffer = AutoBuffer->buffer(auto_buffer);
     variable buffer_length = length(AutoBuffer->buffer(auto_buffer));
 
@@ -45,13 +45,13 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
         variable allocated = brk_allocate(+(buffer_length, 1));
         copy(buffer, allocated, buffer_length);
 
-        variable keyword_data = @cast_*TokenKeywordData(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, row, column));
+        variable keyword_data = @cast_*TokenKeywordData(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, whole_8->(row), whole_8->(column)));
         TokenKeywordData<-keyword(keyword_data, allocated);
         return;
     };
 
     if is_number(buffer) {
-        variable whole_8_data = @cast_*TokenNumberData(tokens_append_data(tokens, TOKEN_NUMBER, file_name, row, column));
+        variable whole_8_data = @cast_*TokenNumberData(tokens_append_data(tokens, TOKEN_NUMBER, file_name, whole_8->(row), whole_8->(column)));
 
         variable stage = 0;
         variable type_buffer = autobuffer_new(8);
@@ -95,7 +95,7 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
     };
 
     if |(string=(buffer, "true"), string=(buffer, "false")) {
-        variable boolean_data = @cast_*TokenBooleanData(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, row, column));
+        variable boolean_data = @cast_*TokenBooleanData(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8->(row), whole_8->(column)));
         TokenBooleanData<-value(boolean_data, string=(buffer, "true"));
 
         return;
@@ -104,8 +104,10 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
     variable allocated = brk_allocate(+(buffer_length, 1));
     copy(buffer, allocated, buffer_length);
 
-    variable name_data = @cast_*TokenNameData(tokens_append_data(tokens, TOKEN_NAME, file_name, row, column));
+    variable name_data = @cast_*TokenNameData(tokens_append_data(tokens, TOKEN_NAME, file_name, whole_8->(row), whole_8->(column)));
     TokenNameData<-name(name_data, allocated);
+
+    increment_whole_8_pointer(column, buffer_length);
 };
 
 constant ASCII_SPACE: whole_1 = 32;
@@ -143,71 +145,80 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
         if !(in_quotes) {
             if !(in_comment) {
                 if =(*1(character_pointer), ASCII_SPACE) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_OPEN_PARENTHESIS) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_OPEN_PARENTHESIS, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_CLOSED_PARENTHESIS) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_CLOSED_PARENTHESIS, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_OPEN_CURLY_BRACKETS, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_CLOSED_CURLY_BRACKETS, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_COMMA) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_COMMA, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_SEMICOLON) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_SEMICOLON, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_COLON) {
-                    tokenize_inner(&(buffer), tokens, file_name, row, column);
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_COLON, file_name, row, column);
+                    column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_TAB) {
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
+                    column = +(column, 1);
                 };
             };
         };
@@ -224,6 +235,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
 
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
+                    column = +(+(column, buffer_length), 2);
                 };
 
                 in_quotes = !(in_quotes);
@@ -235,6 +247,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                 in_comment = true;
                 done_anything = true;
             };
+            column = +(column, 1);
         };
 
         if !(done_anything) {
@@ -253,13 +266,6 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
 
             column = 1;
             row = +(row, 1);
-        } else {
-            if done_anything {
-                column = +(column, +(column_cache, 1));
-                column_cache = 0;
-            } else {
-                column_cache = +(column_cache, 1);
-            };
         };
 
         index = +(index, 1);
