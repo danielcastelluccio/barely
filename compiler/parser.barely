@@ -480,8 +480,6 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
 
             if string=(function_name, "&") {
                 variable invoke_pointer = nodes_append(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
-            } else if string=(function_name, "zero") {
-                variable invoke_pointer = nodes_append(nodes, NODE_ZERO, get_token_location_data(tokens, whole_8->(index_pointer)));
             } else {
                 variable invoke_pointer_data = @cast_*NodeInvokeData(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8->(index_pointer))));
                 NodeInvokeData<-name(invoke_pointer_data, function_name);

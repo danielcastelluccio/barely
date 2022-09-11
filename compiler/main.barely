@@ -72,6 +72,39 @@ function main(arguments: **, argument_count: whole_8) {
                     nodes_append_structure(&(nodes), +(name, 7));
                     autobuffer_stack8_push(&(already_added), &(already_added_index), +(name, 7));
                 };
+            } else if string_length=(name, "any_", 4) {
+                if is_number(+(name, 4)) {
+                    variable added = false;
+                    variable j = 0;
+                    while <(j, already_added_index) {
+                        if string=(@cast_*(autoarray8_get(&(already_added), j)), name) {
+                            added = true;
+                        };
+                        j = +(j, 1);
+                    };
+
+                    if !(added) {
+                        nodes_append_structure(&(nodes), name);
+                        autobuffer_stack8_push(&(already_added), &(already_added_index), name);
+                    };
+                };
+            };
+        } else if =(id, NODE_DECLARE) {
+            variable type = NodeDeclareData->type(@cast_*NodeDeclareData(nodes_get_pointer_data(&(nodes), i)));
+            if string_length=(type, "any_", 4) {
+                variable added = false;
+                variable j = 0;
+                while <(j, already_added_index) {
+                    if string=(@cast_*(autoarray8_get(&(already_added), j)), type) {
+                        added = true;
+                    };
+                    j = +(j, 1);
+                };
+
+                if !(added) {
+                    nodes_append_structure(&(nodes), type);
+                    autobuffer_stack8_push(&(already_added), &(already_added_index), type);
+                };
             };
         };
 
@@ -121,6 +154,19 @@ function main(arguments: **, argument_count: whole_8) {
 
             variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
             NodeFunctionData<-name(pointer_store_node, allocated);
+            NodeFunctionData<-argument_names(pointer_store_node, @cast_*(0));
+            NodeFunctionData<-argument_types(pointer_store_node, allocated_arguments);
+            NodeFunctionData<-returns(pointer_store_node, allocated_returns);
+
+            variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
+
+            variable allocated_arguments = brk_allocate(8);
+
+            variable allocated_returns = brk_allocate(16);
+            array8_set(allocated_returns, 0, name);
+
+            variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+            NodeFunctionData<-name(pointer_store_node, name);
             NodeFunctionData<-argument_names(pointer_store_node, @cast_*(0));
             NodeFunctionData<-argument_types(pointer_store_node, allocated_arguments);
             NodeFunctionData<-returns(pointer_store_node, allocated_returns);

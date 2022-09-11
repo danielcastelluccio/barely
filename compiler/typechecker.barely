@@ -446,10 +446,6 @@ function type_check(nodes: *Nodes) {
                     variable variable_declare3 = hashmap_string_get(@cast_*HashMap(autoarray8_get(&(variable_scopes_declares_map), scope_index)), variable_name);
                     variable variable_declare4 = @cast_*NodeDeclareData(nodes_get_pointer_data(nodes, @cast_whole_8(variable_declare3)));
                     NodeDeclareData<-type(variable_declare4, variable_type);
-                } else if =(nodes_get_id(nodes, -(i, 1)), NODE_ZERO) {
-                    variable zero_data = @cast_*NodeZeroData(nodes_get_pointer_data(nodes, -(i, 1)));
-                    NodeZeroData<-type(zero_data, variable_type);
-                    popped_stack = variable_type;
                 };
 
                 if !(is_type(variable_type, popped_stack, nodes)) {
@@ -588,11 +584,6 @@ function type_check(nodes: *Nodes) {
         } else if =(id, NODE_CONSTANT) {
             done_anything = true;
         } else if =(id, NODE_INCLUDE) {
-            done_anything = true;
-        } else if =(id, NODE_ZERO) {
-            variable zero_data = @cast_*NodeZeroData(pointer_data);
-            variable type2 = NodeZeroData->type(zero_data);
-            autobuffer_stack8_push(&(stack), &(stack_pointer), type2);
             done_anything = true;
         } else if !(done_anything) {
             print("Unhandled ");
