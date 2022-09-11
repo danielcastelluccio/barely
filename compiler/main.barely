@@ -20,19 +20,6 @@ function main(arguments: **, argument_count: whole_8) {
     nodes_append_structure(&(nodes), "whole_2");
     nodes_append_structure(&(nodes), "whole_1");
     nodes_append_structure(&(nodes), "*");
-    nodes_append_structure(&(nodes), "any_1");
-    nodes_append_structure(&(nodes), "any_2");
-    nodes_append_structure(&(nodes), "any_4");
-    nodes_append_structure(&(nodes), "any_8");
-    nodes_append_structure(&(nodes), "any_16");
-    nodes_append_structure(&(nodes), "any_32");
-    nodes_append_structure(&(nodes), "any_64");
-    nodes_append_structure(&(nodes), "any_128");
-    nodes_append_structure(&(nodes), "any_256");
-    nodes_append_structure(&(nodes), "any_512");
-    nodes_append_structure(&(nodes), "any_1024");
-    nodes_append_structure(&(nodes), "any_2048");
-    nodes_append_structure(&(nodes), "any_4096");
 
     add_internal_functions(&(nodes));
 
@@ -59,6 +46,36 @@ function main(arguments: **, argument_count: whole_8) {
             i = +(i, 1);
         };
 
+    };
+
+    variable already_added = autobuffer_new(64);
+    variable already_added_index = 0;
+
+    variable nodes_index_saved = Nodes->index(&(nodes));
+    variable i = 0;
+    while <(i, nodes_index_saved) {
+        variable id = nodes_get_id(&(nodes), i);
+    
+        if =(id, NODE_INVOKE) {
+            variable name = NodeInvokeData->name(@cast_*NodeInvokeData(nodes_get_pointer_data(&(nodes), i)));
+            if string_length=(name, "@cast_*any_", 11) {
+                variable added = false;
+                variable j = 0;
+                while <(j, already_added_index) {
+                    if string=(@cast_*(autoarray8_get(&(already_added), j)), +(name, 7)) {
+                        added = true;
+                    };
+                    j = +(j, 1);
+                };
+
+                if !(added) {
+                    nodes_append_structure(&(nodes), +(name, 7));
+                    autobuffer_stack8_push(&(already_added), &(already_added_index), +(name, 7));
+                };
+            };
+        };
+
+         i = +(i, 1);
     };
 
     variable nodes_index_saved = Nodes->index(&(nodes));
