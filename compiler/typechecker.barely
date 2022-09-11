@@ -164,22 +164,22 @@ function type_check(nodes: *Nodes) {
                 autopush_string(&(number_type), &(number_type_index), "integer_");
             };
 
-            autopush_string_whole_8(&(number_type), &(number_type_index), NodeNumberData->size(number_data));
+            autobuffer_string_push_whole_8(&(number_type), &(number_type_index), NodeNumberData->size(number_data));
 
-            autostack8_push(&(stack), &(stack_pointer), AutoBuffer->buffer(&(number_type)));
+            autobuffer_stack8_push(&(stack), &(stack_pointer), AutoBuffer->buffer(&(number_type)));
             done_anything = true;
         } else if =(id, NODE_BOOLEAN) {
-            autostack8_push(&(stack), &(stack_pointer), "boolean");
+            autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
             done_anything = true;
         } else if =(id, NODE_STRING) {
-            autostack8_push(&(stack), &(stack_pointer), "*");
+            autobuffer_stack8_push(&(stack), &(stack_pointer), "*");
             done_anything = true;
         } else if =(id, NODE_INVOKE) {
             variable invoke_data = @cast_*NodeInvokeData(pointer_data);
             variable function_name = NodeInvokeData->name(invoke_data);
 
             if string_length=(function_name, "@cast_", 6) {
-                variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable to_push = @cast_*(+(function_name, 6));
 
                 if !(=(get_size_linux_x86-642(popped, nodes), get_size_linux_x86-642(to_push, nodes))) {
@@ -192,10 +192,10 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), to_push);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), to_push);
             } else if string=(function_name, "+") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -207,7 +207,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), second);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), second);
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "+_", 0, 2);
@@ -215,8 +215,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "-") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -228,7 +228,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), second);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), second);
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "-_", 0, 2);
@@ -236,8 +236,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "*") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -249,7 +249,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), second);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), second);
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "*_", 0, 2);
@@ -257,8 +257,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "/") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -270,7 +270,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), second);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), second);
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "/_", 0, 2);
@@ -278,8 +278,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "%") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -291,7 +291,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), second);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), second);
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "%_", 0, 2);
@@ -299,8 +299,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "=") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -312,7 +312,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), "boolean");
+                autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "=_", 0, 2);
@@ -320,8 +320,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, ">") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -333,7 +333,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), "boolean");
+                autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), ">_", 0, 2);
@@ -341,8 +341,8 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "<") {
-                variable first = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
@@ -354,7 +354,7 @@ function type_check(nodes: *Nodes) {
                     exit(1);
                 };
 
-                autostack8_push(&(stack), &(stack_pointer), "boolean");
+                autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
 
                 variable new_+_name = autobuffer_new(16);
                 autobuffer_set(&(new_+_name), "<_", 0, 2);
@@ -378,7 +378,7 @@ function type_check(nodes: *Nodes) {
                 variable length = array8_length(arguments);
                 variable k = 0;
                 while <(k, length) {
-                    variable given = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                    variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                     variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
                     if !(is_type(wanted, given, nodes)) {
                         print_node_error_beginning(nodes, i);
@@ -398,7 +398,7 @@ function type_check(nodes: *Nodes) {
                 variable k = 0;
                 while !(=(array8_get(returns, k), 0)) {
                     variable return_value = @cast_*(array8_get(returns, k));
-                    autostack8_push(&(stack), &(stack_pointer), return_value);
+                    autobuffer_stack8_push(&(stack), &(stack_pointer), return_value);
 
                     k = +(k, 1);
                 };
@@ -419,7 +419,7 @@ function type_check(nodes: *Nodes) {
             variable variable_name = NodeAssignData->name(assign_data);
 
             variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
-            variable popped_stack = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+            variable popped_stack = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
             if !(=(variable_type, 0)) {
                 if string=(variable_type, "") {
@@ -465,25 +465,25 @@ function type_check(nodes: *Nodes) {
 
             variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
             if !(=(variable_type, 0)) {
-                autostack8_push(&(stack), &(stack_pointer), variable_type);
+                autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
             } else {
                 variable function_argument_names2 = @cast_*(hashmap_string_get(&(function_argument_names_map), current_function));
                 variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
 
-                variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
+                variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
                 if !(=(variable_type, 0)) {
-                    autostack8_push(&(stack), &(stack_pointer), variable_type);
+                    autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                 } else {
                     variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
 
                     if !(=(variable_type, 0)) {
-                        autostack8_push(&(stack), &(stack_pointer), variable_type);
+                        autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                     } else {
                         variable_type = @cast_*(hashmap_string_get(&(constants_map), variable_name));
 
                         if !(=(variable_type, 0)) {
-                            autostack8_push(&(stack), &(stack_pointer), variable_type);
+                            autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                         } else {
                             print_node_error_beginning(nodes, i);
                             print("Retrieve target '");
@@ -503,7 +503,7 @@ function type_check(nodes: *Nodes) {
             variable j = -(temp, 1);
             while <(j, temp) {
                 variable function_return = @cast_*(array8_get(function_returns2, j));
-                variable stack_popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+                variable stack_popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 
                 if !(is_type(function_return, stack_popped, nodes)) {
                     print_node_error_beginning(nodes, i);
@@ -520,14 +520,14 @@ function type_check(nodes: *Nodes) {
 
             done_anything = true;
         } else if =(id, NODE_POINTER) {
-            variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+            variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
             variable allocated = brk_allocate(+(length(popped), 2));
             copy("*", allocated, 1);
             copy(popped, @cast_*(+(allocated, 1)), length(popped));
-            autostack8_push(&(stack), &(stack_pointer), allocated);
+            autobuffer_stack8_push(&(stack), &(stack_pointer), allocated);
             done_anything = true;
         } else if =(id, NODE_JUMP_CONDITIONAL) {
-            variable popped = @cast_*(autostack8_pop(&(stack), &(stack_pointer)));
+            variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
             if !(string=(popped, "boolean")) {
                 print_node_error_beginning(nodes, i);
                 print("Conditional Jump (if/while) wants 'boolean', given '");
@@ -553,7 +553,7 @@ function type_check(nodes: *Nodes) {
         } else if =(id, NODE_ZERO) {
             variable zero_data = @cast_*NodeZeroData(pointer_data);
             variable type2 = NodeZeroData->type(zero_data);
-            autostack8_push(&(stack), &(stack_pointer), type2);
+            autobuffer_stack8_push(&(stack), &(stack_pointer), type2);
             done_anything = true;
         } else if !(done_anything) {
             print("Unhandled ");

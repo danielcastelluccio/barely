@@ -1,5 +1,5 @@
-include "compiler/tokens.barely";
-include "compiler/nodes.barely";
+include "compiler/token.barely";
+include "compiler/node.barely";
 
 function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
     variable buffer = AutoBuffer->buffer(auto_buffer);
@@ -729,7 +729,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
         variable index = whole_8->(index_pointer);
         while !(string=(TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index))), "=")) {
             variable name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
-            autostack8_push(&(names), &(name_index), name);
+            autobuffer_stack8_push(&(names), &(name_index), name);
             index = +(index, 1);
         };
 

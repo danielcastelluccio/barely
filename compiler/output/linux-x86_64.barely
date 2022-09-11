@@ -901,7 +901,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-642(variable_type, nodes);
-                variable variable_index_thing = autostringarraymap_get_index(&(variable_names), variable_name, variable_index);
+                variable variable_index_thing = autobuffer_stringarray_get_index(&(variable_names), variable_name, variable_index);
                 variable location = 0;
                 variable j = 0;
                 while <(j, variable_index_thing) {
@@ -1021,7 +1021,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-642(variable_type, nodes);
-                variable variable_index_thing = autostringarraymap_get_index(&(variable_names), variable_name, variable_index);
+                variable variable_index_thing = autobuffer_stringarray_get_index(&(variable_names), variable_name, variable_index);
                 variable location = 0;
                 variable j = 0;
                 while <(j, variable_index_thing) {
@@ -1073,11 +1073,11 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 variable function_argument_names2 = @cast_*(hashmap_string_get(&(function_argument_names_map), current_function));
                 variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
 
-                variable_type = stringarraymap_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
+                variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
                 if !(=(variable_type, 0)) {
                     variable size = get_size_linux_x86-642(variable_type, nodes);
-                    variable location = get_size_multiple_reversed_linux_x86-642(function_arguments2, stringarraymap_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes);
+                    variable location = get_size_multiple_reversed_linux_x86-642(function_arguments2, stringarray_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes);
 
                     if =(next_id, NODE_POINTER) {
                         autopush_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(16, location), RAX);
