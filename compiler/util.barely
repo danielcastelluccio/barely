@@ -96,10 +96,10 @@ function stringarray_get_index(keys: *, wanted: *, size: whole_8): whole_8 {
     return 999;
 };
 
-function autobuffer_string_push_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_8: whole_8) {
+function AutoBuffer.String.push_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_8: whole_8) {
     variable whole_8_buffer = any_24();
     whole_8_to_string(whole_8, &(whole_8_buffer));
-    autopush_string(buffer, buffer_index_pointer, &(whole_8_buffer));
+    AutoBuffer.push_string(buffer, buffer_index_pointer, &(whole_8_buffer));
 };
 
 function print(string: *) {
@@ -135,21 +135,21 @@ function array8_length(array: *): whole_8 {
     return k;
 };
 
-function autobuffer_stack8_push(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(whole_8->(stack_pointer), 8));
+function AutoBuffer.stack8_push(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
+    AutoBuffer.set_whole_8(buffer, @cast_whole_8(value), *(whole_8->(stack_pointer), 8));
     increment_whole_8_pointer(stack_pointer, 1);
 };
 
-function autobuffer_stack8_pop(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
+function AutoBuffer.stack8_pop(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
     decrement_whole_8_pointer(stack_pointer, 1);
-    variable index_pointer = @cast_*any_8(autobuffer_get(buffer, *(whole_8->(stack_pointer), 8)));
+    variable index_pointer = @cast_*any_8(AutoBuffer.get(buffer, *(whole_8->(stack_pointer), 8)));
     return any_8->(index_pointer);
 };
 
-function autobuffer_stringarray_get_index(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
+function AutoBuffer.stringarray_get_index(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
     variable j = 0;
     while <(j, size) {
-        if string=(@cast_*(autoarray8_get(keys, j)), wanted) {
+        if string=(@cast_*(AutoBuffer.array8_get(keys, j)), wanted) {
             return j;
         };
         j = +(j, 1);
@@ -174,55 +174,55 @@ structure BucketData {
     value: any_8;
 };
 
-function hashmap_new(size: whole_8): HashMap {
+function HashMap.new(size: whole_8): HashMap {
     variable hashmap: HashMap;
 
-    variable buffer = autobuffer_new(size);
+    variable buffer = AutoBuffer.new(size);
 
     HashMap<-buffer(&(hashmap), buffer);
 
     return hashmap;
 };
 
-function hashmap_put(hashmap: *HashMap, hash: whole_8, value: any_8) {
+function HashMap.put(hashmap: *HashMap, hash: whole_8, value: any_8) {
     variable buffer = &(HashMap->buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    variable bucket_pointer = @cast_*AutoBuffer(AutoBuffer.get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
     if =(bucket_pointer, 0) {
         variable allocated_autobuffer = @cast_*AutoBuffer(brk_allocate(24));
-        variable autobuffer = autobuffer_new(48);
+        variable autobuffer = AutoBuffer.new(48);
         AutoBuffer<-(allocated_autobuffer, autobuffer);
 
         bucket_pointer = allocated_autobuffer;
-        autobuffer_set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8));
+        AutoBuffer.set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8));
     };
 
     variable searching = true;
     variable i = 0;
     while searching {
-        if =(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0) {
+        if =(AutoBuffer.get_any_8(bucket_pointer, *(i, 24)), 0) {
             searching = false;
-        } else if =(autobuffer_get_any_8(bucket_pointer, +(*(i, 24), 8)), hash) {
+        } else if =(AutoBuffer.get_any_8(bucket_pointer, +(*(i, 24), 8)), hash) {
             searching = false;
         } else {
             i = +(i, 1);
         };
     };
 
-    variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+    variable bucket_data = @cast_*BucketData(AutoBuffer.get_size(bucket_pointer, *(i, 24), 24));
     BucketData<-data(bucket_data, 1);
     BucketData<-hash(bucket_data, hash);
     BucketData<-value(bucket_data, value);
 };
 
-function hashmap_get(hashmap: *HashMap, hash: whole_8): any_8 {
+function HashMap.get(hashmap: *HashMap, hash: whole_8): any_8 {
     variable buffer = &(HashMap->buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    variable bucket_pointer = @cast_*AutoBuffer(AutoBuffer.get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
         variable i = 0;
-        while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+        while !(=(AutoBuffer.get_any_8(bucket_pointer, *(i, 24)), 0)) {
+            variable bucket_data = @cast_*BucketData(AutoBuffer.get_size(bucket_pointer, *(i, 24), 24));
 
             if =(BucketData->hash(bucket_data), hash) {
                 return BucketData->value(bucket_data);
@@ -235,14 +235,14 @@ function hashmap_get(hashmap: *HashMap, hash: whole_8): any_8 {
     return 0;
 };
 
-function hashmap_get2(hashmap: *HashMap, hash: whole_8): any_8 {
+function HashMap.get2(hashmap: *HashMap, hash: whole_8): any_8 {
     variable buffer = &(HashMap->buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    variable bucket_pointer = @cast_*AutoBuffer(AutoBuffer.get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
         variable i = 0;
-        while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+        while !(=(AutoBuffer.get_any_8(bucket_pointer, *(i, 24)), 0)) {
+            variable bucket_data = @cast_*BucketData(AutoBuffer.get_size(bucket_pointer, *(i, 24), 24));
 
             if =(BucketData->hash(bucket_data), hash) {
                 return BucketData->value(bucket_data);
@@ -255,15 +255,15 @@ function hashmap_get2(hashmap: *HashMap, hash: whole_8): any_8 {
     return 999;
 };
 
-function hashmap_string_put(hashmap: *HashMap, string: *, value: any_8) {
-    hashmap_put(hashmap, string_hash(string), value);
+function HashMap.string_put(hashmap: *HashMap, string: *, value: any_8) {
+    HashMap.put(hashmap, String.hash(string), value);
 };
 
-function hashmap_string_get(hashmap: *HashMap, string: *): any_8 {
-    return hashmap_get(hashmap, string_hash(string));
+function HashMap.string_get(hashmap: *HashMap, string: *): any_8 {
+    return HashMap.get(hashmap, String.hash(string));
 };
 
-function string_hash(string: *): whole_8 {
+function String.hash(string: *): whole_8 {
     variable hash = 0;
     variable i = 0;
     while <(i, length(string)) {

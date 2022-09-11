@@ -23,10 +23,10 @@ function main(arguments: **, argument_count: whole_8) {
 
     add_internal_functions(&(nodes));
 
-    cached_sizes_map = hashmap_new(131072);
-    cached_signedness_map = hashmap_new(131072);
+    cached_sizes_map = HashMap.new(131072);
+    cached_signedness_map = HashMap.new(131072);
 
-    variable already_included = autobuffer_new(64);
+    variable already_included = AutoBuffer.new(64);
     variable already_included_index = 0;
 
     variable output_file = "output";
@@ -48,7 +48,7 @@ function main(arguments: **, argument_count: whole_8) {
 
     };
 
-    variable already_added = autobuffer_new(64);
+    variable already_added = AutoBuffer.new(64);
     variable already_added_index = 0;
 
     variable nodes_index_saved = Nodes->index(&(nodes));
@@ -58,11 +58,11 @@ function main(arguments: **, argument_count: whole_8) {
     
         if =(id, NODE_INVOKE) {
             variable name = NodeInvokeData->name(@cast_*NodeInvokeData(nodes_get_pointer_data(&(nodes), i)));
-            if string_length=(name, "@cast_*any_", 11) {
+            if String.length=(name, "@cast_*any_", 11) {
                 variable added = false;
                 variable j = 0;
                 while <(j, already_added_index) {
-                    if string=(@cast_*(autoarray8_get(&(already_added), j)), +(name, 7)) {
+                    if string=(@cast_*(AutoBuffer.array8_get(&(already_added), j)), +(name, 7)) {
                         added = true;
                     };
                     j = +(j, 1);
@@ -70,14 +70,14 @@ function main(arguments: **, argument_count: whole_8) {
 
                 if !(added) {
                     nodes_append_structure(&(nodes), +(name, 7));
-                    autobuffer_stack8_push(&(already_added), &(already_added_index), +(name, 7));
+                    AutoBuffer.stack8_push(&(already_added), &(already_added_index), +(name, 7));
                 };
-            } else if string_length=(name, "any_", 4) {
+            } else if String.length=(name, "any_", 4) {
                 if is_number(+(name, 4)) {
                     variable added = false;
                     variable j = 0;
                     while <(j, already_added_index) {
-                        if string=(@cast_*(autoarray8_get(&(already_added), j)), name) {
+                        if string=(@cast_*(AutoBuffer.array8_get(&(already_added), j)), name) {
                             added = true;
                         };
                         j = +(j, 1);
@@ -85,17 +85,17 @@ function main(arguments: **, argument_count: whole_8) {
 
                     if !(added) {
                         nodes_append_structure(&(nodes), name);
-                        autobuffer_stack8_push(&(already_added), &(already_added_index), name);
+                        AutoBuffer.stack8_push(&(already_added), &(already_added_index), name);
                     };
                 };
             };
         } else if =(id, NODE_DECLARE) {
             variable type = NodeDeclareData->type(@cast_*NodeDeclareData(nodes_get_pointer_data(&(nodes), i)));
-            if string_length=(type, "any_", 4) {
+            if String.length=(type, "any_", 4) {
                 variable added = false;
                 variable j = 0;
                 while <(j, already_added_index) {
-                    if string=(@cast_*(autoarray8_get(&(already_added), j)), type) {
+                    if string=(@cast_*(AutoBuffer.array8_get(&(already_added), j)), type) {
                         added = true;
                     };
                     j = +(j, 1);
@@ -103,7 +103,7 @@ function main(arguments: **, argument_count: whole_8) {
 
                 if !(added) {
                     nodes_append_structure(&(nodes), type);
-                    autobuffer_stack8_push(&(already_added), &(already_added_index), type);
+                    AutoBuffer.stack8_push(&(already_added), &(already_added_index), type);
                 };
             };
         };
@@ -242,88 +242,88 @@ structure Nodes {
 function nodes_new(): Nodes {
     variable nodes: Nodes;
 
-    Nodes<-buffer(&(nodes), autobuffer_new(131072));
+    Nodes<-buffer(&(nodes), AutoBuffer.new(131072));
     Nodes<-index(&(nodes), 0);
 
     return nodes;
 };
 
 function add_internal_functions(nodes: *Nodes) {
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_1");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_1");
     nodes_append_function(nodes, "*1", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "*8", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "boolean");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "boolean");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "boolean");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "boolean");
     nodes_append_function(nodes, "!", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "boolean");
-    autoarray8_set(&(function_arguments), 1, "boolean");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "boolean");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "boolean");
+    AutoBuffer.array8_set(&(function_arguments), 1, "boolean");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "boolean");
     nodes_append_function(nodes, "&&", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
     nodes_append_function(nodes, "|", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "whole_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "whole_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "@syscall0", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "whole_8");
-    autoarray8_set(&(function_arguments), 1, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "whole_8");
+    AutoBuffer.array8_set(&(function_arguments), 1, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "@syscall1", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "whole_8");
-    autoarray8_set(&(function_arguments), 1, "any_8");
-    autoarray8_set(&(function_arguments), 2, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "whole_8");
+    AutoBuffer.array8_set(&(function_arguments), 1, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 2, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "@syscall2", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "whole_8");
-    autoarray8_set(&(function_arguments), 1, "any_8");
-    autoarray8_set(&(function_arguments), 2, "any_8");
-    autoarray8_set(&(function_arguments), 3, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "whole_8");
+    AutoBuffer.array8_set(&(function_arguments), 1, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 2, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 3, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "@syscall3", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "whole_8");
-    autoarray8_set(&(function_arguments), 1, "any_8");
-    autoarray8_set(&(function_arguments), 2, "any_8");
-    autoarray8_set(&(function_arguments), 3, "any_8");
-    autoarray8_set(&(function_arguments), 4, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "whole_8");
+    AutoBuffer.array8_set(&(function_arguments), 1, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 2, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 3, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 4, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "@syscall4", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 
-    variable function_arguments = autobuffer_new(24);
-    autoarray8_set(&(function_arguments), 0, "whole_8");
-    autoarray8_set(&(function_arguments), 1, "any_8");
-    autoarray8_set(&(function_arguments), 2, "any_8");
-    autoarray8_set(&(function_arguments), 3, "any_8");
-    autoarray8_set(&(function_arguments), 4, "any_8");
-    autoarray8_set(&(function_arguments), 5, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autoarray8_set(&(function_returns), 0, "any_8");
+    variable function_arguments = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_arguments), 0, "whole_8");
+    AutoBuffer.array8_set(&(function_arguments), 1, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 2, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 3, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 4, "any_8");
+    AutoBuffer.array8_set(&(function_arguments), 5, "any_8");
+    variable function_returns = AutoBuffer.new(24);
+    AutoBuffer.array8_set(&(function_returns), 0, "any_8");
     nodes_append_function(nodes, "@syscall5", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 };
 
@@ -335,7 +335,7 @@ structure Tokens {
 function tokens_new(): Tokens {
     variable tokens: Tokens;
 
-    Tokens<-buffer(&(tokens), autobuffer_new(131072));
+    Tokens<-buffer(&(tokens), AutoBuffer.new(131072));
     Tokens<-index(&(tokens), 0);
 
     return tokens;
@@ -353,7 +353,7 @@ function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer
 
     parse(&(tokens), nodes);
 
-    autobuffer_stack8_push(already_included, already_included_index, file_name);
+    AutoBuffer.stack8_push(already_included, already_included_index, file_name);
 
     variable i = 0;
     while <(i, whole_8->(nodes_index)) {
@@ -366,7 +366,7 @@ function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer
             variable included = false;
             variable j = 0;
             while <(j, whole_8->(already_included_index)) {
-                if string=(@cast_*(autoarray8_get(already_included, j)), path) {
+                if string=(@cast_*(AutoBuffer.array8_get(already_included, j)), path) {
                     included = true;
                 };
                 j = +(j, 1);
