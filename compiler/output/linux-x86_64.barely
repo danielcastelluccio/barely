@@ -401,6 +401,11 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
     variable current_function: *;
 
+    variable variable_scopes_types_map = autobuffer_new(64);
+    variable variable_scope_types_pointer = 0;
+    variable variable_scopes_indexes_map = autobuffer_new(64);
+    variable variable_scope_indexes_pointer = 0;
+
     variable variable_types_map = hashmap_new(2048);
     variable variable_names = autobuffer_new(2048);
     variable variable_sizes = autobuffer_new(2048);
@@ -434,6 +439,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 current_function = function_name;
 
                 autobuffer_reset(&(HashMap->buffer(&(variable_types_map))));
+                autobuffer_reset(&(variable_scopes_indexes_map));
 
                 variable_index = 0;
             };
@@ -893,20 +899,38 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             autoarray8_set(&(variable_sizes), variable_index, get_size_linux_x86-642(variable_type, nodes));
             variable_index = +(variable_index, 1);
 
+            hashmap_string_put(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
+
             done_anything = true;
         } else if =(id, NODE_ASSIGN) {
             variable assign_data = @cast_*NodeAssignData(pointer_data);
             variable variable_name = NodeAssignData->name(assign_data);
-            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
+
+            variable scope_index = -(variable_scope_types_pointer, 1);
+            variable variable_type = @cast_*(0);
+            while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
+                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                scope_index = -(scope_index, 1);
+            };
+            scope_index = +(scope_index, 1);
+            
+            variable scope_variable_index = @cast_whole_8(autoarray8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-642(variable_type, nodes);
-                variable variable_index_thing = autobuffer_stringarray_get_index(&(variable_names), variable_name, variable_index);
+
+                variable running = true;
                 variable location = 0;
                 variable j = 0;
-                while <(j, variable_index_thing) {
-                    location = +(location, autoarray8_get(&(variable_sizes), j));
-                    j = +(j, 1);
+                while running {
+                    if !(<(j, variable_index)) {
+                        running = false;
+                    } else if !(|(!(string=(variable_name, @cast_*(autoarray8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
+                        running = false;
+                    } else {
+                        location = +(location, autoarray8_get(&(variable_sizes), j));
+                        j = +(j, 1);
+                    };
                 };
 
                 variable j = 0;
@@ -1017,16 +1041,32 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable next_id = nodes_get_id(nodes, +(i, 1));
 
             variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
-            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
+
+            variable scope_index = -(variable_scope_types_pointer, 1);
+            variable variable_type = @cast_*(0);
+            while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
+                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                scope_index = -(scope_index, 1);
+            };
+            scope_index = +(scope_index, 1);
+
+            variable scope_variable_index = @cast_whole_8(autoarray8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-642(variable_type, nodes);
-                variable variable_index_thing = autobuffer_stringarray_get_index(&(variable_names), variable_name, variable_index);
+
+                variable running = true;
                 variable location = 0;
                 variable j = 0;
-                while <(j, variable_index_thing) {
-                    location = +(location, autoarray8_get(&(variable_sizes), j));
-                    j = +(j, 1);
+                while running {
+                    if !(<(j, variable_index)) {
+                        running = false;
+                    } else if !(|(!(string=(variable_name, @cast_*(autoarray8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
+                        running = false;
+                    } else {
+                        location = +(location, autoarray8_get(&(variable_sizes), j));
+                        j = +(j, 1);
+                    };
                 };
 
                 if =(next_id, NODE_POINTER) {
@@ -1133,6 +1173,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
                             variable j = 0;
                             while <(j, size) {
+                                variable done_anything_assign = false;
+
                                 if >(-(size, j), 7) {
                                     autopush_mov_bss_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, RAX);
                                     autopush_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
@@ -1319,6 +1361,21 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             
             autoarray8_set(&(targets), target, get_instruction(&(instructions_buffer), &(instructions_index)));
             done_anything = true;
+        } else if =(id, NODE_SCOPE) {
+            variable hashmap_new = hashmap_new(512);
+            variable allocated = brk_allocate(24);
+            HashMap<-(@cast_*HashMap(allocated), hashmap_new);
+            autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
+
+            //println(current_function);
+            //print_whole_8(variable_index);
+            //println("");
+            //print_whole_8(variable_scope_types_pointer);
+            //println("");
+            autobuffer_stack8_push(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer), variable_index);
+        } else if =(id, NODE_ENDSCOPE) {
+            variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
+            variable _ = autobuffer_stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
         } else if =(id, NODE_ENDFUNCTION) {
             done_anything = true;
         } else if =(id, NODE_STRUCTURE) {
@@ -1399,6 +1456,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
         } else {
             print("Unhandled ");
             print_whole_8(id);
+            println("");
         };
 
         i = +(i, 1);

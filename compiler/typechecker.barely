@@ -74,9 +74,6 @@ function print_node_error_beginning(nodes: *Nodes, location: whole_8) {
 function type_check(nodes: *Nodes) {
     variable node_count = Nodes->index(nodes);
 
-    variable stack = autobuffer_new(64);
-    variable stack_pointer: whole_8;
-
     variable function_arguments_map = hashmap_new(1024);
     variable function_argument_names_map = hashmap_new(1024);
     variable function_returns_map = hashmap_new(1024);
@@ -139,8 +136,16 @@ function type_check(nodes: *Nodes) {
 
     variable current_function: *;
 
-    variable variable_types_map = hashmap_new(1024);
-    variable variable_declares_map = hashmap_new(1024);
+    variable variable_scopes_types_map = autobuffer_new(64);
+    variable variable_scope_types_pointer = 0;
+    variable variable_scopes_declares_map = autobuffer_new(64);
+    variable variable_scope_declares_pointer = 0;
+
+    variable stack = autobuffer_new(64);
+    variable stack_pointer: whole_8;
+
+    variable scopes = autobuffer_new(64);
+    variable scope_pointer = 0;
 
     i = 0;
     while <(i, node_count) {
@@ -150,7 +155,6 @@ function type_check(nodes: *Nodes) {
 
         if =(id, NODE_FUNCTION) {
             current_function = NodeFunctionData->name(@cast_*NodeFunctionData(pointer_data));
-            autobuffer_reset(&(HashMap->buffer(&(variable_types_map))));
             done_anything = true;
         } else if =(id, NODE_NUMBER) {
             variable number_data = @cast_*NodeNumberData(pointer_data);
@@ -410,26 +414,38 @@ function type_check(nodes: *Nodes) {
             variable variable_name = NodeDeclareData->name(declare_data);
             variable variable_type = NodeDeclareData->type(declare_data);
 
-            hashmap_string_put(&(variable_types_map), variable_name, variable_type);
-            hashmap_string_put(&(variable_declares_map), variable_name, i);
+            //println(current_function);
+            //println(variable_name);
+            //print_whole_8(variable_scope_types_pointer);
+            //println("");
+
+            hashmap_string_put(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
+            hashmap_string_put(@cast_*HashMap(autoarray8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
 
             done_anything = true;
         } else if =(id, NODE_ASSIGN) {
             variable assign_data = @cast_*NodeAssignData(pointer_data);
             variable variable_name = NodeAssignData->name(assign_data);
 
-            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
+            variable scope_index = -(variable_scope_types_pointer, 1);
+            variable variable_type = @cast_*(0);
+            while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
+                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                scope_index = -(scope_index, 1);
+            };
+            scope_index = +(scope_index, 1);
+
             variable popped_stack = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
             if !(=(variable_type, 0)) {
                 if string=(variable_type, "") {
-                    hashmap_string_put(&(variable_types_map), variable_name, popped_stack);
                     variable_type = popped_stack;
 
-                    variable variable_declare = hashmap_string_get(&(variable_declares_map), variable_name);
-                    variable variable_declare2 = @cast_*NodeDeclareData(nodes_get_pointer_data(nodes, @cast_whole_8(variable_declare)));
+                    hashmap_string_put(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), scope_index)), variable_name, popped_stack);
 
-                    NodeDeclareData<-type(variable_declare2, variable_type);
+                    variable variable_declare3 = hashmap_string_get(@cast_*HashMap(autoarray8_get(&(variable_scopes_declares_map), scope_index)), variable_name);
+                    variable variable_declare4 = @cast_*NodeDeclareData(nodes_get_pointer_data(nodes, @cast_whole_8(variable_declare3)));
+                    NodeDeclareData<-type(variable_declare4, variable_type);
                 };
 
                 if !(is_type(variable_type, popped_stack, nodes)) {
@@ -463,7 +479,14 @@ function type_check(nodes: *Nodes) {
         } else if =(id, NODE_RETRIEVE) {
             variable variable_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
 
-            variable variable_type = @cast_*(hashmap_string_get(&(variable_types_map), variable_name));
+            variable scope_index = -(variable_scope_types_pointer, 1);
+            variable variable_type = @cast_*(0);
+            while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
+                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autoarray8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                scope_index = -(scope_index, 1);
+            };
+            scope_index = +(scope_index, 1);
+
             if !(=(variable_type, 0)) {
                 autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
             } else {
@@ -471,7 +494,6 @@ function type_check(nodes: *Nodes) {
                 variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
 
                 variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
-
                 if !(=(variable_type, 0)) {
                     autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                 } else {
@@ -536,6 +558,19 @@ function type_check(nodes: *Nodes) {
                 exit(1);
             };
             done_anything = true;
+        } else if =(id, NODE_SCOPE) {
+            variable hashmap_new = hashmap_new(512);
+            variable allocated = brk_allocate(24);
+            HashMap<-(@cast_*HashMap(allocated), hashmap_new);
+            autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
+
+            variable hashmap_new = hashmap_new(512);
+            variable allocated = brk_allocate(24);
+            HashMap<-(@cast_*HashMap(allocated), hashmap_new);
+            autobuffer_stack8_push(&(variable_scopes_declares_map), &(variable_scope_declares_pointer), allocated);
+        } else if =(id, NODE_ENDSCOPE) {
+            variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
+            variable _ = autobuffer_stack8_pop(&(variable_scopes_declares_map), &(variable_scope_declares_pointer));
         } else if =(id, NODE_JUMP) {
             done_anything = true;
         } else if =(id, NODE_TARGET) {
