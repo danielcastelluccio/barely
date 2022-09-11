@@ -881,7 +881,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable string_id = program_constant_index;
             program_constant_index = +(program_constant_index, 1);
 
-            variable id_string: any_24;
+            variable id_string: any_24 = zero();
             whole_8_to_string(string_id, &(id_string));
 
             variable string_data_index = autopush_data_string(&(data_buffer), &(data_buffer_index), string_value);
@@ -1470,9 +1470,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
         variable call_instruction2 = @cast_InstructionIndex(autoarray8_get(&(calls), i));
         variable call_name = @cast_*(autoarray8_get(&(call_targets), i));
 
-        variable function_index: InstructionIndex;
-
-        function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), call_name));
+        variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), call_name));
 
         set_call_value(&(instructions_buffer), call_instruction2, function_index);
         i = +(i, 1);
