@@ -232,15 +232,13 @@ function autoarray8_length(buffer: *AutoBuffer): whole_8 {
 function autopush_mov_whole_8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
     if >(register, 7_whole_1) {
         autopush_whole_1(buffer, buffer_index_pointer, 73_whole_1);
-        autopush_whole_1(buffer, buffer_index_pointer, 199_whole_1);
-        autopush_whole_1(buffer, buffer_index_pointer, +(184_whole_1, register));
-        autopush_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(value));
+        autopush_whole_1(buffer, buffer_index_pointer, +(176_whole_1, register));
+        autopush_whole_8(buffer, buffer_index_pointer, value);
         return;
     };
     autopush_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autopush_whole_1(buffer, buffer_index_pointer, 199_whole_1);
-    autopush_whole_1(buffer, buffer_index_pointer, +(192_whole_1, register));
-    autopush_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(value));
+    autopush_whole_1(buffer, buffer_index_pointer, +(184_whole_1, register));
+    autopush_whole_8(buffer, buffer_index_pointer, value);
 };
 
 function autopush_mov_whole_4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4, value: whole_4) {
@@ -1673,12 +1671,12 @@ function autopush_syscall(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
     autopush_whole_1(buffer, buffer_index_pointer, 5_whole_1);
 };
 
-function autopush_whole_1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_1: whole_1) {
+function autopush_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_8: whole_8) {
     variable buffer_index = whole_8->(buffer_index_pointer);
 
-    autobuffer_set(buffer, &(whole_1), buffer_index, 1);
+    autobuffer_set(buffer, &(whole_8), buffer_index, 8);
 
-    increment_whole_8_pointer(buffer_index_pointer, 1);
+    increment_whole_8_pointer(buffer_index_pointer, 8);
 };
 
 function autopush_whole_4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_4: whole_4) {
@@ -1695,6 +1693,14 @@ function autopush_whole_2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, w
     autobuffer_set(buffer, &(whole_2), buffer_index, 2);
 
     increment_whole_8_pointer(buffer_index_pointer, 2);
+};
+
+function autopush_whole_1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_1: whole_1) {
+    variable buffer_index = whole_8->(buffer_index_pointer);
+
+    autobuffer_set(buffer, &(whole_1), buffer_index, 1);
+
+    increment_whole_8_pointer(buffer_index_pointer, 1);
 };
 
 function autopush_string(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, string: *) {
