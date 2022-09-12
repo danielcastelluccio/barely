@@ -523,6 +523,16 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
         index = +(index, 1);
     };
 
+    if =(id, TOKEN_OPEN_CURLY_BRACKETS) {
+        nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
+        index = +(index, 1);
+        while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+            parse_statement(tokens, &(index), nodes);
+        };
+        index = +(index, 1);
+        nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
+    };
+
     whole_8<-(index_pointer, index);
 };
 
