@@ -147,6 +147,11 @@ function type_check(nodes: *Nodes) {
     variable scopes = AutoBuffer.new(64);
     variable scope_pointer = 0;
 
+    variable if_blocks = AutoBuffer.new(64);
+    variable if_block_pointer = 0;
+
+    variable if_block_results = AutoBuffer.new(64);
+
     i = 0;
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
@@ -584,8 +589,59 @@ function type_check(nodes: *Nodes) {
             HashMap<-(@cast_*HashMap(allocated), hashmap_new);
             AutoBuffer.stack8_push(&(variable_scopes_declares_map), &(variable_scope_declares_pointer), allocated);
         } else if =(id, NODE_ENDSCOPE) {
-            variable _ = AutoBuffer.stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
-            variable _ = AutoBuffer.stack8_pop(&(variable_scopes_declares_map), &(variable_scope_declares_pointer));
+            variable unused = AutoBuffer.stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
+            variable unused = AutoBuffer.stack8_pop(&(variable_scopes_declares_map), &(variable_scope_declares_pointer));
+        } else if =(id, NODE_STARTIFBLOCK) {
+            AutoBuffer.stack8_push(&(if_blocks), &(if_block_pointer), stack_pointer);
+        } else if =(id, NODE_ENDIFBLOCK) {
+            variable end_if_id = NodeEndIfBlockData->id(@cast_*NodeEndIfBlockData(pointer_data));
+            variable start_stack = @cast_whole_8(AutoBuffer.stack8_pop(&(if_blocks), &(if_block_pointer)));
+            variable previous_results = @cast_*(AutoBuffer.array8_get(&(if_block_results), end_if_id));
+            
+            variable size = *(8, -(stack_pointer, start_stack));
+            if =(previous_results, 0) {
+                previous_results = brk_allocate(+(8, size));
+                variable array = AutoBuffer.get_size(&(stack), *(8, start_stack), size);
+                copy(array, previous_results, size);
+
+                AutoBuffer.array8_set(&(if_block_results), end_if_id, previous_results);
+            } else {
+                variable array = AutoBuffer.get_size(&(stack), *(8, start_stack), size);
+                variable previous_array = previous_results;
+
+                variable max_size = size;
+                if >(*(array8_length(previous_array), 8), size) {
+                    size = *(array8_length(previous_array), 8);
+                };
+
+                variable j = 0;
+                while <(j, /(size, 8)) {
+                    variable previous_value = @cast_*(array8_get(previous_array, j));
+                    variable value = @cast_*(array8_get(array, j));
+
+                    variable error = false;
+
+                    if =(value, 0) {
+                        error = true;
+                    } else if =(previous_value, 0) {
+                        error = true;
+                    } else if !(string=(value, previous_value)) {
+                        error = true;
+                    };
+
+                    if error {
+                        print_node_error_beginning(nodes, i);
+                        println("If does not have matching branch results");
+                        exit(1);
+                    };
+
+                    j = +(j, 1);
+                };
+
+                //println("test");
+            };
+
+            done_anything = true;
         } else if =(id, NODE_JUMP) {
             done_anything = true;
         } else if =(id, NODE_TARGET) {
@@ -603,6 +659,7 @@ function type_check(nodes: *Nodes) {
         } else if !(done_anything) {
             print("Unhandled ");
             print_whole_8(id);
+            println("");
         };
 
         i = +(i, 1);

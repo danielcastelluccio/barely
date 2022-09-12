@@ -1420,8 +1420,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             //println("");
             AutoBuffer.stack8_push(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer), variable_index);
         } else if =(id, NODE_ENDSCOPE) {
-            variable _ = AutoBuffer.stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
-            variable _ = AutoBuffer.stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
+            variable unused = AutoBuffer.stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
+            variable unused = AutoBuffer.stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
         } else if =(id, NODE_ENDFUNCTION) {
             done_anything = true;
         } else if =(id, NODE_STRUCTURE) {
@@ -1455,6 +1455,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_INCLUDE) {
+            done_anything = true;
+        } else if =(id, NODE_STARTIFBLOCK) {
+            done_anything = true;
+        } else if =(id, NODE_ENDIFBLOCK) {
             done_anything = true;
         } else {
             print("Unhandled ");

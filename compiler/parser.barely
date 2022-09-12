@@ -569,12 +569,16 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
                     increment_whole_8_pointer(index_pointer, 2);
                 };
 
+                nodes_append(nodes, NODE_STARTIFBLOCK, get_token_location_data(tokens, whole_8->(index_pointer)));
                 while !(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
                     parse_statement(tokens, index_pointer, nodes);
                 };
 
                 variable jump_data = @cast_*NodeJumpData(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8->(index_pointer))));
                 NodeJumpData<-target_id(jump_data, end_target);
+
+                variable end_if = @cast_*NodeEndIfBlockData(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, whole_8->(index_pointer))));
+                NodeEndIfBlockData<-id(end_if, end_target);
 
                 nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, whole_8->(index_pointer)));
 

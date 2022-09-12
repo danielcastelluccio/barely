@@ -86,12 +86,12 @@ function AutoBuffer.get(buffer: *AutoBuffer, location: whole_8): * {
 };
 
 function AutoBuffer.get_size(buffer: *AutoBuffer, location: whole_8, size: whole_8): * {
-    AutoBuffer.register(buffer, location size);
+    AutoBuffer.register(buffer, location, size);
     return AutoBuffer.get(buffer, location);
 };
 
 function AutoBuffer.get_whole_8(buffer: *AutoBuffer, location: whole_8): whole_8 {
-    return whole_8->(@cast_*whole_8(AutoBuffer.get(buffer, location)));
+    return whole_8->(@cast_*whole_8(AutoBuffer.get_size(buffer, location, 8)));
 };
 
 function AutoBuffer.get_*(buffer: *AutoBuffer, location: whole_8): * {
