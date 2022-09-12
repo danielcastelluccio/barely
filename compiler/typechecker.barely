@@ -382,13 +382,21 @@ function type_check(nodes: *Nodes) {
                 variable length = array8_length(arguments);
                 variable k = 0;
                 while <(k, length) {
+                    if =(stack_pointer, 0) {
+                        print_node_error_beginning(nodes, i);
+                        print("Invoke of '");
+                        print(function_name);
+                        println("' ran out of stack values");
+                        exit(1);
+                    };
+
                     variable given = @cast_*(AutoBuffer.stack8_pop(&(stack), &(stack_pointer)));
                     variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
                     if !(is_type(wanted, given, nodes)) {
                         print_node_error_beginning(nodes, i);
-                        print("Invoke of ");
+                        print("Invoke of '");
                         print(function_name);
-                        print(" wants '");
+                        print("' wants '");
                         print(wanted);
                         print("', given '");
                         print(given);
@@ -525,6 +533,13 @@ function type_check(nodes: *Nodes) {
             variable j = -(temp, 1);
             while <(j, temp) {
                 variable function_return = @cast_*(array8_get(function_returns2, j));
+
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    println("Return ran out of stack values");
+                    exit(1);
+                };
+
                 variable stack_popped = @cast_*(AutoBuffer.stack8_pop(&(stack), &(stack_pointer)));
                 
                 if !(is_type(function_return, stack_popped, nodes)) {
