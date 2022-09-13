@@ -621,9 +621,8 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
 
             variable name_index = 0;
             variable seen_name = false;
-            variable running = true;
             variable parse_expression = false;
-            while running {
+            while true {
                 variable id = tokens_get_id(tokens, index);
                 if =(id, TOKEN_COMMA) {
                     name_index = +(name_index, 1);
@@ -646,13 +645,13 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
                 if =(tokens_get_id(tokens, index), TOKEN_NAME) {
                     variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
                     if string=(name_value, "=") {
-                        running = false;
                         parse_expression = true;
+                        break;
                     };
                 };
                 if =(tokens_get_id(tokens, index), TOKEN_SEMICOLON) {
-                    running = false;
                     parse_expression = false;
+                    break;
                 };
             };
 
