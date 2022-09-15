@@ -495,24 +495,24 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable whole_8_data = @cast_*NodeNumberData(pointer_data);
             variable value_whole_8 = NodeNumberData->value(whole_8_data);
 
-            if =(NodeNumberData->type(whole_8_data), 0) {
-                variable size = NodeNumberData->size(whole_8_data);
+            variable size = NodeNumberData->size(whole_8_data);
 
-                if =(size, 8) {
-                    AutoBuffer.push_push_whole_8(&(instructions_buffer), &(instructions_index), value_whole_8);
-                } else if =(size, 4) {
-                    AutoBuffer.push_mov_whole_4_register4(&(instructions_buffer), &(instructions_index), EAX, whole_8_to_whole_4(value_whole_8));
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
-                } else if =(size, 2) {
-                    AutoBuffer.push_mov_whole_2_register2(&(instructions_buffer), &(instructions_index), AX, whole_8_to_whole_2(value_whole_8));
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
-                } else if =(size, 1) {
-                    AutoBuffer.push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, @cast_whole_1(whole_8_to_whole_1(value_whole_8)));
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
-                };
+            if =(size, 8) {
+                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, value_whole_8);
+                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
+                AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
+            } else if =(size, 4) {
+                AutoBuffer.push_mov_whole_4_register4(&(instructions_buffer), &(instructions_index), EAX, whole_8_to_whole_4(value_whole_8));
+                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+            } else if =(size, 2) {
+                AutoBuffer.push_mov_whole_2_register2(&(instructions_buffer), &(instructions_index), AX, whole_8_to_whole_2(value_whole_8));
+                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+            } else if =(size, 1) {
+                AutoBuffer.push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, @cast_whole_1(whole_8_to_whole_1(value_whole_8)));
+                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
             };
 
             done_anything = true;

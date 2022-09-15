@@ -1,6 +1,7 @@
 function is_number(string: *): boolean {
     variable length = length(string);
 
+    variable has_number = false;
     variable i = 0;
     while <(i, length) {
         variable character = whole_1->(@cast_*whole_1(+(string, i)));
@@ -10,23 +11,27 @@ function is_number(string: *): boolean {
             character = 48_whole_1;
         };
 
-        if <(character, 48_whole_1) {
+        if =(character, 45_whole_1) {
+        } else if <(character, 48_whole_1) {
             return false;
+        } else if >(character, 57_whole_1) {
+            return false;
+        } else {
+            has_number = true;
         };
 
-        if >(character, 57_whole_1) {
-            return false;
-        };
         i = +(i, 1);
     };
 
-    return true;
+    return has_number;
 };
 
 function to_number(string: *): whole_8 {
     variable length = length(string);
 
     variable whole_8 = 0;
+
+    variable has_negative = false;
 
     variable i = 0;
     while <(i, length) {
@@ -35,12 +40,19 @@ function to_number(string: *): whole_8 {
         if =(character, 95_whole_1) {
             break;
         } else {
-            whole_8 = *(whole_8, 10);
-            whole_8 = +(whole_8, whole_1_to_whole_8(-(character, 48_whole_1)));
+            if =(character, 45_whole_1) {
+                has_negative = true;
+            } else {
+                whole_8 = *(whole_8, 10);
+                whole_8 = +(whole_8, whole_1_to_whole_8(-(character, 48_whole_1)));
+            };
             i = +(i, 1);
         };
     };
 
+    if has_negative {
+        return -(0, whole_8);
+    };
     return whole_8;
 };
 
