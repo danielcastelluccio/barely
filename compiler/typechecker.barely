@@ -627,6 +627,8 @@ function type_check(nodes: *Nodes) {
                         error = true;
                     } else if !(string=(value, previous_value)) {
                         error = true;
+                    } else {
+                        variable _ = AutoBuffer.stack8_pop(&(stack), &(stack_pointer));
                     };
 
                     if error {
@@ -637,8 +639,6 @@ function type_check(nodes: *Nodes) {
 
                     j = +(j, 1);
                 };
-
-                //println("test");
             };
 
             done_anything = true;
