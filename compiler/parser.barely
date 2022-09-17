@@ -94,8 +94,10 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
             TokenNumberData<-type(whole_8_data, 1);
         };
 
-        TokenNumberData<-size(whole_8_data, to_number(AutoBuffer->buffer(&(size_buffer))));
-        TokenNumberData<-value(whole_8_data, to_number(buffer));
+        variable size = to_number(AutoBuffer->buffer(&(size_buffer)));
+
+        TokenNumberData<-size(whole_8_data, size);
+        TokenNumberData<-value(whole_8_data, to_number_size(buffer, size));
     } else if |(string=(buffer, "true"), string=(buffer, "false")) {
         variable boolean_data = @cast_*TokenBooleanData(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8->(row), whole_8->(column)));
         TokenBooleanData<-value(boolean_data, string=(buffer, "true"));
