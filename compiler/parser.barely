@@ -60,6 +60,9 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
         variable size_buffer = AutoBuffer.new(8);
         variable size_buffer_index = 0;
 
+        variable number_buffer = AutoBuffer.new(8);
+        variable number_buffer_index = 0;
+
         variable j = 0;
         while <(j, length(buffer)) {
             variable character = whole_1->(@cast_*whole_1(+(buffer, j)));
@@ -69,6 +72,8 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
                 AutoBuffer.push_whole_1(&(type_buffer), &(type_buffer_index), character);
             } else if =(stage, 2) {
                 AutoBuffer.push_whole_1(&(size_buffer), &(size_buffer_index), character);
+            } else {
+                AutoBuffer.push_whole_1(&(number_buffer), &(number_buffer_index), character);
             };
             
             j = +(j, 1);
@@ -96,8 +101,43 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
 
         variable size = to_number(AutoBuffer->buffer(&(size_buffer)));
 
+        variable size_holdable = 2;
+        variable m = 1;
+        while <(m, *(size, 8)) {
+            size_holdable = *(2, size_holdable);
+            m = +(m, 1);
+        };
+        size_holdable = -(size_holdable, 1);
+        if =(TokenNumberData->type(whole_8_data), 1) {
+            size_holdable = /(size_holdable, 2);
+        };
+
+        variable number = 0;
+
+        if =(any_1->(@cast_*any_1(buffer)), 45_whole_1) {
+            if =(TokenNumberData->type(whole_8_data), 0) {
+                number = +(size_holdable, 1);
+            } else {
+                number = -(to_number(+(buffer, 1)), 1);
+            };
+        } else {
+            number = to_number(buffer);
+        };
+
+        if >(number, size_holdable) {
+            print_token_error_beginning(tokens, -(Tokens->index(tokens), 1));
+            print("Number literal '");
+            print(AutoBuffer->buffer(&(number_buffer)));
+            print("' cannot fit in type '");
+            print(AutoBuffer->buffer(&(type_buffer)));
+            print("_");
+            print(AutoBuffer->buffer(&(size_buffer)));
+            println("'");
+            exit(1);
+        };
+
         TokenNumberData<-size(whole_8_data, size);
-        TokenNumberData<-value(whole_8_data, to_number_size(buffer, size));
+        TokenNumberData<-value(whole_8_data, to_number_size_signed(buffer, size, false));
     } else if |(string=(buffer, "true"), string=(buffer, "false")) {
         variable boolean_data = @cast_*TokenBooleanData(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8->(row), whole_8->(column)));
         TokenBooleanData<-value(boolean_data, string=(buffer, "true"));
