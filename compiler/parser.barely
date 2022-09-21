@@ -247,6 +247,12 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_SEMICOLON, file_name, row, column);
                     column = +(column, 1);
                 };
+                if =(*1(character_pointer), ASCII_LINE_FEED) {
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+                };
                 if =(*1(character_pointer), ASCII_COLON) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
