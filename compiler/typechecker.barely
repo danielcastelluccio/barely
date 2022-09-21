@@ -188,6 +188,12 @@ function type_check(nodes: *Nodes) {
             variable function_name = NodeInvokeData->name(invoke_data);
 
             if string_length=(function_name, "@cast_", 6) {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    println("Cast ran out of stack values");
+                    exit(1);
+                };
+
                 variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable to_push = @cast_*(+(function_name, 6));
 
@@ -203,6 +209,12 @@ function type_check(nodes: *Nodes) {
 
                 autobuffer_stack8_push(&(stack), &(stack_pointer), to_push);
             } else if string=(function_name, "+") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '+' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -224,6 +236,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "-") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '-' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -245,6 +263,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "*") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '*' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -266,6 +290,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "/") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '/' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -287,6 +317,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "%") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '%' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -308,6 +344,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "=") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '=' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -329,6 +371,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, ">") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '>' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -350,6 +398,12 @@ function type_check(nodes: *Nodes) {
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
             } else if string=(function_name, "<") {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '<' ran out of stack values");
+                    exit(1);
+                };
+
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -427,11 +481,6 @@ function type_check(nodes: *Nodes) {
             variable variable_name = NodeDeclareData->name(declare_data);
             variable variable_type = NodeDeclareData->type(declare_data);
 
-            //println(current_function);
-            //println(variable_name);
-            //print_whole_8(variable_scope_types_pointer);
-            //println("");
-
             hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
             hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
 
@@ -447,6 +496,12 @@ function type_check(nodes: *Nodes) {
                 scope_index = -(scope_index, 1);
             };
             scope_index = +(scope_index, 1);
+
+            if =(stack_pointer, 0) {
+                print_node_error_beginning(nodes, i);
+                println("Assign ran out of stack values");
+                exit(1);
+            };
 
             variable popped_stack = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
@@ -562,6 +617,12 @@ function type_check(nodes: *Nodes) {
 
             done_anything = true;
         } else if =(id, NODE_POINTER) {
+            if =(stack_pointer, 0) {
+                print_node_error_beginning(nodes, i);
+                println("Pointer ran out of stack values");
+                exit(1);
+            };
+
             variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
             variable allocated = brk_allocate(+(length(popped), 2));
             copy("*", allocated, 1);
@@ -569,6 +630,12 @@ function type_check(nodes: *Nodes) {
             autobuffer_stack8_push(&(stack), &(stack_pointer), allocated);
             done_anything = true;
         } else if =(id, NODE_JUMP_CONDITIONAL) {
+            if =(stack_pointer, 0) {
+                print_node_error_beginning(nodes, i);
+                println("Conditional jump ran out of stack values");
+                exit(1);
+            };
+
             variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
             if !(string=(popped, "boolean")) {
                 print_node_error_beginning(nodes, i);
