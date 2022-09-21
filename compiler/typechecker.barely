@@ -729,6 +729,13 @@ function type_check(nodes: *Nodes) {
             done_anything = true;
         } else if =(id, NODE_INCLUDE) {
             done_anything = true;
+        } else if =(id, NODE_ENDSTATEMENT) {
+            if !(=(stack_pointer, 0)) {
+                print_node_error_beginning(nodes, i);
+                println("Statement end has extra stack values");
+                exit(1);
+            };
+            done_anything = true;
         } else if !(done_anything) {
             print("Unhandled ");
             print_whole_8(id);

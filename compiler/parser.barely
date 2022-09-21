@@ -662,6 +662,10 @@ function get_target_id(): whole_8 {
 };
 
 function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    while =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_COMMA) {
+        increment_whole_8_pointer(index_pointer, 1);
+    };
+
     variable done_anything = false;
 
     if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
@@ -734,7 +738,6 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
 
             whole_8<-(index_pointer, index);
             done_anything = true;
-            return;
         };
     };
     if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
@@ -751,6 +754,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             };
 
             variable node = nodes_append(nodes, NODE_RETURN, get_token_location_data(tokens, whole_8->(index_pointer)));
+            increment_whole_8_pointer(index_pointer, 1);
             done_anything = true;
             return;
         };
@@ -790,7 +794,6 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
  
             increment_whole_8_pointer(index_pointer, 1);
             done_anything = true;
-            return;
         };
     };
     if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, +(whole_8->(index_pointer), 1)), TOKEN_NAME)) {
@@ -817,7 +820,6 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
 
         whole_8<-(index_pointer, index);
         done_anything = true;
-        return;
     };
     if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
@@ -832,7 +834,12 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
 
     if !(done_anything) {
         parse_expression(tokens, index_pointer, nodes);
-        increment_whole_8_pointer(index_pointer, 1);
+        if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_SEMICOLON) {
+            variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8->(index_pointer)));
+            increment_whole_8_pointer(index_pointer, 1);
+        };
+    } else {
+        variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8->(index_pointer)));
     };
 };
 
