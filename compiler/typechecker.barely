@@ -615,6 +615,12 @@ function type_check(nodes: *Nodes) {
                 j = -(j, 1);
             };
 
+            if !(=(stack_pointer, 0)) {
+                print_node_error_beginning(nodes, i);
+                println("Return has extra stack values");
+                exit(1);
+            };
+
             done_anything = true;
         } else if =(id, NODE_POINTER) {
             if =(stack_pointer, 0) {
