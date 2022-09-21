@@ -1,7 +1,7 @@
 include "lib/elf.barely";
 
 function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
-    variable output = AutoBuffer.new(512);
+    variable output = autobuffer_new(512);
 
     variable file_header = new_elf64_file_header();
     ELF64FileHeader<-format(&(file_header), 2_whole_1);
@@ -13,75 +13,75 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     ELF64FileHeader<-program_header_table(&(file_header), 64);
     ELF64FileHeader<-program_header_count(&(file_header), whole_8_to_whole_2(3));
 
-    variable data_buffer = AutoBuffer.new(512);
+    variable data_buffer = autobuffer_new(512);
     variable data_index = 0;
 
-    variable instructions_buffer = AutoBuffer.new(512);
+    variable instructions_buffer = autobuffer_new(512);
     variable instructions_index = 0;
 
-    variable data_indexes_to_adjust = AutoBuffer.new(512);
+    variable data_indexes_to_adjust = autobuffer_new(512);
     variable data_indexes_to_adjust_index = 0;
 
-    variable data_indexes_to_adjust_relative = AutoBuffer.new(512);
+    variable data_indexes_to_adjust_relative = autobuffer_new(512);
     variable data_indexes_to_adjust_relative_index = 0;
 
-    variable bss_indexes_to_adjust = AutoBuffer.new(512);
+    variable bss_indexes_to_adjust = autobuffer_new(512);
     variable bss_indexes_to_adjust_index = 0;
 
-    variable bss_indexes_to_adjust_relative = AutoBuffer.new(512);
+    variable bss_indexes_to_adjust_relative = autobuffer_new(512);
     variable bss_indexes_to_adjust_relative_index = 0;
 
-    variable buffer = AutoBuffer.new(8388608);
+    variable buffer = autobuffer_new(8388608);
     variable buffer_index = 0;
 
-    variable data_buffer = AutoBuffer.new(131072);
+    variable data_buffer = autobuffer_new(131072);
     variable data_buffer_index = 0;
 
     variable bss_index = 0;
 
-    variable bss_buffer = AutoBuffer.new(131072);
+    variable bss_buffer = autobuffer_new(131072);
     variable bss_buffer_index = 0;
 
-    AutoBuffer.push_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RSP, 8, RAX);
-    AutoBuffer.push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RAX, R12);
-    AutoBuffer.push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, R13);
-    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-    AutoBuffer.push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RBX, R14);
-    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
-    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RBX);
-    variable main_call = AutoBuffer.push_call_near(&(instructions_buffer), &(instructions_index));
-    AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 60);
-    AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDI, 0);
-    AutoBuffer.push_syscall(&(instructions_buffer), &(instructions_index));
+    autobuffer_push_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RSP, 8, RAX);
+    autobuffer_push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RAX, R12);
+    autobuffer_push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, R13);
+    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+    autobuffer_push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RBX, R14);
+    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RBX);
+    variable main_call = autobuffer_push_call_near(&(instructions_buffer), &(instructions_index));
+    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 60);
+    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDI, 0);
+    autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
 
-    variable function_argument_names_map = HashMap.new(1024);
-    variable function_arguments_map = HashMap.new(1024);
-    variable function_returns_map = HashMap.new(1024);
-    variable function_local_sizes_map = HashMap.new(1024);
-    variable function_locations_map = HashMap.new(1024);
+    variable function_argument_names_map = hashmap_new(1024);
+    variable function_arguments_map = hashmap_new(1024);
+    variable function_returns_map = hashmap_new(1024);
+    variable function_local_sizes_map = hashmap_new(1024);
+    variable function_locations_map = hashmap_new(1024);
     variable index = 0;
 
-    variable global_types_map = HashMap.new(512);
-    variable global_locations_map = HashMap.new(512);
+    variable global_types_map = hashmap_new(512);
+    variable global_locations_map = hashmap_new(512);
 
-    variable constant_types_map = HashMap.new(512);
-    variable constant_locations_map = HashMap.new(512);
+    variable constant_types_map = hashmap_new(512);
+    variable constant_locations_map = hashmap_new(512);
 
-    variable memory_function_instructions_map = HashMap.new(1024);
-    variable memory_function_instruction_sizes_map = HashMap.new(1024);
+    variable memory_function_instructions_map = hashmap_new(1024);
+    variable memory_function_instruction_sizes_map = hashmap_new(1024);
 
-    variable calls = AutoBuffer.new(512);
-    variable call_targets = AutoBuffer.new(512);
+    variable calls = autobuffer_new(512);
+    variable call_targets = autobuffer_new(512);
     variable call_index = 0;
 
-    variable targets = AutoBuffer.new(512);
+    variable targets = autobuffer_new(512);
 
-    variable jmps = AutoBuffer.new(512);
-    variable jmp_targets = AutoBuffer.new(512);
+    variable jmps = autobuffer_new(512);
+    variable jmp_targets = autobuffer_new(512);
     variable jmp_index = 0;
 
-    variable jes = AutoBuffer.new(512);
-    variable je_targets = AutoBuffer.new(512);
+    variable jes = autobuffer_new(512);
+    variable je_targets = autobuffer_new(512);
     variable je_index = 0;
 
     variable node_count = Nodes->index(nodes);
@@ -92,9 +92,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
         if =(id, NODE_FUNCTION) {
             variable function_data = @cast_*NodeFunctionData(pointer_data);
-            HashMap.string_put(&(function_argument_names_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_names(function_data));
-            HashMap.string_put(&(function_arguments_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_types(function_data));
-            HashMap.string_put(&(function_returns_map), NodeFunctionData->name(function_data), NodeFunctionData->returns(function_data));
+            hashmap_string_put(&(function_argument_names_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_names(function_data));
+            hashmap_string_put(&(function_arguments_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_types(function_data));
+            hashmap_string_put(&(function_returns_map), NodeFunctionData->name(function_data), NodeFunctionData->returns(function_data));
 
             variable total = 16;
             variable j = i;
@@ -112,7 +112,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 j = +(j, 1);
             };
 
-            HashMap.string_put(&(function_local_sizes_map), NodeFunctionData->name(function_data), total);
+            hashmap_string_put(&(function_local_sizes_map), NodeFunctionData->name(function_data), total);
 
             index = +(index, 1);
         } else if =(id, NODE_GLOBAL) {
@@ -120,9 +120,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable global_name = NodeGlobalData->name(global_data);
             variable global_type = NodeGlobalData->type(global_data);
 
-            HashMap.string_put(&(global_types_map), global_name, global_type);
+            hashmap_string_put(&(global_types_map), global_name, global_type);
             variable global_location = bss_index;
-            HashMap.string_put(&(global_locations_map), global_name, global_location);
+            hashmap_string_put(&(global_locations_map), global_name, global_location);
 
             bss_index = +(bss_index, get_size_linux_x86-642(global_type, nodes));
         } else if =(id, NODE_CONSTANT) {
@@ -130,11 +130,11 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable constant_name = NodeConstantData->name(constant_data);
             variable constant_type = NodeConstantData->type(constant_data);
 
-            HashMap.string_put(&(constant_types_map), constant_name, constant_type);
+            hashmap_string_put(&(constant_types_map), constant_name, constant_type);
 
-            variable constant_location = AutoBuffer.push_data_whole_8(&(data_buffer), &(data_buffer_index), @cast_whole_8(NodeConstantData->value(constant_data)));
+            variable constant_location = autobuffer_push_data_whole_8(&(data_buffer), &(data_buffer_index), @cast_whole_8(NodeConstantData->value(constant_data)));
 
-            HashMap.string_put(&(constant_locations_map), constant_name, constant_location);
+            hashmap_string_put(&(constant_locations_map), constant_name, constant_location);
         } else if =(id, NODE_STRUCTURE) {
             variable structure_data = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
             variable structure_name = NodeStructureData->name(structure_data);
@@ -144,155 +144,155 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             copy(structure_name, allocated, length(structure_name));
             copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
 
-            variable allocated_contents0 = AutoBuffer.new(8388608);
+            variable allocated_contents0 = autobuffer_new(8388608);
             variable allocated_contents01 = &(allocated_contents0);
-            variable allocated_contents02 = AutoBuffer.new(8388608);
+            variable allocated_contents02 = autobuffer_new(8388608);
             variable allocated_contents03 = &(allocated_contents02);
             variable contents_index = 0;
             variable contents_index2 = 0;
 
             variable size = get_size_linux_x86-642(structure_name, nodes);
 
-            AutoBuffer.push_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, size);
-            AutoBuffer.push_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP , 0, RAX);
-            AutoBuffer.push_sub_register8_whole_8(allocated_contents03, &(contents_index2), RSP, size);
+            autobuffer_push_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, size);
+            autobuffer_push_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP , 0, RAX);
+            autobuffer_push_sub_register8_whole_8(allocated_contents03, &(contents_index2), RSP, size);
 
             variable j = 0;
             while <(j, size) {
                 variable done_anything_structure = false;
 
                 if >(-(size, j), 7) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP, j, RBX);
-                    AutoBuffer.push_mov_register8_register8_pointer_offset(allocated_contents03, &(contents_index2), RBX, RAX, j);
+                    autobuffer_push_mov_register8_pointer_offset_register8(allocated_contents03, &(contents_index2), RSP, j, RBX);
+                    autobuffer_push_mov_register8_register8_pointer_offset(allocated_contents03, &(contents_index2), RBX, RAX, j);
 
                     j = +(j, 8);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, j), 3), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(allocated_contents03, &(contents_index2), RSP, j, EBX);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(allocated_contents03, &(contents_index2), EBX, RAX, j);
+                    autobuffer_push_mov_register8_pointer_offset_register4(allocated_contents03, &(contents_index2), RSP, j, EBX);
+                    autobuffer_push_mov_register4_register8_pointer_offset(allocated_contents03, &(contents_index2), EBX, RAX, j);
 
                     j = +(j, 4);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, j), 1), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(allocated_contents03, &(contents_index2), RSP, j, BX);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(allocated_contents03, &(contents_index2), BX, RAX, j);
+                    autobuffer_push_mov_register8_pointer_offset_register2(allocated_contents03, &(contents_index2), RSP, j, BX);
+                    autobuffer_push_mov_register2_register8_pointer_offset(allocated_contents03, &(contents_index2), BX, RAX, j);
 
                     j = +(j, 2);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, j), 0), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(allocated_contents03, &(contents_index2), RSP, j, BL);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(allocated_contents03, &(contents_index2), BL, RAX, j);
+                    autobuffer_push_mov_register8_pointer_offset_register1(allocated_contents03, &(contents_index2), RSP, j, BL);
+                    autobuffer_push_mov_register1_register8_pointer_offset(allocated_contents03, &(contents_index2), BL, RAX, j);
 
                     j = +(j, 1);
                     done_anything_structure = true;
                 };
             };
 
-            AutoBuffer.push_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, +(size, 8));
+            autobuffer_push_add_register8_whole_8(allocated_contents03, &(contents_index2), RSP, +(size, 8));
 
-            HashMap.string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents03));
-            HashMap.string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+            hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents03));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
             // Getter for whole value
             variable allocated = brk_allocate(+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("->", @cast_*(+(allocated, length(structure_name))), 2);
 
-            variable allocated_contents1 = AutoBuffer.new(131072);
+            variable allocated_contents1 = autobuffer_new(131072);
             variable allocated_contents11 = &(allocated_contents1);
-            variable allocated_contents12 = AutoBuffer.new(131072);
+            variable allocated_contents12 = autobuffer_new(131072);
             variable allocated_contents13 = &(allocated_contents12);
             variable contents_index = 0;
             variable contents_index2 = 0;
 
-            AutoBuffer.push_pop_register8(allocated_contents13, &(contents_index2), RAX);
-            AutoBuffer.push_sub_register8_whole_8(allocated_contents13, &(contents_index2), RSP, size);
+            autobuffer_push_pop_register8(allocated_contents13, &(contents_index2), RAX);
+            autobuffer_push_sub_register8_whole_8(allocated_contents13, &(contents_index2), RSP, size);
 
             variable k = 0;
             while <(k, size) {
                 variable done_anything_structure = false;
 
                 if >(-(size, k), 7) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register8(allocated_contents13, &(contents_index2), RAX, k, RBX);
-                    AutoBuffer.push_mov_register8_register8_pointer_offset(allocated_contents13, &(contents_index2), RBX, RSP, k);
+                    autobuffer_push_mov_register8_pointer_offset_register8(allocated_contents13, &(contents_index2), RAX, k, RBX);
+                    autobuffer_push_mov_register8_register8_pointer_offset(allocated_contents13, &(contents_index2), RBX, RSP, k);
 
                     k = +(k, 8);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 3), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(allocated_contents13, &(contents_index2), RAX, k, EBX);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(allocated_contents13, &(contents_index2), EBX, RSP, k);
+                    autobuffer_push_mov_register8_pointer_offset_register4(allocated_contents13, &(contents_index2), RAX, k, EBX);
+                    autobuffer_push_mov_register4_register8_pointer_offset(allocated_contents13, &(contents_index2), EBX, RSP, k);
 
                     k = +(k, 4);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 1), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(allocated_contents13, &(contents_index2), RAX, k, BX);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(allocated_contents13, &(contents_index2), BX, RSP, k);
+                    autobuffer_push_mov_register8_pointer_offset_register2(allocated_contents13, &(contents_index2), RAX, k, BX);
+                    autobuffer_push_mov_register2_register8_pointer_offset(allocated_contents13, &(contents_index2), BX, RSP, k);
 
                     k = +(k, 2);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 0), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(allocated_contents13, &(contents_index2), RAX, k, BL);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(allocated_contents13, &(contents_index2), BL, RSP, k);
+                    autobuffer_push_mov_register8_pointer_offset_register1(allocated_contents13, &(contents_index2), RAX, k, BL);
+                    autobuffer_push_mov_register1_register8_pointer_offset(allocated_contents13, &(contents_index2), BL, RSP, k);
 
                     k = +(k, 1);
                     done_anything_structure = true;
                 };
             };
 
-            HashMap.string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents13));
-            HashMap.string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+            hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents13));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
-            variable allocated_contents1 = AutoBuffer.new(131072);
+            variable allocated_contents1 = autobuffer_new(131072);
             variable allocated_contents11 = &(allocated_contents1);
-            variable allocated_contents12 = AutoBuffer.new(131072);
+            variable allocated_contents12 = autobuffer_new(131072);
             variable allocated_contents13 = &(allocated_contents12);
             variable contents_index = 0;
             variable contents_index2 = 0;
 
-            AutoBuffer.push_sub_register8_whole_8(allocated_contents13, &(contents_index2), RSP, size);
+            autobuffer_push_sub_register8_whole_8(allocated_contents13, &(contents_index2), RSP, size);
 
             variable k = 0;
             while <(k, size) {
                 variable done_anything_structure = false;
 
                 if >(-(size, k), 7) {
-                    AutoBuffer.push_mov_whole_8_register8(allocated_contents13, &(contents_index2), RBX, 0);
-                    AutoBuffer.push_mov_register8_register8_pointer_offset(allocated_contents13, &(contents_index2), RBX, RSP, k);
+                    autobuffer_push_mov_whole_8_register8(allocated_contents13, &(contents_index2), RBX, 0);
+                    autobuffer_push_mov_register8_register8_pointer_offset(allocated_contents13, &(contents_index2), RBX, RSP, k);
 
                     k = +(k, 8);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 3), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_whole_4_register4(allocated_contents13, &(contents_index2), EBX, 0_whole_4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(allocated_contents13, &(contents_index2), EBX, RSP, k);
+                    autobuffer_push_mov_whole_4_register4(allocated_contents13, &(contents_index2), EBX, 0_whole_4);
+                    autobuffer_push_mov_register4_register8_pointer_offset(allocated_contents13, &(contents_index2), EBX, RSP, k);
 
                     k = +(k, 4);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 1), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_whole_2_register2(allocated_contents13, &(contents_index2), BX, 0_whole_2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(allocated_contents13, &(contents_index2), BX, RSP, k);
+                    autobuffer_push_mov_whole_2_register2(allocated_contents13, &(contents_index2), BX, 0_whole_2);
+                    autobuffer_push_mov_register2_register8_pointer_offset(allocated_contents13, &(contents_index2), BX, RSP, k);
 
                     k = +(k, 2);
                     done_anything_structure = true;
                 };
                 if &&(>(-(size, k), 0), !(done_anything_structure)) {
-                    AutoBuffer.push_mov_whole_1_register1(allocated_contents13, &(contents_index2), BL, 0_whole_1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(allocated_contents13, &(contents_index2), BL, RSP, k);
+                    autobuffer_push_mov_whole_1_register1(allocated_contents13, &(contents_index2), BL, 0_whole_1);
+                    autobuffer_push_mov_register1_register8_pointer_offset(allocated_contents13, &(contents_index2), BL, RSP, k);
 
                     k = +(k, 1);
                     done_anything_structure = true;
                 };
             };
 
-            HashMap.string_put(&(memory_function_instructions_map), structure_name, AutoBuffer->buffer(allocated_contents13));
-            HashMap.string_put(&(memory_function_instruction_sizes_map), structure_name, contents_index2);
+            hashmap_string_put(&(memory_function_instructions_map), structure_name, AutoBuffer->buffer(allocated_contents13));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), structure_name, contents_index2);
 
             variable member_names = NodeStructureData->item_names(structure_data);
             variable member_types = NodeStructureData->item_types(structure_data);
@@ -310,19 +310,19 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 copy("->", @cast_*(+(+(allocated, length(structure_name)), 1)), 2);
                 copy(member_name, @cast_*(+(+(allocated, +(length(structure_name), 2)), 1)), length(member_name));
 
-                variable allocated_contents4 = AutoBuffer.new(131072);
+                variable allocated_contents4 = autobuffer_new(131072);
                 variable allocated_contents41 = &(allocated_contents4);
-                variable allocated_contents42 = AutoBuffer.new(131072);
+                variable allocated_contents42 = autobuffer_new(131072);
                 variable allocated_contents43 = &(allocated_contents42);
                 variable contents_index = 0;
                 variable contents_index2 = 0;
 
-                AutoBuffer.push_pop_register8(allocated_contents43, &(contents_index2), RAX);
-                AutoBuffer.push_add_register8_whole_8(allocated_contents43, &(contents_index2), RAX, location);
-                AutoBuffer.push_push_register8(allocated_contents43, &(contents_index2), RAX);
+                autobuffer_push_pop_register8(allocated_contents43, &(contents_index2), RAX);
+                autobuffer_push_add_register8_whole_8(allocated_contents43, &(contents_index2), RAX, location);
+                autobuffer_push_push_register8(allocated_contents43, &(contents_index2), RAX);
 
-                HashMap.string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents43));
-                HashMap.string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+                hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents43));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
                 // Setter for individual members
                 variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
@@ -330,57 +330,57 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
 
-                variable allocated_contents2 = AutoBuffer.new(8388608);
+                variable allocated_contents2 = autobuffer_new(8388608);
                 variable allocated_contents21 = &(allocated_contents2);
-                variable allocated_contents22 = AutoBuffer.new(8388608);
+                variable allocated_contents22 = autobuffer_new(8388608);
                 variable allocated_contents23 = &(allocated_contents22);
                 variable contents_index = 0;
                 variable contents_index2 = 0;
 
                 variable size = get_size_linux_x86-642(member_type, nodes);
 
-                AutoBuffer.push_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, size);
-                AutoBuffer.push_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, 0, RAX);
-                AutoBuffer.push_sub_register8_whole_8(allocated_contents23, &(contents_index2), RSP, size);
+                autobuffer_push_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, size);
+                autobuffer_push_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, 0, RAX);
+                autobuffer_push_sub_register8_whole_8(allocated_contents23, &(contents_index2), RSP, size);
 
                 variable k = 0;
                 while <(k, size) {
                     variable done_anything_structure = false;
 
                     if >(-(size, k), 7) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, k, RBX);
-                        AutoBuffer.push_mov_register8_register8_pointer_offset(allocated_contents23, &(contents_index2), RBX, RAX, +(k, location));
+                        autobuffer_push_mov_register8_pointer_offset_register8(allocated_contents23, &(contents_index2), RSP, k, RBX);
+                        autobuffer_push_mov_register8_register8_pointer_offset(allocated_contents23, &(contents_index2), RBX, RAX, +(k, location));
 
                         k = +(k, 8);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 3), !(done_anything_structure)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register4(allocated_contents23, &(contents_index2), RSP, k, EBX);
-                        AutoBuffer.push_mov_register4_register8_pointer_offset(allocated_contents23, &(contents_index2), EBX, RAX, +(k, location));
+                        autobuffer_push_mov_register8_pointer_offset_register4(allocated_contents23, &(contents_index2), RSP, k, EBX);
+                        autobuffer_push_mov_register4_register8_pointer_offset(allocated_contents23, &(contents_index2), EBX, RAX, +(k, location));
 
                         k = +(k, 4);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 1), !(done_anything_structure)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register2(allocated_contents23, &(contents_index2), RSP, k, BX);
-                        AutoBuffer.push_mov_register2_register8_pointer_offset(allocated_contents23, &(contents_index2), BX, RAX, +(k, location));
+                        autobuffer_push_mov_register8_pointer_offset_register2(allocated_contents23, &(contents_index2), RSP, k, BX);
+                        autobuffer_push_mov_register2_register8_pointer_offset(allocated_contents23, &(contents_index2), BX, RAX, +(k, location));
 
                         k = +(k, 2);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 0), !(done_anything_structure)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register1(allocated_contents23, &(contents_index2), RSP, k, BL);
-                        AutoBuffer.push_mov_register1_register8_pointer_offset(allocated_contents23, &(contents_index2), BL, RAX, +(k, location));
+                        autobuffer_push_mov_register8_pointer_offset_register1(allocated_contents23, &(contents_index2), RSP, k, BL);
+                        autobuffer_push_mov_register1_register8_pointer_offset(allocated_contents23, &(contents_index2), BL, RAX, +(k, location));
 
                         k = +(k, 1);
                         done_anything_structure = true;
                     };
                 };
 
-                AutoBuffer.push_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, +(size, 8));
+                autobuffer_push_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, +(size, 8));
 
-                HashMap.string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents23));
-                HashMap.string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+                hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents23));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
                 // Getter for indivudal members
                 variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
@@ -388,9 +388,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 copy("->", @cast_*(+(allocated, length(structure_name))), 2);
                 copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
 
-                variable allocated_contents3 = AutoBuffer.new(8388608);
+                variable allocated_contents3 = autobuffer_new(8388608);
                 variable allocated_contents31 = &(allocated_contents3);
-                variable allocated_contents32 = AutoBuffer.new(8388608);
+                variable allocated_contents32 = autobuffer_new(8388608);
                 variable allocated_contents33 = &(allocated_contents32);
                 variable contents_index = 0;
                 variable contents_index2 = 0;
@@ -398,45 +398,45 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 variable size = get_size_linux_x86-642(member_type, nodes);
                 variable location = get_size_multiple_linux_x86-642(member_types, j, nodes);
 
-                AutoBuffer.push_pop_register8(allocated_contents33, &(contents_index2), RAX);
-                AutoBuffer.push_sub_register8_whole_8(allocated_contents33, &(contents_index2), RSP, size);
+                autobuffer_push_pop_register8(allocated_contents33, &(contents_index2), RAX);
+                autobuffer_push_sub_register8_whole_8(allocated_contents33, &(contents_index2), RSP, size);
 
                 variable k = 0;
                 while <(k, size) {
                     variable done_anything_structure = false;
 
                     if >(-(size, k), 7) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register8(allocated_contents33, &(contents_index2), RAX, +(k, location), RBX);
-                        AutoBuffer.push_mov_register8_register8_pointer_offset(allocated_contents33, &(contents_index2), RBX, RSP, k);
+                        autobuffer_push_mov_register8_pointer_offset_register8(allocated_contents33, &(contents_index2), RAX, +(k, location), RBX);
+                        autobuffer_push_mov_register8_register8_pointer_offset(allocated_contents33, &(contents_index2), RBX, RSP, k);
 
                         k = +(k, 8);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 3), !(done_anything_structure)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register4(allocated_contents33, &(contents_index2), RAX, +(k, location), EBX);
-                        AutoBuffer.push_mov_register4_register8_pointer_offset(allocated_contents33, &(contents_index2), EBX, RSP, k);
+                        autobuffer_push_mov_register8_pointer_offset_register4(allocated_contents33, &(contents_index2), RAX, +(k, location), EBX);
+                        autobuffer_push_mov_register4_register8_pointer_offset(allocated_contents33, &(contents_index2), EBX, RSP, k);
 
                         k = +(k, 4);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 1), !(done_anything_structure)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register2(allocated_contents33, &(contents_index2), RAX, +(k, location), BX);
-                        AutoBuffer.push_mov_register2_register8_pointer_offset(allocated_contents33, &(contents_index2), BX, RSP, k);
+                        autobuffer_push_mov_register8_pointer_offset_register2(allocated_contents33, &(contents_index2), RAX, +(k, location), BX);
+                        autobuffer_push_mov_register2_register8_pointer_offset(allocated_contents33, &(contents_index2), BX, RSP, k);
 
                         k = +(k, 2);
                         done_anything_structure = true;
                     };
                     if &&(>(-(size, k), 0), !(done_anything_structure)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register1(allocated_contents33, &(contents_index2), RAX, +(k, location), BL);
-                        AutoBuffer.push_mov_register1_register8_pointer_offset(allocated_contents33, &(contents_index2), BL, RSP, k);
+                        autobuffer_push_mov_register8_pointer_offset_register1(allocated_contents33, &(contents_index2), RAX, +(k, location), BL);
+                        autobuffer_push_mov_register1_register8_pointer_offset(allocated_contents33, &(contents_index2), BL, RSP, k);
 
                         k = +(k, 1);
                         done_anything_structure = true;
                     };
                 };
 
-                HashMap.string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents33));
-                HashMap.string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+                hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents33));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
 
                 j = +(j, 1);
             };
@@ -447,14 +447,14 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
     variable current_function: *;
 
-    variable variable_scopes_types_map = AutoBuffer.new(64);
+    variable variable_scopes_types_map = autobuffer_new(64);
     variable variable_scope_types_pointer = 0;
-    variable variable_scopes_indexes_map = AutoBuffer.new(64);
+    variable variable_scopes_indexes_map = autobuffer_new(64);
     variable variable_scope_indexes_pointer = 0;
 
-    variable variable_types_map = HashMap.new(2048);
-    variable variable_names = AutoBuffer.new(2048);
-    variable variable_sizes = AutoBuffer.new(2048);
+    variable variable_types_map = hashmap_new(2048);
+    variable variable_names = autobuffer_new(2048);
+    variable variable_sizes = autobuffer_new(2048);
     variable variable_index = 0;
 
     variable program_constant_index = 0;
@@ -473,19 +473,19 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             if !(=(next_id, NODE_ENDFUNCTION)) {
                 variable function_name = NodeFunctionData->name(function_data);
 
-                HashMap.string_put(&(function_locations_map), function_name, instructions_index);
+                hashmap_string_put(&(function_locations_map), function_name, instructions_index);
 
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RBP);
-                AutoBuffer.push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, RBP);
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RBP);
+                autobuffer_push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, RBP);
 
-                variable locals_size = @cast_whole_8(HashMap.string_get(&(function_local_sizes_map), function_name));
+                variable locals_size = @cast_whole_8(hashmap_string_get(&(function_local_sizes_map), function_name));
 
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
 
                 current_function = function_name;
 
-                AutoBuffer.reset(&(HashMap->buffer(&(variable_types_map))));
-                AutoBuffer.reset(&(variable_scopes_indexes_map));
+                autobuffer_reset(&(HashMap->buffer(&(variable_types_map))));
+                autobuffer_reset(&(variable_scopes_indexes_map));
 
                 variable_index = 0;
             };
@@ -498,21 +498,21 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable size = NodeNumberData->size(whole_8_data);
 
             if =(size, 8) {
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, value_whole_8);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
-                AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, value_whole_8);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
+                autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
             } else if =(size, 4) {
-                AutoBuffer.push_mov_whole_4_register4(&(instructions_buffer), &(instructions_index), EAX, whole_8_to_whole_4(value_whole_8));
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                autobuffer_push_mov_whole_4_register4(&(instructions_buffer), &(instructions_index), EAX, whole_8_to_whole_4(value_whole_8));
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
             } else if =(size, 2) {
-                AutoBuffer.push_mov_whole_2_register2(&(instructions_buffer), &(instructions_index), AX, whole_8_to_whole_2(value_whole_8));
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+                autobuffer_push_mov_whole_2_register2(&(instructions_buffer), &(instructions_index), AX, whole_8_to_whole_2(value_whole_8));
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
             } else if =(size, 1) {
-                AutoBuffer.push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, @cast_whole_1(whole_8_to_whole_1(value_whole_8)));
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                autobuffer_push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, @cast_whole_1(whole_8_to_whole_1(value_whole_8)));
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
             };
 
             done_anything = true;
@@ -520,14 +520,14 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable boolean_data = @cast_*NodeBooleanData(pointer_data);
             variable value_boolean = NodeBooleanData->value(boolean_data);
 
-            AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+            autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
 
             if @cast_boolean(value_boolean) {
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
             } else {
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
             };
 
             done_anything = true;
@@ -545,378 +545,378 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             variable done_anything_invoke = false;
 
-            variable memory_function = HashMap.string_get(&(memory_function_instructions_map), function_name);
+            variable memory_function = hashmap_string_get(&(memory_function_instructions_map), function_name);
             if !(=(memory_function, 0)) {
                 variable contents = @cast_*(memory_function);
-                variable contents_size = @cast_whole_8(HashMap.string_get(&(memory_function_instruction_sizes_map), function_name));
-                AutoBuffer.push_pointer(&(instructions_buffer), &(instructions_index), contents, contents_size);
+                variable contents_size = @cast_whole_8(hashmap_string_get(&(memory_function_instruction_sizes_map), function_name));
+                autobuffer_push_pointer(&(instructions_buffer), &(instructions_index), contents, contents_size);
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "@cast_", 6) {
+            } else if string_length=(function_name, "@cast_", 6) {
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "=_", 2) {
+            } else if string_length=(function_name, "=_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_cmp_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_cmp_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_cmp_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_cmp_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_cmp_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_cmp_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
                 };
 
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
-                AutoBuffer.push_cmove_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
+                autobuffer_push_cmove_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
                 done_anything_invoke = true;
-            } else if String.length=(function_name, ">_", 2) {
+            } else if string_length=(function_name, ">_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_cmp_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_cmp_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_cmp_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_cmp_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_cmp_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_cmp_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
                 };
 
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
-                AutoBuffer.push_cmovb_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
+                autobuffer_push_cmovb_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "<_", 2) {
+            } else if string_length=(function_name, "<_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_cmp_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_cmp_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_cmp_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_cmp_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_cmp_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_cmp_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
                 };
 
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
-                AutoBuffer.push_cmova_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
+                autobuffer_push_cmova_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
                 done_anything_invoke = true;
             } else if string=(function_name, "get_rsp") {
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RSP);
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RSP);
                 done_anything_invoke = true;
             } else if string=(function_name, "!") {
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
                 //TODO compare directly with whole_8
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
-                AutoBuffer.push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
-                AutoBuffer.push_cmove_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
+                autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 1);
+                autobuffer_push_cmove_register8_register8(&(instructions_buffer), &(instructions_index), RCX, RBX);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), CL, RSP, 0);
 
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "+_", 2) {
+            } else if string_length=(function_name, "+_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_add_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
-                    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_add_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
+                    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_add_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_add_register4_register4(&(instructions_buffer), &(instructions_index), EAX, EBX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_add_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_add_register2_register2(&(instructions_buffer), &(instructions_index), AX, BX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_add_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_add_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                 };
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "-_", 2) {
+            } else if string_length=(function_name, "-_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_sub_register8_register8(&(instructions_buffer), &(instructions_index), RBX, RAX);
-                    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_sub_register8_register8(&(instructions_buffer), &(instructions_index), RBX, RAX);
+                    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RBX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_sub_register4_register4(&(instructions_buffer), &(instructions_index), EBX, EAX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EBX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_sub_register4_register4(&(instructions_buffer), &(instructions_index), EBX, EAX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EBX, RSP, 0);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_sub_register2_register2(&(instructions_buffer), &(instructions_index), BX, AX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_sub_register2_register2(&(instructions_buffer), &(instructions_index), BX, AX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BX, RSP, 0);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_sub_register1_register1(&(instructions_buffer), &(instructions_index), BL, AL);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BL, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_sub_register1_register1(&(instructions_buffer), &(instructions_index), BL, AL);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BL, RSP, 0);
                 };
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "*_", 2) {
+            } else if string_length=(function_name, "*_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_mul_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_mul_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mul_register4(&(instructions_buffer), &(instructions_index), EBX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mul_register4(&(instructions_buffer), &(instructions_index), EBX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mul_register2(&(instructions_buffer), &(instructions_index), BX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mul_register2(&(instructions_buffer), &(instructions_index), BX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mul_register1(&(instructions_buffer), &(instructions_index), BL);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mul_register1(&(instructions_buffer), &(instructions_index), BL);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                 };
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "/_", 2) {
+            } else if string_length=(function_name, "/_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_div_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_div_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_div_register4(&(instructions_buffer), &(instructions_index), EBX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_div_register4(&(instructions_buffer), &(instructions_index), EBX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, 0);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_div_register2(&(instructions_buffer), &(instructions_index), BX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_div_register2(&(instructions_buffer), &(instructions_index), BX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_div_register1(&(instructions_buffer), &(instructions_index), BL);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_div_register1(&(instructions_buffer), &(instructions_index), BL);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                 };
                 done_anything_invoke = true;
-            } else if String.length=(function_name, "%_", 2) {
+            } else if string_length=(function_name, "%_", 2) {
                 variable size = get_size_linux_x86-642(+(function_name, 2), nodes);
 
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDX, 0);
                 if =(size, 8) {
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                    AutoBuffer.push_div_register8(&(instructions_buffer), &(instructions_index), RBX);
-                    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RDX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_div_register8(&(instructions_buffer), &(instructions_index), RBX);
+                    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RDX);
                 } else if =(size, 4) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_div_register4(&(instructions_buffer), &(instructions_index), EBX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EDX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EBX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, 0, EAX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_div_register4(&(instructions_buffer), &(instructions_index), EBX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 4);
+                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EDX, RSP, 0);
                 } else if =(size, 2) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_div_register2(&(instructions_buffer), &(instructions_index), BX);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), DX, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, BX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, 0, AX);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_div_register2(&(instructions_buffer), &(instructions_index), BX);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
+                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), DX, RSP, 0);
                 } else if =(size, 1) {
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                    AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_div_register1(&(instructions_buffer), &(instructions_index), BL);
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AH, RSP, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                    autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_div_register1(&(instructions_buffer), &(instructions_index), BL);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AH, RSP, 0);
                 };
                 done_anything_invoke = true;
             } else if string=(function_name, "*8") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RAX, 0, RBX);
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RBX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RAX, 0, RBX);
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RBX);
                 done_anything_invoke = true;
             } else if string=(function_name, "*1") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
-                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RAX, 0, BL);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BL, RSP, 0);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
+                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RAX, 0, BL);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), BL, RSP, 0);
 
                 done_anything_invoke = true;
             } else if string=(function_name, "|") {
-                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_or_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_or_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                 done_anything_invoke = true;
             } else if string=(function_name, "&&") {
-                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-                AutoBuffer.push_and_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
-                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, BL);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                autobuffer_push_and_register1_register1(&(instructions_buffer), &(instructions_index), AL, BL);
+                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                 done_anything_invoke = true;
             } else if string=(function_name, "@syscall0") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_syscall(&(instructions_buffer), &(instructions_index));
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             } else if string=(function_name, "@syscall1") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_syscall(&(instructions_buffer), &(instructions_index));
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             } else if string=(function_name, "@syscall2") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RSI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_syscall(&(instructions_buffer), &(instructions_index));
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RSI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             } else if string=(function_name, "@syscall3") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RDX);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RSI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_syscall(&(instructions_buffer), &(instructions_index));
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RDX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RSI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             } else if string=(function_name, "@syscall5") {
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), R8);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), R10);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RDX);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RSI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
-                AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
-                AutoBuffer.push_syscall(&(instructions_buffer), &(instructions_index));
-                AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), R8);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), R10);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RDX);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RSI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RDI);
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
+                autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             } else {
-                variable call_instruction = AutoBuffer.push_call_near(&(instructions_buffer), &(instructions_index));
-                AutoBuffer.array8_set(&(calls), call_index, call_instruction);
-                AutoBuffer.array8_set(&(call_targets), call_index, function_name);
+                variable call_instruction = autobuffer_push_call_near(&(instructions_buffer), &(instructions_index));
+                autobuffer_array8_set(&(calls), call_index, call_instruction);
+                autobuffer_array8_set(&(call_targets), call_index, function_name);
 
                 call_index = +(call_index, 1);
             };
@@ -930,9 +930,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable id_string = any_24();
             whole_8_to_string(string_id, &(id_string));
 
-            variable String.data_index = AutoBuffer.push_data_string(&(data_buffer), &(data_buffer_index), string_value);
+            variable string_data_index = autobuffer_push_data_string(&(data_buffer), &(data_buffer_index), string_value);
 
-            AutoBuffer.push_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), String.data_index);
+            autobuffer_push_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), string_data_index);
 
             done_anything = true;
         } else if =(id, NODE_DECLARE) {
@@ -940,12 +940,12 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable variable_name = NodeDeclareData->name(declare_data);
             variable variable_type = NodeDeclareData->type(declare_data);
 
-            HashMap.string_put(&(variable_types_map), variable_name, variable_type);
-            AutoBuffer.array8_set(&(variable_names), variable_index, variable_name);
-            AutoBuffer.array8_set(&(variable_sizes), variable_index, get_size_linux_x86-642(variable_type, nodes));
+            hashmap_string_put(&(variable_types_map), variable_name, variable_type);
+            autobuffer_array8_set(&(variable_names), variable_index, variable_name);
+            autobuffer_array8_set(&(variable_sizes), variable_index, get_size_linux_x86-642(variable_type, nodes));
             variable_index = +(variable_index, 1);
 
-            HashMap.string_put(@cast_*HashMap(AutoBuffer.array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
+            hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
 
             done_anything = true;
         } else if =(id, NODE_ASSIGN) {
@@ -955,12 +955,12 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable scope_index = -(variable_scope_types_pointer, 1);
             variable variable_type = @cast_*(0);
             while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                variable_type = @cast_*(HashMap.string_get(@cast_*HashMap(AutoBuffer.array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
                 scope_index = -(scope_index, 1);
             };
             scope_index = +(scope_index, 1);
             
-            variable scope_variable_index = @cast_whole_8(AutoBuffer.array8_get(&(variable_scopes_indexes_map), scope_index));
+            variable scope_variable_index = @cast_whole_8(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-642(variable_type, nodes);
@@ -970,10 +970,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 while true {
                     if !(<(j, variable_index)) {
                         break;
-                    } else if !(|(!(string=(variable_name, @cast_*(AutoBuffer.array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
+                    } else if !(|(!(string=(variable_name, @cast_*(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
                         break;
                     } else {
-                        location = +(location, AutoBuffer.array8_get(&(variable_sizes), j));
+                        location = +(location, autobuffer_array8_get(&(variable_sizes), j));
                         j = +(j, 1);
                     };
                 };
@@ -983,102 +983,102 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                     variable done_anything_assign = false;
 
                     if >(-(size, j), 7) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
-                        AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, -(0, -(+(size, location), j)));
+                        autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
+                        autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, -(0, -(+(size, location), j)));
 
                         j = +(j, 8);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, j, EAX);
-                        AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, -(0, -(+(size, location), j)));
+                        autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, j, EAX);
+                        autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, -(0, -(+(size, location), j)));
 
                         j = +(j, 4);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, j, AX);
-                        AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, -(0, -(+(size, location), j)));
+                        autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, j, AX);
+                        autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, -(0, -(+(size, location), j)));
 
                         j = +(j, 2);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, j, AL);
-                        AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, -(0, -(+(size, location), j)));
+                        autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, j, AL);
+                        autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, -(0, -(+(size, location), j)));
 
                         j = +(j, 1);
                         done_anything_assign = true;
                     };
                 };
                 
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
             } else {
                 variable global_name = brk_allocate(+(length(variable_name), 2));
                 copy("_", global_name, 1);
                 copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
-                variable_type = @cast_*(HashMap.string_get(&(global_types_map), variable_name));
+                variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
                 variable size = get_size_linux_x86-642(variable_type, nodes);
 
-                variable global_location = @cast_BssIndex(HashMap.string_get(&(global_locations_map), variable_name));
+                variable global_location = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
 
                 variable j = 0;
                 while <(j, size) {
                     variable done_anything_assign = false;
 
                     if >(-(size, j), 7) {
-                        AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
-                        AutoBuffer.push_mov_register8_bss_pointer_offset(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index), RAX, global_location, j);
+                        autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, j, RAX);
+                        autobuffer_push_mov_register8_bss_pointer_offset(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index), RAX, global_location, j);
 
                         j = +(j, 8);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
-                        //AutoBuffer.push_whole_8(&(buffer), &(buffer_index), j);
-                        //AutoBuffer.push_String.with_newline(&(buffer), &(buffer_index), "]");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "mov eax, [rsp+");
+                        //autobuffer_push_whole_8(&(buffer), &(buffer_index), j);
+                        //autobuffer_push_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "mov [");
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), global_name);
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "+");
-                        //AutoBuffer.push_whole_8(&(buffer), &(buffer_index), j);
-                        //AutoBuffer.push_String.with_newline(&(buffer), &(buffer_index), "], eax");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "mov [");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), global_name);
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "+");
+                        //autobuffer_push_whole_8(&(buffer), &(buffer_index), j);
+                        //autobuffer_push_string_with_newline(&(buffer), &(buffer_index), "], eax");
 
                         j = +(j, 4);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
-                        //AutoBuffer.push_whole_8(&(buffer), &(buffer_index), j);
-                        //AutoBuffer.push_String.with_newline(&(buffer), &(buffer_index), "]");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "mov ax, [rsp+");
+                        //autobuffer_push_whole_8(&(buffer), &(buffer_index), j);
+                        //autobuffer_push_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "mov [");
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), global_name);
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "+");
-                        //AutoBuffer.push_whole_8(&(buffer), &(buffer_index), j);
-                        //AutoBuffer.push_String.with_newline(&(buffer), &(buffer_index), "], ax");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "mov [");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), global_name);
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "+");
+                        //autobuffer_push_whole_8(&(buffer), &(buffer_index), j);
+                        //autobuffer_push_string_with_newline(&(buffer), &(buffer_index), "], ax");
 
                         j = +(j, 2);
                         done_anything_assign = true;
                     };
                     if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "mov al, [rsp+");
-                        //AutoBuffer.push_whole_8(&(buffer), &(buffer_index), j);
-                        //AutoBuffer.push_String.with_newline(&(buffer), &(buffer_index), "]");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "mov al, [rsp+");
+                        //autobuffer_push_whole_8(&(buffer), &(buffer_index), j);
+                        //autobuffer_push_string_with_newline(&(buffer), &(buffer_index), "]");
 
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "mov [");
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), global_name);
-                        //AutoBuffer.push_string(&(buffer), &(buffer_index), "+");
-                        //AutoBuffer.push_whole_8(&(buffer), &(buffer_index), j);
-                        //AutoBuffer.push_String.with_newline(&(buffer), &(buffer_index), "], al");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "mov [");
+                        //autobuffer_push_string(&(buffer), &(buffer_index), global_name);
+                        //autobuffer_push_string(&(buffer), &(buffer_index), "+");
+                        //autobuffer_push_whole_8(&(buffer), &(buffer_index), j);
+                        //autobuffer_push_string_with_newline(&(buffer), &(buffer_index), "], al");
 
                         j = +(j, 1);
                         done_anything_assign = true;
                     };
                 };
 
-                AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
+                autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
             };
 
             done_anything = true;
@@ -1090,12 +1090,12 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable scope_index = -(variable_scope_types_pointer, 1);
             variable variable_type = @cast_*(0);
             while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                variable_type = @cast_*(HashMap.string_get(@cast_*HashMap(AutoBuffer.array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
                 scope_index = -(scope_index, 1);
             };
             scope_index = +(scope_index, 1);
 
-            variable scope_variable_index = @cast_whole_8(AutoBuffer.array8_get(&(variable_scopes_indexes_map), scope_index));
+            variable scope_variable_index = @cast_whole_8(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-642(variable_type, nodes);
@@ -1105,47 +1105,47 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 while true {
                     if !(<(j, variable_index)) {
                         break;
-                    } else if !(|(!(string=(variable_name, @cast_*(AutoBuffer.array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
+                    } else if !(|(!(string=(variable_name, @cast_*(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
                         break;
                     } else {
-                        location = +(location, AutoBuffer.array8_get(&(variable_sizes), j));
+                        location = +(location, autobuffer_array8_get(&(variable_sizes), j));
                         j = +(j, 1);
                     };
                 };
 
                 if =(next_id, NODE_POINTER) {
                     variable thing = instructions_index;
-                    AutoBuffer.push_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, -(0, +(size, location)), RAX);
-                    AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                    autobuffer_push_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, -(0, +(size, location)), RAX);
+                    autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 } else {
-                    AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
 
                     variable j = 0;
                     while <(j, size) {
                         variable done_anything_assign = false;
 
                         if >(-(size, j), 7) {
-                            AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), RAX);
-                            AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
+                            autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), RAX);
+                            autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
                             j = +(j, 8);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                            AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), EAX);
-                            AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
+                            autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), EAX);
+                            autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
                             j = +(j, 4);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                            AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), AX);
-                            AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
+                            autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), AX);
+                            autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
 
                             j = +(j, 2);
                             done_anything_assign = true;
                         };
                         if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                            AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), AL);
-                            AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
+                            autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, -(0, -(+(size, location), j)), AL);
+                            autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
 
                             j = +(j, 1);
                             done_anything_assign = true;
@@ -1154,8 +1154,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 };
 
             } else {
-                variable function_argument_names2 = @cast_*(HashMap.string_get(&(function_argument_names_map), current_function));
-                variable function_arguments2 = @cast_*(HashMap.string_get(&(function_arguments_map), current_function));
+                variable function_argument_names2 = @cast_*(hashmap_string_get(&(function_argument_names_map), current_function));
+                variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
 
                 variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
@@ -1164,42 +1164,42 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                     variable location = get_size_multiple_reversed_linux_x86-642(function_arguments2, stringarray_get_index(function_argument_names2, variable_name, array8_length(function_argument_names2)), nodes);
 
                     if =(next_id, NODE_POINTER) {
-                        AutoBuffer.push_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(16, location), RAX);
-                        AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
+                        autobuffer_push_lea_register8_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(16, location), RAX);
+                        autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                     } else {
-                        AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
+                        autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
 
                         variable j = 0;
                         while <(j, size) {
                             variable done_anything_assign = false;
                             if >(-(size, j), 7) {
-                                AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), RAX);
-                                AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
+                                autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), RAX);
+                                autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
                                 j = +(j, 8);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                                AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), EAX);
-                                AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
+                                autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), EAX);
+                                autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
                                 j = +(j, 4);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                                AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), AX);
-                                AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
+                                autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), AX);
+                                autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
                                 j = +(j, 2);
                                 done_anything_assign = true;
                             };
                             if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                                AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), AL);
-                                AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
+                                autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RBP, +(+(16, location), j), AL);
+                                autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
                                 j = +(j, 1);
                                 done_anything_assign = true;
                             };
                         };
                     };
                 } else {
-                    variable_type = @cast_*(HashMap.string_get(&(global_types_map), variable_name));
+                    variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
 
                     if !(=(variable_type, 0)) {
                         variable global_name = brk_allocate(+(length(variable_name), 2));
@@ -1208,83 +1208,83 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
                         variable size = get_size_linux_x86-642(variable_type, nodes);
 
-                        variable global_index2 = @cast_BssIndex(HashMap.string_get(&(global_locations_map), variable_name));
+                        variable global_index2 = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
 
                         if =(next_id, NODE_POINTER) {
-                            AutoBuffer.push_push_bss(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_index), global_index2);
+                            autobuffer_push_push_bss(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_index), global_index2);
                         } else {
-                            AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
+                            autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
 
                             variable j = 0;
                             while <(j, size) {
                                 variable done_anything_assign = false;
 
                                 if >(-(size, j), 7) {
-                                    AutoBuffer.push_mov_bss_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, RAX);
-                                    AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
+                                    autobuffer_push_mov_bss_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, RAX);
+                                    autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
                                     j = +(j, 8);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                                    AutoBuffer.push_mov_bss_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, EAX);
-                                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
+                                    autobuffer_push_mov_bss_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, EAX);
+                                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
                                     j = +(j, 4);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                                    AutoBuffer.push_mov_bss_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AX);
-                                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
+                                    autobuffer_push_mov_bss_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AX);
+                                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
                                     j = +(j, 2);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                                    AutoBuffer.push_mov_bss_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AL);
-                                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
+                                    autobuffer_push_mov_bss_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust_relative), &(bss_indexes_to_adjust_relative_index),  global_index2, j, AL);
+                                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
                                     j = +(j, 1);
                                     done_anything_assign = true;
                                 };
                             };
                         };
                     } else {
-                        variable_type = @cast_*(HashMap.string_get(&(constant_types_map), variable_name));
+                        variable_type = @cast_*(hashmap_string_get(&(constant_types_map), variable_name));
 
                         variable constant_name = brk_allocate(+(length(variable_name), 2));
                         copy("_", constant_name, 1);
                         copy(variable_name, @cast_*(+(constant_name, 1)), length(variable_name));
 
-                        variable constant_location = @cast_DataIndex(HashMap.string_get(&(constant_locations_map), variable_name));
+                        variable constant_location = @cast_DataIndex(hashmap_string_get(&(constant_locations_map), variable_name));
 
                         variable size = get_size_linux_x86-642(variable_type, nodes);
 
                         if =(next_id, NODE_POINTER) {
-                            AutoBuffer.push_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), constant_location);
+                            autobuffer_push_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), constant_location);
                         } else {
-                            AutoBuffer.push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
+                            autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
 
                             variable j = 0;
                             while <(j, size) {
                                 variable done_anything_assign = false;
                                 if >(-(size, j), 7) {
-                                    AutoBuffer.push_mov_data_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, RAX);
-                                    AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
+                                    autobuffer_push_mov_data_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, RAX);
+                                    autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
                                     j = +(j, 8);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                                    AutoBuffer.push_mov_data_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, EAX);
-                                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
+                                    autobuffer_push_mov_data_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, EAX);
+                                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
                                     j = +(j, 4);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                                    AutoBuffer.push_mov_data_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AX);
-                                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
+                                    autobuffer_push_mov_data_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AX);
+                                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
                                     j = +(j, 2);
                                     done_anything_assign = true;
                                 };
                                 if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                                    AutoBuffer.push_mov_data_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AL);
-                                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
+                                    autobuffer_push_mov_data_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AL);
+                                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
                                     j = +(j, 1);
                                     done_anything_assign = true;
                                 };
@@ -1298,8 +1298,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_RETURN) {
-            variable arguments_size = get_size_multiple_linux_x86-642(@cast_*(HashMap.string_get(&(function_arguments_map), current_function)), 999, nodes);
-            variable returns_size = get_size_multiple_linux_x86-642(@cast_*(HashMap.string_get(&(function_returns_map), current_function)), 999, nodes);
+            variable arguments_size = get_size_multiple_linux_x86-642(@cast_*(hashmap_string_get(&(function_arguments_map), current_function)), 999, nodes);
+            variable returns_size = get_size_multiple_linux_x86-642(@cast_*(hashmap_string_get(&(function_returns_map), current_function)), 999, nodes);
             variable returns_size_rounded = returns_size;
             if !(=(%(returns_size_rounded, 8), 0)) {
                 returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
@@ -1309,8 +1309,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable k = +(returns_size, 8);
 
             variable thing = instructions_index;
-            AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 8, RCX);
-            AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 0, RDX);
+            autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 8, RCX);
+            autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RBP, 0, RDX);
 
             returns_size = +(returns_size, 8);
 
@@ -1320,47 +1320,47 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 if >(-(returns_size, j), 7) {
                     k = -(k, 8);
 
-                    AutoBuffer.push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 8), RAX);
-                    AutoBuffer.push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
+                    autobuffer_push_mov_register8_pointer_offset_register8(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 8), RAX);
+                    autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
                     j = +(j, 8);
                 };
                 if &&(>(-(returns_size, j), 3), !(done_anything_assign)) {
                     k = -(k, 4);
 
-                    AutoBuffer.push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 4), EAX);
-                    AutoBuffer.push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
+                    autobuffer_push_mov_register8_pointer_offset_register4(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 4), EAX);
+                    autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
                     j = +(j, 4);
                 };
                 if &&(>(-(returns_size, j), 1), !(done_anything_assign)) {
                     k = -(k, 2);
 
-                    AutoBuffer.push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 2), AX);
-                    AutoBuffer.push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
+                    autobuffer_push_mov_register8_pointer_offset_register2(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 2), AX);
+                    autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
                     j = +(j, 2);
                 };
                 if &&(>(-(returns_size, j), 0), !(done_anything_assign)) {
                     k = -(k, 1);
 
-                    AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 1), AL);
-                    AutoBuffer.push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
+                    autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, -(-(returns_size, j), 1), AL);
+                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RBP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
                     j = +(j, 1);
                 };
             };
 
-            AutoBuffer.push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RBP, RSP);
+            autobuffer_push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RBP, RSP);
 
-            AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
+            autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(+(16, +(-(arguments_size, returns_size), k)), 0));
 
             returns_size = -(returns_size, 8);
 
-            AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RDX);
-            AutoBuffer.push_pop_register8(&(instructions_buffer), &(instructions_index), RBP);
-            AutoBuffer.push_push_register8(&(instructions_buffer), &(instructions_index), RCX);
-            AutoBuffer.push_ret(&(instructions_buffer), &(instructions_index));
+            autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RDX);
+            autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RBP);
+            autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RCX);
+            autobuffer_push_ret(&(instructions_buffer), &(instructions_index));
                 
             done_anything = true;
         } else if =(id, NODE_POINTER) {
@@ -1370,22 +1370,22 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable target = NodeJumpConditionalData->target_id(jump_conditional_data);
             variable conditional = NodeJumpConditionalData->desired_state(jump_conditional_data);
 
-            AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
-            AutoBuffer.push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
-            AutoBuffer.push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
-            AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
-            AutoBuffer.push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 1);
+            autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 0);
+            autobuffer_push_mov_register8_pointer_offset_register1(&(instructions_buffer), &(instructions_index), RSP, 0, AL);
+            autobuffer_push_add_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+            autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
+            autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 1);
 
             if @cast_boolean(conditional) {
-                AutoBuffer.push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RCX);
+                autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RCX);
                 done_anything = true;
             } else {
-                AutoBuffer.push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
+                autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RBX);
             };
 
-            variable jump_instruction = AutoBuffer.push_je_near(&(instructions_buffer), &(instructions_index));
-            AutoBuffer.array8_set(&(jes), je_index, jump_instruction);
-            AutoBuffer.array8_set(&(je_targets), je_index, target);
+            variable jump_instruction = autobuffer_push_je_near(&(instructions_buffer), &(instructions_index));
+            autobuffer_array8_set(&(jes), je_index, jump_instruction);
+            autobuffer_array8_set(&(je_targets), je_index, target);
 
             je_index = +(je_index, 1);
             done_anything = true;
@@ -1393,9 +1393,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable jump_data = @cast_*NodeJumpData(pointer_data);
             variable target = NodeJumpData->target_id(jump_data);
 
-            variable jump_instruction = AutoBuffer.push_jmp_near(&(instructions_buffer), &(instructions_index));
-            AutoBuffer.array8_set(&(jmps), jmp_index, jump_instruction);
-            AutoBuffer.array8_set(&(jmp_targets), jmp_index, target);
+            variable jump_instruction = autobuffer_push_jmp_near(&(instructions_buffer), &(instructions_index));
+            autobuffer_array8_set(&(jmps), jmp_index, jump_instruction);
+            autobuffer_array8_set(&(jmp_targets), jmp_index, target);
 
             jmp_index = +(jmp_index, 1);
             done_anything = true;
@@ -1403,23 +1403,23 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable target_data = @cast_*NodeTargetData(pointer_data);
             variable target = NodeTargetData->id(target_data);
             
-            AutoBuffer.array8_set(&(targets), target, get_instruction(&(instructions_buffer), &(instructions_index)));
+            autobuffer_array8_set(&(targets), target, get_instruction(&(instructions_buffer), &(instructions_index)));
             done_anything = true;
         } else if =(id, NODE_SCOPE) {
-            variable hashmap_new = HashMap.new(512);
+            variable hashmap_new = hashmap_new(512);
             variable allocated = brk_allocate(24);
             HashMap<-(@cast_*HashMap(allocated), hashmap_new);
-            AutoBuffer.stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
+            autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
 
             //println(current_function);
             //print_whole_8(variable_index);
             //println("");
             //print_whole_8(variable_scope_types_pointer);
             //println("");
-            AutoBuffer.stack8_push(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer), variable_index);
+            autobuffer_stack8_push(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer), variable_index);
         } else if =(id, NODE_ENDSCOPE) {
-            variable _ = AutoBuffer.stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
-            variable _ = AutoBuffer.stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
+            variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
+            variable _ = autobuffer_stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
         } else if =(id, NODE_ENDFUNCTION) {
             done_anything = true;
         } else if =(id, NODE_STRUCTURE) {
@@ -1434,10 +1434,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             
             variable size = get_size_linux_x86-642(type, nodes);
 
-            //AutoBuffer.push_string(&(bss_buffer), &(bss_buffer_index), global_name);
-            //AutoBuffer.push_string(&(bss_buffer), &(bss_buffer_index), ": rb ");
-            //AutoBuffer.push_whole_8(&(bss_buffer), &(bss_buffer_index), size);
-            //AutoBuffer.push_String.with_newline(&(bss_buffer), &(bss_buffer_index), "");
+            //autobuffer_push_string(&(bss_buffer), &(bss_buffer_index), global_name);
+            //autobuffer_push_string(&(bss_buffer), &(bss_buffer_index), ": rb ");
+            //autobuffer_push_whole_8(&(bss_buffer), &(bss_buffer_index), size);
+            //autobuffer_push_string_with_newline(&(bss_buffer), &(bss_buffer_index), "");
             
             done_anything = true;
         } else if =(id, NODE_CONSTANT) {
@@ -1467,15 +1467,15 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
         i = +(i, 1);
     };
 
-    variable main_index = HashMap.string_get(&(function_locations_map), "main");
+    variable main_index = hashmap_string_get(&(function_locations_map), "main");
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
 
     variable i = 0;
     while <(i, call_index) {
-        variable call_instruction2 = @cast_InstructionIndex(AutoBuffer.array8_get(&(calls), i));
-        variable call_name = @cast_*(AutoBuffer.array8_get(&(call_targets), i));
+        variable call_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(calls), i));
+        variable call_name = @cast_*(autobuffer_array8_get(&(call_targets), i));
 
-        variable function_index = @cast_InstructionIndex(HashMap.string_get(&(function_locations_map), call_name));
+        variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), call_name));
 
         set_call_value(&(instructions_buffer), call_instruction2, function_index);
         i = +(i, 1);
@@ -1483,64 +1483,64 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
     variable i = 0;
     while <(i, jmp_index) {
-        variable jmp_instruction2 = @cast_InstructionIndex(AutoBuffer.array8_get(&(jmps), i));
-        variable jmp_target = @cast_whole_8(AutoBuffer.array8_get(&(jmp_targets), i));
-        variable target_location = AutoBuffer.array8_get(&(targets), jmp_target);
+        variable jmp_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(jmps), i));
+        variable jmp_target = @cast_whole_8(autobuffer_array8_get(&(jmp_targets), i));
+        variable target_location = autobuffer_array8_get(&(targets), jmp_target);
         set_jmp_value(&(instructions_buffer), jmp_instruction2, @cast_InstructionIndex(target_location));
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, je_index) {
-        variable jmp_instruction2 = @cast_InstructionIndex(AutoBuffer.array8_get(&(jes), i));
-        variable jmp_target = @cast_whole_8(AutoBuffer.array8_get(&(je_targets), i));
-        variable target_location = AutoBuffer.array8_get(&(targets), jmp_target);
+        variable jmp_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(jes), i));
+        variable jmp_target = @cast_whole_8(autobuffer_array8_get(&(je_targets), i));
+        variable target_location = autobuffer_array8_get(&(targets), jmp_target);
         set_je_value(&(instructions_buffer), jmp_instruction2, @cast_InstructionIndex(target_location));
         i = +(i, 1);
     };
 
-    variable asm_output = AutoBuffer.new(32);
+    variable asm_output = autobuffer_new(32);
     variable asm_output_length: whole_8 = 0;
-    AutoBuffer.push_string(&(asm_output), &(asm_output_length), output_file);
+    autobuffer_push_string(&(asm_output), &(asm_output_length), output_file);
 
     variable start_address = 4194304;
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_index) {
-        variable index = @cast_whole_8(AutoBuffer.array8_get(&(data_indexes_to_adjust), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(AutoBuffer.get_whole_4(&(instructions_buffer), index))), +(instructions_index, 232));
-        AutoBuffer.set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 4096))), index);
+        variable index = @cast_whole_8(autobuffer_array8_get(&(data_indexes_to_adjust), i));
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, 232));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 4096))), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_index) {
-        variable index = @cast_whole_8(AutoBuffer.array8_get(&(bss_indexes_to_adjust), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(AutoBuffer.get_whole_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
-        AutoBuffer.set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 8192))), index);
+        variable index = @cast_whole_8(autobuffer_array8_get(&(bss_indexes_to_adjust), i));
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 8192))), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_relative_index) {
-        variable index = @cast_whole_8(AutoBuffer.array8_get(&(data_indexes_to_adjust_relative), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(AutoBuffer.get_whole_4(&(instructions_buffer), index))), instructions_index);
-        variable actual_value = @cast_whole_8(whole_4_to_whole_8(AutoBuffer.get_whole_4(&(instructions_buffer), index)));
-        AutoBuffer.set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 4096)), index);
+        variable index = @cast_whole_8(autobuffer_array8_get(&(data_indexes_to_adjust_relative), i));
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), instructions_index);
+        variable actual_value = @cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 4096)), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_relative_index) {
-        variable index = @cast_whole_8(AutoBuffer.array8_get(&(bss_indexes_to_adjust_relative), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(AutoBuffer.get_whole_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
-        variable actual_value = @cast_whole_8(whole_4_to_whole_8(AutoBuffer.get_whole_4(&(instructions_buffer), index)));
-        AutoBuffer.set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 8192)), index);
+        variable index = @cast_whole_8(autobuffer_array8_get(&(bss_indexes_to_adjust_relative), i));
+        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
+        variable actual_value = @cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
+        autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 8192)), index);
         i = +(i, 1);
     };
 
-    AutoBuffer.set(&(output), AutoBuffer->buffer(&(instructions_buffer)), 232, instructions_index);
-    AutoBuffer.set(&(output), AutoBuffer->buffer(&(data_buffer)), +(232, instructions_index), data_buffer_index);
+    autobuffer_set(&(output), AutoBuffer->buffer(&(instructions_buffer)), 232, instructions_index);
+    autobuffer_set(&(output), AutoBuffer->buffer(&(data_buffer)), +(232, instructions_index), data_buffer_index);
 
     variable program_header: ELF64ProgramHeader;
     ELF64ProgramHeader<-type(&(program_header), whole_8_to_whole_4(1));
@@ -1572,10 +1572,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     ELF64ProgramHeader<-flags(&(program_header3), whole_8_to_whole_4(6));
     ELF64ProgramHeader<-alignment(&(program_header3), 4096);
 
-    AutoBuffer.set(&(output), &(file_header), 0, 64);
-    AutoBuffer.set(&(output), &(program_header), 64, 56);
-    AutoBuffer.set(&(output), &(program_header2), 120, 56);
-    AutoBuffer.set(&(output), &(program_header3), 176, 56);
+    autobuffer_set(&(output), &(file_header), 0, 64);
+    autobuffer_set(&(output), &(program_header), 64, 56);
+    autobuffer_set(&(output), &(program_header2), 120, 56);
+    autobuffer_set(&(output), &(program_header3), 176, 56);
 
     variable output_file = sys_open(AutoBuffer->buffer(&(asm_output)), +(+(O_WRONLY, O_CREAT), O_TRUNC), 452);
     sys_write(output_file, AutoBuffer->buffer(&(output)), AutoBuffer->size(&(output)));
@@ -1583,7 +1583,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 };
 
 function get_size_linux_x86-642(type: *, nodes: *Nodes): whole_8 {
-    variable cached_size = @cast_whole_8(HashMap.string_get(&(cached_sizes_map), type));
+    variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
     if !(=(cached_size, 0)) {
         return cached_size;
     };
@@ -1591,27 +1591,27 @@ function get_size_linux_x86-642(type: *, nodes: *Nodes): whole_8 {
     if string=(type, "boolean") {
         return 1;
     };
-    if String.length=(type, "*", 1) {
+    if string_length=(type, "*", 1) {
         return 8;
     };
 
-    if String.length=(type, "any", 3) {
+    if string_length=(type, "any", 3) {
         variable number = to_number(@cast_*(+(type, 4)));
-        HashMap.string_put(&(cached_sizes_map), type, number);
+        hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
-    if String.length=(type, "whole", 5) {
+    if string_length=(type, "whole", 5) {
         variable number = to_number(@cast_*(+(type, 6)));
-        HashMap.string_put(&(cached_sizes_map), type, number);
+        hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
-    if String.length=(type, "integer", 7) {
+    if string_length=(type, "integer", 7) {
         variable number = to_number(@cast_*(+(type, 8)));
-        HashMap.string_put(&(cached_sizes_map), type, number);
+        hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
@@ -1625,7 +1625,7 @@ function get_size_linux_x86-642(type: *, nodes: *Nodes): whole_8 {
             variable member_types = NodeStructureData->item_types(pointer);
             if string=(type, name) {
                 variable size = get_size_multiple_linux_x86-642(member_types, 999, nodes);
-                HashMap.string_put(&(cached_sizes_map), type, size);
+                hashmap_string_put(&(cached_sizes_map), type, size);
                 return size;
             };
         };

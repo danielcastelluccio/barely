@@ -6,7 +6,7 @@ structure AutoBuffer {
     increment: whole_8;
 };
 
-function AutoBuffer.new(size: whole_8): AutoBuffer {
+function autobuffer_new(size: whole_8): AutoBuffer {
     variable auto_buffer: AutoBuffer;
 
     AutoBuffer<-size(&(auto_buffer), size);
@@ -18,7 +18,7 @@ function AutoBuffer.new(size: whole_8): AutoBuffer {
     return auto_buffer;
 };
 
-function AutoBuffer.reset(buffer: *AutoBuffer) {
+function autobuffer_reset(buffer: *AutoBuffer) {
     variable actual_buffer = AutoBuffer->buffer(buffer);
     variable size = AutoBuffer->size(buffer);
     variable i = 0;
@@ -38,31 +38,31 @@ function AutoBuffer.reset(buffer: *AutoBuffer) {
     };
 };
 
-function AutoBuffer.set_boolean(buffer: *AutoBuffer, value: boolean, to: whole_8) {
-    AutoBuffer.set(buffer, &(value), to, 1);
+function autobuffer_set_boolean(buffer: *AutoBuffer, value: boolean, to: whole_8) {
+    autobuffer_set(buffer, &(value), to, 1);
 };
 
-function AutoBuffer.set_any_1(buffer: *AutoBuffer, value: any_1, to: whole_8) {
-    AutoBuffer.set(buffer, &(value), to, 1);
+function autobuffer_set_any_1(buffer: *AutoBuffer, value: any_1, to: whole_8) {
+    autobuffer_set(buffer, &(value), to, 1);
 };
 
-function AutoBuffer.set_any_4(buffer: *AutoBuffer, value: any_4, to: whole_8) {
-    AutoBuffer.set(buffer, &(value), to, 4);
+function autobuffer_set_any_4(buffer: *AutoBuffer, value: any_4, to: whole_8) {
+    autobuffer_set(buffer, &(value), to, 4);
 };
 
-function AutoBuffer.set_any_8(buffer: *AutoBuffer, value: any_8, to: whole_8) {
-    AutoBuffer.set(buffer, &(value), to, 8);
+function autobuffer_set_any_8(buffer: *AutoBuffer, value: any_8, to: whole_8) {
+    autobuffer_set(buffer, &(value), to, 8);
 };
 
-function AutoBuffer.set_*(buffer: *AutoBuffer, value: *, to: whole_8) {
-    AutoBuffer.set(buffer, &(value), to, 8);
+function autobuffer_set_*(buffer: *AutoBuffer, value: *, to: whole_8) {
+    autobuffer_set(buffer, &(value), to, 8);
 };
 
-function AutoBuffer.set_whole_8(buffer: *AutoBuffer, value: whole_8, to: whole_8) {
-    AutoBuffer.set(buffer, &(value), to, 8);
+function autobuffer_set_whole_8(buffer: *AutoBuffer, value: whole_8, to: whole_8) {
+    autobuffer_set(buffer, &(value), to, 8);
 };
 
-function AutoBuffer.register(buffer: *AutoBuffer, location: whole_8, size: whole_8) {
+function autobuffer_register(buffer: *AutoBuffer, location: whole_8, size: whole_8) {
     while >(+(location, size), AutoBuffer->size(buffer)) {
         variable previous_buffer = AutoBuffer->buffer(buffer);
         variable previous_size = AutoBuffer->size(buffer);
@@ -74,40 +74,40 @@ function AutoBuffer.register(buffer: *AutoBuffer, location: whole_8, size: whole
     };
 };
 
-function AutoBuffer.set(buffer: *AutoBuffer, from: *, to: whole_8, size: whole_8) {
-    AutoBuffer.register(buffer, to, size);
+function autobuffer_set(buffer: *AutoBuffer, from: *, to: whole_8, size: whole_8) {
+    autobuffer_register(buffer, to, size);
     variable to_pointer = @cast_*(+(AutoBuffer->buffer(buffer), to));
 
     copy(from, to_pointer, size);
 };
 
-function AutoBuffer.get(buffer: *AutoBuffer, location: whole_8): * {
+function autobuffer_get(buffer: *AutoBuffer, location: whole_8): * {
     return @cast_*(+(AutoBuffer->buffer(buffer), location));
 };
 
-function AutoBuffer.get_size(buffer: *AutoBuffer, location: whole_8, size: whole_8): * {
-    AutoBuffer.register(buffer, location, size);
-    return AutoBuffer.get(buffer, location);
+function autobuffer_get_size(buffer: *AutoBuffer, location: whole_8, size: whole_8): * {
+    autobuffer_register(buffer, location, size);
+    return autobuffer_get(buffer, location);
 };
 
-function AutoBuffer.get_whole_8(buffer: *AutoBuffer, location: whole_8): whole_8 {
-    return whole_8->(@cast_*whole_8(AutoBuffer.get_size(buffer, location, 8)));
+function autobuffer_get_whole_8(buffer: *AutoBuffer, location: whole_8): whole_8 {
+    return whole_8->(@cast_*whole_8(autobuffer_get_size(buffer, location, 8)));
 };
 
-function AutoBuffer.get_*(buffer: *AutoBuffer, location: whole_8): * {
-    return *->(@cast_**(AutoBuffer.get(buffer, location)));
+function autobuffer_get_*(buffer: *AutoBuffer, location: whole_8): * {
+    return *->(@cast_**(autobuffer_get(buffer, location)));
 };
 
-function AutoBuffer.get_any_1(buffer: *AutoBuffer, location: whole_8): any_1 {
-    return any_1->(@cast_*any_1(AutoBuffer.get(buffer, location)));
+function autobuffer_get_any_1(buffer: *AutoBuffer, location: whole_8): any_1 {
+    return any_1->(@cast_*any_1(autobuffer_get(buffer, location)));
 };
 
-function AutoBuffer.get_any_8(buffer: *AutoBuffer, location: whole_8): any_8 {
-    return any_8->(@cast_*any_8(AutoBuffer.get_size(buffer, location, 8)));
+function autobuffer_get_any_8(buffer: *AutoBuffer, location: whole_8): any_8 {
+    return any_8->(@cast_*any_8(autobuffer_get_size(buffer, location, 8)));
 };
 
-function AutoBuffer.get_whole_4(buffer: *AutoBuffer, location: whole_8): whole_4 {
-    return whole_4->(@cast_*whole_4(AutoBuffer.get(buffer, location)));
+function autobuffer_get_whole_4(buffer: *AutoBuffer, location: whole_8): whole_4 {
+    return whole_4->(@cast_*whole_4(autobuffer_get(buffer, location)));
 };
 
 function increment_whole_8_pointer(pointer: *whole_8, amount: whole_8) {
