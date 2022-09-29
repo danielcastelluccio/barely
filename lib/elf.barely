@@ -110,6 +110,15 @@ function set_jmp_value(instructions: *AutoBuffer, jump: InstructionIndex, value:
     autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
 };
 
+function set_control_flow_value_absolute(instructions: *AutoBuffer, jump: InstructionIndex, offset: whole_8) {
+    autobuffer_set_any_4(instructions, whole_8_to_whole_4(offset), @cast_whole_8(jump));
+};
+
+function autobuffer_push_call_far_register8(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, register: Register8) {
+    autobuffer_push_whole_1(instructions, instruction_index_pointer, 255_whole_1);
+    autobuffer_push_whole_1(instructions, instruction_index_pointer, +(208_whole_1, register));
+};
+
 function autobuffer_push_call_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
     variable current_instruction = whole_8->(instruction_index_pointer);
 
@@ -202,6 +211,15 @@ function autobuffer_push_push_data(buffer: *AutoBuffer, buffer_index_pointer: *w
     autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
 
     whole_8<-(indexes_to_adjust_index, +(1, whole_8->(indexes_to_adjust_index)));
+};
+
+function autobuffer_push_push_instruction_pointer(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, ): InstructionIndex {
+    variable instruction_index = @cast_InstructionIndex(whole_8->(buffer_index_pointer));
+
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, 0_whole_4);
+
+    return instruction_index;
 };
 
 function autobuffer_push_push_bss(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, bss_index: BssIndex) {

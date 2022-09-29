@@ -70,6 +70,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable memory_function_instructions_map = hashmap_new(1024);
     variable memory_function_instruction_sizes_map = hashmap_new(1024);
 
+    variable push_functions = autobuffer_new(512);
+    variable push_function_targets = autobuffer_new(512);
+    variable push_function_index = 0;
+
     variable calls = autobuffer_new(512);
     variable call_targets = autobuffer_new(512);
     variable call_index = 0;
@@ -989,11 +993,14 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RAX);
                 done_anything_invoke = true;
             } else {
-                variable call_instruction = autobuffer_push_call_near(&(instructions_buffer), &(instructions_index));
-                autobuffer_array8_set(&(calls), call_index, call_instruction);
-                autobuffer_array8_set(&(call_targets), call_index, function_name);
+                variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
+                autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
+                autobuffer_push_call_far_register8(&(instructions_buffer), &(instructions_index), RAX);
 
-                call_index = +(call_index, 1);
+                autobuffer_array8_set(&(push_functions), push_function_index, push_function_instruction);
+                autobuffer_array8_set(&(push_function_targets), push_function_index, function_name);
+
+                push_function_index = +(push_function_index, 1);
             };
             done_anything = true;
         } else if =(id, NODE_STRING) {
@@ -1547,6 +1554,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable main_index = hashmap_string_get(&(function_locations_map), "main");
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
 
+    variable start_address = 4194304;
+
     variable i = 0;
     while <(i, call_index) {
         variable call_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(calls), i));
@@ -1555,6 +1564,19 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
         variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), call_name));
 
         set_call_value(&(instructions_buffer), call_instruction2, function_index);
+        i = +(i, 1);
+    };
+
+    variable i = 0;
+    while <(i, push_function_index) {
+        variable push_function_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(push_functions), i));
+        variable push_function_name = @cast_*(autobuffer_array8_get(&(push_function_targets), i));
+
+        variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), push_function_name));
+
+        variable value_new = +(function_index, 232);
+
+        set_control_flow_value_absolute(&(instructions_buffer), +(push_function_instruction2, 1), +(start_address, value_new));
         i = +(i, 1);
     };
 
@@ -1579,8 +1601,6 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable asm_output = autobuffer_new(32);
     variable asm_output_length: whole_8 = 0;
     autobuffer_push_string(&(asm_output), &(asm_output_length), output_file);
-
-    variable start_address = 4194304;
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_index) {
