@@ -750,34 +750,18 @@ function type_check(nodes: *Nodes) {
             variable current_argument_buffer = autobuffer_new(64);
             variable current_argument_buffer_index = 0;
 
+            variable arguments_buffer = autobuffer_new(64);
+            variable arguments_buffer_index = 0;
+
             variable inner = 0;
             variable j = 10;
             while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
                 variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
                 if &&(=(character, 44_whole_1), =(inner, 0)) {
-                    variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                    variable wanted = AutoBuffer->buffer(&(current_argument_buffer));
+                    autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer->buffer(&(current_argument_buffer)));
+                    arguments_buffer_index = +(arguments_buffer_index, 1);
 
-                    if !(is_type(wanted, given, nodes)) {
-                        print_node_error_beginning(nodes, i);
-                        print("Invoke of '");
-
-                        if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
-                            variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
-                            print(NodeRetrieveData->name(previous_node_data));
-                        } else {
-                            print("unknown");
-                        };
-
-                        print("' wants '");
-                        print(wanted);
-                        print("', given '");
-                        print(given);
-                        println("'");
-                        exit(1);
-                    };
-
-                    autobuffer_reset(&(current_argument_buffer));
+                    current_argument_buffer = autobuffer_new(64);
                     current_argument_buffer_index = 0;
                 } else {
                     autobuffer_push_whole_1(&(current_argument_buffer), &(current_argument_buffer_index), character);
@@ -789,6 +773,46 @@ function type_check(nodes: *Nodes) {
                     inner = -(inner, 1);
                 };
                 j = +(j, 1);
+            };
+
+            variable k = @cast_integer_8(arguments_buffer_index);
+            while >(k, 0_integer_8) {
+                k = -(k, 1_integer_8);
+
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '");
+                    if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
+                        variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
+                        print(NodeRetrieveData->name(previous_node_data));
+                    } else {
+                        print("unknown");
+                    };
+                    println("' ran out of stack values");
+                    exit(1);
+                };
+
+                variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
+
+                if !(is_type(wanted, given, nodes)) {
+                    print_node_error_beginning(nodes, i);
+                    print("Invoke of '");
+
+                    if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
+                        variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
+                        print(NodeRetrieveData->name(previous_node_data));
+                    } else {
+                        print("unknown");
+                    };
+
+                    print("' wants '");
+                    print(wanted);
+                    print("', given '");
+                    print(given);
+                    println("'");
+                    exit(1);
+                };
             };
 
             inner = 0;

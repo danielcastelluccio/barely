@@ -590,6 +590,16 @@ function parse_invoke_parenthesis(tokens: *Tokens, index_pointer: *whole_8, node
 function parse_invoke_parenthesis_ending(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
 
+    while !(=(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
+        variable id = tokens_get_id(tokens, index);
+        if =(id, TOKEN_SEMICOLON) {
+            return;
+        } else if =(id, TOKEN_CLOSED_CURLY_BRACKETS) {
+            return;
+        };
+        index = +(index, 1);
+    };
+
     variable inner = 0;
     while |(>(inner, 0), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
         variable id2 = tokens_get_id(tokens, index);
@@ -607,12 +617,12 @@ function parse_invoke_parenthesis_ending(tokens: *Tokens, index_pointer: *whole_
 
                     index2 = +(index2, 1);
                 };
-                index2 = +(index2, 1);
                 parse_invoke_parenthesis_ending(tokens, &(index2), nodes);
 
                 parse_invoke_parenthesis(tokens, &(index), nodes);
+            } else {
+                inner = +(inner, 1);
             };
-            inner = +(inner, 1);
         } else if =(id2, TOKEN_CLOSED_PARENTHESIS) {
             inner = -(inner, 1);
         };
@@ -627,7 +637,7 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
     variable id = tokens_get_id(tokens, index);
     variable pointer_data = tokens_get_pointer_data(tokens, index);
 
-    //parse_invoke_parenthesis_ending(tokens, &(index), nodes);
+    parse_invoke_parenthesis_ending(tokens, &(index), nodes);
 
     //if =(id, TOKEN_OPEN_PARENTHESIS) {
     //    variable inner = 0;
@@ -645,22 +655,22 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
 
     if =(id, TOKEN_NAME) {
         variable done_anything_name = false;
-        if =(tokens_get_id(tokens, +(index, 1)), TOKEN_OPEN_PARENTHESIS) {
-            variable function_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
-            index = +(index, 1);
+        //if =(tokens_get_id(tokens, +(index, 1)), TOKEN_OPEN_PARENTHESIS) {
+        //    variable function_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+        //    index = +(index, 1);
 
-            parse_invoke_parenthesis(tokens, &(index), nodes);
+        //    parse_invoke_parenthesis(tokens, &(index), nodes);
 
-            if string=(function_name, "&") {
-                variable invoke_pointer = nodes_append(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
-            } else {
-                variable invoke_pointer_data = @cast_*NodeRetrieveData(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, whole_8->(index_pointer))));
-                NodeRetrieveData<-name(invoke_pointer_data, function_name);
-                variable _ = nodes_append(nodes, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
-            };
+        //    if string=(function_name, "&") {
+        //        variable invoke_pointer = nodes_append(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
+        //    } else {
+        //        variable invoke_pointer_data = @cast_*NodeRetrieveData(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, whole_8->(index_pointer))));
+        //        NodeRetrieveData<-name(invoke_pointer_data, function_name);
+        //        variable _ = nodes_append(nodes, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
+        //    };
 
-            done_anything_name = true;
-        };
+        //    done_anything_name = true;
+        //};
 
         if !(done_anything_name) {
             variable retrieve_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
@@ -766,6 +776,27 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
             NodeTargetData<-id(target_node_data, end_target);
         };
     };
+
+    index = whole_8->(index_pointer);
+
+    if =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS) {
+        variable inner = 0;
+        while |(>(inner, 0), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
+            variable id2 = tokens_get_id(tokens, index);
+            if =(id2, TOKEN_OPEN_PARENTHESIS) {
+                if =(inner, 0) {
+                    variable _ = nodes_append(nodes, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
+                };
+                inner = +(inner, 1);
+            } else if =(id2, TOKEN_CLOSED_PARENTHESIS) {
+                inner = -(inner, 1);
+            };
+            index = +(index, 1);
+        };
+        index = +(index, 1);
+    };
+
+    whole_8<-(index_pointer, index);
 };
 
 global target_id: whole_8;
