@@ -164,6 +164,8 @@ constant ASCII_TAB: whole_1 = 9;
 constant ASCII_LINE_FEED: whole_1 = 10;
 constant ASCII_QUOTATION: whole_1 = 34;
 constant ASCII_SLASH: whole_1 = 47;
+constant ASCII_OPEN_BRACKET: whole_1 = 91;
+constant ASCII_CLOSED_BRACKET: whole_1 = 93;
 
 function tokenize(file_name: *, contents: *, tokens: *Tokens) {
     variable index = 0;
@@ -227,6 +229,24 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_CLOSED_CURLY_BRACKETS, file_name, row, column);
+                    column = +(column, 1);
+                };
+                if =(*1(character_pointer), ASCII_OPEN_BRACKET) {
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    variable _ = tokens_append(tokens, TOKEN_OPEN_BRACKET, file_name, row, column);
+                    column = +(column, 1);
+                };
+                if =(*1(character_pointer), ASCII_CLOSED_BRACKET) {
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    variable _ = tokens_append(tokens, TOKEN_CLOSED_BRACKET, file_name, row, column);
                     column = +(column, 1);
                 };
                 if =(*1(character_pointer), ASCII_COMMA) {
@@ -421,6 +441,36 @@ function parse_structure(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
     whole_8<-(index_pointer, index);
 };
 
+function parse_name(tokens: *Tokens, index_pointer: *whole_8): * {
+    variable buffer = autobuffer_new(64);
+    variable buffer_index = 0;
+    variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
+    autobuffer_push_string(&(buffer), &(buffer_index), token_name);
+    increment_whole_8_pointer(index_pointer, 1);
+
+    variable inner = 0;
+    while |(>(inner, 0), =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_OPEN_BRACKET)) {
+        variable id = tokens_get_id(tokens, whole_8->(index_pointer));
+        variable pointer_data = tokens_get_pointer_data(tokens, whole_8->(index_pointer));
+        if =(id, TOKEN_OPEN_BRACKET) {
+            autobuffer_push_string(&(buffer), &(buffer_index), "[");
+            inner = +(inner, 1);
+        } else if =(id, TOKEN_CLOSED_BRACKET) {
+            autobuffer_push_string(&(buffer), &(buffer_index), "]");
+            inner = -(inner, 1);
+        } else if =(id, TOKEN_COMMA) {
+            autobuffer_push_string(&(buffer), &(buffer_index), ",");
+        } else if =(id, TOKEN_COLON) {
+            autobuffer_push_string(&(buffer), &(buffer_index), ":");
+        } else if =(id, TOKEN_NAME) {
+            autobuffer_push_string(&(buffer), &(buffer_index), TokenNameData->name(@cast_*TokenNameData(pointer_data)));
+        };
+        increment_whole_8_pointer(index_pointer, 1);
+    };
+
+    return AutoBuffer->buffer(&(buffer));
+};
+
 function parse_function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer)
 
@@ -446,15 +496,19 @@ function parse_function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes)
 
             if =(%(parameters_index, 2), 0) {
                 autobuffer_array8_set(&(parameter_names_pointer), parameters_index2, token_name);
+                index = +(index, 1);
             } else {
+                token_name = parse_name(tokens, &(index));
                 autobuffer_array8_set(&(parameter_types_pointer), parameters_index2, token_name);
                 parameters_index2 = +(parameters_index2, 1);
             };
 
             parameters_index = +(parameters_index, 1);
+        } else if =(id, TOKEN_COLON) {
+            index = +(index, 1);
+        } else if =(id, TOKEN_COMMA) {
+            index = +(index, 1);
         };
-
-        index = +(index, 1);
     };
     
     index = +(index, 1);
@@ -464,13 +518,16 @@ function parse_function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes)
         variable id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_NAME) {
-            variable token_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
+            variable token_name = parse_name(tokens, &(index));
 
             autobuffer_array8_set(&(returns_pointer), returns_index, token_name);
             returns_index = +(returns_index, 1);
+        } else if =(id, TOKEN_COMMA) {
+            index = +(index, 1);
+        } else if =(id, TOKEN_COLON) {
+            index = +(index, 1);
         };
 
-        index = +(index, 1);
     };
 
     variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
@@ -505,41 +562,101 @@ function parse_function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes)
     whole_8<-(index_pointer, index);
 };
 
+function parse_invoke_parenthesis(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    variable index = whole_8->(index_pointer);
+
+    variable index_cache = index;
+
+    index = +(index, 1);
+
+    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
+        variable id2 = tokens_get_id(tokens, index);
+        if =(id2, TOKEN_COMMA) {
+            index = +(index, 1);
+        } else if |(=(id2, TOKEN_SEMICOLON), =(id2, TOKEN_OPEN_CURLY_BRACKETS)) {
+            print_token_error_beginning(tokens, index_cache);
+            println("Unclosed parenthesis");
+            exit(1);
+        } else {
+            parse_expression(tokens, &(index), nodes);
+        };
+    };
+
+    index = +(index, 1);
+
+    whole_8<-(index_pointer, index);
+};
+
+function parse_invoke_parenthesis_ending(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    variable index = whole_8->(index_pointer);
+
+    variable inner = 0;
+    while |(>(inner, 0), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
+        variable id2 = tokens_get_id(tokens, index);
+        if =(id2, TOKEN_OPEN_PARENTHESIS) {
+            if =(inner, 0) {
+                variable index2 = +(index, 1);
+                variable inner2 = 1;
+                while >(inner2, 0) {
+                    variable id3 = tokens_get_id(tokens, index2);
+                    if =(id3, TOKEN_OPEN_PARENTHESIS) {
+                        inner2 = +(inner2, 1);
+                    } else if =(id3, TOKEN_CLOSED_PARENTHESIS) {
+                        inner2 = -(inner2, 1);
+                    };
+
+                    index2 = +(index2, 1);
+                };
+                index2 = +(index2, 1);
+                parse_invoke_parenthesis_ending(tokens, &(index2), nodes);
+
+                parse_invoke_parenthesis(tokens, &(index), nodes);
+            };
+            inner = +(inner, 1);
+        } else if =(id2, TOKEN_CLOSED_PARENTHESIS) {
+            inner = -(inner, 1);
+        };
+        index = +(index, 1);
+    };
+    //whole_8<-(index_pointer, index);
+};
+
 function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
 
     variable id = tokens_get_id(tokens, index);
     variable pointer_data = tokens_get_pointer_data(tokens, index);
 
+    //parse_invoke_parenthesis_ending(tokens, &(index), nodes);
+
+    //if =(id, TOKEN_OPEN_PARENTHESIS) {
+    //    variable inner = 0;
+    //    while |(>(inner, 0), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
+    //        variable id2 = tokens_get_id(tokens, index);
+    //        if =(id2, TOKEN_OPEN_PARENTHESIS) {
+    //            inner = +(inner, 1);
+    //        } else if =(id2, TOKEN_CLOSED_PARENTHESIS) {
+    //            inner = -(inner, 1);
+    //        };
+    //        index = +(index, 1);
+    //    };
+    //    index = +(index, 1);
+    //};
+
     if =(id, TOKEN_NAME) {
         variable done_anything_name = false;
         if =(tokens_get_id(tokens, +(index, 1)), TOKEN_OPEN_PARENTHESIS) {
             variable function_name = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, index)));
-
-            variable index_cache = +(index, 1);
-
-            index = +(index, 2);
-
-            while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
-                variable id2 = tokens_get_id(tokens, index);
-                if =(id2, TOKEN_COMMA) {
-                    index = +(index, 1);
-                } else if |(=(id2, TOKEN_SEMICOLON), =(id2, TOKEN_OPEN_CURLY_BRACKETS)) {
-                    print_token_error_beginning(tokens, index_cache);
-                    println("Unclosed parenthesis");
-                    exit(1);
-                } else {
-                    parse_expression(tokens, &(index), nodes);
-                };
-            };
-
             index = +(index, 1);
+
+            parse_invoke_parenthesis(tokens, &(index), nodes);
 
             if string=(function_name, "&") {
                 variable invoke_pointer = nodes_append(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
             } else {
-                variable invoke_pointer_data = @cast_*NodeInvokeData(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8->(index_pointer))));
-                NodeInvokeData<-name(invoke_pointer_data, function_name);
+                variable invoke_pointer_data = @cast_*NodeRetrieveData(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, whole_8->(index_pointer))));
+                NodeRetrieveData<-name(invoke_pointer_data, function_name);
+                variable _ = nodes_append(nodes, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
             };
 
             done_anything_name = true;
