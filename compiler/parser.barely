@@ -587,8 +587,8 @@ function parse_invoke_parenthesis(tokens: *Tokens, index_pointer: *whole_8, node
     whole_8<-(index_pointer, index);
 };
 
-function parse_invoke_parenthesis_ending(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8->(index_pointer);
+function parse_invoke_parenthesis_ending(tokens: *Tokens, index_in: whole_8, nodes: *Nodes) {
+    variable index = index_in;
 
     while !(=(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
         variable id = tokens_get_id(tokens, index);
@@ -625,7 +625,7 @@ function parse_invoke_parenthesis_ending(tokens: *Tokens, index_pointer: *whole_
 
                     index2 = +(index2, 1);
                 };
-                parse_invoke_parenthesis_ending(tokens, &(index2), nodes);
+                parse_invoke_parenthesis_ending(tokens, index2, nodes);
 
                 parse_invoke_parenthesis(tokens, &(index), nodes);
             } else {
@@ -636,15 +636,16 @@ function parse_invoke_parenthesis_ending(tokens: *Tokens, index_pointer: *whole_
         };
         index = +(index, 1);
     };
-
-    //whole_8<-(index_pointer, index);
 };
 
-function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *Nodes) {
     variable index = whole_8->(index_pointer);
 
     variable id = tokens_get_id(tokens, index);
     variable pointer_data = tokens_get_pointer_data(tokens, index);
+
+    variable nodes_temp = nodes_new();
+    variable nodes = &(nodes_temp);
 
     variable nodes_index = Nodes->index(nodes);
 
@@ -788,26 +789,17 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
 
     index = whole_8->(index_pointer);
     
-    variable nodes_buffer = autobuffer_new(256);
-    variable nodes_moved_size = *(-(Nodes->index(nodes), nodes_index), NODE_SIZE);
-    variable nodes_pointer = autobuffer_get_size(&(Nodes->buffer(nodes)), *(nodes_index, NODE_SIZE), nodes_moved_size);
-    autobuffer_set(&(nodes_buffer), nodes_pointer, 0, nodes_moved_size);
+    variable nodes_moved_size = *(Nodes->index(nodes), NODE_SIZE);
 
     variable nodes_index_cached = Nodes->index(nodes);
 
     variable last_id = nodes_get_id(nodes, -(nodes_index_cached, 1));
     variable last_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(nodes_index_cached, 1))));
 
-    Nodes<-index(nodes, nodes_index);
+    parse_invoke_parenthesis_ending(tokens, index, nodes_in);
 
-    variable index2 = index;
-
-    parse_invoke_parenthesis_ending(tokens, &(index), nodes);
-
-    index = index2;
-
-    autobuffer_set(&(Nodes->buffer(nodes)), AutoBuffer->buffer(&(nodes_buffer)), *(Nodes->index(nodes), NODE_SIZE), nodes_moved_size);
-    Nodes<-index(nodes, +(Nodes->index(nodes), /(nodes_moved_size, NODE_SIZE)));
+    autobuffer_set(&(Nodes->buffer(nodes_in)), AutoBuffer->buffer(&(Nodes->buffer(nodes))), *(Nodes->index(nodes_in), NODE_SIZE), nodes_moved_size);
+    Nodes<-index(nodes_in, +(Nodes->index(nodes_in), /(nodes_moved_size, NODE_SIZE)));
 
     if =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS) {
         variable inner = 0;
@@ -860,15 +852,15 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes: *Node
                     };
 
                     if is_special {
-                        Nodes<-index(nodes, -(Nodes->index(nodes), 1));
+                        Nodes<-index(nodes_in, -(Nodes->index(nodes_in), 1));
                         if string=(special_name, "&") {
-                            variable _ = @cast_*NodeInvokeData(nodes_append_data(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer))));
+                            variable _ = @cast_*NodeInvokeData(nodes_append_data(nodes_in, NODE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer))));
                         } else {
-                            variable invoke_data = @cast_*NodeInvokeData(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8->(index_pointer))));
+                            variable invoke_data = @cast_*NodeInvokeData(nodes_append_data(nodes_in, NODE_INVOKE, get_token_location_data(tokens, whole_8->(index_pointer))));
                             NodeInvokeData<-name(invoke_data, special_name);
                         };
                     } else {
-                        variable _ = nodes_append(nodes, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
+                        variable _ = nodes_append(nodes_in, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
                     };
                 };
                 inner = +(inner, 1);
@@ -967,6 +959,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
                 };
             };
 
+            index = +(index, 1);
             whole_8<-(index_pointer, index);
             done_anything = true;
         };
@@ -1023,7 +1016,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             variable target_node2_data = @cast_*NodeTargetData(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8->(index_pointer))));
             NodeTargetData<-id(target_node2_data, target2);
  
-            increment_whole_8_pointer(index_pointer, 1);
+            increment_whole_8_pointer(index_pointer, 2);
             done_anything = true;
         };
     };
@@ -1041,6 +1034,8 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
         index = +(index, 1);
 
         parse_expression(tokens, &(index), nodes);
+
+        index = +(index, 1);
 
         variable i = 0;
         while !(=(autobuffer_array8_get(&(names), i), 0)) {
