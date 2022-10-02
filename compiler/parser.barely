@@ -806,6 +806,8 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
     autobuffer_set(&(Nodes->buffer(nodes_in)), AutoBuffer->buffer(&(Nodes->buffer(nodes))), *(Nodes->index(nodes_in), NODE_SIZE), nodes_moved_size);
     Nodes<-index(nodes_in, +(Nodes->index(nodes_in), /(nodes_moved_size, NODE_SIZE)));
 
+    variable is_first = true;
+
     if =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS) {
         variable inner = 0_integer_8;
 
@@ -815,7 +817,7 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                 if =(inner, 0_integer_8) {
                     variable is_special = false;
                     variable special_name = "";
-                    if =(last_id, NODE_RETRIEVE) {
+                    if &&(=(last_id, NODE_RETRIEVE), is_first) {
                         variable retrieve_name = last_name;
                         if string=(retrieve_name, "+") {
                             is_special = true;
@@ -868,6 +870,8 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                     } else {
                         variable _ = nodes_append(nodes_in, NODE_INVOKE_POINTER, get_token_location_data(tokens, whole_8->(index_pointer)));
                     };
+
+                    is_first = false;
                 };
                 inner = +(inner, 1_integer_8);
             } else if =(id2, TOKEN_CLOSED_PARENTHESIS) {
