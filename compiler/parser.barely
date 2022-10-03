@@ -1,6 +1,3 @@
-include "compiler/token.barely";
-include "compiler/node.barely";
-
 function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
     variable buffer = AutoBuffer->buffer(auto_buffer);
     variable buffer_length = length(AutoBuffer->buffer(auto_buffer));
@@ -35,9 +32,6 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
         is_keyword = true;
     };
     if string=(buffer, "constant") {
-        is_keyword = true;
-    };
-    if string=(buffer, "include") {
         is_keyword = true;
     };
     if string=(buffer, "break") {
@@ -385,17 +379,6 @@ function parse_global(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     NodeGlobalData<-type(global_node_data, type);
 
     increment_whole_8_pointer(index_pointer, 5);
-};
-
-function parse_include(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8->(index_pointer);
-    variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
-    variable name = TokenNameData->name(name_token_pointer_data);
-
-    variable include_node_data = @cast_*NodeIncludeData(nodes_append_data(nodes, NODE_INCLUDE, get_token_location_data(tokens, whole_8->(index_pointer))));
-    NodeIncludeData<-path(include_node_data, name);
-
-    increment_whole_8_pointer(index_pointer, 3);
 };
 
 function parse_structure(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
@@ -1104,10 +1087,6 @@ function parse(tokens: *Tokens, nodes: *Nodes) {
 
             if string=(keyword, "constant") {
                 parse_constant(tokens, &(index), nodes);
-            };
-
-            if string=(keyword, "include") {
-                parse_include(tokens, &(index), nodes);
             };
         };
     };

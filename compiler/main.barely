@@ -1,10 +1,3 @@
-include "lib/syscall_linux.barely";
-include "lib/autobuffer.barely";
-include "compiler/parser.barely";
-include "compiler/typechecker.barely";
-include "compiler/output/linux-x86_64.barely";
-include "compiler/util.barely";
-
 global empty: any_8;
 
 global cached_sizes_map: HashMap;
@@ -358,31 +351,6 @@ function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer
     parse(&(tokens), nodes);
 
     autobuffer_stack8_push(already_included, already_included_index, file_name);
-
-    variable i = 0;
-    while <(i, whole_8->(nodes_index)) {
-        variable id = nodes_get_id(nodes, i);
-
-        if =(id, NODE_INCLUDE) {
-            variable include_data = @cast_*NodeIncludeData(nodes_get_pointer_data(nodes, i));
-            variable path = NodeIncludeData->path(include_data);
-
-            variable included = false;
-            variable j = 0;
-            while <(j, whole_8->(already_included_index)) {
-                if string=(@cast_*(autobuffer_array8_get(already_included, j)), path) {
-                    included = true;
-                };
-                j = +(j, 1);
-            };
-
-            if !(included) {
-                include_file(path, nodes, already_included, already_included_index);
-            };
-        };
-
-        i = +(i, 1);
-    };
 };
 
 function get_contents(name: *): * {
