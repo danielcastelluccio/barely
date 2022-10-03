@@ -974,7 +974,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             done_anything = true;
         };
     };
-    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD), !(done_anything)) {
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
         if string=(name_value, "return") {
             increment_whole_8_pointer(index_pointer, 1);
@@ -993,7 +993,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             return;
         };
     };
-    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD), !(done_anything)) {
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
         if string=(name_value, "while") {
             increment_whole_8_pointer(index_pointer, 1);
@@ -1030,7 +1030,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             done_anything = true;
         };
     };
-    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, +(whole_8->(index_pointer), 1)), TOKEN_NAME)) {
+    if &&(&&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_NAME), =(tokens_get_id(tokens, +(whole_8->(index_pointer), 1)), TOKEN_NAME)), !(done_anything)) {
         variable names = autobuffer_new(40);
         variable name_index = 0;
 
@@ -1057,7 +1057,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
         whole_8<-(index_pointer, index);
         done_anything = true;
     };
-    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD) {
+    if &&(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_KEYWORD), !(done_anything)) {
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
         if string=(name_value, "break") {
             variable jump_data = @cast_*NodeJumpData(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8->(index_pointer))));
@@ -1075,7 +1075,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             increment_whole_8_pointer(index_pointer, 1);
         };
     } else {
-        variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8->(index_pointer)));
+        variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, -(whole_8->(index_pointer), 1)));
     };
 };
 

@@ -621,6 +621,9 @@ function type_check(nodes: *Nodes) {
                                     autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
                                     j = +(j, 1);
                                 };
+                                if >(j, 0) {
+                                    function_type_buffer_index = -(function_type_buffer_index, 1);
+                                };
 
                                 autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ":");
 
@@ -631,6 +634,9 @@ function type_check(nodes: *Nodes) {
                                     autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_return);
                                     autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
                                     j = +(j, 1);
+                                };
+                                if >(j, 0) {
+                                    function_type_buffer_index = -(function_type_buffer_index, 1);
                                 };
 
                                 autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "]");
@@ -1039,7 +1045,7 @@ function type_check(nodes: *Nodes) {
                     variable j = 10;
                     while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
                         variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
-                        if &&(=(character, 44_whole_1), =(inner, 0)) {
+                        if &&(|(=(character, 93_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
                             autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer->buffer(&(current_argument_buffer)));
                             arguments_buffer_index = +(arguments_buffer_index, 1);
 
@@ -1056,11 +1062,12 @@ function type_check(nodes: *Nodes) {
                         };
                         j = +(j, 1);
                     };
+                    if >(length(AutoBuffer->buffer(&(current_argument_buffer))), 0) {
+                        autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer->buffer(&(current_argument_buffer)));
+                        arguments_buffer_index = +(arguments_buffer_index, 1);
+                    };
 
                     variable k = @cast_integer_8(arguments_buffer_index);
-                    //println(function_type);
-                    //print_whole_8(@cast_whole_8(k));
-                    //println("");
                     while >(k, 0_integer_8) {
                         k = -(k, 1_integer_8);
 
@@ -1081,7 +1088,6 @@ function type_check(nodes: *Nodes) {
                         variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
 
                         if !(is_type(wanted, given, nodes)) {
-                            //print_whole_8(@cast_whole_8(k));
                             println(wanted);
 
                             print_node_error_beginning(nodes, i);
@@ -1106,11 +1112,12 @@ function type_check(nodes: *Nodes) {
                     inner = 0;
                     current_argument_buffer = autobuffer_new(64);
                     current_argument_buffer_index = 0;
+
                     j = +(j, 1);
 
                     while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 93_whole_1)), >(inner, 0)) {
                         variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
-                        if &&(=(character, 44_whole_1), =(inner, 0)) {
+                        if &&(|(=(character, 58_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
                             variable return_ = AutoBuffer->buffer(&(current_argument_buffer));
                             autobuffer_stack8_push(&(stack), &(stack_pointer), return_);
 
@@ -1126,6 +1133,10 @@ function type_check(nodes: *Nodes) {
                             inner = -(inner, 1);
                         };
                         j = +(j, 1);
+                    };
+
+                    if >(length(AutoBuffer->buffer(&(current_argument_buffer))), 0) {
+                        autobuffer_stack8_push(&(stack), &(stack_pointer), AutoBuffer->buffer(&(current_argument_buffer)));
                     };
                 } else {
                     print_node_error_beginning(nodes, i);
