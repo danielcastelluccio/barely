@@ -110,6 +110,15 @@ function set_jmp_value(instructions: *AutoBuffer, jump: InstructionIndex, value:
     autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
 };
 
+function set_control_flow_value_absolute(instructions: *AutoBuffer, jump: InstructionIndex, offset: whole_8) {
+    autobuffer_set_any_4(instructions, whole_8_to_whole_4(offset), @cast_whole_8(jump));
+};
+
+function autobuffer_push_call_far_register8(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, register: Register8) {
+    autobuffer_push_whole_1(instructions, instruction_index_pointer, 255_whole_1);
+    autobuffer_push_whole_1(instructions, instruction_index_pointer, +(208_whole_1, register));
+};
+
 function autobuffer_push_call_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
     variable current_instruction = whole_8->(instruction_index_pointer);
 
@@ -202,6 +211,14 @@ function autobuffer_push_push_data(buffer: *AutoBuffer, buffer_index_pointer: *w
     autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
 
     whole_8<-(indexes_to_adjust_index, +(1, whole_8->(indexes_to_adjust_index)));
+};
+
+function autobuffer_push_push_instruction_pointer(buffer: *AutoBuffer, buffer_index_pointer: *whole_8): InstructionIndex {
+    variable instruction_index = @cast_InstructionIndex(whole_8->(buffer_index_pointer));
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, 0_whole_4);
+
+    return instruction_index;
 };
 
 function autobuffer_push_push_bss(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, bss_index: BssIndex) {
@@ -818,6 +835,38 @@ function autobuffer_push_cmova_register8_register8(buffer: *AutoBuffer, buffer_i
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
 };
 
+function autobuffer_push_cmovg_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
+    variable instruction = 72_whole_1;
+
+    if >(register1, 7_whole_1) {
+        instruction = +(instruction, 4_whole_1);
+    };
+
+    if >(register2, 7_whole_1) {
+        instruction = +(instruction, 1_whole_1);
+    };
+
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, 79_whole_1);
+
+    variable value = 0_whole_1;
+
+    if >(register1, 7_whole_1) {
+        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
+    } else {
+        value = +(value, *(register1, 8_whole_1));
+    };
+
+    if >(register2, 7_whole_1) {
+        value = +(value, -(register2, 8_whole_1));
+    } else {
+        value = +(value, register2);
+    };
+
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
+};
+
 function autobuffer_push_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
     variable instruction = 72_whole_1;
 
@@ -832,6 +881,38 @@ function autobuffer_push_cmovb_register8_register8(buffer: *AutoBuffer, buffer_i
     autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 66_whole_1);
+
+    variable value = 0_whole_1;
+
+    if >(register1, 7_whole_1) {
+        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
+    } else {
+        value = +(value, *(register1, 8_whole_1));
+    };
+
+    if >(register2, 7_whole_1) {
+        value = +(value, -(register2, 8_whole_1));
+    } else {
+        value = +(value, register2);
+    };
+
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
+};
+
+function autobuffer_push_cmovl_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
+    variable instruction = 72_whole_1;
+
+    if >(register1, 7_whole_1) {
+        instruction = +(instruction, 4_whole_1);
+    };
+
+    if >(register2, 7_whole_1) {
+        instruction = +(instruction, 1_whole_1);
+    };
+
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
+    autobuffer_push_whole_1(buffer, buffer_index_pointer, 76_whole_1);
 
     variable value = 0_whole_1;
 
@@ -1861,12 +1942,12 @@ function autobuffer_push_whole_1(buffer: *AutoBuffer, buffer_index_pointer: *who
 };
 
 function autobuffer_push_string(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, string: *) {
-    variable length = length(string);
+    variable length2 = length(string);
     variable buffer_index = whole_8->(buffer_index_pointer);
 
-    autobuffer_set(buffer, string, buffer_index, length);
+    autobuffer_set(buffer, string, buffer_index, length2);
 
-    whole_8<-(buffer_index_pointer, +(length, whole_8->(buffer_index_pointer)));
+    whole_8<-(buffer_index_pointer, +(length2, whole_8->(buffer_index_pointer)));
 };
 
 function autobuffer_push_pointer(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, pointer: *, length: whole_8) {

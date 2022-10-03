@@ -49,9 +49,9 @@ function is_signed(type: *, nodes: *Nodes): whole_8 {
             variable name = NodeStructureData->name(pointer);
             variable member_types = NodeStructureData->item_types(pointer);
             if string=(type, name) {
-                variable is_signed = is_signed(@cast_*(array8_get(member_types, 0)), nodes);
-                hashmap_string_put(&(cached_signedness_map), type, is_signed);
-                return is_signed;
+                variable is_signed2 = is_signed(@cast_*(array8_get(member_types, 0)), nodes);
+                hashmap_string_put(&(cached_signedness_map), type, is_signed2);
+                return is_signed2;
             };
         };
         i = +(i, 1);
@@ -69,6 +69,37 @@ function print_node_error_beginning(nodes: *Nodes, location: whole_8) {
     print(":");
     print_whole_8(NodeLocationData->column(location_data));
     print(": ");
+};
+
+function print_node_info(nodes: *Nodes, index: whole_8) {
+    variable id = nodes_get_id(nodes, index);
+    variable pointer_data = nodes_get_pointer_data(nodes, index);
+    if =(id, NODE_RETRIEVE) {
+        variable retrieve_data = @cast_*NodeRetrieveData(pointer_data);
+        print("Retrieve{name='");
+        print(NodeRetrieveData->name(retrieve_data));
+        println("'}");
+    } else if =(id, NODE_INVOKE) {
+        variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+        print("Invoke{name='");
+        print(NodeInvokeData->name(invoke_data));
+        println("'}");
+    } else if =(id, NODE_POINTER) {
+        println("Pointer{}")
+    } else if =(id, NODE_INVOKE_POINTER) {
+        println("InvokePointer{}")
+    } else if =(id, NODE_NUMBER) {
+        println("Number{}")
+    } else if =(id, NODE_BOOLEAN) {
+        println("Boolean{}")
+    } else if =(id, NODE_ASSIGN) {
+        println("Assign{}")
+    } else if =(id, NODE_ENDSTATEMENT) {
+        println("EndStatement{}")
+    } else {
+        print_whole_8(id);
+        println("");
+    };
 };
 
 function type_check(nodes: *Nodes) {
@@ -157,6 +188,8 @@ function type_check(nodes: *Nodes) {
         variable id = nodes_get_id(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
         variable done_anything = false;
+
+        //print_node_info(nodes, i);
 
         if =(id, NODE_FUNCTION) {
             current_function = NodeFunctionData->name(@cast_*NodeFunctionData(pointer_data));
@@ -575,11 +608,66 @@ function type_check(nodes: *Nodes) {
                         if !(=(variable_type, 0)) {
                             autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                         } else {
-                            print_node_error_beginning(nodes, i);
-                            print("Retrieve target '");
-                            print(variable_name);
-                            println("' not found");
-                            exit(1);
+                            if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
+                                variable function_type_buffer = autobuffer_new(64);
+                                variable function_type_buffer_index = 0;
+
+                                autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "*function[");
+                                variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), variable_name));
+                                variable j = 0;
+                                while !(=(array8_get(function_arguments2, j), 0)) {
+                                    variable function_argument = @cast_*(array8_get(function_arguments2, j));
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_argument);
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
+                                    j = +(j, 1);
+                                };
+                                if >(j, 0) {
+                                    function_type_buffer_index = -(function_type_buffer_index, 1);
+                                };
+
+                                autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ":");
+
+                                variable function_returns2 = @cast_*(hashmap_string_get(&(function_returns_map), variable_name));
+                                variable j = 0;
+                                while !(=(array8_get(function_returns2, j), 0)) {
+                                    variable function_return = @cast_*(array8_get(function_returns2, j));
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_return);
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
+                                    j = +(j, 1);
+                                };
+                                if >(j, 0) {
+                                    function_type_buffer_index = -(function_type_buffer_index, 1);
+                                };
+
+                                autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "]");
+                                autobuffer_stack8_push(&(stack), &(stack_pointer), AutoBuffer->buffer(&(function_type_buffer)));
+                            } else {
+                                if string=(variable_name, "&") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_&");
+                                } else if string=(variable_name, "+") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_+");
+                                } else if string=(variable_name, "-") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_-");
+                                } else if string=(variable_name, "*") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_*");
+                                } else if string=(variable_name, "/") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_/");
+                                } else if string=(variable_name, "%") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_%");
+                                } else if string=(variable_name, "=") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_=");
+                                } else if string=(variable_name, ">") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_>");
+                                } else if string=(variable_name, "<") {
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_<");
+                                } else {
+                                    print_node_error_beginning(nodes, i);
+                                    print("Retrieve target '");
+                                    print(variable_name);
+                                    println("' not found");
+                                    exit(1);
+                                };
+                            };
                         };
                     };
                 };
@@ -652,14 +740,14 @@ function type_check(nodes: *Nodes) {
             };
             done_anything = true;
         } else if =(id, NODE_SCOPE) {
-            variable hashmap_new = hashmap_new(512);
+            variable new_hashmap = hashmap_new(512);
             variable allocated = brk_allocate(24);
-            HashMap<-(@cast_*HashMap(allocated), hashmap_new);
+            HashMap<-(@cast_*HashMap(allocated), new_hashmap);
             autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
 
-            variable hashmap_new = hashmap_new(512);
+            variable new_hashmap = hashmap_new(512);
             variable allocated = brk_allocate(24);
-            HashMap<-(@cast_*HashMap(allocated), hashmap_new);
+            HashMap<-(@cast_*HashMap(allocated), new_hashmap);
             autobuffer_stack8_push(&(variable_scopes_declares_map), &(variable_scope_declares_pointer), allocated);
         } else if =(id, NODE_ENDSCOPE) {
             variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
@@ -715,6 +803,351 @@ function type_check(nodes: *Nodes) {
             };
 
             done_anything = true;
+        } else if =(id, NODE_INVOKE_POINTER) {
+            variable function_type = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+            if string_length=(function_type, "*function_", 10) {
+                variable function_name = +(function_type, 10);
+                if string=(function_name, "&") {
+                    variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                    variable allocated = brk_allocate(+(length(popped), 2));
+                    copy("*", allocated, 1);
+                    copy(popped, @cast_*(+(allocated, 1)), length(popped));
+                    autobuffer_stack8_push(&(stack), &(stack_pointer), allocated);
+
+                    NodeInvokePointerData<-ignore(@cast_*NodeInvokePointerData(pointer_data), true);
+                };// else if string=(function_name, "+") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '+' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '+' wants matching arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), second);
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "+_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, "-") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '-' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '-' wants matching arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), second);
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "-_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, "*") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '*' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '*' has incompatable arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), second);
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "*_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, "/") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '/' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '/' has incompatable arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), second);
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "/_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, "%") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '%' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '%' has incompatable arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), second);
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "%_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, "=") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '=' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '=' has incompatable arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "=_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, ">") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '>' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '>' has incompatable arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), ">_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //} else if string=(function_name, "<") {
+                //    if =(stack_pointer, 0) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '<' ran out of stack values");
+                //        exit(1);
+                //    };
+
+                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                //        print_node_error_beginning(nodes, i);
+                //        print("Invoke of '<' has incompatable arguments, given '");
+                //        print(first);
+                //        print("' and '");
+                //        print(second);
+                //        println("'");
+                //        exit(1);
+                //    };
+
+                //    autobuffer_stack8_push(&(stack), &(stack_pointer), "boolean");
+
+                //    variable new_+_name = autobuffer_new(16);
+                //    autobuffer_set(&(new_+_name), "<_", 0, 2);
+                //    autobuffer_set(&(new_+_name), first, 2, length(first));
+
+                //    NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
+                //};
+            } else {
+                if string_length=(function_type, "*function[", 10) {
+                    variable current_argument_buffer = autobuffer_new(64);
+                    variable current_argument_buffer_index = 0;
+
+                    variable arguments_buffer = autobuffer_new(64);
+                    variable arguments_buffer_index = 0;
+
+                    variable inner = 0;
+                    variable j = 10;
+                    while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
+                        variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
+                        if &&(|(=(character, 93_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
+                            autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer->buffer(&(current_argument_buffer)));
+                            arguments_buffer_index = +(arguments_buffer_index, 1);
+
+                            current_argument_buffer = autobuffer_new(64);
+                            current_argument_buffer_index = 0;
+                        } else {
+                            autobuffer_push_whole_1(&(current_argument_buffer), &(current_argument_buffer_index), character);
+                        };
+
+                        if =(character, 91_whole_1) {
+                            inner = +(inner, 1);
+                        } else if =(character, 93_whole_1) {
+                            inner = -(inner, 1);
+                        };
+                        j = +(j, 1);
+                    };
+                    if >(length(AutoBuffer->buffer(&(current_argument_buffer))), 0) {
+                        autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer->buffer(&(current_argument_buffer)));
+                        arguments_buffer_index = +(arguments_buffer_index, 1);
+                    };
+
+                    variable k = @cast_integer_8(arguments_buffer_index);
+                    while >(k, 0_integer_8) {
+                        k = -(k, 1_integer_8);
+
+                        if =(stack_pointer, 0) {
+                            print_node_error_beginning(nodes, i);
+                            print("Invoke of '");
+                            if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
+                                variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
+                                print(NodeRetrieveData->name(previous_node_data));
+                            } else {
+                                print("unknown");
+                            };
+                            println("' ran out of stack values");
+                            exit(1);
+                        };
+
+                        variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                        variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
+
+                        if !(is_type(wanted, given, nodes)) {
+                            println(wanted);
+
+                            print_node_error_beginning(nodes, i);
+                            print("Invoke of '");
+
+                            if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
+                                variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
+                                print(NodeRetrieveData->name(previous_node_data));
+                            } else {
+                                print("unknown");
+                            };
+
+                            print("' wants '");
+                            print(wanted);
+                            print("', given '");
+                            print(given);
+                            println("'");
+                            exit(1);
+                        };
+                    };
+
+                    inner = 0;
+                    current_argument_buffer = autobuffer_new(64);
+                    current_argument_buffer_index = 0;
+
+                    j = +(j, 1);
+
+                    while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 93_whole_1)), >(inner, 0)) {
+                        variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
+                        if &&(|(=(character, 58_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
+                            variable return_ = AutoBuffer->buffer(&(current_argument_buffer));
+                            autobuffer_stack8_push(&(stack), &(stack_pointer), return_);
+
+                            current_argument_buffer = autobuffer_new(64);
+                            current_argument_buffer_index = 0;
+                        } else {
+                            autobuffer_push_whole_1(&(current_argument_buffer), &(current_argument_buffer_index), character);
+                        };
+
+                        if =(character, 91_whole_1) {
+                            inner = +(inner, 1);
+                        } else if =(character, 93_whole_1) {
+                            inner = -(inner, 1);
+                        };
+                        j = +(j, 1);
+                    };
+
+                    if >(length(AutoBuffer->buffer(&(current_argument_buffer))), 0) {
+                        autobuffer_stack8_push(&(stack), &(stack_pointer), AutoBuffer->buffer(&(current_argument_buffer)));
+                    };
+                } else {
+                    print_node_error_beginning(nodes, i);
+                    print("Attempting to invoke non function pointer '");
+                    print(function_type);
+                    println("'");
+                    exit(1);
+                };
+            };
+
+            done_anything = true;
         } else if =(id, NODE_JUMP) {
             done_anything = true;
         } else if =(id, NODE_TARGET) {
@@ -733,7 +1166,11 @@ function type_check(nodes: *Nodes) {
             if !(=(stack_pointer, 0)) {
                 print_node_error_beginning(nodes, i);
                 println("Statement end has extra stack values");
+                while !(=(stack_pointer, 0)) {
+                    println(@cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer))));
+                };
                 exit(1);
+
             };
             done_anything = true;
         } else if !(done_anything) {
