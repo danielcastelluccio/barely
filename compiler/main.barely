@@ -20,6 +20,13 @@ function main(arguments: **, argument_count: whole_8) {
 
     add_internal_functions(&(nodes));
 
+    variable current_platform = "linux";
+    variable add_target_internal_functions, is_target_internal_function = if string=(current_platform, "linux") {
+        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64
+    };
+
+    add_target_internal_functions(&(nodes));
+
     cached_sizes_map = hashmap_new(131072);
     cached_signedness_map = hashmap_new(131072);
 
@@ -38,7 +45,7 @@ function main(arguments: **, argument_count: whole_8) {
             
             i = +(i, 2);
         } else {
-            include_file(pointer, &(nodes), &(already_included), &(already_included_index));
+            include_file(pointer, &(nodes), &(already_included), &(already_included_index), is_target_internal_function);
 
             i = +(i, 1);
         };
@@ -271,57 +278,6 @@ function add_internal_functions(nodes: *Nodes) {
     autobuffer_array8_set(&(function_returns), 0, "boolean");
     nodes_append_function(nodes, "&&", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
     nodes_append_function(nodes, "|", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
-
-    variable function_arguments = autobuffer_new(24);
-    autobuffer_array8_set(&(function_arguments), 0, "whole_8");
-    variable function_returns = autobuffer_new(24);
-    autobuffer_array8_set(&(function_returns), 0, "any_8");
-    nodes_append_function(nodes, "@syscall0", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
-
-    variable function_arguments = autobuffer_new(24);
-    autobuffer_array8_set(&(function_arguments), 0, "whole_8");
-    autobuffer_array8_set(&(function_arguments), 1, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autobuffer_array8_set(&(function_returns), 0, "any_8");
-    nodes_append_function(nodes, "@syscall1", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
-
-    variable function_arguments = autobuffer_new(24);
-    autobuffer_array8_set(&(function_arguments), 0, "whole_8");
-    autobuffer_array8_set(&(function_arguments), 1, "any_8");
-    autobuffer_array8_set(&(function_arguments), 2, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autobuffer_array8_set(&(function_returns), 0, "any_8");
-    nodes_append_function(nodes, "@syscall2", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
-
-    variable function_arguments = autobuffer_new(24);
-    autobuffer_array8_set(&(function_arguments), 0, "whole_8");
-    autobuffer_array8_set(&(function_arguments), 1, "any_8");
-    autobuffer_array8_set(&(function_arguments), 2, "any_8");
-    autobuffer_array8_set(&(function_arguments), 3, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autobuffer_array8_set(&(function_returns), 0, "any_8");
-    nodes_append_function(nodes, "@syscall3", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
-
-    variable function_arguments = autobuffer_new(24);
-    autobuffer_array8_set(&(function_arguments), 0, "whole_8");
-    autobuffer_array8_set(&(function_arguments), 1, "any_8");
-    autobuffer_array8_set(&(function_arguments), 2, "any_8");
-    autobuffer_array8_set(&(function_arguments), 3, "any_8");
-    autobuffer_array8_set(&(function_arguments), 4, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autobuffer_array8_set(&(function_returns), 0, "any_8");
-    nodes_append_function(nodes, "@syscall4", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
-
-    variable function_arguments = autobuffer_new(24);
-    autobuffer_array8_set(&(function_arguments), 0, "whole_8");
-    autobuffer_array8_set(&(function_arguments), 1, "any_8");
-    autobuffer_array8_set(&(function_arguments), 2, "any_8");
-    autobuffer_array8_set(&(function_arguments), 3, "any_8");
-    autobuffer_array8_set(&(function_arguments), 4, "any_8");
-    autobuffer_array8_set(&(function_arguments), 5, "any_8");
-    variable function_returns = autobuffer_new(24);
-    autobuffer_array8_set(&(function_returns), 0, "any_8");
-    nodes_append_function(nodes, "@syscall5", AutoBuffer->buffer(&(function_arguments)), AutoBuffer->buffer(&(function_returns)));
 };
 
 structure Tokens {
@@ -338,7 +294,7 @@ function tokens_new(): Tokens {
     return tokens;
 };
 
-function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer, already_included_index: *whole_8) {
+function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer, already_included_index: *whole_8, is_target_internal_function: *function[*:boolean]) {
     variable nodes_index = &(Nodes->index(nodes));
     variable tokens = tokens_new();
 
@@ -348,7 +304,7 @@ function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer
 
     variable previous_index = whole_8->(nodes_index);
 
-    parse(&(tokens), nodes);
+    parse(&(tokens), nodes, is_target_internal_function);
 
     autobuffer_stack8_push(already_included, already_included_index, file_name);
 };
