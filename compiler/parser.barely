@@ -176,20 +176,20 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
     variable in_comment = false;
 
     while <(index, contents_length) {
-        variable character_pointer = @cast_*(+(contents, index));
-        variable character_pointer_next = @cast_*(+(contents, +(index, 1)));
+        variable character_pointer = @cast_*any_1(+(contents, index));
+        variable character_pointer_next = @cast_*any_1(+(contents, +(index, 1)));
         variable done_anything = false;
 
         if !(in_quotes) {
             if !(in_comment) {
-                if =(*1(character_pointer), ASCII_SPACE) {
+                if =(any_1->(character_pointer), ASCII_SPACE) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_OPEN_PARENTHESIS) {
+                if =(any_1->(character_pointer), ASCII_OPEN_PARENTHESIS) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -198,7 +198,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_OPEN_PARENTHESIS, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_CLOSED_PARENTHESIS) {
+                if =(any_1->(character_pointer), ASCII_CLOSED_PARENTHESIS) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -207,7 +207,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_CLOSED_PARENTHESIS, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
+                if =(any_1->(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -216,7 +216,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_OPEN_CURLY_BRACKETS, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
+                if =(any_1->(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -225,7 +225,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_CLOSED_CURLY_BRACKETS, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_OPEN_BRACKET) {
+                if =(any_1->(character_pointer), ASCII_OPEN_BRACKET) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -234,7 +234,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_OPEN_BRACKET, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_CLOSED_BRACKET) {
+                if =(any_1->(character_pointer), ASCII_CLOSED_BRACKET) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -243,7 +243,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_CLOSED_BRACKET, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_COMMA) {
+                if =(any_1->(character_pointer), ASCII_COMMA) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -252,7 +252,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_COMMA, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_SEMICOLON) {
+                if =(any_1->(character_pointer), ASCII_SEMICOLON) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -261,13 +261,13 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_SEMICOLON, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_LINE_FEED) {
+                if =(any_1->(character_pointer), ASCII_LINE_FEED) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
                 };
-                if =(*1(character_pointer), ASCII_COLON) {
+                if =(any_1->(character_pointer), ASCII_COLON) {
                     tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
                     done_anything = true;
                     autobuffer_reset(&(buffer));
@@ -276,7 +276,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     variable _ = tokens_append(tokens, TOKEN_COLON, file_name, row, column);
                     column = +(column, 1);
                 };
-                if =(*1(character_pointer), ASCII_TAB) {
+                if =(any_1->(character_pointer), ASCII_TAB) {
                     done_anything = true;
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
@@ -286,7 +286,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
         };
 
         if !(in_comment) {
-            if =(*1(character_pointer), ASCII_QUOTATION) {
+            if =(any_1->(character_pointer), ASCII_QUOTATION) {
                 if in_quotes {
                     variable buffer_length = length(AutoBuffer->buffer(&(buffer)));
                     variable allocated = brk_allocate(+(buffer_length, 1));
@@ -304,8 +304,8 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                 done_anything = true;
             };
         };
-        if =(*1(character_pointer), ASCII_SLASH) {
-            if =(*1(character_pointer_next), ASCII_SLASH) {
+        if =(any_1->(character_pointer), ASCII_SLASH) {
+            if =(any_1->(character_pointer_next), ASCII_SLASH) {
                 in_comment = true;
                 done_anything = true;
             };
@@ -320,7 +320,7 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
             };
         };
 
-        if =(*1(character_pointer), ASCII_LINE_FEED) {
+        if =(any_1->(character_pointer), ASCII_LINE_FEED) {
             in_comment = false;
             done_anything = true;
             autobuffer_reset(&(buffer));
@@ -819,6 +819,12 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                         } else if string=(retrieve_name, "<") {
                             is_special = true;
                         } else if string=(retrieve_name, "&") {
+                            is_special = true;
+                        } else if string=(retrieve_name, "!") {
+                            is_special = true;
+                        } else if string=(retrieve_name, "|") {
+                            is_special = true;
+                        } else if string=(retrieve_name, "&&") {
                             is_special = true;
                         } else if string_length=(retrieve_name, "@cast_", 6) {
                             is_special = true;
