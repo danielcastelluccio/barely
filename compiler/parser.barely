@@ -577,24 +577,6 @@ function parse_invoke_parenthesis(tokens: *Tokens, index_pointer: *whole_8, node
 function parse_invoke_parenthesis_ending(tokens: *Tokens, index_in: whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
     variable index = index_in;
 
-    while !(=(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
-        variable id = tokens_get_id(tokens, index);
-        variable pointer_data = tokens_get_pointer_data(tokens, index);
-
-        if =(id, TOKEN_SEMICOLON) {
-            return;
-        } else if =(id, TOKEN_CLOSED_CURLY_BRACKETS) {
-            return;
-        } else if =(id, TOKEN_CLOSED_PARENTHESIS) {
-            return;
-        } else if =(id, TOKEN_OPEN_CURLY_BRACKETS) {
-            return;
-        } else if =(id, TOKEN_COMMA) {
-            return;
-        };
-        index = +(index, 1);
-    };
-
     variable inner = 0_integer_8;
     while |(>(inner, 0_integer_8), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
         variable id2 = tokens_get_id(tokens, index);
@@ -728,7 +710,6 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                 variable token_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, whole_8->(index_pointer)));
                 variable token_index = whole_8->(index_pointer);
 
-                variable _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, whole_8->(index_pointer)));
                 if string=(TokenKeywordData->keyword(token_data), "if") {
                     increment_whole_8_pointer(index_pointer, 1);
 
@@ -736,8 +717,7 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                     variable conditional_jump_data = @cast_*NodeJumpConditionalData(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, whole_8->(index_pointer))));
                     NodeJumpConditionalData<-target_id(conditional_jump_data, target);
                     NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
-
-                    increment_whole_8_pointer(index_pointer, 1);
+                    variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8->(index_pointer)));
                 } else if &&(string=(TokenKeywordData->keyword(token_data), "else"), =(tokens_get_id(tokens, +(token_index, 1)), TOKEN_KEYWORD)) {
                     increment_whole_8_pointer(index_pointer, 2);
 
@@ -745,16 +725,13 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                     variable conditional_jump_data = @cast_*NodeJumpConditionalData(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, whole_8->(index_pointer))));
                     NodeJumpConditionalData<-target_id(conditional_jump_data, target);
                     NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
-
-                    increment_whole_8_pointer(index_pointer, 1);
+                    variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8->(index_pointer)));
                 } else {
-                    increment_whole_8_pointer(index_pointer, 2);
+                    increment_whole_8_pointer(index_pointer, 1);
                 };
 
                 variable _ = nodes_append(nodes, NODE_STARTIFBLOCK, get_token_location_data(tokens, whole_8->(index_pointer)));
-                while !(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
-                    parse_statement(tokens, index_pointer, nodes, is_target_internal_function);
-                };
+                parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
 
                 variable jump_data = @cast_*NodeJumpData(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8->(index_pointer))));
                 NodeJumpData<-target_id(jump_data, end_target);
@@ -762,12 +739,8 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
                 variable end_if = @cast_*NodeEndIfBlockData(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, whole_8->(index_pointer))));
                 NodeEndIfBlockData<-id(end_if, end_target);
 
-                variable _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, whole_8->(index_pointer)));
-
                 variable target_node_data = @cast_*NodeTargetData(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8->(index_pointer))));
                 NodeTargetData<-id(target_node_data, target);
-
-                increment_whole_8_pointer(index_pointer, 1);
             };
 
             variable target_node_data = @cast_*NodeTargetData(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8->(index_pointer))));
@@ -876,7 +849,9 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
 };
 
 global target_id: whole_8;
-global while_target_id: whole_8;
+
+global while_target_id_stack: AutoBuffer;
+global while_target_id_stack_index: whole_8;
 
 function get_target_id(): whole_8 {
     variable return_ = target_id;
@@ -1000,24 +975,19 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
             variable conditional_jump_data = @cast_*NodeJumpConditionalData(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, whole_8->(index_pointer))));
             NodeJumpConditionalData<-target_id(conditional_jump_data, target2);
             NodeJumpConditionalData<-desired_state(conditional_jump_data, false);
+            variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8->(index_pointer)));
 
-            increment_whole_8_pointer(index_pointer, 1);
-
-            variable _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, whole_8->(index_pointer)));
-            while !(=(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
-                while_target_id = target2;
-                parse_statement(tokens, index_pointer, nodes, is_target_internal_function);
-            };
+            autobuffer_stack8_push(&(while_target_id_stack), &(while_target_id_stack_index), target2);
+            parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
+            variable _ = autobuffer_stack8_pop(&(while_target_id_stack), &(while_target_id_stack_index));
 
             variable jump_node_data = @cast_*NodeJumpData(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8->(index_pointer))));
             NodeJumpData<-target_id(jump_node_data, target1);
 
-            variable _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, whole_8->(index_pointer)));
-
             variable target_node2_data = @cast_*NodeTargetData(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8->(index_pointer))));
             NodeTargetData<-id(target_node2_data, target2);
  
-            increment_whole_8_pointer(index_pointer, 2);
+            increment_whole_8_pointer(index_pointer, 1);
             done_anything = true;
         };
     };
@@ -1052,7 +1022,7 @@ function parse_statement(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes
         variable name_value = TokenNameData->name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, whole_8->(index_pointer))));
         if string=(name_value, "break") {
             variable jump_data = @cast_*NodeJumpData(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8->(index_pointer))));
-            NodeJumpData<-target_id(jump_data, while_target_id);
+            NodeJumpData<-target_id(jump_data, @cast_whole_8(autobuffer_array8_get(&(while_target_id_stack), -(while_target_id_stack_index, 1))));
 
             increment_whole_8_pointer(index_pointer, 2);
             done_anything = true;
