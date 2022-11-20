@@ -71,37 +71,6 @@ function print_node_error_beginning(nodes: *Nodes, location: whole_8) {
     print(": ");
 };
 
-function print_node_info(nodes: *Nodes, index: whole_8) {
-    variable id = nodes_get_id(nodes, index);
-    variable pointer_data = nodes_get_pointer_data(nodes, index);
-    if =(id, NODE_RETRIEVE) {
-        variable retrieve_data = @cast_*NodeRetrieveData(pointer_data);
-        print("Retrieve{name='");
-        print(NodeRetrieveData->name(retrieve_data));
-        println("'}");
-    } else if =(id, NODE_INVOKE) {
-        variable invoke_data = @cast_*NodeInvokeData(pointer_data);
-        print("Invoke{name='");
-        print(NodeInvokeData->name(invoke_data));
-        println("'}");
-    } else if =(id, NODE_POINTER) {
-        println("Pointer{}")
-    } else if =(id, NODE_INVOKE_POINTER) {
-        println("InvokePointer{}")
-    } else if =(id, NODE_NUMBER) {
-        println("Number{}")
-    } else if =(id, NODE_BOOLEAN) {
-        println("Boolean{}")
-    } else if =(id, NODE_ASSIGN) {
-        println("Assign{}")
-    } else if =(id, NODE_ENDSTATEMENT) {
-        println("EndStatement{}")
-    } else {
-        print_whole_8(id);
-        println("");
-    };
-};
-
 function type_check(nodes: *Nodes) {
     variable node_count = Nodes->index(nodes);
 
