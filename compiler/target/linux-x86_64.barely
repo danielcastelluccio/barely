@@ -123,8 +123,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable global_types_map = hashmap_new(512);
     variable global_locations_map = hashmap_new(512);
 
-    variable constant_types_map = hashmap_new(512);
-    variable constant_locations_map = hashmap_new(512);
+    variable define_types_map = hashmap_new(512);
+    variable define_values_map = hashmap_new(512);
 
     variable memory_function_instructions_map = hashmap_new(1024);
     variable memory_function_instruction_sizes_map = hashmap_new(1024);
@@ -188,16 +188,21 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             hashmap_string_put(&(global_locations_map), global_name, global_location);
 
             bss_index = +(bss_index, get_size_linux_x86-642(global_type, nodes));
-        } else if =(id, NODE_CONSTANT) {
-            variable constant_data = @cast_*NodeConstantData(pointer_data);
-            variable constant_name = NodeConstantData->name(constant_data);
-            variable constant_type = NodeConstantData->type(constant_data);
+        } else if =(id, NODE_DEFINE) {
+            variable define_data = @cast_*NodeDefineData(pointer_data);
+            variable define_name = NodeDefineData->name(define_data);
+            variable define_type = NodeDefineData->type(define_data);
 
-            hashmap_string_put(&(constant_types_map), constant_name, constant_type);
+            hashmap_string_put(&(define_types_map), define_name, define_type);
 
-            variable constant_location = autobuffer_push_data_whole_8(&(data_buffer), &(data_buffer_index), @cast_whole_8(NodeConstantData->value(constant_data)));
+            variable define_value: any_8;
+            if string=(define_type, "whole_8") {
+                define_value = @cast_whole_8(any_8->(@cast_*any_8(NodeDefineData->data(define_data))));
+            } else {
+                println("unknown define type");
+            };
 
-            hashmap_string_put(&(constant_locations_map), constant_name, constant_location);
+            hashmap_string_put(&(define_values_map), define_name, define_value);
         } else if =(id, NODE_STRUCTURE) {
             variable structure_data = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
             variable structure_name = NodeStructureData->name(structure_data);
@@ -1428,50 +1433,19 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                             };
                         };
                     } else {
-                        variable_type = @cast_*(hashmap_string_get(&(constant_types_map), variable_name));
+                        variable_type = @cast_*(hashmap_string_get(&(define_types_map), variable_name));
 
                         if !(=(variable_type, 0)) {
                             variable constant_name = brk_allocate(+(length(variable_name), 2));
                             copy("_", constant_name, 1);
                             copy(variable_name, @cast_*(+(constant_name, 1)), length(variable_name));
 
-                            variable constant_location = @cast_DataIndex(hashmap_string_get(&(constant_locations_map), variable_name));
+                            variable define_value = hashmap_string_get(&(define_values_map), variable_name);
 
-                            variable size = get_size_linux_x86-642(variable_type, nodes);
-
-                            if =(next_id, NODE_POINTER) {
-                                autobuffer_push_push_data(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust), &(data_indexes_to_adjust_index), constant_location);
-                            } else {
-                                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, size);
-
-                                variable j = 0;
-                                while <(j, size) {
-                                    variable done_anything_assign = false;
-                                    if >(-(size, j), 7) {
-                                        autobuffer_push_mov_data_offset_pointer_register8(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, RAX);
-                                        autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, j);
-                                        j = +(j, 8);
-                                        done_anything_assign = true;
-                                    };
-                                    if &&(>(-(size, j), 3), !(done_anything_assign)) {
-                                        autobuffer_push_mov_data_offset_pointer_register4(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, EAX);
-                                        autobuffer_push_mov_register4_register8_pointer_offset(&(instructions_buffer), &(instructions_index), EAX, RSP, j);
-                                        j = +(j, 4);
-                                        done_anything_assign = true;
-                                    };
-                                    if &&(>(-(size, j), 1), !(done_anything_assign)) {
-                                        autobuffer_push_mov_data_offset_pointer_register2(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AX);
-                                        autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, j);
-                                        j = +(j, 2);
-                                        done_anything_assign = true;
-                                    };
-                                    if &&(>(-(size, j), 0), !(done_anything_assign)) {
-                                        autobuffer_push_mov_data_offset_pointer_register1(&(instructions_buffer), &(instructions_index), &(data_indexes_to_adjust_relative), &(data_indexes_to_adjust_relative_index), constant_location, j, AL);
-                                        autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, j);
-                                        j = +(j, 1);
-                                        done_anything_assign = true;
-                                    };
-                                };
+                            if string=(variable_type, "whole_8") {
+                                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, @cast_whole_8(define_value));
+                                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
+                                autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
                             };
                         } else {
                             if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
@@ -1603,11 +1577,6 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             HashMap<-(@cast_*HashMap(allocated), new_hashmap);
             autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
 
-            //println(current_function);
-            //print_whole_8(variable_index);
-            //println("");
-            //print_whole_8(variable_scope_types_pointer);
-            //println("");
             autobuffer_stack8_push(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer), variable_index);
         } else if =(id, NODE_ENDSCOPE) {
             variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
@@ -1625,24 +1594,9 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             copy(name2, @cast_*(+(global_name, 1)), length(name2));
             
             variable size = get_size_linux_x86-642(type, nodes);
-
-            //autobuffer_push_string(&(bss_buffer), &(bss_buffer_index), global_name);
-            //autobuffer_push_string(&(bss_buffer), &(bss_buffer_index), ": rb ");
-            //autobuffer_push_whole_8(&(bss_buffer), &(bss_buffer_index), size);
-            //autobuffer_push_string_with_newline(&(bss_buffer), &(bss_buffer_index), "");
             
             done_anything = true;
-        } else if =(id, NODE_CONSTANT) {
-            variable constant_data = @cast_*NodeConstantData(pointer_data);
-            variable name3 = NodeConstantData->name(constant_data);
-            variable type2 = NodeConstantData->type(constant_data);
-            //TODO: reassigning locals should warn
-            variable value2 = NodeConstantData->value(constant_data);
-
-            variable constant_name = brk_allocate(+(length(name3), 2));
-            copy("_", constant_name, 1);
-            copy(name3, @cast_*(+(constant_name, 1)), length(name3));
-
+        } else if =(id, NODE_DEFINE) {
             done_anything = true;
         } else if =(id, NODE_STARTIFBLOCK) {
             done_anything = true;

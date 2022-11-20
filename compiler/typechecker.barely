@@ -79,7 +79,7 @@ function type_check(nodes: *Nodes) {
     variable function_returns_map = hashmap_new(1024);
 
     variable globals_map = hashmap_new(512);
-    variable constants_map = hashmap_new(512);
+    variable defines_map = hashmap_new(512);
 
     variable has_main = false;
     
@@ -118,12 +118,12 @@ function type_check(nodes: *Nodes) {
             hashmap_string_put(&(globals_map), global_name, global_type);
         };
 
-        if =(id, NODE_CONSTANT) {
-            variable constant_data = @cast_*NodeConstantData(pointer_data);
-            variable constant_name = NodeConstantData->name(constant_data);
-            variable constant_type = NodeConstantData->type(constant_data);
+        if =(id, NODE_DEFINE) {
+            variable define_data = @cast_*NodeDefineData(pointer_data);
+            variable define_name = NodeDefineData->name(define_data);
+            variable define_type = NodeDefineData->type(define_data);
 
-            hashmap_string_put(&(constants_map), constant_name, constant_type);
+            hashmap_string_put(&(defines_map), define_name, define_type);
         };
 
         i = +(i, 1);
@@ -572,7 +572,7 @@ function type_check(nodes: *Nodes) {
                     if !(=(variable_type, 0)) {
                         autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                     } else {
-                        variable_type = @cast_*(hashmap_string_get(&(constants_map), variable_name));
+                        variable_type = @cast_*(hashmap_string_get(&(defines_map), variable_name));
 
                         if !(=(variable_type, 0)) {
                             autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
@@ -1127,7 +1127,7 @@ function type_check(nodes: *Nodes) {
             done_anything = true;
         } else if =(id, NODE_GLOBAL) {
             done_anything = true;
-        } else if =(id, NODE_CONSTANT) {
+        } else if =(id, NODE_DEFINE) {
             done_anything = true;
         } else if =(id, NODE_ENDSTATEMENT) {
             if !(=(stack_pointer, 0)) {

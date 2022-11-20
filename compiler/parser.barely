@@ -31,7 +31,7 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
     if string=(buffer, "global") {
         is_keyword = true;
     };
-    if string=(buffer, "constant") {
+    if string=(buffer, "define") {
         is_keyword = true;
     };
     if string=(buffer, "break") {
@@ -350,21 +350,40 @@ function print_token_error_beginning(tokens: *Tokens, location: whole_8) {
     print(": ");
 };
 
-function parse_constant(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8->(index_pointer);
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
-    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
-    variable type = TokenNameData->name(type_token_pointer_data);
-    variable value_token_pointer_data = @cast_*TokenNumberData(tokens_get_pointer_data(tokens, +(index, 5)));
-    variable value = TokenNumberData->value(value_token_pointer_data);
 
-    variable constant_node_data = @cast_*NodeConstantData(nodes_append_data(nodes, NODE_CONSTANT, get_token_location_data(tokens, whole_8->(index_pointer))));
-    NodeConstantData<-name(constant_node_data, name);
-    NodeConstantData<-type(constant_node_data, type);
-    NodeConstantData<-value(constant_node_data, value);
+    variable type = @cast_*(0);
+    variable value_offset = if =(tokens_get_location_data(tokens, +(index, 2)), TOKEN_COLON) {
+        variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
+        type = TokenNameData->name(type_token_pointer_data);
+        5
+    } else {
+        3
+    };
 
-    increment_whole_8_pointer(index_pointer, 7);
+    variable value: *;
+    if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
+        variable value_token_pointer_data = @cast_*TokenNumberData(tokens_get_pointer_data(tokens, +(index, value_offset)));
+
+        value = brk_allocate(8);
+        whole_8<-(@cast_*whole_8(value), TokenNumberData->value(value_token_pointer_data));
+    };
+
+    if =(type, 0) {
+        if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
+            type = "whole_8";
+        };
+    };
+
+    variable define_node_data = @cast_*NodeDefineData(nodes_append_data(nodes, NODE_DEFINE, get_token_location_data(tokens, whole_8->(index_pointer))));
+    NodeDefineData<-name(define_node_data, name);
+    NodeDefineData<-type(define_node_data, type);
+    NodeDefineData<-data(define_node_data, value);
+
+    increment_whole_8_pointer(index_pointer, +(value_offset, 2));
 };
 
 function parse_global(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
@@ -1063,8 +1082,8 @@ function parse(tokens: *Tokens, nodes: *Nodes, is_target_internal_function: *fun
                 parse_global(tokens, &(index), nodes);
             };
 
-            if string=(keyword, "constant") {
-                parse_constant(tokens, &(index), nodes);
+            if string=(keyword, "define") {
+                parse_define(tokens, &(index), nodes);
             };
         };
     };
