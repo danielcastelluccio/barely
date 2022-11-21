@@ -1,3 +1,33 @@
+function is_type2(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap): boolean {
+    if string=(wanted, given) {
+        return true;
+    };
+
+    if string=(wanted, "*") {
+        if string_length=(given, "*", 1) {
+            return true;
+        };
+    };
+
+    if string_length=(wanted, "*", 1) {
+        if string_length=(given, "*", 1) {
+            return is_type2(+(wanted, 1), +(given, 1), nodes, defines_map);
+        };
+    };
+
+    variable defined = @cast_*(hashmap_string_get(&(defines_map), given));
+    if !(=(defined, 0)) {
+        return string=(defined, wanted);
+    };
+
+    if string_length=(wanted, "any_", 4) {
+        variable size = to_number(@cast_*(+(wanted, 4)));
+        return =(size, get_size_linux_x86-642(given, nodes));
+    };
+
+    return false;
+};
+
 function is_type(wanted: *, given: *, nodes: *Nodes): boolean {
     if string=(wanted, given) {
         return true;
@@ -85,9 +115,14 @@ function type_check(nodes: *Nodes) {
     variable globals_map = hashmap_new(512);
     variable defines_map = hashmap_new(512);
 
+    variable structure_members_array = autobuffer_new(1024);
+    variable structure_member_names_array = autobuffer_new(1024);
+
     variable has_main = false;
 
     variable function_id = 0;
+
+    variable define_structure_index = 0;
     
     variable i = 0;
     while <(i, node_count) {
@@ -120,6 +155,16 @@ function type_check(nodes: *Nodes) {
                 autobuffer_array8_set(&(function_argument_names_array), function_id, NodeFunctionData->argument_names(function_data));
                 autobuffer_array8_set(&(function_returns_array), function_id, NodeFunctionData->returns(function_data));
                 function_id = +(function_id, 1);
+            };
+        };
+
+        if =(id, NODE_STRUCTURE) {
+            variable structure_data = @cast_*NodeStructureData(pointer_data);
+
+            if =(NodeStructureData->name(structure_data), 0) {
+                autobuffer_array8_set(&(structure_members_array), define_structure_index, NodeStructureData->item_types(structure_data));
+                autobuffer_array8_set(&(structure_member_names_array), define_structure_index, NodeStructureData->item_names(structure_data));
+                define_structure_index = +(define_structure_index, 1);
             };
         };
 
@@ -177,8 +222,6 @@ function type_check(nodes: *Nodes) {
         variable id = nodes_get_id(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
         variable done_anything = false;
-
-        //print_node_info(nodes, i);
 
         if =(id, NODE_FUNCTION) {
             current_function = NodeFunctionData->name(@cast_*NodeFunctionData(pointer_data));
@@ -456,6 +499,20 @@ function type_check(nodes: *Nodes) {
             } else {
                 variable found_function = false;
 
+                if NodeInvokeData->has_specifier(invoke_data) {
+                    variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                    variable function_name_new = brk_allocate(+(+(length(popped), length(function_name)), 1));
+                    copy(popped, function_name_new, length(popped));
+                    copy(function_name, +(function_name_new, length(popped)), length(function_name));
+
+                    function_name = function_name_new;
+                    NodeInvokeData<-name(invoke_data, function_name);
+                    NodeInvokeData<-has_specifier(invoke_data, false);
+
+                    variable previous = @cast_*whole_8(nodes_get_pointer(nodes, -(i, 1)));
+                    whole_8<-(previous, NODE_SKIP);
+                };
+
                 if =(hashmap_string_get(&(function_arguments_map), function_name), 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke target '");
@@ -480,7 +537,7 @@ function type_check(nodes: *Nodes) {
 
                     variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                     variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
-                    if !(is_type(wanted, given, nodes)) {
+                    if !(is_type2(wanted, given, nodes, defines_map)) {
                         print_node_error_beginning(nodes, i);
                         print("Invoke of '");
                         print(function_name);
@@ -1179,4 +1236,3 @@ function type_check(nodes: *Nodes) {
         i = +(i, 1);
     };
 };
-

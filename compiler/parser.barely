@@ -160,6 +160,7 @@ constant ASCII_QUOTATION: whole_1 = 34;
 constant ASCII_SLASH: whole_1 = 47;
 constant ASCII_OPEN_BRACKET: whole_1 = 91;
 constant ASCII_CLOSED_BRACKET: whole_1 = 93;
+constant ASCII_PERIOD: whole_1 = 46;
 
 function tokenize(file_name: *, contents: *, tokens: *Tokens) {
     variable index = 0;
@@ -259,6 +260,15 @@ function tokenize(file_name: *, contents: *, tokens: *Tokens) {
                     buffer_index = 0;
 
                     variable _ = tokens_append(tokens, TOKEN_SEMICOLON, file_name, row, column);
+                    column = +(column, 1);
+                };
+                if =(any_1->(character_pointer), ASCII_PERIOD) {
+                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
+                    done_anything = true;
+                    autobuffer_reset(&(buffer));
+                    buffer_index = 0;
+
+                    variable _ = tokens_append(tokens, TOKEN_PERIOD, file_name, row, column);
                     column = +(column, 1);
                 };
                 if =(any_1->(character_pointer), ASCII_LINE_FEED) {
@@ -420,7 +430,32 @@ function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, i
 
             type = AutoBuffer->buffer(&(type_buffer));
         } else if &&(=(tokens_get_id(tokens, +(index, value_offset)), TOKEN_KEYWORD), string=(TokenKeywordData->keyword(@cast_*TokenKeywordData(tokens_get_pointer_data(tokens, +(index, value_offset)))), "structure")) {
-            type = "structure";
+            variable index_temp = +(+(index, value_offset), 2);
+
+            variable type_buffer = autobuffer_new(16);
+            variable type_buffer_index = 0;
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "structure[");
+
+            variable is_type = false;
+            while !(=(tokens_get_id(tokens, index_temp), TOKEN_CLOSED_CURLY_BRACKETS)) {
+                if =(tokens_get_id(tokens, index_temp), TOKEN_NAME) {
+                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), parse_name(tokens, &(index_temp)));
+                    is_type = !(is_type);
+                } else if =(tokens_get_id(tokens, index_temp), TOKEN_COLON) {
+                    index_temp = +(index_temp, 1);
+                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), ":");
+                } else if =(tokens_get_id(tokens, index_temp), TOKEN_SEMICOLON) {
+                    index_temp = +(index_temp, 1);
+                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), ",");
+                };
+            };
+            index_temp = +(index_temp, 1);
+
+            type_buffer_index = -(type_buffer_index, 1);
+
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
+
+            type = AutoBuffer->buffer(&(type_buffer));
         };
     };
 
@@ -811,6 +846,7 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
     variable nodes = &(nodes_temp);
 
     variable nodes_index = Nodes->index(nodes);
+    variable nodes_initial_index = Nodes->index(nodes_in);
 
     if =(id, TOKEN_NAME) {
         variable done_anything_name = false;
@@ -1009,6 +1045,29 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
     };
 
     whole_8<-(index_pointer, index);
+
+    if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_PERIOD) {
+        variable added_size = *(-(Nodes->index(nodes_in), nodes_initial_index), NODE_SIZE);
+        variable added = brk_allocate(added_size);
+        copy(+(AutoBuffer->buffer(&(Nodes->buffer(nodes_in))), *(nodes_initial_index, NODE_SIZE)), added, added_size);
+
+        Nodes<-index(nodes_in, nodes_initial_index);
+
+        increment_whole_8_pointer(index_pointer, 1);
+        parse_expression(tokens, index_pointer, nodes_in, is_target_internal_function);
+
+        Nodes<-index(nodes_in, -(Nodes->index(nodes_in), 2));
+
+        variable invoke_retrieve_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes_in, Nodes->index(nodes_in)));
+        variable name = NodeRetrieveData->name(invoke_retrieve_data);
+
+        copy(added, +(AutoBuffer->buffer(&(Nodes->buffer(nodes_in))), *(Nodes->index(nodes_in), NODE_SIZE)), added_size);
+        Nodes<-index(nodes_in, +(Nodes->index(nodes_in), /(added_size, NODE_SIZE)));
+
+        variable invoke_data = @cast_*NodeInvokeData(nodes_append_data(nodes_in, NODE_INVOKE, get_token_location_data(tokens, whole_8->(index_pointer))));
+        NodeInvokeData<-name(invoke_data, name);
+        NodeInvokeData<-has_specifier(invoke_data, true);
+    };
 };
 
 global target_id: whole_8;
