@@ -419,7 +419,9 @@ function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, i
             autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
 
             type = AutoBuffer->buffer(&(type_buffer));
-        }
+        } else if &&(=(tokens_get_id(tokens, +(index, value_offset)), TOKEN_KEYWORD), string=(TokenKeywordData->keyword(@cast_*TokenKeywordData(tokens_get_pointer_data(tokens, +(index, value_offset)))), "structure")) {
+            type = "structure";
+        };
     };
 
     variable define_node_data = @cast_*NodeDefineData(nodes_append_data(nodes, NODE_DEFINE, get_token_location_data(tokens, whole_8->(index_pointer))));
@@ -446,6 +448,50 @@ function parse_global(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     NodeGlobalData<-type(global_node_data, type);
 
     increment_whole_8_pointer(index_pointer, 5);
+};
+
+function parse_structure2(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    variable index = whole_8->(index_pointer);
+
+    variable member_names = autobuffer_new(40);
+    variable member_types = autobuffer_new(40);
+    variable member_index = 0;
+
+    index = +(index, 2);
+
+    variable seen_name = false;
+
+    while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
+        variable id = tokens_get_id(tokens, index);
+
+        if =(id, TOKEN_NAME) {
+            variable token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, index));
+            variable name_name = TokenNameData->name(token_pointer_data);
+
+            if seen_name {
+                name_name = parse_name(tokens, &(index));
+                autobuffer_array8_set(&(member_types), member_index, name_name);
+                member_index = +(member_index, 1);
+            } else {
+                index = +(index, 1);
+                autobuffer_array8_set(&(member_names), member_index, name_name);
+            };
+
+            seen_name = !(seen_name);
+        } else if =(id, TOKEN_COLON) {
+            index = +(index, 1);
+        } else if =(id, TOKEN_SEMICOLON) {
+            index = +(index, 1);
+        };
+    };
+
+    variable structure_data = @cast_*NodeStructureData(nodes_append_data(nodes, NODE_STRUCTURE, get_token_location_data(tokens, whole_8->(index_pointer))));
+    NodeStructureData<-item_names(structure_data, AutoBuffer->buffer(&(member_names)));
+    NodeStructureData<-item_types(structure_data, AutoBuffer->buffer(&(member_types)));
+
+    index = +(index, 1);
+
+    whole_8<-(index_pointer, index);
 };
 
 function parse_structure(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
@@ -1205,7 +1251,7 @@ function parse_individual2(tokens: *Tokens, index, *whole_8, nodes: *Nodes, is_t
         };
 
         if string=(keyword, "structure") {
-            parse_structure(tokens, index, nodes);
+            parse_structure2(tokens, index, nodes);
         };
 
         if string=(keyword, "global") {
