@@ -59,6 +59,8 @@ function is_internal_function_linux_x86-64(name: *): boolean {
     return string_length=(name, "@syscall", 8);
 };
 
+global define_function_index: whole_8;
+
 function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable output = autobuffer_new(512);
 
@@ -113,6 +115,12 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RDI, 0);
     autobuffer_push_syscall(&(instructions_buffer), &(instructions_index));
 
+    variable function_locations_array = autobuffer_new(1024);
+    variable function_local_sizes_array = autobuffer_new(1024);
+    variable function_argument_names_array = autobuffer_new(1024);
+    variable function_arguments_array = autobuffer_new(1024);
+    variable function_returns_array = autobuffer_new(1024);
+
     variable function_argument_names_map = hashmap_new(1024);
     variable function_arguments_map = hashmap_new(1024);
     variable function_returns_map = hashmap_new(1024);
@@ -130,8 +138,11 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable memory_function_instruction_sizes_map = hashmap_new(1024);
 
     variable push_functions = autobuffer_new(512);
+    variable push_functions2 = autobuffer_new(512);
     variable push_function_targets = autobuffer_new(512);
+    variable push_function_targets2 = autobuffer_new(512);
     variable push_function_index = 0;
+    variable push_function_index2 = 0;
 
     variable calls = autobuffer_new(512);
     variable call_targets = autobuffer_new(512);
@@ -155,27 +166,52 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
         if =(id, NODE_FUNCTION) {
             variable function_data = @cast_*NodeFunctionData(pointer_data);
-            hashmap_string_put(&(function_argument_names_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_names(function_data));
-            hashmap_string_put(&(function_arguments_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_types(function_data));
-            hashmap_string_put(&(function_returns_map), NodeFunctionData->name(function_data), NodeFunctionData->returns(function_data));
+            if !(=(NodeFunctionData->name(function_data), 0)) {
+                hashmap_string_put(&(function_argument_names_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_names(function_data));
+                hashmap_string_put(&(function_arguments_map), NodeFunctionData->name(function_data), NodeFunctionData->argument_types(function_data));
+                hashmap_string_put(&(function_returns_map), NodeFunctionData->name(function_data), NodeFunctionData->returns(function_data));
 
-            variable total = 16;
-            variable j = i;
-            while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
-                variable id = nodes_get_id(nodes, j);
-                variable pointer_data = nodes_get_pointer_data(nodes, j);
-                
-                if =(id, NODE_DECLARE) {
-                    variable declare_data = @cast_*NodeDeclareData(pointer_data);
-                    variable declare_name = NodeDeclareData->name(declare_data);
-                    variable declare_type = NodeDeclareData->type(declare_data);
-                    total = +(total, get_size_linux_x86-642(declare_type, nodes));
+                variable total = 16;
+                variable j = i;
+                while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
+                    variable id = nodes_get_id(nodes, j);
+                    variable pointer_data = nodes_get_pointer_data(nodes, j);
+                    
+                    if =(id, NODE_DECLARE) {
+                        variable declare_data = @cast_*NodeDeclareData(pointer_data);
+                        variable declare_name = NodeDeclareData->name(declare_data);
+                        variable declare_type = NodeDeclareData->type(declare_data);
+                        total = +(total, get_size_linux_x86-642(declare_type, nodes));
+                    };
+
+                    j = +(j, 1);
                 };
 
-                j = +(j, 1);
-            };
+                hashmap_string_put(&(function_local_sizes_map), NodeFunctionData->name(function_data), total);
+            } else {
+                autobuffer_array8_set(&(function_argument_names_array), define_function_index, NodeFunctionData->argument_names(function_data));
+                autobuffer_array8_set(&(function_arguments_array), define_function_index, NodeFunctionData->argument_types(function_data));
+                autobuffer_array8_set(&(function_returns_array), define_function_index, NodeFunctionData->returns(function_data));
 
-            hashmap_string_put(&(function_local_sizes_map), NodeFunctionData->name(function_data), total);
+                variable total = 16;
+                variable j = i;
+                while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
+                    variable id = nodes_get_id(nodes, j);
+                    variable pointer_data = nodes_get_pointer_data(nodes, j);
+                    
+                    if =(id, NODE_DECLARE) {
+                        variable declare_data = @cast_*NodeDeclareData(pointer_data);
+                        variable declare_name = NodeDeclareData->name(declare_data);
+                        variable declare_type = NodeDeclareData->type(declare_data);
+                        total = +(total, get_size_linux_x86-642(declare_type, nodes));
+                    };
+
+                    j = +(j, 1);
+                };
+
+                autobuffer_array8_set(&(function_local_sizes_array), define_function_index, total);
+                define_function_index = +(define_function_index, 1);
+            };
 
             index = +(index, 1);
         } else if =(id, NODE_GLOBAL) {
@@ -198,6 +234,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable define_value: any_8;
             if string=(define_type, "whole_8") {
                 define_value = NodeNumberData->value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
+            } else if string_length=(define_type, "*function", 9) {
+                define_value = define_function_index;
             } else {
                 println("unknown define type");
             };
@@ -564,6 +602,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     };
 
     variable current_function: *;
+    variable current_function_id = 999;
 
     variable variable_scopes_types_map = autobuffer_new(64);
     variable variable_scope_types_pointer = 0;
@@ -576,6 +615,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     variable variable_index = 0;
 
     variable program_constant_index = 0;
+
+    variable second_defined_function_index = 0;
 
     variable i = 0;
     while <(i, node_count) {
@@ -591,20 +632,28 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             if !(=(next_id, NODE_ENDFUNCTION)) {
                 variable function_name = NodeFunctionData->name(function_data);
 
-                hashmap_string_put(&(function_locations_map), function_name, instructions_index);
-
+                variable instructions_index_cached = instructions_index;
                 autobuffer_push_push_register8(&(instructions_buffer), &(instructions_index), RBP);
                 autobuffer_push_mov_register8_register8(&(instructions_buffer), &(instructions_index), RSP, RBP);
 
-                variable locals_size = @cast_whole_8(hashmap_string_get(&(function_local_sizes_map), function_name));
+                if !(=(function_name, 0)) {
+                    hashmap_string_put(&(function_locations_map), function_name, instructions_index_cached);
 
-                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
+                    variable locals_size = @cast_whole_8(hashmap_string_get(&(function_local_sizes_map), function_name));
 
-                current_function = function_name;
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
+
+                    current_function = function_name;
+                } else {
+                    variable locals_size = @cast_whole_8(autobuffer_array8_get(&(function_local_sizes_array), second_defined_function_index));
+
+                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
+                    current_function_id = second_defined_function_index;
+                    second_defined_function_index = +(second_defined_function_index, 1);
+                };
 
                 autobuffer_reset(&(HashMap->buffer(&(variable_types_map))));
                 autobuffer_reset(&(variable_scopes_indexes_map));
-
                 variable_index = 0;
             };
 
@@ -1341,8 +1390,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 };
 
             } else {
-                variable function_argument_names2 = @cast_*(hashmap_string_get(&(function_argument_names_map), current_function));
-                variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), current_function));
+                variable function_argument_names2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
+                variable function_arguments2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
 
                 variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
@@ -1446,6 +1495,14 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                                 autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, @cast_whole_8(define_value));
                                 autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
                                 autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
+                            } else if string_length=(variable_type, "*function", 9) {
+                                variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
+                                autobuffer_array8_set(&(push_functions2), push_function_index2, push_function_instruction);
+                                autobuffer_array8_set(&(push_function_targets2), push_function_index2, define_value);
+
+                                push_function_index2 = +(push_function_index2, 1);
+                            } else {
+                                println("undefined define reference type");
                             };
                         } else {
                             if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
@@ -1464,8 +1521,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_RETURN) {
-            variable arguments_size = get_size_multiple_linux_x86-642(@cast_*(hashmap_string_get(&(function_arguments_map), current_function)), 999, nodes);
-            variable returns_size = get_size_multiple_linux_x86-642(@cast_*(hashmap_string_get(&(function_returns_map), current_function)), 999, nodes);
+            variable arguments_size = get_size_multiple_linux_x86-642(if =(current_function, 0) { @cast_*(autobuffer_array8_get(&(function_arguments_array), current_function_id)) } else { @cast_*(hashmap_string_get(&(function_arguments_map), current_function)) }, 999, nodes);
+            variable returns_size = get_size_multiple_linux_x86-642(if =(current_function, 0) { @cast_*(autobuffer_array8_get(&(function_returns_array), current_function_id)) } else { @cast_*(hashmap_string_get(&(function_returns_map), current_function)) }, 999, nodes);
             variable returns_size_rounded = returns_size;
             if !(=(%(returns_size_rounded, 8), 0)) {
                 returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
@@ -1582,6 +1639,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
             variable _ = autobuffer_stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
         } else if =(id, NODE_ENDFUNCTION) {
+            current_function = @cast_*(0);
             done_anything = true;
         } else if =(id, NODE_STRUCTURE) {
             done_anything = true;
@@ -1597,6 +1655,13 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             
             done_anything = true;
         } else if =(id, NODE_DEFINE) {
+            variable define_data = @cast_*NodeDefineData(pointer_data);
+            variable define_name = NodeDefineData->name(define_data);
+            variable define_type = NodeDefineData->type(define_data);
+            
+            if string_length=(define_type, "*function", 9) {
+                autobuffer_array8_set(&(function_locations_array), @cast_whole_8(hashmap_string_get(&(define_values_map), define_name)), instructions_index);
+            };
             done_anything = true;
         } else if =(id, NODE_STARTIFBLOCK) {
             done_anything = true;
@@ -1616,6 +1681,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     };
 
     variable main_index = hashmap_string_get(&(function_locations_map), "main");
+    if =(main_index, 0) {
+        variable main_function_index = @cast_whole_8(hashmap_string_get(&(define_values_map), "main"));
+        main_index = autobuffer_array8_get(&(function_locations_array), main_function_index);
+    };
     set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
 
     variable start_address = 4194304;
@@ -1637,6 +1706,19 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
         variable push_function_name = @cast_*(autobuffer_array8_get(&(push_function_targets), i));
 
         variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), push_function_name));
+
+        variable value_new = +(function_index, 232);
+
+        set_control_flow_value_absolute(&(instructions_buffer), +(push_function_instruction2, 1), +(start_address, value_new));
+        i = +(i, 1);
+    };
+
+    variable i = 0;
+    while <(i, push_function_index2) {
+        variable push_function_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(push_functions2), i));
+        variable push_function_id = @cast_whole_8(autobuffer_array8_get(&(push_function_targets2), i));
+
+        variable function_index = @cast_InstructionIndex(autobuffer_array8_get(&(function_locations_array), push_function_id));
 
         variable value_new = +(function_index, 232);
 
