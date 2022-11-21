@@ -241,6 +241,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             copy(structure_name, allocated, length(structure_name));
             copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
 
+            variable allocated2 = brk_allocate(+(length(structure_name), 2));
+            copy(structure_name, allocated2, length(structure_name));
+            copy("<", @cast_*(+(allocated2, length(structure_name))), 1);
+
             variable allocated_contents0 = autobuffer_new(8388608);
             variable allocated_contents01 = &(allocated_contents0);
             variable allocated_contents02 = autobuffer_new(8388608);
@@ -292,11 +296,17 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents03));
             hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+            hashmap_string_put(&(memory_function_instructions_map), allocated2, AutoBuffer->buffer(allocated_contents03));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated2, contents_index2);
 
             // Getter for whole value
             variable allocated = brk_allocate(+(length(structure_name), 3));
             copy(structure_name, allocated, length(structure_name));
             copy("->", @cast_*(+(allocated, length(structure_name))), 2);
+
+            variable allocated2 = brk_allocate(+(length(structure_name), 2));
+            copy(structure_name, allocated2, length(structure_name));
+            copy(">", @cast_*(+(allocated2, length(structure_name))), 1);
 
             variable allocated_contents1 = autobuffer_new(131072);
             variable allocated_contents11 = &(allocated_contents1);
@@ -344,6 +354,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents13));
             hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+            hashmap_string_put(&(memory_function_instructions_map), allocated2, AutoBuffer->buffer(allocated_contents13));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated2, contents_index2);
 
             variable allocated_contents1 = autobuffer_new(131072);
             variable allocated_contents11 = &(allocated_contents1);
@@ -395,6 +407,10 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             copy(structure_name, allocated, length(structure_name));
             copy("->0", @cast_*(+(allocated, length(structure_name))), 3);
 
+            variable allocated2 = brk_allocate(+(length(structure_name), 3));
+            copy(structure_name, allocated2, length(structure_name));
+            copy(">0", @cast_*(+(allocated2, length(structure_name))), 2);
+
             variable allocated_contents1 = autobuffer_new(131072);
             variable allocated_contents11 = &(allocated_contents1);
             variable allocated_contents12 = autobuffer_new(131072);
@@ -440,6 +456,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents13));
             hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+            hashmap_string_put(&(memory_function_instructions_map), allocated2, AutoBuffer->buffer(allocated_contents13));
+            hashmap_string_put(&(memory_function_instruction_sizes_map), allocated2, contents_index2);
 
             variable member_names = NodeStructureData->item_names(structure_data);
             variable member_types = NodeStructureData->item_types(structure_data);
@@ -457,6 +475,12 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 copy("->", @cast_*(+(+(allocated, length(structure_name)), 1)), 2);
                 copy(member_name, @cast_*(+(+(allocated, +(length(structure_name), 2)), 1)), length(member_name));
 
+                variable allocated2 = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
+                copy("*", allocated2, 1);
+                copy(structure_name, @cast_*(+(allocated2, 1)), length(structure_name));
+                copy(">", @cast_*(+(+(allocated2, length(structure_name)), 1)), 1);
+                copy(member_name, @cast_*(+(+(allocated2, +(length(structure_name), 1)), 1)), length(member_name));
+
                 variable allocated_contents4 = autobuffer_new(131072);
                 variable allocated_contents41 = &(allocated_contents4);
                 variable allocated_contents42 = autobuffer_new(131072);
@@ -470,6 +494,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
                 hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents43));
                 hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
+                hashmap_string_put(&(memory_function_instructions_map), allocated2, AutoBuffer->buffer(allocated_contents43));
+                hashmap_string_put(&(memory_function_instruction_sizes_map), allocated2, contents_index2);
 
                 // Setter for individual members
                 variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
@@ -646,7 +672,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             j = +(j, 1);
         };
 
-        autobuffer_array8_set(&(function_local_sizes_array), define_function_index, total);
+        autobuffer_array8_set(&(function_local_sizes_array), i, total);
         i = +(i, 1);
     };
 
@@ -671,6 +697,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
+
+        //print_node_info(nodes, i);
 
         variable done_anything = false;
 
@@ -1389,7 +1417,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 variable j = 0;
                 while true {
                     // changed from 'variable_index' to 'scope_variable_index', appears to fix a bug
-                    if !(<(j, scope_variable_index)) {
+                    if !(<(j, variable_index)) {
                         break;
                     } else if !(|(!(string=(variable_name, @cast_*(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
                         break;

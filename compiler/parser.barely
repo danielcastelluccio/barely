@@ -954,6 +954,7 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
     variable nodes_index_cached = Nodes->index(nodes);
 
     variable last_id = nodes_get_id(nodes, -(nodes_index_cached, 1));
+    //variable last_is_specifier = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(nodes_index_cached, 1))));
     variable last_name = NodeRetrieveData->name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(nodes_index_cached, 1))));
 
     parse_invoke_parenthesis_ending(tokens, index, nodes_in, is_target_internal_function);
@@ -1056,10 +1057,19 @@ function parse_expression(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *N
         increment_whole_8_pointer(index_pointer, 1);
         parse_expression(tokens, index_pointer, nodes_in, is_target_internal_function);
 
-        Nodes<-index(nodes_in, -(Nodes->index(nodes_in), 2));
+        Nodes<-index(nodes_in, -(Nodes->index(nodes_in), 1));
 
-        variable invoke_retrieve_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes_in, Nodes->index(nodes_in)));
-        variable name = NodeRetrieveData->name(invoke_retrieve_data);
+        variable name: *;
+
+        if =(nodes_get_id(nodes_in, Nodes->index(nodes_in)), NODE_INVOKE_POINTER) {
+            Nodes<-index(nodes_in, -(Nodes->index(nodes_in), 1));
+            variable invoke_retrieve_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes_in, Nodes->index(nodes_in)));
+            // bug w/ using this, not popping stuff off properly
+            name = NodeRetrieveData->name(invoke_retrieve_data);
+        } else {
+            variable invoke_retrieve_data = @cast_*NodeInvokeData(nodes_get_pointer_data(nodes_in, Nodes->index(nodes_in)));
+            name = NodeInvokeData->name(invoke_retrieve_data);
+        };
 
         copy(added, +(AutoBuffer->buffer(&(Nodes->buffer(nodes_in))), *(Nodes->index(nodes_in), NODE_SIZE)), added_size);
         Nodes<-index(nodes_in, +(Nodes->index(nodes_in), /(added_size, NODE_SIZE)));

@@ -20,6 +20,11 @@ function is_type2(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap): boo
         return string=(defined, wanted);
     };
 
+    defined = @cast_*(hashmap_string_get(&(defines_map), wanted));
+    if !(=(defined, 0)) {
+        return string=(defined, given);
+    };
+
     if string_length=(wanted, "any_", 4) {
         variable size = to_number(@cast_*(+(wanted, 4)));
         return =(size, get_size_linux_x86-642(given, nodes));
@@ -257,9 +262,10 @@ function type_check(nodes: *Nodes) {
             done_anything = true;
         } else if =(id, NODE_INVOKE) {
             variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+            variable has_specifier = NodeInvokeData->has_specifier(invoke_data);
             variable function_name = NodeInvokeData->name(invoke_data);
 
-            if string_length=(function_name, "@cast_", 6) {
+            if &&(!(has_specifier), string_length=(function_name, "@cast_", 6)) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     println("Cast ran out of stack values");
@@ -280,7 +286,7 @@ function type_check(nodes: *Nodes) {
                 };
 
                 autobuffer_stack8_push(&(stack), &(stack_pointer), to_push);
-            } else if string=(function_name, "+") {
+            } else if &&(!(has_specifier), string=(function_name, "+")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '+' ran out of stack values");
@@ -307,7 +313,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, "-") {
+            } else if &&(!(has_specifier), string=(function_name, "-")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '-' ran out of stack values");
@@ -334,7 +340,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, "*") {
+            } else if &&(!(has_specifier), string=(function_name, "*")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '*' ran out of stack values");
@@ -361,7 +367,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, "/") {
+            } else if &&(!(has_specifier), string=(function_name, "/")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '/' ran out of stack values");
@@ -388,7 +394,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, "%") {
+            } else if &&(!(has_specifier), string=(function_name, "%")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '%' ran out of stack values");
@@ -415,7 +421,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, "=") {
+            } else if &&(!(has_specifier), string=(function_name, "=")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '=' ran out of stack values");
@@ -442,7 +448,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, ">") {
+            } else if &&(!(has_specifier), string=(function_name, ">")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '>' ran out of stack values");
@@ -469,7 +475,7 @@ function type_check(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData<-name(invoke_data, AutoBuffer->buffer(&(new_+_name)));
-            } else if string=(function_name, "<") {
+            } else if &&(!(has_specifier), string=(function_name, "<")) {
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '<' ran out of stack values");
@@ -1140,7 +1146,7 @@ function type_check(nodes: *Nodes) {
                         variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                         variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
 
-                        if !(is_type(wanted, given, nodes)) {
+                        if !(is_type2(wanted, given, nodes, defines_map)) {
                             println(wanted);
 
                             print_node_error_beginning(nodes, i);
