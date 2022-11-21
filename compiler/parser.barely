@@ -350,7 +350,7 @@ function print_token_error_beginning(tokens: *Tokens, location: whole_8) {
     print(": ");
 };
 
-function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
     variable index = whole_8->(index_pointer);
     variable name_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData->name(name_token_pointer_data);
@@ -364,12 +364,13 @@ function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
         3
     };
 
-    variable value: *;
     if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
         variable value_token_pointer_data = @cast_*TokenNumberData(tokens_get_pointer_data(tokens, +(index, value_offset)));
 
-        value = brk_allocate(8);
+        variable value = brk_allocate(8);
         whole_8<-(@cast_*whole_8(value), TokenNumberData->value(value_token_pointer_data));
+    } else {
+        
     };
 
     if =(type, 0) {
@@ -381,9 +382,14 @@ function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable define_node_data = @cast_*NodeDefineData(nodes_append_data(nodes, NODE_DEFINE, get_token_location_data(tokens, whole_8->(index_pointer))));
     NodeDefineData<-name(define_node_data, name);
     NodeDefineData<-type(define_node_data, type);
-    NodeDefineData<-data(define_node_data, value);
+    //NodeDefineData<-data(define_node_data, value);
 
-    increment_whole_8_pointer(index_pointer, +(value_offset, 2));
+    increment_whole_8_pointer(index_pointer, value_offset);
+
+    parse_individual(tokens, index_pointer, nodes, is_target_internal_function);
+
+    variable _ = nodes_append(nodes, NODE_ENDDEFINE, get_token_location_data(tokens, whole_8->(index_pointer)))
+    increment_whole_8_pointer(index_pointer, 1);
 };
 
 function parse_global(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
@@ -1059,33 +1065,38 @@ function parse_multiple(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes,
     };
 };
 
+function parse_individual(tokens: *Tokens, index, *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+    variable id = tokens_get_id(tokens, whole_8->(index));
+    if =(id, TOKEN_KEYWORD) {
+        variable keyword_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, whole_8->(index)));
+        variable keyword = TokenKeywordData->keyword(keyword_data);
+
+        if string=(keyword, "function") {
+            parse_function(tokens, index, nodes, is_target_internal_function);
+        };
+
+        if string=(keyword, "structure") {
+            parse_structure(tokens, index, nodes);
+        };
+
+        if string=(keyword, "global") {
+            parse_global(tokens, index, nodes);
+        };
+
+        if string=(keyword, "define") {
+            parse_define(tokens, index, nodes, is_target_internal_function);
+        };
+    } else {
+        parse_expression(tokens, index, nodes, is_target_internal_function);
+    };
+};
+
 function parse(tokens: *Tokens, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
     variable index = 0;
     
     variable tokens_count = Tokens->index(tokens);
     while <(index, tokens_count) {
-        variable id = tokens_get_id(tokens, index);
-
-        if =(id, TOKEN_KEYWORD) {
-            variable keyword_data = @cast_*TokenKeywordData(tokens_get_pointer_data(tokens, index));
-            variable keyword = TokenKeywordData->keyword(keyword_data);
-
-            if string=(keyword, "function") {
-                parse_function(tokens, &(index), nodes, is_target_internal_function);
-            };
-
-            if string=(keyword, "structure") {
-                parse_structure(tokens, &(index), nodes);
-            };
-
-            if string=(keyword, "global") {
-                parse_global(tokens, &(index), nodes);
-            };
-
-            if string=(keyword, "define") {
-                parse_define(tokens, &(index), nodes);
-            };
-        };
+        parse_individual(tokens, &(index), nodes, is_target_internal_function);
     };
 };
 

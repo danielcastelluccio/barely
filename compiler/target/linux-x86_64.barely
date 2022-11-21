@@ -197,7 +197,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
             variable define_value: any_8;
             if string=(define_type, "whole_8") {
-                define_value = @cast_whole_8(any_8->(@cast_*any_8(NodeDefineData->data(define_data))));
+                define_value = NodeNumberData->value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
             } else {
                 println("unknown define type");
             };
@@ -1603,6 +1603,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
         } else if =(id, NODE_ENDIFBLOCK) {
             done_anything = true;
         } else if =(id, NODE_ENDSTATEMENT) {
+            done_anything = true;
+        } else if =(id, NODE_ENDDEFINE) {
             done_anything = true;
         } else {
             print("Unhandled ");

@@ -162,6 +162,7 @@ function type_check(nodes: *Nodes) {
 
         if =(id, NODE_FUNCTION) {
             current_function = NodeFunctionData->name(@cast_*NodeFunctionData(pointer_data));
+            stack_pointer = 0;
             done_anything = true;
         } else if =(id, NODE_NUMBER) {
             variable number_data = @cast_*NodeNumberData(pointer_data);
@@ -1128,6 +1129,8 @@ function type_check(nodes: *Nodes) {
         } else if =(id, NODE_GLOBAL) {
             done_anything = true;
         } else if =(id, NODE_DEFINE) {
+            done_anything = true;
+        } else if =(id, NODE_ENDDEFINE) {
             done_anything = true;
         } else if =(id, NODE_ENDSTATEMENT) {
             if !(=(stack_pointer, 0)) {
