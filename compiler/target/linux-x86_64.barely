@@ -529,7 +529,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                     };
                 };
 
-                autobuffer_push_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, size);
+                autobuffer_push_add_register8_whole_8(allocated_contents23, &(contents_index2), RSP, +(size, 8));
 
                 hashmap_string_put(&(memory_function_instructions_map), allocated, AutoBuffer->buffer(allocated_contents23));
                 hashmap_string_put(&(memory_function_instruction_sizes_map), allocated, contents_index2);
@@ -1248,7 +1248,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             variable scope_variable_index = @cast_whole_8(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
-                variable size = get_size_linux_x86-642(variable_type, nodes);
+                variable size = get_size_linux_x86-643(variable_type, nodes, define_values_map, structure_members_array);
 
                 variable location = 0;
                 variable j = 0;
@@ -1388,7 +1388,8 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                 variable location = 0;
                 variable j = 0;
                 while true {
-                    if !(<(j, variable_index)) {
+                    // changed from 'variable_index' to 'scope_variable_index', appears to fix a bug
+                    if !(<(j, scope_variable_index)) {
                         break;
                     } else if !(|(!(string=(variable_name, @cast_*(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
                         break;
@@ -1913,7 +1914,7 @@ function get_size_linux_x86-643(type: *, nodes: *Nodes, define_values_map: HashM
     if !(=(defined_value, 999)) {
         variable member_types = @cast_*(autobuffer_array8_get(&(structure_members_array), defined_value));
 
-        variable size = get_size_multiple_linux_x86-642(member_types, 999, nodes);
+        variable size = get_size_multiple_linux_x86-643(member_types, 999, nodes, define_values_map, structure_members_array);
         hashmap_string_put(&(cached_sizes_map), type, size);
         return size;
     };
