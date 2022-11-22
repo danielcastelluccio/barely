@@ -635,17 +635,12 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
             hashmap_string_put(&(define_types_map), define_name, define_type);
 
             variable define_value: any_8;
-            if string=(define_type, "whole_8") {
-                define_value = NodeNumberData->value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
-            } else if string_length=(define_type, "*function", 9) {
+            if string_length=(define_type, "*function", 9) {
                 define_value = define_function_index;
             } else if string_length=(define_type, "structure", 9) {
                 define_value = define_structure_index;
             } else {
-                print("unknown define type '");
-                print(define_type);
-                println("'");
-                exit(1);
+                define_value = NodeNumberData->value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
             };
 
             hashmap_string_put(&(define_values_map), define_name, define_value);
@@ -1569,11 +1564,7 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
 
                             variable define_value = hashmap_string_get(&(define_values_map), variable_name);
 
-                            if string=(variable_type, "whole_8") {
-                                autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, @cast_whole_8(define_value));
-                                autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
-                                autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
-                            } else if string_length=(variable_type, "*function", 9) {
+                            if string_length=(variable_type, "*function", 9) {
                                 variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
                                 autobuffer_array8_set(&(push_functions2), push_function_index2, push_function_instruction);
                                 autobuffer_array8_set(&(push_function_targets2), push_function_index2, define_value);
@@ -1581,7 +1572,18 @@ function output_linux_x86-64_elf(nodes: *Nodes, output_file: *) {
                                 push_function_index2 = +(push_function_index2, 1);
                             } else if string_length=(variable_type, "structure", 9) {
                             } else {
-                                println("undefined define reference type");
+                                variable size = get_size_linux_x86-643(variable_type, nodes, define_values_map, structure_members_array);
+                                if =(size, 8) {
+                                    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, @cast_whole_8(define_value));
+                                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
+                                    autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
+                                } else if =(size, 1) {
+                                    autobuffer_push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, whole_8_to_whole_1(@cast_whole_8(define_value)));
+                                    autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
+                                    autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
+                                } else {
+                                    println("no size");
+                                };
                             };
                         } else {
                             if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {

@@ -34,6 +34,9 @@ function tokenize_inner(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *,
     if string=(buffer, "define") {
         is_keyword = true;
     };
+    if string=(buffer, "constant") {
+        is_keyword = true;
+    };
     if string=(buffer, "break") {
         is_keyword = true;
     };
@@ -366,7 +369,7 @@ function parse_define(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, i
     variable name = TokenNameData->name(name_token_pointer_data);
 
     variable type = @cast_*(0);
-    variable value_offset = if =(tokens_get_location_data(tokens, +(index, 2)), TOKEN_COLON) {
+    variable value_offset = if =(tokens_get_id(tokens, +(index, 2)), TOKEN_COLON) {
         variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 3)));
         type = TokenNameData->name(type_token_pointer_data);
         5
@@ -1356,7 +1359,14 @@ function parse_individual(tokens: *Tokens, index, *whole_8, nodes: *Nodes, is_ta
         if string=(keyword, "define") {
             parse_define(tokens, index, nodes, is_target_internal_function);
         };
+
+        //just here until we remove all 'constant' from compiler
+        if string=(keyword, "constant") {
+            parse_define(tokens, index, nodes, is_target_internal_function);
+        };
     } else {
+        print_token_error_beginning(tokens, whole_8->(index));
+        println("");
         parse_expression(tokens, index, nodes, is_target_internal_function);
     };
 };
