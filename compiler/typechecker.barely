@@ -123,6 +123,8 @@ define type_check = function(nodes: *Nodes) {
     variable globals_map = hashmap_new(512);
     variable defines_map = hashmap_new(512);
 
+    variable define_values_map = hashmap_new(512);
+
     variable structure_members_array = autobuffer_new(1024);
     variable structure_member_names_array = autobuffer_new(1024);
 
@@ -130,6 +132,7 @@ define type_check = function(nodes: *Nodes) {
 
     variable function_id = 0;
 
+    variable define_function_index = 0;
     variable define_structure_index = 0;
     
     variable i = 0;
@@ -190,10 +193,22 @@ define type_check = function(nodes: *Nodes) {
             variable define_type = NodeDefineData.>type(define_data);
 
             hashmap_string_put(&(defines_map), define_name, define_type);
+            //println(define_name);
 
             if &&(string=(define_name, "main"), string_length=(define_type, "*function[", 10)) {
                 has_main = true;
             };
+
+            variable define_value: any_8;
+            if string_length=(define_type, "*function", 9) {
+                define_value = define_function_index;
+            } else if string_length=(define_type, "structure", 9) {
+                define_value = define_structure_index;
+            } else {
+                define_value = NodeNumberData.>value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
+            };
+
+            hashmap_string_put(&(define_values_map), define_name, define_value);
         };
 
         i = +(i, 1);
@@ -280,7 +295,7 @@ define type_check = function(nodes: *Nodes) {
                 variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable to_push = @cast_*(+(function_name, 6));
 
-                if !(=(get_size_linux_x86-643(popped, nodes, defines_map, structure_members_array), get_size_linux_x86-643(to_push, nodes, defines_map, structure_members_array))) {
+                if !(=(get_size_linux_x86-643(popped, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(to_push, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Cast wants equal sized types, given '");
                     print(popped);
@@ -301,7 +316,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '+' wants matching arguments, given '");
                     print(first);
@@ -328,7 +343,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '-' wants matching arguments, given '");
                     print(first);
@@ -355,7 +370,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '*' has incompatable arguments, given '");
                     print(first);
@@ -382,7 +397,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '/' has incompatable arguments, given '");
                     print(first);
@@ -409,7 +424,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '%' has incompatable arguments, given '");
                     print(first);
@@ -436,7 +451,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '=' has incompatable arguments, given '");
                     print(first);
@@ -463,7 +478,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '>' has incompatable arguments, given '");
                     print(first);
@@ -490,7 +505,7 @@ define type_check = function(nodes: *Nodes) {
                 variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, defines_map, structure_members_array), get_size_linux_x86-643(second, nodes, defines_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '<' has incompatable arguments, given '");
                     print(first);
@@ -1152,8 +1167,6 @@ define type_check = function(nodes: *Nodes) {
                         variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
 
                         if !(is_type2(wanted, given, nodes, defines_map)) {
-                            println(wanted);
-
                             print_node_error_beginning(nodes, i);
                             print("Invoke of '");
 

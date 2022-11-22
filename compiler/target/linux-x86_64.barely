@@ -59,9 +59,6 @@ define is_internal_function_linux_x86-64 = function(name: *): boolean {
     return string_length=(name, "@syscall", 8);
 };
 
-global define_function_index: whole_8;
-global define_structure_index: whole_8;
-
 define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
     variable output = autobuffer_new(512);
 
@@ -139,6 +136,9 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     variable define_types_map = hashmap_new(512);
     variable define_values_map = hashmap_new(512);
+
+    variable define_function_index = 0;
+    variable define_structure_index = 0;
 
     variable memory_function_instructions_map = hashmap_new(1024);
     variable memory_function_instruction_sizes_map = hashmap_new(1024);
@@ -1232,7 +1232,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 autobuffer_push_pop_register8(&(instructions_buffer), &(instructions_index), RAX);
                 autobuffer_push_call_far_register8(&(instructions_buffer), &(instructions_index), RAX);
 
-                autobuffer_array8_set(&(push_functions), push_function_index, push_function_instruction);
+                // hack, should not need to cast
+                autobuffer_array8_set(&(push_functions), push_function_index, @cast_any_8(push_function_instruction));
                 autobuffer_array8_set(&(push_function_targets), push_function_index, function_name);
 
                 push_function_index = +(push_function_index, 1);
@@ -1579,7 +1580,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
                             if string_length=(variable_type, "*function", 9) {
                                 variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
-                                autobuffer_array8_set(&(push_functions2), push_function_index2, push_function_instruction);
+                                autobuffer_array8_set(&(push_functions2), push_function_index2, @cast_any_8(push_function_instruction));
                                 autobuffer_array8_set(&(push_function_targets2), push_function_index2, define_value);
 
                                 push_function_index2 = +(push_function_index2, 1);
@@ -1601,7 +1602,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                         } else {
                             if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
                                 variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
-                                autobuffer_array8_set(&(push_functions), push_function_index, push_function_instruction);
+                                autobuffer_array8_set(&(push_functions), push_function_index, @cast_any_8(push_function_instruction));
                                 autobuffer_array8_set(&(push_function_targets), push_function_index, variable_name);
 
                                 push_function_index = +(push_function_index, 1);
@@ -1701,7 +1702,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             };
 
             variable jump_instruction = autobuffer_push_je_near(&(instructions_buffer), &(instructions_index));
-            autobuffer_array8_set(&(jes), je_index, jump_instruction);
+            autobuffer_array8_set(&(jes), je_index, @cast_any_8(jump_instruction));
             autobuffer_array8_set(&(je_targets), je_index, target);
 
             je_index = +(je_index, 1);
@@ -1711,7 +1712,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             variable target = NodeJumpData.>target_id(jump_data);
 
             variable jump_instruction = autobuffer_push_jmp_near(&(instructions_buffer), &(instructions_index));
-            autobuffer_array8_set(&(jmps), jmp_index, jump_instruction);
+            autobuffer_array8_set(&(jmps), jmp_index, @cast_any_8(jump_instruction));
             autobuffer_array8_set(&(jmp_targets), jmp_index, target);
 
             jmp_index = +(jmp_index, 1);
@@ -1720,7 +1721,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             variable target_data = @cast_*NodeTargetData(pointer_data);
             variable target = NodeTargetData.>id(target_data);
             
-            autobuffer_array8_set(&(targets), target, get_instruction(&(instructions_buffer), &(instructions_index)));
+            autobuffer_array8_set(&(targets), target, @cast_any_8(get_instruction(&(instructions_buffer), &(instructions_index))));
             done_anything = true;
         } else if =(id, NODE_SCOPE) {
             variable new_hashmap = hashmap_new(512);
@@ -1990,6 +1991,7 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
             i = +(i, 1);
         };
 
+        hashmap_string_put(&(cached_sizes_map), type, total);
         return total;
     };
 
