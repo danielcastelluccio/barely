@@ -188,11 +188,11 @@ define print_whole_8 = function(whole_8: whole_8) {
     print(&(buffer));
 };
 
-structure HashMap {
+define HashMap = structure {
     buffer: AutoBuffer;
 };
 
-structure BucketData {
+define BucketData = structure {
     data: whole_8;
     hash: whole_8;
     value: any_8;
@@ -203,13 +203,13 @@ define hashmap_new = function(size: whole_8): HashMap {
 
     variable buffer = autobuffer_new(size);
 
-    HashMap<-buffer(&(hashmap), buffer);
+    HashMap.<buffer(&(hashmap), buffer);
 
     return hashmap;
 };
 
 define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
-    variable buffer = &(HashMap->buffer(hashmap));
+    variable buffer = &(HashMap.>buffer(hashmap));
 
     variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
     if =(bucket_pointer, 0) {
@@ -234,13 +234,13 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
     };
 
     variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
-    BucketData<-data(bucket_data, 1);
-    BucketData<-hash(bucket_data, hash);
-    BucketData<-value(bucket_data, value);
+    BucketData.<data(bucket_data, 1);
+    BucketData.<hash(bucket_data, hash);
+    BucketData.<value(bucket_data, value);
 };
 
 define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    variable buffer = &(HashMap->buffer(hashmap));
+    variable buffer = &(HashMap.>buffer(hashmap));
 
     variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
@@ -248,8 +248,8 @@ define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
             variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
 
-            if =(BucketData->hash(bucket_data), hash) {
-                return BucketData->value(bucket_data);
+            if =(BucketData.>hash(bucket_data), hash) {
+                return BucketData.>value(bucket_data);
             };
 
             i = +(i, 1);
@@ -260,7 +260,7 @@ define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
 };
 
 define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    variable buffer = &(HashMap->buffer(hashmap));
+    variable buffer = &(HashMap.>buffer(hashmap));
 
     variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
@@ -268,8 +268,8 @@ define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
             variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
 
-            if =(BucketData->hash(bucket_data), hash) {
-                return BucketData->value(bucket_data);
+            if =(BucketData.>hash(bucket_data), hash) {
+                return BucketData.>value(bucket_data);
             };
 
             i = +(i, 1);

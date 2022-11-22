@@ -6,25 +6,25 @@ constant TOKEN_COMMA: whole_8 = 4;
 constant TOKEN_SEMICOLON: whole_8 = 5;
 constant TOKEN_KEYWORD: whole_8 = 6;
 
-structure TokenKeywordData {
+define TokenKeywordData = structure {
     keyword: *;
 };
 
 constant TOKEN_NAME: whole_8 = 7;
 
-structure TokenNameData {
+define TokenNameData = structure {
     name: *;
 };
 
 constant TOKEN_STRING: whole_8 = 8;
 
-structure TokenStringData {
+define TokenStringData = structure {
     value: *;
 };
 
 constant TOKEN_NUMBER: whole_8 = 9;
 
-structure TokenNumberData {
+define TokenNumberData = structure {
     value: whole_8;
     type: whole_8;
     size: whole_8;
@@ -34,7 +34,7 @@ constant TOKEN_COLON: whole_8 = 10;
 
 constant TOKEN_BOOLEAN: whole_8 = 11;
 
-structure TokenBooleanData {
+define TokenBooleanData = structure {
     value: boolean;
 };
 
@@ -44,26 +44,26 @@ constant TOKEN_PERIOD: whole_8 = 14;
 
 constant TOKEN_SIZE: whole_8 = 56;
 
-structure TokenLocationData {
+define TokenLocationData = structure {
     file: *;
     row: whole_8;
     column: whole_8;
 };
 
 define tokens_get_id = function(tokens: *Tokens, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
+    return autobuffer_get_whole_8(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
 define tokens_get_pointer = function(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
+    return autobuffer_get(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
 define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 32));
+    return autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 32));
 };
 
 define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
-    return @cast_*TokenLocationData(autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
+    return @cast_*TokenLocationData(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
 };
 
 define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
@@ -71,8 +71,8 @@ define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *,
 };
 
 define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    variable tokens_buffer = &(Tokens->buffer(tokens));
-    variable tokens_index = &(Tokens->index(tokens));
+    variable tokens_buffer = &(Tokens.>buffer(tokens));
+    variable tokens_index = &(Tokens.>index(tokens));
     autobuffer_register(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
     variable to_return = autobuffer_get(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE));
 
