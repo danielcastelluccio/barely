@@ -3,7 +3,7 @@ global empty: any_8;
 global cached_sizes_map: HashMap;
 global cached_signedness_map: HashMap;
 
-function main(arguments: **, argument_count: whole_8) {
+define main = function(arguments: **, argument_count: whole_8) {
     println("Parsing...");
 
     variable nodes = nodes_new();
@@ -384,7 +384,7 @@ function main(arguments: **, argument_count: whole_8) {
     output_linux_x86-64_elf(&(nodes), output_file);
 };
 
-function get_structure_string_type(pointer: *NodeStructureData): * {
+define get_structure_string_type = function(pointer: *NodeStructureData): * {
     variable main_name_buffer = autobuffer_new(16);
     variable main_name_index = 0;
 
@@ -413,7 +413,7 @@ structure Nodes {
     index: whole_8;
 };
 
-function nodes_new(): Nodes {
+define nodes_new = function(): Nodes {
     variable nodes: Nodes;
 
     Nodes<-buffer(&(nodes), autobuffer_new(131072));
@@ -422,7 +422,7 @@ function nodes_new(): Nodes {
     return nodes;
 };
 
-function add_basic_internal_functions(nodes: *Nodes) {
+define add_basic_internal_functions = function(nodes: *Nodes) {
     // Just the internal functions that don't have more advanced argument types. (like '+' which can add many different sizes)
     variable function_arguments = autobuffer_new(24);
     autobuffer_array8_set(&(function_arguments), 0, "boolean");
@@ -444,7 +444,7 @@ structure Tokens {
     index: whole_8;
 };
 
-function tokens_new(): Tokens {
+define tokens_new = function(): Tokens {
     variable tokens: Tokens;
 
     Tokens<-buffer(&(tokens), autobuffer_new(131072));
@@ -453,7 +453,7 @@ function tokens_new(): Tokens {
     return tokens;
 };
 
-function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer, already_included_index: *whole_8, is_target_internal_function: *function[*:boolean]) {
+define include_file = function(file_name: *, nodes: *Nodes, already_included: *AutoBuffer, already_included_index: *whole_8, is_target_internal_function: *function[*:boolean]) {
     variable nodes_index = &(Nodes->index(nodes));
     variable tokens = tokens_new();
 
@@ -468,7 +468,7 @@ function include_file(file_name: *, nodes: *Nodes, already_included: *AutoBuffer
     autobuffer_stack8_push(already_included, already_included_index, file_name);
 };
 
-function get_contents(name: *): * {
+define get_contents = function(name: *): * {
     variable descriptor = sys_open(name, O_RDONLY, 0);
 
     variable stat: Stat;

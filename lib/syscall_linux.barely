@@ -25,19 +25,19 @@ constant SYS_EXIT: whole_8 = 60;
 
 constant SYS_MKDIR: whole_8 = 83;
 
-function sys_read(fd: whole_8, buffer: *, length: whole_8) {
+define sys_read = function(fd: whole_8, buffer: *, length: whole_8) {
     variable _: any_8 = @syscall3(SYS_READ, fd, buffer, length);
 };
 
-function sys_write(fd: whole_8, buffer: *, length: whole_8) {
+define sys_write = function(fd: whole_8, buffer: *, length: whole_8) {
     variable _: any_8 = @syscall3(SYS_WRITE, fd, buffer, length);
 };
 
-function sys_open(path: *, flags: whole_8, mode: whole_8): whole_8 {
+define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
     return @cast_whole_8(@syscall3(SYS_OPEN, path, flags, mode));
 };
 
-function sys_close(fd: whole_8) {
+define sys_close = function(fd: whole_8) {
     variable _: any_8 = @syscall1(SYS_CLOSE, fd);
 };
 
@@ -47,30 +47,30 @@ structure Stat {
     nonsense_1: any_88;
 };
 
-function sys_stat(name: *, buffer: *Stat) {
+define sys_stat = function(name: *, buffer: *Stat) {
     variable _ = @syscall2(SYS_STAT, name, buffer);
 };
 
-function sys_fstat(fd: whole_8, buffer: *Stat) {
+define sys_fstat = function(fd: whole_8, buffer: *Stat) {
     variable _ = @syscall2(SYS_FSTAT, fd, buffer);
 };
 
-function sys_brk(location: *): * {
+define sys_brk = function(location: *): * {
     return @cast_*(@syscall1(SYS_BRK, location));
 };
 
-function sys_fork(): whole_8 {
+define sys_fork = function(): whole_8 {
     return @cast_whole_8(@syscall0(SYS_FORK));
 };
 
-function sys_execve(file: *, args: *, env: **): whole_8 {
+define sys_execve = function(file: *, args: *, env: **): whole_8 {
     return @cast_whole_8(@syscall3(SYS_EXECVE, file, args, env));
 };
 
-function sys_exit(code: whole_8) {
+define sys_exit = function(code: whole_8) {
     variable _ = @syscall1(SYS_EXIT, code);
 };
 
-function sys_mkdir(path: *, mode: whole_8) {
+define sys_mkdir = function(path: *, mode: whole_8) {
     variable _ = @syscall2(SYS_MKDIR, path, mode);
 };

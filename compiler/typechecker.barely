@@ -1,4 +1,4 @@
-function is_type2(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap): boolean {
+define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap): boolean {
     if string=(wanted, given) {
         return true;
     };
@@ -33,7 +33,7 @@ function is_type2(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap): boo
     return false;
 };
 
-function is_type(wanted: *, given: *, nodes: *Nodes): boolean {
+define is_type = function(wanted: *, given: *, nodes: *Nodes): boolean {
     if string=(wanted, given) {
         return true;
     };
@@ -52,7 +52,7 @@ function is_type(wanted: *, given: *, nodes: *Nodes): boolean {
     return false;
 };
 
-function is_signed(type: *, nodes: *Nodes): whole_8 {
+define is_signed = function(type: *, nodes: *Nodes): whole_8 {
     variable cached_signedness = @cast_whole_8(hashmap_string_get2(&(cached_signedness_map), type));
     if !(=(cached_signedness, 999)) {
         return cached_signedness;
@@ -95,7 +95,7 @@ function is_signed(type: *, nodes: *Nodes): whole_8 {
     return 0;
 };
 
-function print_node_error_beginning(nodes: *Nodes, location: whole_8) {
+define print_node_error_beginning = function(nodes: *Nodes, location: whole_8) {
     variable location_data = nodes_get_location_data(nodes, location);
     print("[ERROR] ");
     print(NodeLocationData->file(location_data));
@@ -106,7 +106,7 @@ function print_node_error_beginning(nodes: *Nodes, location: whole_8) {
     print(": ");
 };
 
-function type_check(nodes: *Nodes) {
+define type_check = function(nodes: *Nodes) {
     variable node_count = Nodes->index(nodes);
 
     variable function_arguments_array = autobuffer_new(1024);

@@ -50,27 +50,27 @@ structure TokenLocationData {
     column: whole_8;
 };
 
-function tokens_get_id(tokens: *Tokens, index: whole_8): whole_8 {
+define tokens_get_id = function(tokens: *Tokens, index: whole_8): whole_8 {
     return autobuffer_get_whole_8(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
-function tokens_get_pointer(tokens: *Tokens, index: whole_8): * {
+define tokens_get_pointer = function(tokens: *Tokens, index: whole_8): * {
     return autobuffer_get(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
-function tokens_get_pointer_data(tokens: *Tokens, index: whole_8): * {
+define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
     return autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 32));
 };
 
-function tokens_get_location_data(tokens: *Tokens, index: whole_8): *TokenLocationData {
+define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
     return @cast_*TokenLocationData(autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
 };
 
-function tokens_append_data(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
     return @cast_*(+(tokens_append(tokens, id, file_name, row, column), 32));
 };
 
-function tokens_append(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
     variable tokens_buffer = &(Tokens->buffer(tokens));
     variable tokens_index = &(Tokens->index(tokens));
     autobuffer_register(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
