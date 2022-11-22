@@ -1,6 +1,6 @@
 define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
-    variable buffer = AutoBuffer->buffer(auto_buffer);
-    variable buffer_length = length(AutoBuffer->buffer(auto_buffer));
+    variable buffer = AutoBuffer.>buffer(auto_buffer);
+    variable buffer_length = length(AutoBuffer.>buffer(auto_buffer));
 
     if =(buffer_length, 0) {
         return;
@@ -77,26 +77,26 @@ define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file
         };
 
         if =(any_1->(@cast_*any_1(buffer)), 45_whole_1) {
-            if =(length(AutoBuffer->buffer(&(type_buffer))), 0) {
+            if =(length(AutoBuffer.>buffer(&(type_buffer))), 0) {
                 autobuffer_push_pointer(&(type_buffer), &(type_buffer_index), "integer", 5);
             };
         } else {
-            if =(length(AutoBuffer->buffer(&(type_buffer))), 0) {
+            if =(length(AutoBuffer.>buffer(&(type_buffer))), 0) {
                 autobuffer_push_pointer(&(type_buffer), &(type_buffer_index), "whole", 5);
             };
         };
 
-        if =(length(AutoBuffer->buffer(&(size_buffer))), 0) {
+        if =(length(AutoBuffer.>buffer(&(size_buffer))), 0) {
             autobuffer_push_pointer(&(size_buffer), &(size_buffer_index), "8", 1);
         };
 
-        if string=(AutoBuffer->buffer(&(type_buffer)), "whole") {
+        if string=(AutoBuffer.>buffer(&(type_buffer)), "whole") {
             TokenNumberData.<type(whole_8_data, 0);
         } else {
             TokenNumberData.<type(whole_8_data, 1);
         };
 
-        variable size = to_number(AutoBuffer->buffer(&(size_buffer)));
+        variable size = to_number(AutoBuffer.>buffer(&(size_buffer)));
 
         variable size_holdable = 2;
         variable m = 1;
@@ -124,11 +124,11 @@ define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file
         if >(number, size_holdable) {
             print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
             print("Number literal '");
-            print(AutoBuffer->buffer(&(number_buffer)));
+            print(AutoBuffer.>buffer(&(number_buffer)));
             print("' cannot fit in type '");
-            print(AutoBuffer->buffer(&(type_buffer)));
+            print(AutoBuffer.>buffer(&(type_buffer)));
             print("_");
-            print(AutoBuffer->buffer(&(size_buffer)));
+            print(AutoBuffer.>buffer(&(size_buffer)));
             println("'");
             exit(1);
         };
@@ -302,9 +302,9 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
         if !(in_comment) {
             if =(any_1->(character_pointer), ASCII_QUOTATION) {
                 if in_quotes {
-                    variable buffer_length = length(AutoBuffer->buffer(&(buffer)));
+                    variable buffer_length = length(AutoBuffer.>buffer(&(buffer)));
                     variable allocated = brk_allocate(+(buffer_length, 1));
-                    copy(AutoBuffer->buffer(&(buffer)), allocated, buffer_length);
+                    copy(AutoBuffer.>buffer(&(buffer)), allocated, buffer_length);
 
                     variable string_pointer_data = @cast_*TokenStringData(tokens_append_data(tokens, TOKEN_STRING, file_name, row, column));
                     TokenStringData.<value(string_pointer_data, allocated);
@@ -432,7 +432,7 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
             autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
 
-            type = AutoBuffer->buffer(&(type_buffer));
+            type = AutoBuffer.>buffer(&(type_buffer));
         } else if &&(=(tokens_get_id(tokens, +(index, value_offset)), TOKEN_KEYWORD), string=(TokenKeywordData.>keyword(@cast_*TokenKeywordData(tokens_get_pointer_data(tokens, +(index, value_offset)))), "structure")) {
             variable index_temp = +(+(index, value_offset), 2);
 
@@ -457,7 +457,7 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
             autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
 
-            type = AutoBuffer->buffer(&(type_buffer));
+            type = AutoBuffer.>buffer(&(type_buffer));
         };
     };
 
@@ -523,8 +523,8 @@ define parse_structure2 = function(tokens: *Tokens, index_pointer: *whole_8, nod
     };
 
     variable structure_data = @cast_*NodeStructureData(nodes_append_data(nodes, NODE_STRUCTURE, get_token_location_data(tokens, whole_8->(index_pointer))));
-    NodeStructureData.<item_names(structure_data, AutoBuffer->buffer(&(member_names)));
-    NodeStructureData.<item_types(structure_data, AutoBuffer->buffer(&(member_types)));
+    NodeStructureData.<item_names(structure_data, AutoBuffer.>buffer(&(member_names)));
+    NodeStructureData.<item_types(structure_data, AutoBuffer.>buffer(&(member_types)));
 
     index = +(index, 1);
 
@@ -570,8 +570,8 @@ define parse_structure = function(tokens: *Tokens, index_pointer: *whole_8, node
 
     variable structure_data = @cast_*NodeStructureData(nodes_append_data(nodes, NODE_STRUCTURE, get_token_location_data(tokens, whole_8->(index_pointer))));
     NodeStructureData.<name(structure_data, name);
-    NodeStructureData.<item_names(structure_data, AutoBuffer->buffer(&(member_names)));
-    NodeStructureData.<item_types(structure_data, AutoBuffer->buffer(&(member_types)));
+    NodeStructureData.<item_names(structure_data, AutoBuffer.>buffer(&(member_names)));
+    NodeStructureData.<item_types(structure_data, AutoBuffer.>buffer(&(member_types)));
 
     index = +(index, 2);
 
@@ -605,7 +605,7 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
         increment_whole_8_pointer(index_pointer, 1);
     };
 
-    return AutoBuffer->buffer(&(buffer));
+    return AutoBuffer.>buffer(&(buffer));
 };
 
 define parse_function2 = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
@@ -665,9 +665,9 @@ define parse_function2 = function(tokens: *Tokens, index_pointer: *whole_8, node
 
     variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
 
-    NodeFunctionData.<argument_names(function_data, AutoBuffer->buffer(&(parameter_names_pointer)));
-    NodeFunctionData.<argument_types(function_data, AutoBuffer->buffer(&(parameter_types_pointer)));
-    NodeFunctionData.<returns(function_data, AutoBuffer->buffer(&(returns_pointer)));
+    NodeFunctionData.<argument_names(function_data, AutoBuffer.>buffer(&(parameter_names_pointer)));
+    NodeFunctionData.<argument_types(function_data, AutoBuffer.>buffer(&(parameter_types_pointer)));
+    NodeFunctionData.<returns(function_data, AutoBuffer.>buffer(&(returns_pointer)));
 
     index = +(index, 1);
 
@@ -756,9 +756,9 @@ define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes
 
     variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
 
-    NodeFunctionData.<argument_names(function_data, AutoBuffer->buffer(&(parameter_names_pointer)));
-    NodeFunctionData.<argument_types(function_data, AutoBuffer->buffer(&(parameter_types_pointer)));
-    NodeFunctionData.<returns(function_data, AutoBuffer->buffer(&(returns_pointer)));
+    NodeFunctionData.<argument_names(function_data, AutoBuffer.>buffer(&(parameter_names_pointer)));
+    NodeFunctionData.<argument_types(function_data, AutoBuffer.>buffer(&(parameter_types_pointer)));
+    NodeFunctionData.<returns(function_data, AutoBuffer.>buffer(&(returns_pointer)));
 
     index = +(index, 1);
 
@@ -961,7 +961,7 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
 
     parse_invoke_parenthesis_ending(tokens, index, nodes_in, is_target_internal_function);
 
-    autobuffer_set(&(Nodes.>buffer(nodes_in)), AutoBuffer->buffer(&(Nodes.>buffer(nodes))), *(Nodes.>index(nodes_in), NODE_SIZE), nodes_moved_size);
+    autobuffer_set(&(Nodes.>buffer(nodes_in)), AutoBuffer.>buffer(&(Nodes.>buffer(nodes))), *(Nodes.>index(nodes_in), NODE_SIZE), nodes_moved_size);
     Nodes.<index(nodes_in, +(Nodes.>index(nodes_in), /(nodes_moved_size, NODE_SIZE)));
 
     variable is_first = true;
@@ -1052,7 +1052,7 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
     if =(tokens_get_id(tokens, whole_8->(index_pointer)), TOKEN_PERIOD) {
         variable added_size = *(-(Nodes.>index(nodes_in), nodes_initial_index), NODE_SIZE);
         variable added = brk_allocate(added_size);
-        copy(+(AutoBuffer->buffer(&(Nodes.>buffer(nodes_in))), *(nodes_initial_index, NODE_SIZE)), added, added_size);
+        copy(+(AutoBuffer.>buffer(&(Nodes.>buffer(nodes_in))), *(nodes_initial_index, NODE_SIZE)), added, added_size);
 
         Nodes.<index(nodes_in, nodes_initial_index);
 
@@ -1073,7 +1073,7 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
             name = NodeInvokeData.>name(invoke_retrieve_data);
         };
 
-        copy(added, +(AutoBuffer->buffer(&(Nodes.>buffer(nodes_in))), *(Nodes.>index(nodes_in), NODE_SIZE)), added_size);
+        copy(added, +(AutoBuffer.>buffer(&(Nodes.>buffer(nodes_in))), *(Nodes.>index(nodes_in), NODE_SIZE)), added_size);
         Nodes.<index(nodes_in, +(Nodes.>index(nodes_in), /(added_size, NODE_SIZE)));
 
         variable invoke_data = @cast_*NodeInvokeData(nodes_append_data(nodes_in, NODE_INVOKE, get_token_location_data(tokens, whole_8->(index_pointer))));

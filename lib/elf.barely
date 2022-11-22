@@ -1974,20 +1974,21 @@ define autobuffer_push_zeros = function(buffer: *AutoBuffer, buffer_index_pointe
 };
 
 define new_elf64_file_header = function(): ELF64FileHeader {
-    variable header = ELF64FileHeader->0();
+    // Double hack, casting and return
+    variable header = @cast_ELF64FileHeader(ELF64FileHeader.>0());
 
     variable _ = whole_8_to_whole_4(2);
-    ELF64FileHeader<-magic(&(header), whole_8_to_whole_4(1179403647));
-    ELF64FileHeader<-header_size(&(header), whole_8_to_whole_2(64));
-    ELF64FileHeader<-program_header_size(&(header), whole_8_to_whole_2(56));
-    ELF64FileHeader<-section_header_size(&(header), whole_8_to_whole_2(64));
-    ELF64FileHeader<-version(&(header), 1_whole_1);
-    ELF64FileHeader<-version2(&(header), whole_8_to_whole_4(1));
+    ELF64FileHeader.<magic(&(header), whole_8_to_whole_4(1179403647));
+    ELF64FileHeader.<header_size(&(header), whole_8_to_whole_2(64));
+    ELF64FileHeader.<program_header_size(&(header), whole_8_to_whole_2(56));
+    ELF64FileHeader.<section_header_size(&(header), whole_8_to_whole_2(64));
+    ELF64FileHeader.<version(&(header), 1_whole_1);
+    ELF64FileHeader.<version2(&(header), whole_8_to_whole_4(1));
 
     return header;
 };
 
-structure ELF64FileHeader {
+define ELF64FileHeader = structure {
     magic: any_4;
     format: any_1;
     endianness: any_1;
@@ -2010,7 +2011,7 @@ structure ELF64FileHeader {
     section_names: any_2;
 };
 
-structure ELF64ProgramHeader {
+define ELF64ProgramHeader = structure {
     type: any_4;
     flags: any_4;
     location: any_8;

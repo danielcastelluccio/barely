@@ -211,14 +211,14 @@ define hashmap_new = function(size: whole_8): HashMap {
 define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
     variable buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if =(bucket_pointer, 0) {
         variable allocated_autobuffer = @cast_*AutoBuffer(brk_allocate(24));
         variable autobuffer = autobuffer_new(48);
-        AutoBuffer<-(allocated_autobuffer, autobuffer);
+        AutoBuffer.<(allocated_autobuffer, autobuffer);
 
         bucket_pointer = allocated_autobuffer;
-        autobuffer_set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8));
+        autobuffer_set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8));
     };
 
     variable searching = true;
@@ -242,7 +242,7 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
 define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
     variable buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
         variable i = 0;
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
@@ -262,7 +262,7 @@ define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
 define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
     variable buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer->size(buffer), 8)), 8)));
+    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
         variable i = 0;
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
