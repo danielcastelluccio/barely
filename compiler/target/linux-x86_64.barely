@@ -137,11 +137,15 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
     variable global_types_map = hashmap_new(512);
     variable global_locations_map = hashmap_new(512);
 
+    variable global_types_array = autobuffer_new(512);
+    variable global_locations_array = autobuffer_new(512);
+
     variable define_types_map = hashmap_new(512);
     variable define_values_map = hashmap_new(512);
 
     variable define_function_index = 0;
     variable define_structure_index = 0;
+    variable define_global_index = 0;
 
     variable memory_function_instructions_map = hashmap_new(1024);
     variable memory_function_instruction_sizes_map = hashmap_new(1024);
@@ -223,9 +227,16 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             variable global_name = NodeGlobalData.>name(global_data);
             variable global_type = NodeGlobalData.>type(global_data);
 
-            autobuffer_array8_set(&(globals_array), global_index, global_name);
-            hashmap_string_put(&(global_types_map), global_name, global_type);
-            global_index = +(global_index, 1);
+            if =(global_name, 0) {
+                autobuffer_array8_set(&(global_types_array), define_global_index, global_type);
+
+                define_global_index = +(define_global_index, 1);
+            } else {
+                autobuffer_array8_set(&(globals_array), global_index, global_name);
+                hashmap_string_put(&(global_types_map), global_name, global_type);
+                global_index = +(global_index, 1);
+            };
+
         } else if =(id, NODE_STRUCTURE) {
             variable structure_data = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
             variable structure_name = NodeStructureData.>name(structure_data);
@@ -255,6 +266,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 define_value = define_function_index;
             } else if string_length=(define_type, "structure", 9) {
                 define_value = define_structure_index;
+            } else if string_length=(define_type, "global", 6) {
+                define_value = define_global_index;
             } else {
                 define_value = NodeNumberData.>value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
             };
@@ -687,6 +700,16 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
     };
 
     i = 0;
+    while <(i, define_global_index) {
+        variable global_type = @cast_*(autobuffer_array8_get(&(global_types_array), i));
+
+        autobuffer_array8_set(&(global_locations_array), i, bss_index);
+
+        bss_index = +(bss_index, get_size_linux_x86-643(global_type, nodes, define_values_map, structure_members_array));
+        i = +(i, 1);
+    };
+
+    i = 0;
     while <(i, global_index) {
         variable global_name = @cast_*(autobuffer_array8_get(&(globals_array), i));
         variable global_type = @cast_*(hashmap_string_get(&(global_types_map), global_name));
@@ -718,8 +741,6 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
     while <(i, node_count) {
         variable id = nodes_get_id(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
-
-        //print_node_info(nodes, i);
 
         variable done_anything = false;
 
@@ -1354,9 +1375,16 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
 
                 variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
-                variable size = get_size_linux_x86-642(variable_type, nodes);
-
                 variable global_location = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
+
+                if =(variable_type, 0) {
+                    variable global_index = @cast_whole_8(hashmap_string_get(&(define_values_map), variable_name));
+                    variable_type = @cast_*(autobuffer_array8_get(&(global_types_array), global_index));
+
+                    global_location = @cast_BssIndex(autobuffer_array8_get(&(global_locations_array), global_index));
+                };
+
+                variable size = get_size_linux_x86-642(variable_type, nodes);
 
                 variable j = 0;
                 while <(j, size) {
@@ -1537,6 +1565,18 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 } else {
                     variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
 
+                    if =(variable_type, 0) {
+                        variable define_type = @cast_*(hashmap_string_get(&(define_types_map), variable_name));
+                        if !(=(define_type, 0)) {
+                            if string_length=(define_type, "global[", 7) {
+                                variable define_value = hashmap_string_get2(&(define_values_map), variable_name);
+                                if !(=(define_value, 999)) {
+                                    variable_type = @cast_*(autobuffer_array8_get(&(global_types_array), @cast_whole_8(define_value)));
+                                };
+                            };
+                        };
+                    };
+
                     if !(=(variable_type, 0)) {
                         variable global_name = brk_allocate(+(length(variable_name), 2));
                         copy("_", global_name, 1);
@@ -1544,7 +1584,11 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
                         variable size = get_size_linux_x86-642(variable_type, nodes);
 
-                        variable global_index2 = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
+                        variable global_index2 = @cast_BssIndex(hashmap_string_get2(&(global_locations_map), variable_name));
+                        if =(global_index2, 999) {
+                            variable define_value = @cast_whole_8(hashmap_string_get2(&(define_values_map), variable_name));
+                            global_index2 = @cast_BssIndex(autobuffer_array8_get(&(global_locations_array), define_value));
+                        };
 
                         if =(next_id, NODE_POINTER) {
                             autobuffer_push_push_bss(&(instructions_buffer), &(instructions_index), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_index), global_index2);
@@ -1753,11 +1797,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             done_anything = true;
         } else if =(id, NODE_GLOBAL) {
             variable global_data = @cast_*NodeGlobalData(pointer_data);
-            variable name2 = NodeGlobalData.>name(global_data);
+            variable name = NodeGlobalData.>name(global_data);
             variable type = NodeGlobalData.>type(global_data);
-            variable global_name = brk_allocate(+(length(name2), 2));
-            copy("_", global_name, 1);
-            copy(name2, @cast_*(+(global_name, 1)), length(name2));
             
             variable size = get_size_linux_x86-642(type, nodes);
             
@@ -2008,6 +2049,16 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
 
         hashmap_string_put(&(cached_sizes_map), type, total);
         return total;
+    };
+
+    if string_length=(type, "global[", 7) {
+        variable inside = brk_allocate(-(length(type), 7));
+        copy(+(type, 7), inside, -(length(type), 8));
+
+        variable size = get_size_linux_x86-643(inside, nodes, define_values_map, structure_members_array);
+
+        hashmap_string_put(&(cached_sizes_map), type, size);
+        return size;
     };
 
     variable node_count = Nodes.>index(nodes);

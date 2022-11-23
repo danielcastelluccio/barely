@@ -17,12 +17,24 @@ define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: Hash
 
     variable defined = @cast_*(hashmap_string_get(&(defines_map), given));
     if !(=(defined, 0)) {
-        return string=(defined, wanted);
+        if string=(defined, wanted) {
+            return true;
+        };
     };
 
     defined = @cast_*(hashmap_string_get(&(defines_map), wanted));
     if !(=(defined, 0)) {
-        return string=(defined, given);
+        if string=(defined, given) {
+            return true;
+        };
+    };
+
+    if string_length=(wanted, "global[", 7) {
+        return string_length=(+(wanted, 7), given, -(length(wanted), 8));
+    };
+
+    if string_length=(given, "global[", 7) {
+        return string_length=(+(given, 7), wanted, -(length(given), 8));
     };
 
     if string_length=(wanted, "any_", 4) {
@@ -121,6 +133,8 @@ define type_check = function(nodes: *Nodes) {
     variable function_returns_map = hashmap_new(1024);
 
     variable globals_map = hashmap_new(512);
+    variable globals_array = autobuffer_new(512);
+
     variable defines_map = hashmap_new(512);
 
     variable define_values_map = hashmap_new(512);
@@ -134,6 +148,7 @@ define type_check = function(nodes: *Nodes) {
 
     variable define_function_index = 0;
     variable define_structure_index = 0;
+    variable define_global_index = 0;
     
     variable i = 0;
     while <(i, node_count) {
@@ -184,7 +199,12 @@ define type_check = function(nodes: *Nodes) {
             variable global_name = NodeGlobalData.>name(global_data);
             variable global_type = NodeGlobalData.>type(global_data);
 
-            hashmap_string_put(&(globals_map), global_name, global_type);
+            if !(=(global_name, 0)) {
+                hashmap_string_put(&(globals_map), global_name, global_type);
+            } else {
+                autobuffer_array8_set(&(globals_array), define_global_index, global_type);
+                define_global_index = +(define_global_index, 1);
+            };
         };
 
         if =(id, NODE_DEFINE) {
@@ -193,7 +213,6 @@ define type_check = function(nodes: *Nodes) {
             variable define_type = NodeDefineData.>type(define_data);
 
             hashmap_string_put(&(defines_map), define_name, define_type);
-            //println(define_name);
 
             if &&(string=(define_name, "main"), string_length=(define_type, "*function[", 10)) {
                 has_main = true;
@@ -204,6 +223,8 @@ define type_check = function(nodes: *Nodes) {
                 define_value = define_function_index;
             } else if string_length=(define_type, "structure", 9) {
                 define_value = define_structure_index;
+            } else if string_length=(define_type, "global", 6) {
+                define_value = define_global_index;
             } else {
                 define_value = NodeNumberData.>value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
             };
@@ -628,7 +649,7 @@ define type_check = function(nodes: *Nodes) {
                     NodeDeclareData.<type(variable_declare4, variable_type);
                 };
 
-                if !(is_type(variable_type, popped_stack, nodes)) {
+                if !(is_type2(variable_type, popped_stack, nodes, defines_map)) {
                     print_node_error_beginning(nodes, i);
                     print("Assign of ");
                     print(variable_name);
@@ -642,15 +663,30 @@ define type_check = function(nodes: *Nodes) {
             } else {
                 variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
 
-                if !(is_type(variable_type, popped_stack, nodes)) {
+                if =(variable_type, 0) {
+                    variable global_id = @cast_whole_8(hashmap_string_get2(&(define_values_map), variable_name));
+                    if !(=(global_id, 999)) {
+                        variable_type = @cast_*(autobuffer_array8_get(&(globals_array), global_id));
+                    };
+                };
+
+                if !(=(variable_type, 0)) {
+                    if !(is_type2(variable_type, popped_stack, nodes, defines_map)) {
+                        print_node_error_beginning(nodes, i);
+                        print("Assign of ");
+                        print(variable_name);
+                        print(" wants '");
+                        print(variable_type);
+                        print("', given '");
+                        print(popped_stack);
+                        println("'");
+                        exit(1);
+                    };
+                } else {
                     print_node_error_beginning(nodes, i);
-                    print("Assign of ");
+                    print("Assign target '");
                     print(variable_name);
-                    print(" wants '");
-                    print(variable_type);
-                    print("', given '");
-                    print(popped_stack);
-                    println("'");
+                    println("' not found");
                     exit(1);
                 };
             };
@@ -769,7 +805,7 @@ define type_check = function(nodes: *Nodes) {
 
                 variable stack_popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 
-                if !(is_type(function_return, stack_popped, nodes)) {
+                if !(is_type2(function_return, stack_popped, nodes, defines_map)) {
                     print_node_error_beginning(nodes, i);
                     print("Return wants '");
                     print(function_return);
@@ -1166,6 +1202,7 @@ define type_check = function(nodes: *Nodes) {
                         variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                         variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
 
+                        //HERE
                         if !(is_type2(wanted, given, nodes, defines_map)) {
                             print_node_error_beginning(nodes, i);
                             print("Invoke of '");

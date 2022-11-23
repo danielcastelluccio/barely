@@ -458,6 +458,14 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
             autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
 
             type = AutoBuffer.>buffer(&(type_buffer));
+        } else {
+            variable type_buffer = autobuffer_new(16);
+            variable type_buffer_index = 0;
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "global[");
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), TokenNameData.>name(@cast_*TokenNameData(tokens_get_pointer_data(tokens, +(+(index, value_offset), 2)))));
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
+
+            type = AutoBuffer.>buffer(&(type_buffer));
         };
     };
 
@@ -471,6 +479,17 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     variable _ = nodes_append(nodes, NODE_ENDDEFINE, get_token_location_data(tokens, whole_8->(index_pointer)));
     increment_whole_8_pointer(index_pointer, 1);
+};
+
+define parse_global2 = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    variable index = whole_8->(index_pointer);
+    variable type_token_pointer_data = @cast_*TokenNameData(tokens_get_pointer_data(tokens, +(index, 2)));
+    variable type = TokenNameData.>name(type_token_pointer_data);
+
+    variable global_node_data = @cast_*NodeGlobalData(nodes_append_data(nodes, NODE_GLOBAL, get_token_location_data(tokens, whole_8->(index_pointer))));
+    NodeGlobalData.<type(global_node_data, type);
+
+    increment_whole_8_pointer(index_pointer, 4);
 };
 
 define parse_global = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
@@ -1082,10 +1101,10 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
     };
 };
 
-global target_id: whole_8;
+define target_id = global(whole_8);
 
-global while_target_id_stack: AutoBuffer;
-global while_target_id_stack_index: whole_8;
+define while_target_id_stack = global(AutoBuffer);
+define while_target_id_stack_index = global(whole_8);
 
 define get_target_id = function(): whole_8 {
     variable return_ = target_id;
@@ -1326,7 +1345,7 @@ define parse_individual2 = function(tokens: *Tokens, index: *whole_8, nodes: *No
         };
 
         if string=(keyword, "global") {
-            parse_global(tokens, index, nodes);
+            parse_global2(tokens, index, nodes);
         };
 
         if string=(keyword, "define") {
