@@ -63,11 +63,11 @@ define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
 };
 
 define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
-    return @cast_*TokenLocationData(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
+    return TokenLocationData.*cast(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
 };
 
 define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    return @cast_*(+(tokens_append(tokens, id, file_name, row, column), 32));
+    return *.cast(+(tokens_append(tokens, id, file_name, row, column), 32));
 };
 
 define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {

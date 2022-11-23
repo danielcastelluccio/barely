@@ -189,7 +189,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
         variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         if =(id, NODE_FUNCTION) {
-            variable function_data = @cast_*NodeFunctionData(pointer_data);
+            variable function_data = NodeFunctionData.*cast(pointer_data);
             if !(=(NodeFunctionData.>name(function_data), 0)) {
                 hashmap_string_put(&(function_argument_names_map), NodeFunctionData.>name(function_data), NodeFunctionData.>argument_names(function_data));
                 hashmap_string_put(&(function_arguments_map), NodeFunctionData.>name(function_data), NodeFunctionData.>argument_types(function_data));
@@ -202,7 +202,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                     variable pointer_data = nodes_get_pointer_data(nodes, j);
                     
                     if =(id, NODE_DECLARE) {
-                        variable declare_data = @cast_*NodeDeclareData(pointer_data);
+                        variable declare_data = NodeDeclareData.*cast(pointer_data);
                         variable declare_name = NodeDeclareData.>name(declare_data);
                         variable declare_type = NodeDeclareData.>type(declare_data);
                         total = +(total, get_size_linux_x86-642(declare_type, nodes));
@@ -223,7 +223,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
             index = +(index, 1);
         } else if =(id, NODE_GLOBAL) {
-            variable global_data = @cast_*NodeGlobalData(pointer_data);
+            variable global_data = NodeGlobalData.*cast(pointer_data);
             variable global_name = NodeGlobalData.>name(global_data);
             variable global_type = NodeGlobalData.>type(global_data);
 
@@ -238,7 +238,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             };
 
         } else if =(id, NODE_STRUCTURE) {
-            variable structure_data = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
+            variable structure_data = NodeStructureData.*cast(nodes_get_pointer_data(nodes, i));
             variable structure_name = NodeStructureData.>name(structure_data);
 
             if =(structure_name, 0) {
@@ -255,7 +255,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             structure_index = +(structure_index, 1);
 
         } else if =(id, NODE_DEFINE) {
-            variable define_data = @cast_*NodeDefineData(pointer_data);
+            variable define_data = NodeDefineData.*cast(pointer_data);
             variable define_name = NodeDefineData.>name(define_data);
             variable define_type = NodeDefineData.>type(define_data);
 
@@ -269,7 +269,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             } else if string_length=(define_type, "global", 6) {
                 define_value = define_global_index;
             } else {
-                define_value = NodeNumberData.>value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
+                define_value = NodeNumberData.>value(NodeNumberData.*cast(nodes_get_pointer_data(nodes, +(i, 1))));
             };
 
             hashmap_string_put(&(define_values_map), define_name, define_value);
@@ -281,13 +281,13 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
     i = 0;
     while <(i, define_function_index) {
         variable total = 16;
-        variable j = @cast_whole_8(autobuffer_array8_get(&(function_local_calculations_array), i));
+        variable j = whole_8.cast(autobuffer_array8_get(&(function_local_calculations_array), i));
         while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
             variable id = nodes_get_id(nodes, j);
             variable pointer_data = nodes_get_pointer_data(nodes, j);
             
             if =(id, NODE_DECLARE) {
-                variable declare_data = @cast_*NodeDeclareData(pointer_data);
+                variable declare_data = NodeDeclareData.*cast(pointer_data);
                 variable declare_name = NodeDeclareData.>name(declare_data);
                 variable declare_type = NodeDeclareData.>type(declare_data);
                 total = +(total, get_size_linux_x86-643(declare_type, nodes, define_values_map, structure_members_array));
@@ -302,17 +302,17 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     i = 0;
     while <(i, structure_index) {
-        variable structure_data = @cast_*NodeStructureData(autobuffer_array8_get(&(structures_array), i));
+        variable structure_data = NodeStructureData.*cast(autobuffer_array8_get(&(structures_array), i));
         variable structure_name = NodeStructureData.>name(structure_data);
 
         // Setter for whole value
         variable allocated = brk_allocate(+(length(structure_name), 3));
         copy(structure_name, allocated, length(structure_name));
-        copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
+        copy("<-", *.cast(+(allocated, length(structure_name))), 2);
 
         variable allocated2 = brk_allocate(+(length(structure_name), 2));
         copy(structure_name, allocated2, length(structure_name));
-        copy("<", @cast_*(+(allocated2, length(structure_name))), 1);
+        copy("<", *.cast(+(allocated2, length(structure_name))), 1);
 
         variable allocated_contents0 = autobuffer_new(8388608);
         variable allocated_contents01 = &(allocated_contents0);
@@ -371,11 +371,11 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
         // Getter for whole value
         variable allocated = brk_allocate(+(length(structure_name), 3));
         copy(structure_name, allocated, length(structure_name));
-        copy("->", @cast_*(+(allocated, length(structure_name))), 2);
+        copy("->", *.cast(+(allocated, length(structure_name))), 2);
 
         variable allocated2 = brk_allocate(+(length(structure_name), 2));
         copy(structure_name, allocated2, length(structure_name));
-        copy(">", @cast_*(+(allocated2, length(structure_name))), 1);
+        copy(">", *.cast(+(allocated2, length(structure_name))), 1);
 
         variable allocated_contents1 = autobuffer_new(131072);
         variable allocated_contents11 = &(allocated_contents1);
@@ -474,11 +474,11 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
         variable allocated = brk_allocate(+(length(structure_name), 4));
         copy(structure_name, allocated, length(structure_name));
-        copy("->0", @cast_*(+(allocated, length(structure_name))), 3);
+        copy("->0", *.cast(+(allocated, length(structure_name))), 3);
 
         variable allocated2 = brk_allocate(+(length(structure_name), 3));
         copy(structure_name, allocated2, length(structure_name));
-        copy(">0", @cast_*(+(allocated2, length(structure_name))), 2);
+        copy(">0", *.cast(+(allocated2, length(structure_name))), 2);
 
         variable allocated_contents1 = autobuffer_new(131072);
         variable allocated_contents11 = &(allocated_contents1);
@@ -533,22 +533,22 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
         variable j = 0;
         while !(=(array8_get(member_names, j), 0)) {
-            variable member_name = @cast_*(array8_get(member_names, j));
-            variable member_type = @cast_*(array8_get(member_types, j));
+            variable member_name = *.cast(array8_get(member_names, j));
+            variable member_type = *.cast(array8_get(member_types, j));
 
             variable location = get_size_multiple_linux_x86-643(member_types, j, nodes, define_values_map, structure_members_array);
 
             variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 4)));
             copy("*", allocated, 1);
-            copy(structure_name, @cast_*(+(allocated, 1)), length(structure_name));
-            copy("->", @cast_*(+(+(allocated, length(structure_name)), 1)), 2);
-            copy(member_name, @cast_*(+(+(allocated, +(length(structure_name), 2)), 1)), length(member_name));
+            copy(structure_name, *.cast(+(allocated, 1)), length(structure_name));
+            copy("->", *.cast(+(+(allocated, length(structure_name)), 1)), 2);
+            copy(member_name, *.cast(+(+(allocated, +(length(structure_name), 2)), 1)), length(member_name));
 
             variable allocated2 = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
             copy("*", allocated2, 1);
-            copy(structure_name, @cast_*(+(allocated2, 1)), length(structure_name));
-            copy(">", @cast_*(+(+(allocated2, length(structure_name)), 1)), 1);
-            copy(member_name, @cast_*(+(+(allocated2, +(length(structure_name), 1)), 1)), length(member_name));
+            copy(structure_name, *.cast(+(allocated2, 1)), length(structure_name));
+            copy(">", *.cast(+(+(allocated2, length(structure_name)), 1)), 1);
+            copy(member_name, *.cast(+(+(allocated2, +(length(structure_name), 1)), 1)), length(member_name));
 
             variable allocated_contents4 = autobuffer_new(131072);
             variable allocated_contents41 = &(allocated_contents4);
@@ -569,13 +569,13 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             // Setter for individual members
             variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
             copy(structure_name, allocated, length(structure_name));
-            copy("<-", @cast_*(+(allocated, length(structure_name))), 2);
-            copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
+            copy("<-", *.cast(+(allocated, length(structure_name))), 2);
+            copy(member_name, *.cast(+(allocated, +(length(structure_name), 2))), length(member_name));
 
             variable allocated2 = brk_allocate(+(length(structure_name), +(length(member_name), 2)));
             copy(structure_name, allocated2, length(structure_name));
-            copy("<", @cast_*(+(allocated2, length(structure_name))), 1);
-            copy(member_name, @cast_*(+(allocated2, +(length(structure_name), 1))), length(member_name));
+            copy("<", *.cast(+(allocated2, length(structure_name))), 1);
+            copy(member_name, *.cast(+(allocated2, +(length(structure_name), 1))), length(member_name));
 
             variable allocated_contents2 = autobuffer_new(8388608);
             variable allocated_contents21 = &(allocated_contents2);
@@ -634,13 +634,13 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             // Getter for indivudal members
             variable allocated = brk_allocate(+(length(structure_name), +(length(member_name), 3)));
             copy(structure_name, allocated, length(structure_name));
-            copy("->", @cast_*(+(allocated, length(structure_name))), 2);
-            copy(member_name, @cast_*(+(allocated, +(length(structure_name), 2))), length(member_name));
+            copy("->", *.cast(+(allocated, length(structure_name))), 2);
+            copy(member_name, *.cast(+(allocated, +(length(structure_name), 2))), length(member_name));
 
             variable allocated2 = brk_allocate(+(length(structure_name), +(length(member_name), 2)));
             copy(structure_name, allocated2, length(structure_name));
-            copy(">", @cast_*(+(allocated2, length(structure_name))), 1);
-            copy(member_name, @cast_*(+(allocated2, +(length(structure_name), 1))), length(member_name));
+            copy(">", *.cast(+(allocated2, length(structure_name))), 1);
+            copy(member_name, *.cast(+(allocated2, +(length(structure_name), 1))), length(member_name));
 
             variable allocated_contents3 = autobuffer_new(8388608);
             variable allocated_contents31 = &(allocated_contents3);
@@ -701,7 +701,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     i = 0;
     while <(i, define_global_index) {
-        variable global_type = @cast_*(autobuffer_array8_get(&(global_types_array), i));
+        variable global_type = *.cast(autobuffer_array8_get(&(global_types_array), i));
 
         autobuffer_array8_set(&(global_locations_array), i, bss_index);
 
@@ -711,8 +711,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     i = 0;
     while <(i, global_index) {
-        variable global_name = @cast_*(autobuffer_array8_get(&(globals_array), i));
-        variable global_type = @cast_*(hashmap_string_get(&(global_types_map), global_name));
+        variable global_name = *.cast(autobuffer_array8_get(&(globals_array), i));
+        variable global_type = *.cast(hashmap_string_get(&(global_types_map), global_name));
 
         hashmap_string_put(&(global_locations_map), global_name, bss_index);
 
@@ -745,7 +745,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
         variable done_anything = false;
 
         if =(id, NODE_FUNCTION) {
-            variable function_data = @cast_*NodeFunctionData(pointer_data);
+            variable function_data = NodeFunctionData.*cast(pointer_data);
             variable next_id = nodes_get_id(nodes, +(i, 1));
 
             if !(=(next_id, NODE_ENDFUNCTION)) {
@@ -758,13 +758,13 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 if !(=(function_name, 0)) {
                     hashmap_string_put(&(function_locations_map), function_name, instructions_index_cached);
 
-                    variable locals_size = @cast_whole_8(hashmap_string_get(&(function_local_sizes_map), function_name));
+                    variable locals_size = whole_8.cast(hashmap_string_get(&(function_local_sizes_map), function_name));
 
                     autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
 
                     current_function = function_name;
                 } else {
-                    variable locals_size = @cast_whole_8(autobuffer_array8_get(&(function_local_sizes_array), second_defined_function_index));
+                    variable locals_size = whole_8.cast(autobuffer_array8_get(&(function_local_sizes_array), second_defined_function_index));
 
                     autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, +(locals_size, 16));
                     current_function_id = second_defined_function_index;
@@ -778,7 +778,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_NUMBER) {
-            variable whole_8_data = @cast_*NodeNumberData(pointer_data);
+            variable whole_8_data = NodeNumberData.*cast(pointer_data);
             variable value_whole_8 = NodeNumberData.>value(whole_8_data);
 
             variable size = NodeNumberData.>size(whole_8_data);
@@ -796,19 +796,19 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 2);
                 autobuffer_push_mov_register2_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AX, RSP, 0);
             } else if =(size, 1) {
-                autobuffer_push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, @cast_whole_1(whole_8_to_whole_1(value_whole_8)));
+                autobuffer_push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, whole_1.cast(whole_8_to_whole_1(value_whole_8)));
                 autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
                 autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
             };
 
             done_anything = true;
         } else if =(id, NODE_BOOLEAN) {
-            variable boolean_data = @cast_*NodeBooleanData(pointer_data);
+            variable boolean_data = NodeBooleanData.*cast(pointer_data);
             variable value_boolean = NodeBooleanData.>value(boolean_data);
 
             autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
 
-            if @cast_boolean(value_boolean) {
+            if value_boolean {
                 autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, 1);
                 autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
             } else {
@@ -818,14 +818,14 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_INVOKE) {
-            variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+            variable invoke_data = NodeInvokeData.*cast(pointer_data);
             variable function_name = NodeInvokeData.>name(invoke_data);
             variable next_id = nodes_get_id(nodes, +(i, 1));
 
             if =(next_id, NODE_POINTER) {
                 variable function_name_new = brk_allocate(+(length(function_name), 2));
                 copy("*", function_name_new, 1);
-                copy(function_name, @cast_*(+(function_name_new, 1)), length(function_name));
+                copy(function_name, *.cast(+(function_name_new, 1)), length(function_name));
                 function_name = function_name_new;
             };
 
@@ -833,13 +833,13 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
             variable memory_function = hashmap_string_get(&(memory_function_instructions_map), function_name);
             if !(=(memory_function, 0)) {
-                variable contents = @cast_*(memory_function);
-                variable contents_size = @cast_whole_8(hashmap_string_get(&(memory_function_instruction_sizes_map), function_name));
+                variable contents = *.cast(memory_function);
+                variable contents_size = whole_8.cast(hashmap_string_get(&(memory_function_instruction_sizes_map), function_name));
                 autobuffer_push_pointer(&(instructions_buffer), &(instructions_index), contents, contents_size);
                 done_anything_invoke = true;
-            } else if string=(function_name, "cast") {
-                done_anything_invoke = true;
             } else if string=(function_name, "*cast") {
+                done_anything_invoke = true;
+            } else if string=(function_name, "cast") {
                 done_anything_invoke = true;
             } else if string_length=(function_name, "@cast_", 6) {
                 done_anything_invoke = true;
@@ -1271,7 +1271,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 autobuffer_push_call_far_register8(&(instructions_buffer), &(instructions_index), RAX);
 
                 // hack, should not need to cast
-                autobuffer_array8_set(&(push_functions), push_function_index, @cast_any_8(push_function_instruction));
+                autobuffer_array8_set(&(push_functions), push_function_index, any_8.cast(push_function_instruction));
                 autobuffer_array8_set(&(push_function_targets), push_function_index, function_name);
 
                 push_function_index = +(push_function_index, 1);
@@ -1282,7 +1282,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             autobuffer_push_call_far_register8(&(instructions_buffer), &(instructions_index), RAX);
             done_anything = true;
         } else if =(id, NODE_STRING) {
-            variable string_data = @cast_*NodeStringData(pointer_data);
+            variable string_data = NodeStringData.*cast(pointer_data);
             variable string_value = NodeStringData.>value(string_data);
             variable string_id = program_constant_index;
             program_constant_index = +(program_constant_index, 1);
@@ -1296,7 +1296,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_DECLARE) {
-            variable declare_data = @cast_*NodeDeclareData(pointer_data);
+            variable declare_data = NodeDeclareData.*cast(pointer_data);
             variable variable_name = NodeDeclareData.>name(declare_data);
             variable variable_type = NodeDeclareData.>type(declare_data);
 
@@ -1305,22 +1305,22 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             autobuffer_array8_set(&(variable_sizes), variable_index, get_size_linux_x86-643(variable_type, nodes, define_values_map, structure_members_array));
             variable_index = +(variable_index, 1);
 
-            hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
+            hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
 
             done_anything = true;
         } else if =(id, NODE_ASSIGN) {
-            variable assign_data = @cast_*NodeAssignData(pointer_data);
+            variable assign_data = NodeAssignData.*cast(pointer_data);
             variable variable_name = NodeAssignData.>name(assign_data);
 
             variable scope_index = -(variable_scope_types_pointer, 1);
-            variable variable_type = @cast_*(0);
+            variable variable_type = *.cast(0);
             while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                variable_type = *.cast(hashmap_string_get(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
                 scope_index = -(scope_index, 1);
             };
             scope_index = +(scope_index, 1);
             
-            variable scope_variable_index = @cast_whole_8(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
+            variable scope_variable_index = whole_8.cast(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-643(variable_type, nodes, define_values_map, structure_members_array);
@@ -1330,7 +1330,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 while true {
                     if !(<(j, variable_index)) {
                         break;
-                    } else if !(|(!(string=(variable_name, @cast_*(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
+                    } else if !(|(!(string=(variable_name, *.cast(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
                         break;
                     } else {
                         location = +(location, autobuffer_array8_get(&(variable_sizes), j));
@@ -1376,16 +1376,16 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             } else {
                 variable global_name = brk_allocate(+(length(variable_name), 2));
                 copy("_", global_name, 1);
-                copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
+                copy(variable_name, *.cast(+(global_name, 1)), length(variable_name));
 
-                variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
-                variable global_location = @cast_BssIndex(hashmap_string_get(&(global_locations_map), variable_name));
+                variable_type = *.cast(hashmap_string_get(&(global_types_map), variable_name));
+                variable global_location = BssIndex.cast(hashmap_string_get(&(global_locations_map), variable_name));
 
                 if =(variable_type, 0) {
-                    variable global_index = @cast_whole_8(hashmap_string_get(&(define_values_map), variable_name));
-                    variable_type = @cast_*(autobuffer_array8_get(&(global_types_array), global_index));
+                    variable global_index = whole_8.cast(hashmap_string_get(&(define_values_map), variable_name));
+                    variable_type = *.cast(autobuffer_array8_get(&(global_types_array), global_index));
 
-                    global_location = @cast_BssIndex(autobuffer_array8_get(&(global_locations_array), global_index));
+                    global_location = BssIndex.cast(autobuffer_array8_get(&(global_locations_array), global_index));
                 };
 
                 variable size = get_size_linux_x86-642(variable_type, nodes);
@@ -1452,17 +1452,17 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
         } else if =(id, NODE_RETRIEVE) {
             variable next_id = nodes_get_id(nodes, +(i, 1));
 
-            variable variable_name = NodeRetrieveData.>name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
+            variable variable_name = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, i)));
 
             variable scope_index = -(variable_scope_types_pointer, 1);
-            variable variable_type = @cast_*(0);
+            variable variable_type = *.cast(0);
             while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                variable_type = *.cast(hashmap_string_get(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
                 scope_index = -(scope_index, 1);
             };
             scope_index = +(scope_index, 1);
 
-            variable scope_variable_index = @cast_whole_8(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
+            variable scope_variable_index = whole_8.cast(autobuffer_array8_get(&(variable_scopes_indexes_map), scope_index));
 
             if !(=(variable_type, 0)) {
                 variable size = get_size_linux_x86-643(variable_type, nodes, define_values_map, structure_members_array);
@@ -1473,7 +1473,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                     // changed from 'variable_index' to 'scope_variable_index', appears to fix a bug
                     if !(<(j, variable_index)) {
                         break;
-                    } else if !(|(!(string=(variable_name, @cast_*(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
+                    } else if !(|(!(string=(variable_name, *.cast(autobuffer_array8_get(&(variable_names), j)))), <(j, scope_variable_index))) {
                         break;
                     } else {
                         location = +(location, autobuffer_array8_get(&(variable_sizes), j));
@@ -1522,8 +1522,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 };
 
             } else {
-                variable function_argument_names2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
-                variable function_arguments2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
+                variable function_argument_names2 = *.cast(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
+                variable function_arguments2 = *.cast(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
 
                 variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
 
@@ -1567,15 +1567,15 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                         };
                     };
                 } else {
-                    variable_type = @cast_*(hashmap_string_get(&(global_types_map), variable_name));
+                    variable_type = *.cast(hashmap_string_get(&(global_types_map), variable_name));
 
                     if =(variable_type, 0) {
-                        variable define_type = @cast_*(hashmap_string_get(&(define_types_map), variable_name));
+                        variable define_type = *.cast(hashmap_string_get(&(define_types_map), variable_name));
                         if !(=(define_type, 0)) {
                             if string_length=(define_type, "global[", 7) {
                                 variable define_value = hashmap_string_get2(&(define_values_map), variable_name);
                                 if !(=(define_value, 999)) {
-                                    variable_type = @cast_*(autobuffer_array8_get(&(global_types_array), @cast_whole_8(define_value)));
+                                    variable_type = *.cast(autobuffer_array8_get(&(global_types_array), whole_8.cast(define_value)));
                                 };
                             };
                         };
@@ -1584,14 +1584,14 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                     if !(=(variable_type, 0)) {
                         variable global_name = brk_allocate(+(length(variable_name), 2));
                         copy("_", global_name, 1);
-                        copy(variable_name, @cast_*(+(global_name, 1)), length(variable_name));
+                        copy(variable_name, *.cast(+(global_name, 1)), length(variable_name));
 
                         variable size = get_size_linux_x86-642(variable_type, nodes);
 
-                        variable global_index2 = @cast_BssIndex(hashmap_string_get2(&(global_locations_map), variable_name));
+                        variable global_index2 = BssIndex.cast(hashmap_string_get2(&(global_locations_map), variable_name));
                         if =(global_index2, 999) {
-                            variable define_value = @cast_whole_8(hashmap_string_get2(&(define_values_map), variable_name));
-                            global_index2 = @cast_BssIndex(autobuffer_array8_get(&(global_locations_array), define_value));
+                            variable define_value = whole_8.cast(hashmap_string_get2(&(define_values_map), variable_name));
+                            global_index2 = BssIndex.cast(autobuffer_array8_get(&(global_locations_array), define_value));
                         };
 
                         if =(next_id, NODE_POINTER) {
@@ -1630,18 +1630,18 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                             };
                         };
                     } else {
-                        variable_type = @cast_*(hashmap_string_get(&(define_types_map), variable_name));
+                        variable_type = *.cast(hashmap_string_get(&(define_types_map), variable_name));
 
                         if !(=(variable_type, 0)) {
                             variable constant_name = brk_allocate(+(length(variable_name), 2));
                             copy("_", constant_name, 1);
-                            copy(variable_name, @cast_*(+(constant_name, 1)), length(variable_name));
+                            copy(variable_name, *.cast(+(constant_name, 1)), length(variable_name));
 
                             variable define_value = hashmap_string_get(&(define_values_map), variable_name);
 
                             if string_length=(variable_type, "*function", 9) {
                                 variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
-                                autobuffer_array8_set(&(push_functions2), push_function_index2, @cast_any_8(push_function_instruction));
+                                autobuffer_array8_set(&(push_functions2), push_function_index2, any_8.cast(push_function_instruction));
                                 autobuffer_array8_set(&(push_function_targets2), push_function_index2, define_value);
 
                                 push_function_index2 = +(push_function_index2, 1);
@@ -1649,11 +1649,11 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                             } else {
                                 variable size = get_size_linux_x86-643(variable_type, nodes, define_values_map, structure_members_array);
                                 if =(size, 8) {
-                                    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, @cast_whole_8(define_value));
+                                    autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RAX, whole_8.cast(define_value));
                                     autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 8);
                                     autobuffer_push_mov_register8_register8_pointer_offset(&(instructions_buffer), &(instructions_index), RAX, RSP, 0);
                                 } else if =(size, 1) {
-                                    autobuffer_push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, whole_8_to_whole_1(@cast_whole_8(define_value)));
+                                    autobuffer_push_mov_whole_1_register1(&(instructions_buffer), &(instructions_index), AL, whole_8_to_whole_1(whole_8.cast(define_value)));
                                     autobuffer_push_sub_register8_whole_8(&(instructions_buffer), &(instructions_index), RSP, 1);
                                     autobuffer_push_mov_register1_register8_pointer_offset(&(instructions_buffer), &(instructions_index), AL, RSP, 0);
                                 } else {
@@ -1663,7 +1663,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                         } else {
                             if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
                                 variable push_function_instruction = autobuffer_push_push_instruction_pointer(&(instructions_buffer), &(instructions_index));
-                                autobuffer_array8_set(&(push_functions), push_function_index, @cast_any_8(push_function_instruction));
+                                autobuffer_array8_set(&(push_functions), push_function_index, any_8.cast(push_function_instruction));
                                 autobuffer_array8_set(&(push_function_targets), push_function_index, variable_name);
 
                                 push_function_index = +(push_function_index, 1);
@@ -1677,8 +1677,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
             done_anything = true;
         } else if =(id, NODE_RETURN) {
-            variable arguments_size = get_size_multiple_linux_x86-643(if =(current_function, 0) { @cast_*(autobuffer_array8_get(&(function_arguments_array), current_function_id)) } else { @cast_*(hashmap_string_get(&(function_arguments_map), current_function)) }, 999, nodes, define_values_map, structure_members_array);
-            variable returns_size = get_size_multiple_linux_x86-643(if =(current_function, 0) { @cast_*(autobuffer_array8_get(&(function_returns_array), current_function_id)) } else { @cast_*(hashmap_string_get(&(function_returns_map), current_function)) }, 999, nodes, define_values_map, structure_members_array);
+            variable arguments_size = get_size_multiple_linux_x86-643(if =(current_function, 0) { *.cast(autobuffer_array8_get(&(function_arguments_array), current_function_id)) } else { *.cast(hashmap_string_get(&(function_arguments_map), current_function)) }, 999, nodes, define_values_map, structure_members_array);
+            variable returns_size = get_size_multiple_linux_x86-643(if =(current_function, 0) { *.cast(autobuffer_array8_get(&(function_returns_array), current_function_id)) } else { *.cast(hashmap_string_get(&(function_returns_map), current_function)) }, 999, nodes, define_values_map, structure_members_array);
             variable returns_size_rounded = returns_size;
             if !(=(%(returns_size_rounded, 8), 0)) {
                 returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
@@ -1745,7 +1745,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
         } else if =(id, NODE_POINTER) {
             done_anything = true;
         } else if =(id, NODE_JUMP_CONDITIONAL) {
-            variable jump_conditional_data = @cast_*NodeJumpConditionalData(pointer_data);
+            variable jump_conditional_data = NodeJumpConditionalData.*cast(pointer_data);
             variable target = NodeJumpConditionalData.>target_id(jump_conditional_data);
             variable conditional = NodeJumpConditionalData.>desired_state(jump_conditional_data);
 
@@ -1755,7 +1755,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RBX, 0);
             autobuffer_push_mov_whole_8_register8(&(instructions_buffer), &(instructions_index), RCX, 1);
 
-            if @cast_boolean(conditional) {
+            if conditional {
                 autobuffer_push_cmp_register8_register8(&(instructions_buffer), &(instructions_index), RAX, RCX);
                 done_anything = true;
             } else {
@@ -1763,31 +1763,31 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             };
 
             variable jump_instruction = autobuffer_push_je_near(&(instructions_buffer), &(instructions_index));
-            autobuffer_array8_set(&(jes), je_index, @cast_any_8(jump_instruction));
+            autobuffer_array8_set(&(jes), je_index, any_8.cast(jump_instruction));
             autobuffer_array8_set(&(je_targets), je_index, target);
 
             je_index = +(je_index, 1);
             done_anything = true;
         } else if =(id, NODE_JUMP) {
-            variable jump_data = @cast_*NodeJumpData(pointer_data);
+            variable jump_data = NodeJumpData.*cast(pointer_data);
             variable target = NodeJumpData.>target_id(jump_data);
 
             variable jump_instruction = autobuffer_push_jmp_near(&(instructions_buffer), &(instructions_index));
-            autobuffer_array8_set(&(jmps), jmp_index, @cast_any_8(jump_instruction));
+            autobuffer_array8_set(&(jmps), jmp_index, any_8.cast(jump_instruction));
             autobuffer_array8_set(&(jmp_targets), jmp_index, target);
 
             jmp_index = +(jmp_index, 1);
             done_anything = true;
         } else if =(id, NODE_TARGET) {
-            variable target_data = @cast_*NodeTargetData(pointer_data);
+            variable target_data = NodeTargetData.*cast(pointer_data);
             variable target = NodeTargetData.>id(target_data);
             
-            autobuffer_array8_set(&(targets), target, @cast_any_8(get_instruction(&(instructions_buffer), &(instructions_index))));
+            autobuffer_array8_set(&(targets), target, any_8.cast(get_instruction(&(instructions_buffer), &(instructions_index))));
             done_anything = true;
         } else if =(id, NODE_SCOPE) {
             variable new_hashmap = hashmap_new(512);
             variable allocated = brk_allocate(24);
-            HashMap.<(@cast_*HashMap(allocated), new_hashmap);
+            HashMap.<(HashMap.*cast(allocated), new_hashmap);
             autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
 
             autobuffer_stack8_push(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer), variable_index);
@@ -1795,12 +1795,12 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
             variable _ = autobuffer_stack8_pop(&(variable_scopes_indexes_map), &(variable_scope_indexes_pointer));
         } else if =(id, NODE_ENDFUNCTION) {
-            current_function = @cast_*(0);
+            current_function = *.cast(0);
             done_anything = true;
         } else if =(id, NODE_STRUCTURE) {
             done_anything = true;
         } else if =(id, NODE_GLOBAL) {
-            variable global_data = @cast_*NodeGlobalData(pointer_data);
+            variable global_data = NodeGlobalData.*cast(pointer_data);
             variable name = NodeGlobalData.>name(global_data);
             variable type = NodeGlobalData.>type(global_data);
             
@@ -1808,12 +1808,12 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             
             done_anything = true;
         } else if =(id, NODE_DEFINE) {
-            variable define_data = @cast_*NodeDefineData(pointer_data);
+            variable define_data = NodeDefineData.*cast(pointer_data);
             variable define_name = NodeDefineData.>name(define_data);
             variable define_type = NodeDefineData.>type(define_data);
             
             if string_length=(define_type, "*function", 9) {
-                autobuffer_array8_set(&(function_locations_array), @cast_whole_8(hashmap_string_get(&(define_values_map), define_name)), instructions_index);
+                autobuffer_array8_set(&(function_locations_array), whole_8.cast(hashmap_string_get(&(define_values_map), define_name)), instructions_index);
             };
             done_anything = true;
         } else if =(id, NODE_STARTIFBLOCK) {
@@ -1837,19 +1837,19 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     variable main_index = hashmap_string_get(&(function_locations_map), "main");
     if =(main_index, 0) {
-        variable main_function_index = @cast_whole_8(hashmap_string_get(&(define_values_map), "main"));
+        variable main_function_index = whole_8.cast(hashmap_string_get(&(define_values_map), "main"));
         main_index = autobuffer_array8_get(&(function_locations_array), main_function_index);
     };
-    set_call_value(&(instructions_buffer), main_call, @cast_InstructionIndex(main_index));
+    set_call_value(&(instructions_buffer), main_call, InstructionIndex.cast(main_index));
 
     variable start_address = 4194304;
 
     variable i = 0;
     while <(i, call_index) {
-        variable call_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(calls), i));
-        variable call_name = @cast_*(autobuffer_array8_get(&(call_targets), i));
+        variable call_instruction2 = InstructionIndex.cast(autobuffer_array8_get(&(calls), i));
+        variable call_name = *.cast(autobuffer_array8_get(&(call_targets), i));
 
-        variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), call_name));
+        variable function_index = InstructionIndex.cast(hashmap_string_get(&(function_locations_map), call_name));
 
         set_call_value(&(instructions_buffer), call_instruction2, function_index);
         i = +(i, 1);
@@ -1857,10 +1857,10 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     variable i = 0;
     while <(i, push_function_index) {
-        variable push_function_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(push_functions), i));
-        variable push_function_name = @cast_*(autobuffer_array8_get(&(push_function_targets), i));
+        variable push_function_instruction2 = InstructionIndex.cast(autobuffer_array8_get(&(push_functions), i));
+        variable push_function_name = *.cast(autobuffer_array8_get(&(push_function_targets), i));
 
-        variable function_index = @cast_InstructionIndex(hashmap_string_get(&(function_locations_map), push_function_name));
+        variable function_index = InstructionIndex.cast(hashmap_string_get(&(function_locations_map), push_function_name));
 
         variable value_new = +(function_index, 232);
 
@@ -1870,10 +1870,10 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     variable i = 0;
     while <(i, push_function_index2) {
-        variable push_function_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(push_functions2), i));
-        variable push_function_id = @cast_whole_8(autobuffer_array8_get(&(push_function_targets2), i));
+        variable push_function_instruction2 = InstructionIndex.cast(autobuffer_array8_get(&(push_functions2), i));
+        variable push_function_id = whole_8.cast(autobuffer_array8_get(&(push_function_targets2), i));
 
-        variable function_index = @cast_InstructionIndex(autobuffer_array8_get(&(function_locations_array), push_function_id));
+        variable function_index = InstructionIndex.cast(autobuffer_array8_get(&(function_locations_array), push_function_id));
 
         variable value_new = +(function_index, 232);
 
@@ -1883,19 +1883,19 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     variable i = 0;
     while <(i, jmp_index) {
-        variable jmp_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(jmps), i));
-        variable jmp_target = @cast_whole_8(autobuffer_array8_get(&(jmp_targets), i));
+        variable jmp_instruction2 = InstructionIndex.cast(autobuffer_array8_get(&(jmps), i));
+        variable jmp_target = whole_8.cast(autobuffer_array8_get(&(jmp_targets), i));
         variable target_location = autobuffer_array8_get(&(targets), jmp_target);
-        set_jmp_value(&(instructions_buffer), jmp_instruction2, @cast_InstructionIndex(target_location));
+        set_jmp_value(&(instructions_buffer), jmp_instruction2, InstructionIndex.cast(target_location));
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, je_index) {
-        variable jmp_instruction2 = @cast_InstructionIndex(autobuffer_array8_get(&(jes), i));
-        variable jmp_target = @cast_whole_8(autobuffer_array8_get(&(je_targets), i));
+        variable jmp_instruction2 = InstructionIndex.cast(autobuffer_array8_get(&(jes), i));
+        variable jmp_target = whole_8.cast(autobuffer_array8_get(&(je_targets), i));
         variable target_location = autobuffer_array8_get(&(targets), jmp_target);
-        set_je_value(&(instructions_buffer), jmp_instruction2, @cast_InstructionIndex(target_location));
+        set_je_value(&(instructions_buffer), jmp_instruction2, InstructionIndex.cast(target_location));
         i = +(i, 1);
     };
 
@@ -1905,34 +1905,34 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_index) {
-        variable index = @cast_whole_8(autobuffer_array8_get(&(data_indexes_to_adjust), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, 232));
+        variable index = whole_8.cast(autobuffer_array8_get(&(data_indexes_to_adjust), i));
+        variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, 232));
         autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 4096))), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_index) {
-        variable index = @cast_whole_8(autobuffer_array8_get(&(bss_indexes_to_adjust), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
+        variable index = whole_8.cast(autobuffer_array8_get(&(bss_indexes_to_adjust), i));
+        variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(+(instructions_index, 232), data_buffer_index));
         autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(value_new, +(start_address, 8192))), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, data_indexes_to_adjust_relative_index) {
-        variable index = @cast_whole_8(autobuffer_array8_get(&(data_indexes_to_adjust_relative), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), instructions_index);
-        variable actual_value = @cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
+        variable index = whole_8.cast(autobuffer_array8_get(&(data_indexes_to_adjust_relative), i));
+        variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), instructions_index);
+        variable actual_value = whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
         autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 4096)), index);
         i = +(i, 1);
     };
 
     variable i = 0;
     while <(i, bss_indexes_to_adjust_relative_index) {
-        variable index = @cast_whole_8(autobuffer_array8_get(&(bss_indexes_to_adjust_relative), i));
-        variable value_new = +(@cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
-        variable actual_value = @cast_whole_8(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
+        variable index = whole_8.cast(autobuffer_array8_get(&(bss_indexes_to_adjust_relative), i));
+        variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index))), +(instructions_index, data_buffer_index));
+        variable actual_value = whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(instructions_buffer), index)));
         autobuffer_set_any_4(&(instructions_buffer), whole_8_to_whole_4(+(-(value_new, +(index, 4)), 8192)), index);
         i = +(i, 1);
     };
@@ -1981,7 +1981,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
 };
 
 define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_map: HashMap, structure_members_array: AutoBuffer): whole_8 {
-    variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
+    variable cached_size = whole_8.cast(hashmap_string_get(&(cached_sizes_map), type));
     if !(=(cached_size, 0)) {
         return cached_size;
     };
@@ -1994,29 +1994,29 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
     };
 
     if string_length=(type, "any", 3) {
-        variable number = to_number(@cast_*(+(type, 4)));
+        variable number = to_number(*.cast(+(type, 4)));
         hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
     if string_length=(type, "whole", 5) {
-        variable number = to_number(@cast_*(+(type, 6)));
+        variable number = to_number(*.cast(+(type, 6)));
         hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
     if string_length=(type, "integer", 7) {
-        variable number = to_number(@cast_*(+(type, 8)));
+        variable number = to_number(*.cast(+(type, 8)));
         hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
-    variable defined_value = @cast_whole_8(hashmap_string_get2(&(define_values_map), type));
+    variable defined_value = whole_8.cast(hashmap_string_get2(&(define_values_map), type));
     if !(=(defined_value, 999)) {
-        variable member_types = @cast_*(autobuffer_array8_get(&(structure_members_array), defined_value));
+        variable member_types = *.cast(autobuffer_array8_get(&(structure_members_array), defined_value));
 
         variable size = get_size_multiple_linux_x86-643(member_types, 999, nodes, define_values_map, structure_members_array);
         hashmap_string_put(&(cached_sizes_map), type, size);
@@ -2032,7 +2032,7 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
         variable is_type = false;
         variable i = 10;
         while <(i, length(type)) {
-            variable character = any_1.>(@cast_*any_1(+(type, i)));
+            variable character = any_1.>(any_1.*cast(+(type, i)));
 
             if =(character, ASCII_COLON) {
                 is_type = true;
@@ -2069,7 +2069,7 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
     variable i = 0;
     while <(i, node_count) {
         if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
-            variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
+            variable pointer = NodeStructureData.*cast(nodes_get_pointer_data(nodes, i));
             variable name = NodeStructureData.>name(pointer);
             if !(=(name, 0)) {
                 variable member_types = NodeStructureData.>item_types(pointer);
@@ -2090,7 +2090,7 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
 };
 
 define get_size_linux_x86-642 = function(type: *, nodes: *Nodes): whole_8 {
-    variable cached_size = @cast_whole_8(hashmap_string_get(&(cached_sizes_map), type));
+    variable cached_size = whole_8.cast(hashmap_string_get(&(cached_sizes_map), type));
     if !(=(cached_size, 0)) {
         return cached_size;
     };
@@ -2103,21 +2103,21 @@ define get_size_linux_x86-642 = function(type: *, nodes: *Nodes): whole_8 {
     };
 
     if string_length=(type, "any", 3) {
-        variable number = to_number(@cast_*(+(type, 4)));
+        variable number = to_number(*.cast(+(type, 4)));
         hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
     if string_length=(type, "whole", 5) {
-        variable number = to_number(@cast_*(+(type, 6)));
+        variable number = to_number(*.cast(+(type, 6)));
         hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
     };
 
     if string_length=(type, "integer", 7) {
-        variable number = to_number(@cast_*(+(type, 8)));
+        variable number = to_number(*.cast(+(type, 8)));
         hashmap_string_put(&(cached_sizes_map), type, number);
 
         return number;
@@ -2127,7 +2127,7 @@ define get_size_linux_x86-642 = function(type: *, nodes: *Nodes): whole_8 {
     variable i = 0;
     while <(i, node_count) {
         if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
-            variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
+            variable pointer = NodeStructureData.*cast(nodes_get_pointer_data(nodes, i));
             variable name = NodeStructureData.>name(pointer);
             variable member_types = NodeStructureData.>item_types(pointer);
             if string=(type, name) {
@@ -2153,7 +2153,7 @@ define get_size_multiple_linux_x86-643 = function(array: *, count: whole_8, node
         if =(array8_get(array, i), 0) {
             return total;
         };
-        total = +(total, get_size_linux_x86-643(@cast_*(array8_get(array, i)), nodes, define_values_map, structure_members_array));
+        total = +(total, get_size_linux_x86-643(*.cast(array8_get(array, i)), nodes, define_values_map, structure_members_array));
         i = +(i, 1);
     };
 
@@ -2168,7 +2168,7 @@ define get_size_multiple_linux_x86-642 = function(array: *, count: whole_8, node
         if =(array8_get(array, i), 0) {
             return total;
         };
-        total = +(total, get_size_linux_x86-642(@cast_*(array8_get(array, i)), nodes));
+        total = +(total, get_size_linux_x86-642(*.cast(array8_get(array, i)), nodes));
         i = +(i, 1);
     };
 
@@ -2181,7 +2181,7 @@ define get_size_multiple_reversed_linux_x86-643 = function(array: *, count: whol
     variable total = 0;
 
     while >(i, count) {
-        total = +(total, get_size_linux_x86-643(@cast_*(array8_get(array, i)), nodes, define_values_map, structure_members_array));
+        total = +(total, get_size_linux_x86-643(*.cast(array8_get(array, i)), nodes, define_values_map, structure_members_array));
         i = -(i, 1);
     };
 
@@ -2194,7 +2194,7 @@ define get_size_multiple_reversed_linux_x86-642 = function(array: *, count: whol
     variable total = 0;
 
     while >(i, count) {
-        total = +(total, get_size_linux_x86-642(@cast_*(array8_get(array, i)), nodes));
+        total = +(total, get_size_linux_x86-642(*.cast(array8_get(array, i)), nodes));
         i = -(i, 1);
     };
 

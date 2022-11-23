@@ -72,7 +72,7 @@ define autobuffer_push_jmp_near = function(instructions: *AutoBuffer, instructio
 
     autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
-    return @cast_InstructionIndex(current_instruction);
+    return InstructionIndex.cast(current_instruction);
 };
 
 define autobuffer_push_je_near = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
@@ -83,7 +83,7 @@ define autobuffer_push_je_near = function(instructions: *AutoBuffer, instruction
 
     autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
-    return @cast_InstructionIndex(current_instruction);
+    return InstructionIndex.cast(current_instruction);
 };
 
 define autobuffer_push_jne_near = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
@@ -94,21 +94,21 @@ define autobuffer_push_jne_near = function(instructions: *AutoBuffer, instructio
 
     autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
-    return @cast_InstructionIndex(current_instruction);
+    return InstructionIndex.cast(current_instruction);
 };
 
 define set_jmp = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jump: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(jump, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
+    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(whole_8.cast(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(jump, 1)));
 };
 
 define set_jmp_value = function(instructions: *AutoBuffer, jump: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(@cast_whole_8(value)), whole_8_to_whole_4(@cast_whole_8(+(jump, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
+    variable offset = -(whole_8_to_whole_4(whole_8.cast(value)), whole_8_to_whole_4(whole_8.cast(+(jump, 5))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(jump, 1)));
 };
 
 define set_control_flow_value_absolute = function(instructions: *AutoBuffer, jump: InstructionIndex, offset: whole_8) {
-    autobuffer_set_any_4(instructions, whole_8_to_whole_4(offset), @cast_whole_8(jump));
+    autobuffer_set_any_4(instructions, whole_8_to_whole_4(offset), whole_8.cast(jump));
 };
 
 define autobuffer_push_call_far_register8 = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, register: Register8) {
@@ -123,7 +123,7 @@ define autobuffer_push_call_near = function(instructions: *AutoBuffer, instructi
 
     autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
 
-    return @cast_InstructionIndex(current_instruction);
+    return InstructionIndex.cast(current_instruction);
 };
 
 define autobuffer_push_ret = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8) {
@@ -131,28 +131,28 @@ define autobuffer_push_ret = function(instructions: *AutoBuffer, instruction_ind
 };
 
 define set_call = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, call: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(call, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(call, 1)));
+    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(whole_8.cast(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(call, 1)));
 };
 
 define set_call_value = function(instructions: *AutoBuffer, call: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(@cast_whole_8(value)), whole_8_to_whole_4(@cast_whole_8(+(call, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(call, 1)));
+    variable offset = -(whole_8_to_whole_4(whole_8.cast(value)), whole_8_to_whole_4(whole_8.cast(+(call, 5))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(call, 1)));
 };
 
 define set_je = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, je: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(je, 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(je, 2)));
+    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(whole_8.cast(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(je, 2)));
 };
 
 define set_je_value = function(instructions: *AutoBuffer, je: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(@cast_whole_8(value)), whole_8_to_whole_4(@cast_whole_8(+(je, 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(je, 2)));
+    variable offset = -(whole_8_to_whole_4(whole_8.cast(value)), whole_8_to_whole_4(whole_8.cast(+(je, 6))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(je, 2)));
 };
 
 define set_jne = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jne: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(jne, 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jne, 2)));
+    variable offset = -(whole_8_to_whole_4(whole_8.>(instruction_index_pointer)), whole_8_to_whole_4(whole_8.cast(+(jne, 6))));
+    autobuffer_set_any_4(instructions, offset, whole_8.cast(+(jne, 2)));
 };
 
 define autobuffer_push_data_string = function(data: *AutoBuffer, data_index_pointer: *whole_8, string: *): DataIndex {
@@ -161,7 +161,7 @@ define autobuffer_push_data_string = function(data: *AutoBuffer, data_index_poin
     autobuffer_push_string(data, data_index_pointer, string);
     increment_whole_8_pointer(data_index_pointer, 1);
 
-    return @cast_DataIndex(index);
+    return DataIndex.cast(index);
 };
 
 define autobuffer_push_data_whole_8 = function(data: *AutoBuffer, data_index_pointer: *whole_8, data: whole_8): DataIndex {
@@ -173,13 +173,13 @@ define autobuffer_push_data_whole_8 = function(data: *AutoBuffer, data_index_poi
 
     whole_8.<(data_index_pointer, +(8, whole_8.>(data_index_pointer)));
 
-    return @cast_DataIndex(index);
+    return DataIndex.cast(index);
 };
 
 define get_instruction = function(instructions: *AutoBuffer, instructions_index_pointer: *whole_8): InstructionIndex {
     variable index = whole_8.>(instructions_index_pointer);
 
-    return @cast_InstructionIndex(index);
+    return InstructionIndex.cast(index);
 };
 
 define autobuffer_push_mov_data_register8 = function(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, register: Register8, data_index: DataIndex) {
@@ -187,7 +187,7 @@ define autobuffer_push_mov_data_register8 = function(buffer: *AutoBuffer, buffer
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 199_whole_1);
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(192_whole_1, register));
     autobuffer_array8_set(indexes_to_adjust, whole_8.>(indexes_to_adjust_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_index, +(1, whole_8.>(indexes_to_adjust_index)));
 };
@@ -197,7 +197,7 @@ define autobuffer_push_mov_data_offset_register8 = function(buffer: *AutoBuffer,
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 199_whole_1);
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(192_whole_1, register));
     autobuffer_array8_set(indexes_to_adjust, whole_8.>(indexes_to_adjust_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(+(data_index, offset))));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
 
     whole_8.<(indexes_to_adjust_index, +(1, whole_8.>(indexes_to_adjust_index)));
 };
@@ -205,13 +205,13 @@ define autobuffer_push_mov_data_offset_register8 = function(buffer: *AutoBuffer,
 define autobuffer_push_push_data = function(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, data_index: DataIndex) {
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
     autobuffer_array8_set(indexes_to_adjust, whole_8.>(indexes_to_adjust_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_index, +(1, whole_8.>(indexes_to_adjust_index)));
 };
 
 define autobuffer_push_push_instruction_pointer = function(buffer: *AutoBuffer, buffer_index_pointer: *whole_8): InstructionIndex {
-    variable instruction_index = @cast_InstructionIndex(whole_8.>(buffer_index_pointer));
+    variable instruction_index = InstructionIndex.cast(whole_8.>(buffer_index_pointer));
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
     autobuffer_push_whole_4(buffer, buffer_index_pointer, 0_whole_4);
 
@@ -221,13 +221,13 @@ define autobuffer_push_push_instruction_pointer = function(buffer: *AutoBuffer, 
 define autobuffer_push_push_bss = function(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, bss_index: BssIndex) {
     autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
     autobuffer_array8_set(indexes_to_adjust, whole_8.>(indexes_to_adjust_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(bss_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(bss_index)));
 
     whole_8.<(indexes_to_adjust_index, +(1, whole_8.>(indexes_to_adjust_index)));
 };
 
 define autobuffer_array8_set = function(buffer: *AutoBuffer, index: whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(index, 8));
+    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(index, 8));
     autobuffer_register(buffer, +(*(index, 8), 8), 8);
 };
 
@@ -379,7 +379,7 @@ define autobuffer_push_mov_data_offset_pointer_register8 = function(buffer: *Aut
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -407,7 +407,7 @@ define autobuffer_push_mov_data_offset_pointer_register4 = function(buffer: *Aut
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -436,7 +436,7 @@ define autobuffer_push_mov_data_offset_pointer_register2 = function(buffer: *Aut
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -464,7 +464,7 @@ define autobuffer_push_mov_data_offset_pointer_register1 = function(buffer: *Aut
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -490,7 +490,7 @@ define autobuffer_push_mov_bss_offset_pointer_register8 = function(buffer: *Auto
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -518,7 +518,7 @@ define autobuffer_push_mov_bss_offset_pointer_register4 = function(buffer: *Auto
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -547,7 +547,7 @@ define autobuffer_push_mov_bss_offset_pointer_register2 = function(buffer: *Auto
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -575,7 +575,7 @@ define autobuffer_push_mov_bss_offset_pointer_register1 = function(buffer: *Auto
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(data_index)));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -601,7 +601,7 @@ define autobuffer_push_mov_register8_bss_pointer_offset = function(buffer: *Auto
     autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
 
     autobuffer_array8_set(indexes_to_adjust_relative, whole_8.>(indexes_to_adjust_relative_index), whole_8.>(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(+(data_index, offset))));
+    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
 
     whole_8.<(indexes_to_adjust_relative_index, +(1, whole_8.>(indexes_to_adjust_relative_index)));
 };
@@ -1974,8 +1974,7 @@ define autobuffer_push_zeros = function(buffer: *AutoBuffer, buffer_index_pointe
 };
 
 define new_elf64_file_header = function(): ELF64FileHeader {
-    // Double hack, casting and return
-    variable header = @cast_ELF64FileHeader(ELF64FileHeader.>0());
+    variable header = ELF64FileHeader.>0();
 
     variable _ = whole_8_to_whole_4(2);
     ELF64FileHeader.<magic(&(header), whole_8_to_whole_4(1179403647));
@@ -2023,19 +2022,19 @@ define ELF64ProgramHeader = structure {
 };
 
 define get_whole_1 = function(pointer: *, offset: whole_8): whole_1 {
-    return whole_1.>(@cast_*whole_1(+(pointer, offset)));
+    return whole_1.>(whole_1.*cast(+(pointer, offset)));
 };
 
 define get_whole_2 = function(pointer: *, offset: whole_8): whole_2 {
-    return whole_2.>(@cast_*whole_2(+(pointer, offset)));
+    return whole_2.>(whole_2.*cast(+(pointer, offset)));
 };
 
 define get_whole_4 = function(pointer: *, offset: whole_8): whole_4 {
-    return whole_4.>(@cast_*whole_4(+(pointer, offset)));
+    return whole_4.>(whole_4.*cast(+(pointer, offset)));
 };
 
 define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
-    return any_8.>(@cast_*any_8(+(pointer, offset)));
+    return any_8.>(any_8.*cast(+(pointer, offset)));
 };
 
 define BRK = global(*);
@@ -2043,19 +2042,19 @@ define REFERENCE_BRK = global(*);
 
 define brk_allocate = function(size: whole_8): * {
     if =(BRK, 0) {
-        BRK = sys_brk(@cast_*(0));
+        BRK = sys_brk(*.cast(0));
         REFERENCE_BRK = BRK;
     };
 
     variable allocated = REFERENCE_BRK;
-    REFERENCE_BRK = @cast_*(+(REFERENCE_BRK, size));
+    REFERENCE_BRK = *.cast(+(REFERENCE_BRK, size));
     
     if >(REFERENCE_BRK, BRK) {
         variable increment = 67108864;
         if >(size, increment) {
             increment = size;
         };
-        BRK = @cast_*(+(BRK, increment));
+        BRK = *.cast(+(BRK, increment));
         variable _ = sys_brk(BRK);
     };
     return allocated;

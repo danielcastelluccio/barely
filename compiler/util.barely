@@ -4,7 +4,7 @@ define is_number = function(string: *): boolean {
     variable has_number = false;
     variable i = 0;
     while <(i, length2) {
-        variable character = whole_1.>(@cast_*whole_1(+(string, i)));
+        variable character = whole_1.>(whole_1.*cast(+(string, i)));
 
         if &&(=(character, 95_whole_1), >(i, 0)) {
             break;
@@ -39,7 +39,7 @@ define to_number_size_signed = function(string: *, size: whole_8, signed: boolea
 
     variable i = 0;
     while <(i, length2) {
-        variable character = whole_1.>(@cast_*whole_1(+(string, i)));
+        variable character = whole_1.>(whole_1.*cast(+(string, i)));
 
         if =(character, 95_whole_1) {
             break;
@@ -72,7 +72,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable whole_82 = whole_8;
 
     if =(whole_8, 0) {
-        any_1.<(@cast_*any_1(buffer), 48_whole_1);
+        any_1.<(any_1.*cast(buffer), 48_whole_1);
     };
 
     variable length = 0;
@@ -86,7 +86,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable i = 0;
     while !(=(whole_82, 0)) {
         variable number = whole_8_to_whole_1(%(whole_82, 10));
-        any_1.<(@cast_*any_1(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
+        any_1.<(any_1.*cast(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
         whole_82 = /(whole_82, 10);
         i = +(i, 1);
     };
@@ -99,19 +99,19 @@ define decrement_whole_8_pointer = function(pointer: *whole_8, amount: whole_8) 
 define stringarray_get = function(keys: *, values: *, wanted: *, size: whole_8): * {
     variable j = 0;
     while <(j, size) {
-        if string=(@cast_*(array8_get(keys, j)), wanted) {
-            return @cast_*(array8_get(values, j));
+        if string=(*.cast(array8_get(keys, j)), wanted) {
+            return *.cast(array8_get(values, j));
         };
         j = +(j, 1);
     };
 
-    return @cast_*(0);
+    return *.cast(0);
 };
 
 define stringarray_get_index = function(keys: *, wanted: *, size: whole_8): whole_8 {
     variable j = 0;
     while <(j, size) {
-        if string=(@cast_*(array8_get(keys, j)), wanted) {
+        if string=(*.cast(array8_get(keys, j)), wanted) {
             return j;
         };
         j = +(j, 1);
@@ -142,12 +142,12 @@ define exit = function(code: whole_8) {
 };
 
 define array8_set = function(array: *, index: whole_8, value: any_8) {
-    variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
+    variable index_pointer = any_8.*cast(+(array, *(index, 8)));
     any_8.<(index_pointer, value);
 };
 
 define array8_get = function(array: *, index: whole_8): any_8 {
-    variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
+    variable index_pointer = any_8.*cast(+(array, *(index, 8)));
     return any_8.>(index_pointer);
 };
 
@@ -160,20 +160,20 @@ define array8_length = function(array: *): whole_8 {
 };
 
 define autobuffer_stack8_push = function(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(whole_8.>(stack_pointer), 8));
+    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(whole_8.>(stack_pointer), 8));
     increment_whole_8_pointer(stack_pointer, 1);
 };
 
 define autobuffer_stack8_pop = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
     decrement_whole_8_pointer(stack_pointer, 1);
-    variable index_pointer = @cast_*any_8(autobuffer_get(buffer, *(whole_8.>(stack_pointer), 8)));
+    variable index_pointer = any_8.*cast(autobuffer_get(buffer, *(whole_8.>(stack_pointer), 8)));
     return any_8.>(index_pointer);
 };
 
 define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
     variable j = 0;
     while <(j, size) {
-        if string=(@cast_*(autobuffer_array8_get(keys, j)), wanted) {
+        if string=(*.cast(autobuffer_array8_get(keys, j)), wanted) {
             return j;
         };
         j = +(j, 1);
@@ -211,9 +211,9 @@ define hashmap_new = function(size: whole_8): HashMap {
 define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
     variable buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
+    variable bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if =(bucket_pointer, 0) {
-        variable allocated_autobuffer = @cast_*AutoBuffer(brk_allocate(24));
+        variable allocated_autobuffer = AutoBuffer.*cast(brk_allocate(24));
         variable autobuffer = autobuffer_new(48);
         AutoBuffer.<(allocated_autobuffer, autobuffer);
 
@@ -233,7 +233,7 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
         };
     };
 
-    variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+    variable bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
     BucketData.<data(bucket_data, 1);
     BucketData.<hash(bucket_data, hash);
     BucketData.<value(bucket_data, value);
@@ -242,11 +242,11 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
 define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
     variable buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
+    variable bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
         variable i = 0;
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+            variable bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
 
             if =(BucketData.>hash(bucket_data), hash) {
                 return BucketData.>value(bucket_data);
@@ -262,11 +262,11 @@ define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
 define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
     variable buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = @cast_*AutoBuffer(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
+    variable bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
         variable i = 0;
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            variable bucket_data = @cast_*BucketData(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+            variable bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
 
             if =(BucketData.>hash(bucket_data), hash) {
                 return BucketData.>value(bucket_data);
@@ -295,7 +295,7 @@ define string_hash = function(string: *): whole_8 {
     variable hash = 0;
     variable i = 0;
     while <(i, length(string)) {
-        variable character = whole_1_to_whole_8(@cast_whole_1(any_1.>(+(@cast_*any_1(string), i))));
+        variable character = whole_1_to_whole_8(whole_1.cast(any_1.>(+(any_1.*cast(string), i))));
         hash = +(+(+(hash, *(hash, character)), character), i);
         i = +(i, 1);
     };

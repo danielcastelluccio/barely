@@ -17,6 +17,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     nodes_append_structure(&(nodes), "integer_2", "any_2");
     nodes_append_structure(&(nodes), "integer_1", "any_1");
     nodes_append_structure(&(nodes), "*", "any_8");
+    nodes_append_structure(&(nodes), "**", "any_8");
 
     add_basic_internal_functions(&(nodes));
 
@@ -39,10 +40,10 @@ define main = function(arguments: **, argument_count: whole_8) {
 
     variable i = 1;
     while <(i, argument_count) {
-        variable pointer = @cast_*(array8_get(arguments, i));
+        variable pointer = *.cast(array8_get(arguments, i));
 
         if string=(pointer, "--output") {
-            variable output = @cast_*(array8_get(arguments, +(i, 1)));
+            variable output = *.cast(array8_get(arguments, +(i, 1)));
             output_file = output;
             
             i = +(i, 2);
@@ -66,20 +67,20 @@ define main = function(arguments: **, argument_count: whole_8) {
         variable id = nodes_get_id(&(nodes), i);
     
         if =(id, NODE_INVOKE) {
-            variable invoke_data = @cast_*NodeInvokeData(nodes_get_pointer_data(&(nodes), i));
+            variable invoke_data = NodeInvokeData.*cast(nodes_get_pointer_data(&(nodes), i));
             variable name = NodeInvokeData.>name(invoke_data);
             variable has_specifier = NodeInvokeData.>has_specifier(invoke_data);
 
             if has_specifier {
                 if |(string_length=(name, ">", 1), string_length=(name, "<", 1)) {
-                    variable previous_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(&(nodes), -(i, 1)));
+                    variable previous_data = NodeRetrieveData.*cast(nodes_get_pointer_data(&(nodes), -(i, 1)));
                     variable previous_name = NodeRetrieveData.>name(previous_data);
 
                     if string_length=(previous_name, "any_", 4) {
                         variable added = false;
                         variable j = 0;
                         while <(j, already_added2_index) {
-                            if string=(@cast_*(autobuffer_array8_get(&(already_added2), j)), previous_name) {
+                            if string=(*.cast(autobuffer_array8_get(&(already_added2), j)), previous_name) {
                                 added = true;
                             };
                             j = +(j, 1);
@@ -97,7 +98,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                 variable added = false;
                 variable j = 0;
                 while <(j, already_added_index) {
-                    if string=(@cast_*(autobuffer_array8_get(&(already_added), j)), +(name, 7)) {
+                    if string=(*.cast(autobuffer_array8_get(&(already_added), j)), +(name, 7)) {
                         added = true;
                     };
                     j = +(j, 1);
@@ -112,7 +113,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                     variable added = false;
                     variable j = 0;
                     while <(j, already_added_index) {
-                        if string=(@cast_*(autobuffer_array8_get(&(already_added), j)), name) {
+                        if string=(*.cast(autobuffer_array8_get(&(already_added), j)), name) {
                             added = true;
                         };
                         j = +(j, 1);
@@ -125,12 +126,12 @@ define main = function(arguments: **, argument_count: whole_8) {
                 };
             };
         } else if =(id, NODE_DECLARE) {
-            variable type = NodeDeclareData.>type(@cast_*NodeDeclareData(nodes_get_pointer_data(&(nodes), i)));
+            variable type = NodeDeclareData.>type(NodeDeclareData.*cast(nodes_get_pointer_data(&(nodes), i)));
             if string_length=(type, "any_", 4) {
                 variable added = false;
                 variable j = 0;
                 while <(j, already_added_index) {
-                    if string=(@cast_*(autobuffer_array8_get(&(already_added), j)), type) {
+                    if string=(*.cast(autobuffer_array8_get(&(already_added), j)), type) {
                         added = true;
                     };
                     j = +(j, 1);
@@ -150,7 +151,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     variable i = 0;
     while <(i, nodes_index_saved) {
         if =(nodes_get_id(&(nodes), i), NODE_STRUCTURE) {
-            variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(&(nodes), i));
+            variable pointer = NodeStructureData.*cast(nodes_get_pointer_data(&(nodes), i));
             variable name = NodeStructureData.>name(pointer);
             variable is_new = NodeStructureData.>is_new(pointer);
 
@@ -158,11 +159,11 @@ define main = function(arguments: **, argument_count: whole_8) {
                 // Setter for whole value
                 variable allocated = brk_allocate(+(length(name), 3));
                 copy(name, allocated, length(name));
-                copy("<-", @cast_*(+(allocated, length(name))), 2);
+                copy("<-", *.cast(+(allocated, length(name))), 2);
 
                 variable allocated_pointer = brk_allocate(+(length(name), 2));
                 copy("*", allocated_pointer, 1);
-                copy(name, @cast_*(+(allocated_pointer, 1)), length(name));
+                copy(name, *.cast(+(allocated_pointer, 1)), length(name));
 
                 variable allocated_arguments = brk_allocate(24);
                 array8_set(allocated_arguments, 0, allocated_pointer);
@@ -170,9 +171,9 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable allocated_returns = brk_allocate(8);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 NodeFunctionData.<name(pointer_store_node, allocated);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -181,7 +182,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                 // Getter for whole value
                 variable allocated = brk_allocate(+(length(name), 3));
                 copy(name, allocated, length(name));
-                copy("->", @cast_*(+(allocated, length(name))), 2);
+                copy("->", *.cast(+(allocated, length(name))), 2);
 
                 variable allocated_arguments = brk_allocate(16);
                 array8_set(allocated_arguments, 0, allocated_pointer);
@@ -189,9 +190,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                 variable allocated_returns = brk_allocate(16);
                 array8_set(allocated_returns, 0, name);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 NodeFunctionData.<name(pointer_store_node, allocated);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -202,9 +203,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                 //variable allocated_returns = brk_allocate(16);
                 //array8_set(allocated_returns, 0, name);
 
-                //variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                //variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 //NodeFunctionData.<name(pointer_store_node, name);
-                //NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                //NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 //NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 //NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -212,16 +213,16 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable allocated = brk_allocate(+(length(name), 4));
                 copy(name, allocated, length(name));
-                copy("->0", @cast_*(+(allocated, length(name))), 3);
+                copy("->0", *.cast(+(allocated, length(name))), 3);
 
                 variable allocated_arguments = brk_allocate(8);
 
                 variable allocated_returns = brk_allocate(16);
                 array8_set(allocated_returns, 0, name);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 NodeFunctionData.<name(pointer_store_node, allocated);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -232,14 +233,14 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable j = 0;
                 while !(=(array8_get(member_names, j), 0)) {
-                    variable member_name = @cast_*(array8_get(member_names, j));
-                    variable member_type = @cast_*(array8_get(member_types, j));
+                    variable member_name = *.cast(array8_get(member_names, j));
+                    variable member_type = *.cast(array8_get(member_types, j));
 
                     // Setter for individual members
                     variable allocated = brk_allocate(+(length(name), +(length(member_name), 3)));
                     copy(name, allocated, length(name));
-                    copy("<-", @cast_*(+(allocated, length(name))), 2);
-                    copy(member_name, @cast_*(+(allocated, +(length(name), 2))), length(member_name));
+                    copy("<-", *.cast(+(allocated, length(name))), 2);
+                    copy(member_name, *.cast(+(allocated, +(length(name), 2))), length(member_name));
 
                     variable allocated_arguments = brk_allocate(24);
                     array8_set(allocated_arguments, 0, allocated_pointer);
@@ -247,9 +248,9 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                     variable allocated_returns = brk_allocate(8);
 
-                    variable member_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                    variable member_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                     NodeFunctionData.<name(member_store_node, allocated);
-                    NodeFunctionData.<argument_names(member_store_node, @cast_*(0));
+                    NodeFunctionData.<argument_names(member_store_node, *.cast(0));
                     NodeFunctionData.<argument_types(member_store_node, allocated_arguments);
                     NodeFunctionData.<returns(member_store_node, allocated_returns);
 
@@ -258,8 +259,8 @@ define main = function(arguments: **, argument_count: whole_8) {
                     // Getter for individual members
                     variable allocated = brk_allocate(+(length(name), +(length(member_name), 3)));
                     copy(name, allocated, length(name));
-                    copy("->", @cast_*(+(allocated, length(name))), 2);
-                    copy(member_name, @cast_*(+(allocated, +(length(name), 2))), length(member_name));
+                    copy("->", *.cast(+(allocated, length(name))), 2);
+                    copy(member_name, *.cast(+(allocated, +(length(name), 2))), length(member_name));
 
                     variable allocated_arguments = brk_allocate(16);
                     array8_set(allocated_arguments, 0, allocated_pointer);
@@ -267,9 +268,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                     variable allocated_returns = brk_allocate(16);
                     array8_set(allocated_returns, 0, member_type);
 
-                    variable member_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                    variable member_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                     NodeFunctionData.<name(member_store_node, allocated);
-                    NodeFunctionData.<argument_names(member_store_node, @cast_*(0));
+                    NodeFunctionData.<argument_names(member_store_node, *.cast(0));
                     NodeFunctionData.<argument_types(member_store_node, allocated_arguments);
                     NodeFunctionData.<returns(member_store_node, allocated_returns);
 
@@ -285,11 +286,11 @@ define main = function(arguments: **, argument_count: whole_8) {
                 // Setter for whole value
                 variable allocated = brk_allocate(+(length(name), 2));
                 copy(name, allocated, length(name));
-                copy("<", @cast_*(+(allocated, length(name))), 1);
+                copy("<", *.cast(+(allocated, length(name))), 1);
 
                 variable allocated_pointer = brk_allocate(+(length(name), 2));
                 copy("*", allocated_pointer, 1);
-                copy(name, @cast_*(+(allocated_pointer, 1)), length(name));
+                copy(name, *.cast(+(allocated_pointer, 1)), length(name));
 
                 variable allocated_arguments = brk_allocate(24);
                 array8_set(allocated_arguments, 0, allocated_pointer);
@@ -297,9 +298,9 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable allocated_returns = brk_allocate(8);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 NodeFunctionData.<name(pointer_store_node, allocated);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -308,7 +309,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                 // Getter for whole value
                 variable allocated = brk_allocate(+(length(name), 2));
                 copy(name, allocated, length(name));
-                copy(">", @cast_*(+(allocated, length(name))), 1);
+                copy(">", *.cast(+(allocated, length(name))), 1);
 
                 variable allocated_arguments = brk_allocate(16);
                 array8_set(allocated_arguments, 0, allocated_pointer);
@@ -316,9 +317,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                 variable allocated_returns = brk_allocate(16);
                 array8_set(allocated_returns, 0, name);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 NodeFunctionData.<name(pointer_store_node, allocated);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -329,9 +330,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                 //variable allocated_returns = brk_allocate(16);
                 //array8_set(allocated_returns, 0, name);
 
-                //variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                //variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 //NodeFunctionData.<name(pointer_store_node, name);
-                //NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                //NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 //NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 //NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -339,16 +340,16 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable allocated = brk_allocate(+(length(name), 3));
                 copy(name, allocated, length(name));
-                copy(">0", @cast_*(+(allocated, length(name))), 2);
+                copy(">0", *.cast(+(allocated, length(name))), 2);
 
                 variable allocated_arguments = brk_allocate(8);
 
                 variable allocated_returns = brk_allocate(16);
                 array8_set(allocated_returns, 0, name);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                variable pointer_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                 NodeFunctionData.<name(pointer_store_node, allocated);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                NodeFunctionData.<argument_names(pointer_store_node, *.cast(0));
                 NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
                 NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
@@ -359,14 +360,14 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable j = 0;
                 while !(=(array8_get(member_names, j), 0)) {
-                    variable member_name = @cast_*(array8_get(member_names, j));
-                    variable member_type = @cast_*(array8_get(member_types, j));
+                    variable member_name = *.cast(array8_get(member_names, j));
+                    variable member_type = *.cast(array8_get(member_types, j));
 
                     // Setter for individual members
                     variable allocated = brk_allocate(+(length(name), +(length(member_name), 2)));
                     copy(name, allocated, length(name));
-                    copy("<", @cast_*(+(allocated, length(name))), 1);
-                    copy(member_name, @cast_*(+(allocated, +(length(name), 1))), length(member_name));
+                    copy("<", *.cast(+(allocated, length(name))), 1);
+                    copy(member_name, *.cast(+(allocated, +(length(name), 1))), length(member_name));
 
                     variable allocated_arguments = brk_allocate(24);
                     array8_set(allocated_arguments, 0, allocated_pointer);
@@ -374,9 +375,9 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                     variable allocated_returns = brk_allocate(8);
 
-                    variable member_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                    variable member_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                     NodeFunctionData.<name(member_store_node, allocated);
-                    NodeFunctionData.<argument_names(member_store_node, @cast_*(0));
+                    NodeFunctionData.<argument_names(member_store_node, *.cast(0));
                     NodeFunctionData.<argument_types(member_store_node, allocated_arguments);
                     NodeFunctionData.<returns(member_store_node, allocated_returns);
 
@@ -385,8 +386,8 @@ define main = function(arguments: **, argument_count: whole_8) {
                     // Getter for individual members
                     variable allocated = brk_allocate(+(length(name), +(length(member_name), 2)));
                     copy(name, allocated, length(name));
-                    copy(">", @cast_*(+(allocated, length(name))), 1);
-                    copy(member_name, @cast_*(+(allocated, +(length(name), 1))), length(member_name));
+                    copy(">", *.cast(+(allocated, length(name))), 1);
+                    copy(member_name, *.cast(+(allocated, +(length(name), 1))), length(member_name));
 
                     variable allocated_arguments = brk_allocate(16);
                     array8_set(allocated_arguments, 0, allocated_pointer);
@@ -394,9 +395,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                     variable allocated_returns = brk_allocate(16);
                     array8_set(allocated_returns, 0, member_type);
 
-                    variable member_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                    variable member_store_node = NodeFunctionData.*cast(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
                     NodeFunctionData.<name(member_store_node, allocated);
-                    NodeFunctionData.<argument_names(member_store_node, @cast_*(0));
+                    NodeFunctionData.<argument_names(member_store_node, *.cast(0));
                     NodeFunctionData.<argument_types(member_store_node, allocated_arguments);
                     NodeFunctionData.<returns(member_store_node, allocated_returns);
 
@@ -427,9 +428,9 @@ define get_structure_string_type = function(pointer: *NodeStructureData): * {
 
     variable j = 0;
     while !(=(array8_get(items, j), 0)) {
-        autobuffer_push_string(&(main_name_buffer), &(main_name_index), @cast_*(array8_get(item_names, j)));
+        autobuffer_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(item_names, j)));
         autobuffer_push_string(&(main_name_buffer), &(main_name_index), ":");
-        autobuffer_push_string(&(main_name_buffer), &(main_name_index), @cast_*(array8_get(items, j)));
+        autobuffer_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(items, j)));
         autobuffer_push_string(&(main_name_buffer), &(main_name_index), ",");
         j = +(j, 1);
     };

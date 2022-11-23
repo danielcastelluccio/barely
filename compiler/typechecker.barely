@@ -15,14 +15,14 @@ define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: Hash
         };
     };
 
-    variable defined = @cast_*(hashmap_string_get(&(defines_map), given));
+    variable defined = *.cast(hashmap_string_get(&(defines_map), given));
     if !(=(defined, 0)) {
         if string=(defined, wanted) {
             return true;
         };
     };
 
-    defined = @cast_*(hashmap_string_get(&(defines_map), wanted));
+    defined = *.cast(hashmap_string_get(&(defines_map), wanted));
     if !(=(defined, 0)) {
         if string=(defined, given) {
             return true;
@@ -37,8 +37,12 @@ define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: Hash
         return string_length=(+(given, 7), wanted, -(length(given), 8));
     };
 
+    if |(&&(string=(wanted, "*structure[_:any_8]"), string=(given, "structure[_:any_8]")), &&(string=(given, "structure[_:any_8]"), string=(wanted, "*structure[_:any_8]"))) {
+        return true;
+    };
+
     if string_length=(wanted, "any_", 4) {
-        variable size = to_number(@cast_*(+(wanted, 4)));
+        variable size = to_number(*.cast(+(wanted, 4)));
         return =(size, get_size_linux_x86-643(given, nodes, defines_map, structure_members_array));
     };
 
@@ -57,7 +61,7 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes): boolean {
     };
 
     if string_length=(wanted, "any_", 4) {
-        variable size = to_number(@cast_*(+(wanted, 4)));
+        variable size = to_number(*.cast(+(wanted, 4)));
         return =(size, get_size_linux_x86-642(given, nodes));
     };
 
@@ -65,7 +69,7 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes): boolean {
 };
 
 define is_signed = function(type: *, nodes: *Nodes): whole_8 {
-    variable cached_signedness = @cast_whole_8(hashmap_string_get2(&(cached_signedness_map), type));
+    variable cached_signedness = whole_8.cast(hashmap_string_get2(&(cached_signedness_map), type));
     if !(=(cached_signedness, 999)) {
         return cached_signedness;
     };
@@ -92,13 +96,13 @@ define is_signed = function(type: *, nodes: *Nodes): whole_8 {
     variable i = 0;
     while <(i, node_count) {
         if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
-            variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(nodes, i));
+            variable pointer = NodeStructureData.*cast(nodes_get_pointer_data(nodes, i));
             variable name = NodeStructureData.>name(pointer);
 
             if !(=(name, 0)) {
                 variable member_types = NodeStructureData.>item_types(pointer);
                 if string=(type, name) {
-                    variable is_signed2 = is_signed(@cast_*(array8_get(member_types, 0)), nodes);
+                    variable is_signed2 = is_signed(*.cast(array8_get(member_types, 0)), nodes);
                     hashmap_string_put(&(cached_signedness_map), type, is_signed2);
                     return is_signed2;
                 };
@@ -107,6 +111,7 @@ define is_signed = function(type: *, nodes: *Nodes): whole_8 {
         i = +(i, 1);
     };
 
+    hashmap_string_put(&(cached_signedness_map), type, 0);
     return 0;
 };
 
@@ -156,7 +161,7 @@ define type_check = function(nodes: *Nodes) {
         variable pointer_data = nodes_get_pointer_data(nodes, i);
 
         if =(id, NODE_FUNCTION) {
-            variable function_data = @cast_*NodeFunctionData(pointer_data);
+            variable function_data = NodeFunctionData.*cast(pointer_data);
             variable function_name = NodeFunctionData.>name(function_data);
             
             if !(=(function_name, 0)) {
@@ -185,7 +190,7 @@ define type_check = function(nodes: *Nodes) {
         };
 
         if =(id, NODE_STRUCTURE) {
-            variable structure_data = @cast_*NodeStructureData(pointer_data);
+            variable structure_data = NodeStructureData.*cast(pointer_data);
 
             if =(NodeStructureData.>name(structure_data), 0) {
                 autobuffer_array8_set(&(structure_members_array), define_structure_index, NodeStructureData.>item_types(structure_data));
@@ -195,7 +200,7 @@ define type_check = function(nodes: *Nodes) {
         };
 
         if =(id, NODE_GLOBAL) {
-            variable global_data = @cast_*NodeGlobalData(pointer_data);
+            variable global_data = NodeGlobalData.*cast(pointer_data);
             variable global_name = NodeGlobalData.>name(global_data);
             variable global_type = NodeGlobalData.>type(global_data);
 
@@ -208,7 +213,7 @@ define type_check = function(nodes: *Nodes) {
         };
 
         if =(id, NODE_DEFINE) {
-            variable define_data = @cast_*NodeDefineData(pointer_data);
+            variable define_data = NodeDefineData.*cast(pointer_data);
             variable define_name = NodeDefineData.>name(define_data);
             variable define_type = NodeDefineData.>type(define_data);
 
@@ -226,7 +231,7 @@ define type_check = function(nodes: *Nodes) {
             } else if string_length=(define_type, "global", 6) {
                 define_value = define_global_index;
             } else {
-                define_value = NodeNumberData.>value(@cast_*NodeNumberData(nodes_get_pointer_data(nodes, +(i, 1))));
+                define_value = NodeNumberData.>value(NodeNumberData.*cast(nodes_get_pointer_data(nodes, +(i, 1))));
             };
 
             hashmap_string_put(&(define_values_map), define_name, define_value);
@@ -270,7 +275,7 @@ define type_check = function(nodes: *Nodes) {
         //print_node_info(nodes, i);
 
         if =(id, NODE_FUNCTION) {
-            current_function = NodeFunctionData.>name(@cast_*NodeFunctionData(pointer_data));
+            current_function = NodeFunctionData.>name(NodeFunctionData.*cast(pointer_data));
 
             if =(current_function, 0) {
                 current_function_id = function_id;
@@ -280,7 +285,7 @@ define type_check = function(nodes: *Nodes) {
             stack_pointer = 0;
             done_anything = true;
         } else if =(id, NODE_NUMBER) {
-            variable number_data = @cast_*NodeNumberData(pointer_data);
+            variable number_data = NodeNumberData.*cast(pointer_data);
 
             variable number_type = autobuffer_new(16);
             variable number_type_index = 0;
@@ -302,7 +307,7 @@ define type_check = function(nodes: *Nodes) {
             autobuffer_stack8_push(&(stack), &(stack_pointer), "*");
             done_anything = true;
         } else if =(id, NODE_INVOKE) {
-            variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+            variable invoke_data = NodeInvokeData.*cast(pointer_data);
             variable has_specifier = NodeInvokeData.>has_specifier(invoke_data);
             variable function_name = NodeInvokeData.>name(invoke_data);
 
@@ -313,8 +318,8 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable to_push = @cast_*(+(function_name, 6));
+                variable popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable to_push = *.cast(+(function_name, 6));
 
                 if !(=(get_size_linux_x86-643(popped, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(to_push, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
@@ -334,10 +339,11 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                // removed signdness check -- probably need to add it back
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '+' wants matching arguments, given '");
                     print(first);
@@ -361,10 +367,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '-' wants matching arguments, given '");
                     print(first);
@@ -388,10 +394,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '*' has incompatable arguments, given '");
                     print(first);
@@ -415,10 +421,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '/' has incompatable arguments, given '");
                     print(first);
@@ -442,10 +448,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '%' has incompatable arguments, given '");
                     print(first);
@@ -469,10 +475,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '=' has incompatable arguments, given '");
                     print(first);
@@ -496,10 +502,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '>' has incompatable arguments, given '");
                     print(first);
@@ -523,10 +529,10 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
-                if |(!(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
+                if !(=(get_size_linux_x86-643(first, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(second, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
                     print("Invoke of '<' has incompatable arguments, given '");
                     print(first);
@@ -550,7 +556,7 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable to_push = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable to_push = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if string=(function_name, "*cast") {
                     variable new_to_push = brk_allocate(+(length(to_push), 2));
@@ -559,7 +565,7 @@ define type_check = function(nodes: *Nodes) {
                     to_push = new_to_push;
                 };
 
-                variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 if !(=(get_size_linux_x86-643(popped, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(to_push, nodes, define_values_map, structure_members_array))) {
                     print_node_error_beginning(nodes, i);
@@ -572,11 +578,14 @@ define type_check = function(nodes: *Nodes) {
                 };
 
                 autobuffer_stack8_push(&(stack), &(stack_pointer), to_push);
+
+                variable previous = whole_8.*cast(nodes_get_pointer(nodes, -(i, 1)));
+                whole_8.<(previous, NODE_SKIP);
             } else {
                 variable found_function = false;
 
                 if has_specifier {
-                    variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                    variable popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                     variable function_name_new = brk_allocate(+(+(length(popped), length(function_name)), 1));
                     copy(popped, function_name_new, length(popped));
                     copy(function_name, +(function_name_new, length(popped)), length(function_name));
@@ -585,7 +594,7 @@ define type_check = function(nodes: *Nodes) {
                     NodeInvokeData.<name(invoke_data, function_name);
                     NodeInvokeData.<has_specifier(invoke_data, false);
 
-                    variable previous = @cast_*whole_8(nodes_get_pointer(nodes, -(i, 1)));
+                    variable previous = whole_8.*cast(nodes_get_pointer(nodes, -(i, 1)));
                     whole_8.<(previous, NODE_SKIP);
                 };
 
@@ -597,8 +606,8 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable arguments = @cast_*(hashmap_string_get(&(function_arguments_map), function_name));
-                variable returns = @cast_*(hashmap_string_get(&(function_returns_map), function_name));
+                variable arguments = *.cast(hashmap_string_get(&(function_arguments_map), function_name));
+                variable returns = *.cast(hashmap_string_get(&(function_returns_map), function_name));
 
                 variable length = array8_length(arguments);
                 variable k = 0;
@@ -611,8 +620,8 @@ define type_check = function(nodes: *Nodes) {
                         exit(1);
                     };
 
-                    variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                    variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
+                    variable given = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                    variable wanted = *.cast(array8_get(arguments, -(-(length, k), 1)));
                     if !(is_type2(wanted, given, nodes, defines_map, structure_members_array)) {
                         print_node_error_beginning(nodes, i);
                         print("Invoke of '");
@@ -630,7 +639,7 @@ define type_check = function(nodes: *Nodes) {
 
                 variable k = 0;
                 while !(=(array8_get(returns, k), 0)) {
-                    variable return_value = @cast_*(array8_get(returns, k));
+                    variable return_value = *.cast(array8_get(returns, k));
                     autobuffer_stack8_push(&(stack), &(stack_pointer), return_value);
 
                     k = +(k, 1);
@@ -639,22 +648,22 @@ define type_check = function(nodes: *Nodes) {
 
             done_anything = true;
         } else if =(id, NODE_DECLARE) {
-            variable declare_data = @cast_*NodeDeclareData(pointer_data);
+            variable declare_data = NodeDeclareData.*cast(pointer_data);
             variable variable_name = NodeDeclareData.>name(declare_data);
             variable variable_type = NodeDeclareData.>type(declare_data);
 
-            hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
-            hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
+            hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type);
+            hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
 
             done_anything = true;
         } else if =(id, NODE_ASSIGN) {
-            variable assign_data = @cast_*NodeAssignData(pointer_data);
+            variable assign_data = NodeAssignData.*cast(pointer_data);
             variable variable_name = NodeAssignData.>name(assign_data);
 
             variable scope_index = -(variable_scope_types_pointer, 1);
-            variable variable_type = @cast_*(0);
+            variable variable_type = *.cast(0);
             while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                variable_type = *.cast(hashmap_string_get(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
                 scope_index = -(scope_index, 1);
             };
             scope_index = +(scope_index, 1);
@@ -665,16 +674,16 @@ define type_check = function(nodes: *Nodes) {
                 exit(1);
             };
 
-            variable popped_stack = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+            variable popped_stack = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
             if !(=(variable_type, 0)) {
                 if string=(variable_type, "") {
                     variable_type = popped_stack;
 
-                    hashmap_string_put(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name, popped_stack);
+                    hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name, popped_stack);
 
-                    variable variable_declare3 = hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_declares_map), scope_index)), variable_name);
-                    variable variable_declare4 = @cast_*NodeDeclareData(nodes_get_pointer_data(nodes, @cast_whole_8(variable_declare3)));
+                    variable variable_declare3 = hashmap_string_get(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_declares_map), scope_index)), variable_name);
+                    variable variable_declare4 = NodeDeclareData.*cast(nodes_get_pointer_data(nodes, whole_8.cast(variable_declare3)));
                     NodeDeclareData.<type(variable_declare4, variable_type);
                 };
 
@@ -690,12 +699,12 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
             } else {
-                variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
+                variable_type = *.cast(hashmap_string_get(&(globals_map), variable_name));
 
                 if =(variable_type, 0) {
-                    variable global_id = @cast_whole_8(hashmap_string_get2(&(define_values_map), variable_name));
+                    variable global_id = whole_8.cast(hashmap_string_get2(&(define_values_map), variable_name));
                     if !(=(global_id, 999)) {
-                        variable_type = @cast_*(autobuffer_array8_get(&(globals_array), global_id));
+                        variable_type = *.cast(autobuffer_array8_get(&(globals_array), global_id));
                     };
                 };
 
@@ -722,15 +731,15 @@ define type_check = function(nodes: *Nodes) {
 
             done_anything = true;
         } else if =(id, NODE_RETRIEVE) {
-            variable variable_name = NodeRetrieveData.>name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
+            variable variable_name = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, i)));
 
-            if &&(string_length=(variable_name, "any_", 4), &&(=(nodes_get_id(nodes, +(i, 1)), NODE_INVOKE), NodeInvokeData.>has_specifier(@cast_*NodeInvokeData(nodes_get_pointer_data(nodes, +(i, 1)))))) {
+            if &&(string_length=(variable_name, "any_", 4), &&(=(nodes_get_id(nodes, +(i, 1)), NODE_INVOKE), NodeInvokeData.>has_specifier(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, +(i, 1)))))) {
                 autobuffer_stack8_push(&(stack), &(stack_pointer), variable_name);
             } else {
                 variable scope_index = -(variable_scope_types_pointer, 1);
-                variable variable_type = @cast_*(0);
+                variable variable_type = *.cast(0);
                 while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                    variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                    variable_type = *.cast(hashmap_string_get(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
                     scope_index = -(scope_index, 1);
                 };
                 scope_index = +(scope_index, 1);
@@ -738,19 +747,19 @@ define type_check = function(nodes: *Nodes) {
                 if !(=(variable_type, 0)) {
                     autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                 } else {
-                    variable function_argument_names2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
-                    variable function_arguments2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
+                    variable function_argument_names2 = *.cast(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
+                    variable function_arguments2 = *.cast(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
 
                     variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
                     if !(=(variable_type, 0)) {
                         autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                     } else {
-                        variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
+                        variable_type = *.cast(hashmap_string_get(&(globals_map), variable_name));
 
                         if !(=(variable_type, 0)) {
                             autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                         } else {
-                            variable_type = @cast_*(hashmap_string_get(&(defines_map), variable_name));
+                            variable_type = *.cast(hashmap_string_get(&(defines_map), variable_name));
 
                             if !(=(variable_type, 0)) {
                                 autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
@@ -760,10 +769,10 @@ define type_check = function(nodes: *Nodes) {
                                     variable function_type_buffer_index = 0;
 
                                     autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "*function[");
-                                    variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), variable_name));
+                                    variable function_arguments2 = *.cast(hashmap_string_get(&(function_arguments_map), variable_name));
                                     variable j = 0;
                                     while !(=(array8_get(function_arguments2, j), 0)) {
-                                        variable function_argument = @cast_*(array8_get(function_arguments2, j));
+                                        variable function_argument = *.cast(array8_get(function_arguments2, j));
                                         autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_argument);
                                         autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
                                         j = +(j, 1);
@@ -774,10 +783,10 @@ define type_check = function(nodes: *Nodes) {
 
                                     autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ":");
 
-                                    variable function_returns2 = @cast_*(hashmap_string_get(&(function_returns_map), variable_name));
+                                    variable function_returns2 = *.cast(hashmap_string_get(&(function_returns_map), variable_name));
                                     variable j = 0;
                                     while !(=(array8_get(function_returns2, j), 0)) {
-                                        variable function_return = @cast_*(array8_get(function_returns2, j));
+                                        variable function_return = *.cast(array8_get(function_returns2, j));
                                         autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_return);
                                         autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
                                         j = +(j, 1);
@@ -823,12 +832,12 @@ define type_check = function(nodes: *Nodes) {
 
             done_anything = true;
         } else if =(id, NODE_RETURN) {
-            variable function_returns2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_returns_array), current_function_id) } else { hashmap_string_get(&(function_returns_map), current_function) });
+            variable function_returns2 = *.cast(if =(current_function, 0) { autobuffer_array8_get(&(function_returns_array), current_function_id) } else { hashmap_string_get(&(function_returns_map), current_function) });
 
             variable temp = array8_length(function_returns2);
             variable j = -(temp, 1);
             while <(j, temp) {
-                variable function_return = @cast_*(array8_get(function_returns2, j));
+                variable function_return = *.cast(array8_get(function_returns2, j));
 
                 if =(stack_pointer, 0) {
                     print_node_error_beginning(nodes, i);
@@ -836,7 +845,7 @@ define type_check = function(nodes: *Nodes) {
                     exit(1);
                 };
 
-                variable stack_popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                variable stack_popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 
                 if !(is_type2(function_return, stack_popped, nodes, defines_map, structure_members_array)) {
                     print_node_error_beginning(nodes, i);
@@ -865,10 +874,10 @@ define type_check = function(nodes: *Nodes) {
                 exit(1);
             };
 
-            variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+            variable popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
             variable allocated = brk_allocate(+(length(popped), 2));
             copy("*", allocated, 1);
-            copy(popped, @cast_*(+(allocated, 1)), length(popped));
+            copy(popped, *.cast(+(allocated, 1)), length(popped));
             autobuffer_stack8_push(&(stack), &(stack_pointer), allocated);
             done_anything = true;
         } else if =(id, NODE_JUMP_CONDITIONAL) {
@@ -878,7 +887,7 @@ define type_check = function(nodes: *Nodes) {
                 exit(1);
             };
 
-            variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+            variable popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
             if !(string=(popped, "boolean")) {
                 print_node_error_beginning(nodes, i);
                 print("Conditional Jump (if/while) wants 'boolean', given '");
@@ -890,12 +899,12 @@ define type_check = function(nodes: *Nodes) {
         } else if =(id, NODE_SCOPE) {
             variable new_hashmap = hashmap_new(512);
             variable allocated = brk_allocate(24);
-            HashMap.<(@cast_*HashMap(allocated), new_hashmap);
+            HashMap.<(HashMap.*cast(allocated), new_hashmap);
             autobuffer_stack8_push(&(variable_scopes_types_map), &(variable_scope_types_pointer), allocated);
 
             variable new_hashmap = hashmap_new(512);
             variable allocated = brk_allocate(24);
-            HashMap.<(@cast_*HashMap(allocated), new_hashmap);
+            HashMap.<(HashMap.*cast(allocated), new_hashmap);
             autobuffer_stack8_push(&(variable_scopes_declares_map), &(variable_scope_declares_pointer), allocated);
         } else if =(id, NODE_ENDSCOPE) {
             variable _ = autobuffer_stack8_pop(&(variable_scopes_types_map), &(variable_scope_types_pointer));
@@ -903,9 +912,9 @@ define type_check = function(nodes: *Nodes) {
         } else if =(id, NODE_STARTIFBLOCK) {
             autobuffer_stack8_push(&(if_blocks), &(if_block_pointer), stack_pointer);
         } else if =(id, NODE_ENDIFBLOCK) {
-            variable end_if_id = NodeEndIfBlockData.>id(@cast_*NodeEndIfBlockData(pointer_data));
-            variable start_stack = @cast_whole_8(autobuffer_stack8_pop(&(if_blocks), &(if_block_pointer)));
-            variable previous_results = @cast_*(autobuffer_array8_get(&(if_block_results), end_if_id));
+            variable end_if_id = NodeEndIfBlockData.>id(NodeEndIfBlockData.*cast(pointer_data));
+            variable start_stack = whole_8.cast(autobuffer_stack8_pop(&(if_blocks), &(if_block_pointer)));
+            variable previous_results = *.cast(autobuffer_array8_get(&(if_block_results), end_if_id));
             
             variable size = *(8, -(stack_pointer, start_stack));
             if =(previous_results, 0) {
@@ -925,8 +934,8 @@ define type_check = function(nodes: *Nodes) {
 
                 variable j = 0;
                 while <(j, /(size, 8)) {
-                    variable previous_value = @cast_*(array8_get(previous_array, j));
-                    variable value = @cast_*(array8_get(array, j));
+                    variable previous_value = *.cast(array8_get(previous_array, j));
+                    variable value = *.cast(array8_get(array, j));
 
                     variable error = false;
 
@@ -952,18 +961,18 @@ define type_check = function(nodes: *Nodes) {
 
             done_anything = true;
         } else if =(id, NODE_INVOKE_POINTER) {
-            variable function_type = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+            variable function_type = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
             if string_length=(function_type, "*function_", 10) {
                 variable function_name = +(function_type, 10);
                 if string=(function_name, "&") {
-                    variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                    variable popped = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                     variable allocated = brk_allocate(+(length(popped), 2));
                     copy("*", allocated, 1);
-                    copy(popped, @cast_*(+(allocated, 1)), length(popped));
+                    copy(popped, *.cast(+(allocated, 1)), length(popped));
                     autobuffer_stack8_push(&(stack), &(stack_pointer), allocated);
 
-                    NodeInvokePointerData.<ignore(@cast_*NodeInvokePointerData(pointer_data), true);
+                    NodeInvokePointerData.<ignore(NodeInvokePointerData.*cast(pointer_data), true);
                 };// else if string=(function_name, "+") {
                 //    if =(stack_pointer, 0) {
                 //        print_node_error_beginning(nodes, i);
@@ -971,8 +980,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -998,8 +1007,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1025,8 +1034,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1052,8 +1061,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1079,8 +1088,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1106,8 +1115,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1133,8 +1142,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1160,8 +1169,8 @@ define type_check = function(nodes: *Nodes) {
                 //        exit(1);
                 //    };
 
-                //    variable first = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                //    variable second = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable first = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                //    variable second = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
 
                 //    if |(!(=(get_size_linux_x86-642(first, nodes), get_size_linux_x86-642(second, nodes))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
                 //        print_node_error_beginning(nodes, i);
@@ -1191,8 +1200,8 @@ define type_check = function(nodes: *Nodes) {
 
                     variable inner = 0;
                     variable j = 10;
-                    while |(!(=(whole_1.>(@cast_*whole_1(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
-                        variable character = whole_1.>(@cast_*whole_1(+(function_type, j)));
+                    while |(!(=(whole_1.>(whole_1.*cast(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
+                        variable character = whole_1.>(whole_1.*cast(+(function_type, j)));
                         if &&(|(=(character, 93_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
                             autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer.>buffer(&(current_argument_buffer)));
                             arguments_buffer_index = +(arguments_buffer_index, 1);
@@ -1215,7 +1224,7 @@ define type_check = function(nodes: *Nodes) {
                         arguments_buffer_index = +(arguments_buffer_index, 1);
                     };
 
-                    variable k = @cast_integer_8(arguments_buffer_index);
+                    variable k = integer_8.cast(arguments_buffer_index);
                     while >(k, 0_integer_8) {
                         k = -(k, 1_integer_8);
 
@@ -1223,7 +1232,7 @@ define type_check = function(nodes: *Nodes) {
                             print_node_error_beginning(nodes, i);
                             print("Invoke of '");
                             if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
-                                variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
+                                variable previous_node_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(i, 1)));
                                 print(NodeRetrieveData.>name(previous_node_data));
                             } else {
                                 print("unknown");
@@ -1232,15 +1241,15 @@ define type_check = function(nodes: *Nodes) {
                             exit(1);
                         };
 
-                        variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
-                        variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
+                        variable given = *.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+                        variable wanted = *.cast(autobuffer_array8_get(&(arguments_buffer), whole_8.cast(k)));
 
                         if !(is_type2(wanted, given, nodes, defines_map, structure_members_array)) {
                             print_node_error_beginning(nodes, i);
                             print("Invoke of '");
 
                             if =(nodes_get_id(nodes, -(i, 1)), NODE_RETRIEVE) {
-                                variable previous_node_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, -(i, 1)));
+                                variable previous_node_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(i, 1)));
                                 print(NodeRetrieveData.>name(previous_node_data));
                             } else {
                                 print("unknown");
@@ -1261,8 +1270,8 @@ define type_check = function(nodes: *Nodes) {
 
                     j = +(j, 1);
 
-                    while |(!(=(whole_1.>(@cast_*whole_1(+(function_type, j))), 93_whole_1)), >(inner, 0)) {
-                        variable character = whole_1.>(@cast_*whole_1(+(function_type, j)));
+                    while |(!(=(whole_1.>(whole_1.*cast(+(function_type, j))), 93_whole_1)), >(inner, 0)) {
+                        variable character = whole_1.>(whole_1.*cast(+(function_type, j)));
                         if &&(|(=(character, 58_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
                             variable return_ = AutoBuffer.>buffer(&(current_argument_buffer));
                             autobuffer_stack8_push(&(stack), &(stack_pointer), return_);
@@ -1299,7 +1308,7 @@ define type_check = function(nodes: *Nodes) {
         } else if =(id, NODE_TARGET) {
             done_anything = true;
         } else if =(id, NODE_ENDFUNCTION) {
-            current_function = @cast_*(0);
+            current_function = *.cast(0);
             done_anything = true;
         } else if =(id, NODE_STRUCTURE) {
             done_anything = true;
@@ -1316,7 +1325,7 @@ define type_check = function(nodes: *Nodes) {
                 print_node_error_beginning(nodes, i);
                 println("Statement end has extra stack values");
                 while !(=(stack_pointer, 0)) {
-                    println(@cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer))));
+                    println(*.cast(autobuffer_stack8_pop(&(stack), &(stack_pointer))));
                 };
                 exit(1);
 

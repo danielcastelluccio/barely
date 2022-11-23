@@ -143,7 +143,7 @@ define nodes_get_pointer_data = function(nodes: *Nodes, index: whole_8): * {
 };
 
 define nodes_get_location_data = function(nodes: *Nodes, index: whole_8): *NodeLocationData {
-    return @cast_*NodeLocationData(autobuffer_get(&(Nodes.>buffer(nodes)), +(*(index, NODE_SIZE), 8)));
+    return NodeLocationData.*cast(autobuffer_get(&(Nodes.>buffer(nodes)), +(*(index, NODE_SIZE), 8)));
 };
 
 define nodes_get_pointer = function(nodes: *Nodes, index: whole_8): * {
@@ -151,7 +151,7 @@ define nodes_get_pointer = function(nodes: *Nodes, index: whole_8): * {
 };
 
 define nodes_append_data = function(nodes: *Nodes, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    return @cast_*(+(nodes_append(nodes, id, file_name, row, column), 32));
+    return *.cast(+(nodes_append(nodes, id, file_name, row, column), 32));
 };
 
 define nodes_append_data_anonymous = function(nodes: *Nodes, id: whole_8): * {
@@ -169,7 +169,7 @@ define nodes_append = function(nodes: *Nodes, id: whole_8, file_name: *, row: wh
     variable to_return = autobuffer_get(nodes_buffer, *(whole_8.>(nodes_index), NODE_SIZE));
 
     autobuffer_set_whole_8(nodes_buffer, id, *(whole_8.>(nodes_index), NODE_SIZE));
-    variable location_data = @cast_*NodeLocationData(autobuffer_get(nodes_buffer, +(*(whole_8.>(nodes_index), NODE_SIZE), 8)));
+    variable location_data = NodeLocationData.*cast(autobuffer_get(nodes_buffer, +(*(whole_8.>(nodes_index), NODE_SIZE), 8)));
     NodeLocationData.<file(location_data, file_name);
     NodeLocationData.<row(location_data, row);
     NodeLocationData.<column(location_data, column);
@@ -180,14 +180,14 @@ define nodes_append = function(nodes: *Nodes, id: whole_8, file_name: *, row: wh
 };
 
 define nodes_append_structure_old = function(nodes: *Nodes, name: *) {
-    variable structure_data = @cast_*NodeStructureData(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<name(structure_data, name);
     NodeStructureData.<item_names(structure_data, &(empty));
     NodeStructureData.<item_types(structure_data, &(empty));
 };
 
 define nodes_append_structure = function(nodes: *Nodes, name: *, any_size_type: *) {
-    variable structure_data = @cast_*NodeStructureData(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<name(structure_data, name);
     NodeStructureData.<item_names(structure_data, &(empty));
     NodeStructureData.<item_types(structure_data, &(empty));
@@ -197,7 +197,7 @@ define nodes_append_structure = function(nodes: *Nodes, name: *, any_size_type: 
     variable item_types = brk_allocate(16);
     array8_set(item_types, 0, any_size_type);
 
-    variable define_data = @cast_*NodeDefineData(nodes_append_data_anonymous(nodes, NODE_DEFINE));
+    variable define_data = NodeDefineData.*cast(nodes_append_data_anonymous(nodes, NODE_DEFINE));
     NodeDefineData.<name(define_data, name);
 
     variable type_buffer = autobuffer_new(16);
@@ -209,7 +209,7 @@ define nodes_append_structure = function(nodes: *Nodes, name: *, any_size_type: 
 
     NodeDefineData.<type(define_data, AutoBuffer.>buffer(&(type_buffer)));
 
-    variable structure_data2 = @cast_*NodeStructureData(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    variable structure_data2 = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<item_names(structure_data2, item_names);
     NodeStructureData.<item_types(structure_data2, item_types);
 
@@ -217,7 +217,7 @@ define nodes_append_structure = function(nodes: *Nodes, name: *, any_size_type: 
 };
 
 define nodes_append_structure_any = function(nodes: *Nodes, name: *) {
-    variable structure_data = @cast_*NodeStructureData(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<name(structure_data, name);
     NodeStructureData.<item_names(structure_data, &(empty));
     NodeStructureData.<item_types(structure_data, &(empty));
@@ -225,7 +225,7 @@ define nodes_append_structure_any = function(nodes: *Nodes, name: *) {
 };
 
 define nodes_append_function = function(nodes: *Nodes, name: *, arguments: *, returns: *) {
-    variable function_data = @cast_*NodeFunctionData(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
+    variable function_data = NodeFunctionData.*cast(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
     NodeFunctionData.<name(function_data, name);
     NodeFunctionData.<argument_types(function_data, arguments);
     NodeFunctionData.<returns(function_data, returns);
@@ -236,22 +236,22 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     variable id = nodes_get_id(nodes, index);
     variable pointer_data = nodes_get_pointer_data(nodes, index);
     if =(id, NODE_RETRIEVE) {
-        variable retrieve_data = @cast_*NodeRetrieveData(pointer_data);
+        variable retrieve_data = NodeRetrieveData.*cast(pointer_data);
         print("Retrieve{name='");
         print(NodeRetrieveData.>name(retrieve_data));
         println("'}");
     } else if =(id, NODE_ASSIGN) {
-        variable assign_data = @cast_*NodeAssignData(pointer_data);
+        variable assign_data = NodeAssignData.*cast(pointer_data);
         print("Assign{name='");
         print(NodeAssignData.>name(assign_data));
         println("'}");
     } else if =(id, NODE_DECLARE) {
-        variable declare_data = @cast_*NodeDeclareData(pointer_data);
+        variable declare_data = NodeDeclareData.*cast(pointer_data);
         print("Declare{name='");
         print(NodeDeclareData.>name(declare_data));
         println("'}");
     } else if =(id, NODE_INVOKE) {
-        variable invoke_data = @cast_*NodeInvokeData(pointer_data);
+        variable invoke_data = NodeInvokeData.*cast(pointer_data);
         print("Invoke{name='");
         print(NodeInvokeData.>name(invoke_data));
         println("'}");

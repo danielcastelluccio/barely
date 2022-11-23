@@ -34,7 +34,7 @@ define sys_write = function(fd: whole_8, buffer: *, length: whole_8) {
 };
 
 define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
-    return @cast_whole_8(@syscall3(SYS_OPEN, path, flags, mode));
+    return whole_8.cast(@syscall3(SYS_OPEN, path, flags, mode));
 };
 
 define sys_close = function(fd: whole_8) {
@@ -56,15 +56,15 @@ define sys_fstat = function(fd: whole_8, buffer: *Stat) {
 };
 
 define sys_brk = function(location: *): * {
-    return @cast_*(@syscall1(SYS_BRK, location));
+    return *.cast(@syscall1(SYS_BRK, location));
 };
 
 define sys_fork = function(): whole_8 {
-    return @cast_whole_8(@syscall0(SYS_FORK));
+    return whole_8.cast(@syscall0(SYS_FORK));
 };
 
 define sys_execve = function(file: *, args: *, env: **): whole_8 {
-    return @cast_whole_8(@syscall3(SYS_EXECVE, file, args, env));
+    return whole_8.cast(@syscall3(SYS_EXECVE, file, args, env));
 };
 
 define sys_exit = function(code: whole_8) {
