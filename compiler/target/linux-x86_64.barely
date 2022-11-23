@@ -837,6 +837,10 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
                 variable contents_size = @cast_whole_8(hashmap_string_get(&(memory_function_instruction_sizes_map), function_name));
                 autobuffer_push_pointer(&(instructions_buffer), &(instructions_index), contents, contents_size);
                 done_anything_invoke = true;
+            } else if string=(function_name, "cast") {
+                done_anything_invoke = true;
+            } else if string=(function_name, "*cast") {
+                done_anything_invoke = true;
             } else if string_length=(function_name, "@cast_", 6) {
                 done_anything_invoke = true;
             } else if string_length=(function_name, "=_", 2) {

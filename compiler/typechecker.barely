@@ -543,10 +543,39 @@ define type_check = function(nodes: *Nodes) {
                 autobuffer_set(&(new_+_name), first, 2, length(first));
 
                 NodeInvokeData.<name(invoke_data, AutoBuffer.>buffer(&(new_+_name)));
+            } else if &&(has_specifier, |(string=(function_name, "cast"), string=(function_name, "*cast"))) {
+                if =(stack_pointer, 0) {
+                    print_node_error_beginning(nodes, i);
+                    println("Cast ran out of stack values");
+                    exit(1);
+                };
+
+                variable to_push = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                if string=(function_name, "*cast") {
+                    variable new_to_push = brk_allocate(+(length(to_push), 2));
+                    copy("*", new_to_push, 1);
+                    copy(to_push, +(new_to_push, 1), length(to_push));
+                    to_push = new_to_push;
+                };
+
+                variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
+
+                if !(=(get_size_linux_x86-643(popped, nodes, define_values_map, structure_members_array), get_size_linux_x86-643(to_push, nodes, define_values_map, structure_members_array))) {
+                    print_node_error_beginning(nodes, i);
+                    print("Cast wants equal sized types, given '");
+                    print(popped);
+                    print("' and casts to '");
+                    print(to_push);
+                    println("'");
+                    exit(1);
+                };
+
+                autobuffer_stack8_push(&(stack), &(stack_pointer), to_push);
             } else {
                 variable found_function = false;
 
-                if NodeInvokeData.>has_specifier(invoke_data) {
+                if has_specifier {
                     variable popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                     variable function_name_new = brk_allocate(+(+(length(popped), length(function_name)), 1));
                     copy(popped, function_name_new, length(popped));
