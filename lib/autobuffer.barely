@@ -24,13 +24,13 @@ define autobuffer_reset = function(buffer: *AutoBuffer) {
         variable done_anything = false;
         
         if <(+(i, 8), size) {
-            any_8<-(@cast_*any_8(+(actual_buffer, i)), 0_whole_8);
+            any_8.<(@cast_*any_8(+(actual_buffer, i)), 0_whole_8);
             i = +(i, 1);
             done_anything = true;
         };
 
         if !(done_anything) {
-            any_1<-(@cast_*any_1(+(actual_buffer, i)), 0_whole_1);
+            any_1.<(@cast_*any_1(+(actual_buffer, i)), 0_whole_1);
             i = +(i, 1);
         };
     };
@@ -89,25 +89,25 @@ define autobuffer_get_size = function(buffer: *AutoBuffer, location: whole_8, si
 };
 
 define autobuffer_get_whole_8 = function(buffer: *AutoBuffer, location: whole_8): whole_8 {
-    return whole_8->(@cast_*whole_8(autobuffer_get_size(buffer, location, 8)));
+    return whole_8.>(@cast_*whole_8(autobuffer_get_size(buffer, location, 8)));
 };
 
 define autobuffer_get_* = function(buffer: *AutoBuffer, location: whole_8): * {
-    return *->(@cast_**(autobuffer_get(buffer, location)));
+    return *.>(@cast_**(autobuffer_get(buffer, location)));
 };
 
 define autobuffer_get_any_1 = function(buffer: *AutoBuffer, location: whole_8): any_1 {
-    return any_1->(@cast_*any_1(autobuffer_get(buffer, location)));
+    return any_1.>(@cast_*any_1(autobuffer_get(buffer, location)));
 };
 
 define autobuffer_get_any_8 = function(buffer: *AutoBuffer, location: whole_8): any_8 {
-    return any_8->(@cast_*any_8(autobuffer_get_size(buffer, location, 8)));
+    return any_8.>(@cast_*any_8(autobuffer_get_size(buffer, location, 8)));
 };
 
 define autobuffer_get_whole_4 = function(buffer: *AutoBuffer, location: whole_8): whole_4 {
-    return whole_4->(@cast_*whole_4(autobuffer_get(buffer, location)));
+    return whole_4.>(@cast_*whole_4(autobuffer_get(buffer, location)));
 };
 
 define increment_whole_8_pointer = function(pointer: *whole_8, amount: whole_8) {
-    whole_8<-(pointer, +(whole_8->(pointer), amount));
+    whole_8.<(pointer, +(whole_8.>(pointer), amount));
 };

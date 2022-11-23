@@ -1,4 +1,4 @@
-define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap): boolean {
+define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap, structure_members_array: AutoBuffer): boolean {
     if string=(wanted, given) {
         return true;
     };
@@ -11,7 +11,7 @@ define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: Hash
 
     if string_length=(wanted, "*", 1) {
         if string_length=(given, "*", 1) {
-            return is_type2(+(wanted, 1), +(given, 1), nodes, defines_map);
+            return is_type2(+(wanted, 1), +(given, 1), nodes, defines_map, structure_members_array);
         };
     };
 
@@ -39,7 +39,7 @@ define is_type2 = function(wanted: *, given: *, nodes: *Nodes, defines_map: Hash
 
     if string_length=(wanted, "any_", 4) {
         variable size = to_number(@cast_*(+(wanted, 4)));
-        return =(size, get_size_linux_x86-642(given, nodes));
+        return =(size, get_size_linux_x86-643(given, nodes, defines_map, structure_members_array));
     };
 
     return false;
@@ -557,7 +557,7 @@ define type_check = function(nodes: *Nodes) {
                     NodeInvokeData.<has_specifier(invoke_data, false);
 
                     variable previous = @cast_*whole_8(nodes_get_pointer(nodes, -(i, 1)));
-                    whole_8<-(previous, NODE_SKIP);
+                    whole_8.<(previous, NODE_SKIP);
                 };
 
                 if =(hashmap_string_get(&(function_arguments_map), function_name), 0) {
@@ -584,7 +584,7 @@ define type_check = function(nodes: *Nodes) {
 
                     variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                     variable wanted = @cast_*(array8_get(arguments, -(-(length, k), 1)));
-                    if !(is_type2(wanted, given, nodes, defines_map)) {
+                    if !(is_type2(wanted, given, nodes, defines_map, structure_members_array)) {
                         print_node_error_beginning(nodes, i);
                         print("Invoke of '");
                         print(function_name);
@@ -649,7 +649,7 @@ define type_check = function(nodes: *Nodes) {
                     NodeDeclareData.<type(variable_declare4, variable_type);
                 };
 
-                if !(is_type2(variable_type, popped_stack, nodes, defines_map)) {
+                if !(is_type2(variable_type, popped_stack, nodes, defines_map, structure_members_array)) {
                     print_node_error_beginning(nodes, i);
                     print("Assign of ");
                     print(variable_name);
@@ -671,7 +671,7 @@ define type_check = function(nodes: *Nodes) {
                 };
 
                 if !(=(variable_type, 0)) {
-                    if !(is_type2(variable_type, popped_stack, nodes, defines_map)) {
+                    if !(is_type2(variable_type, popped_stack, nodes, defines_map, structure_members_array)) {
                         print_node_error_beginning(nodes, i);
                         print("Assign of ");
                         print(variable_name);
@@ -695,92 +695,96 @@ define type_check = function(nodes: *Nodes) {
         } else if =(id, NODE_RETRIEVE) {
             variable variable_name = NodeRetrieveData.>name(@cast_*NodeRetrieveData(nodes_get_pointer_data(nodes, i)));
 
-            variable scope_index = -(variable_scope_types_pointer, 1);
-            variable variable_type = @cast_*(0);
-            while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
-                variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
-                scope_index = -(scope_index, 1);
-            };
-            scope_index = +(scope_index, 1);
-
-            if !(=(variable_type, 0)) {
-                autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
+            if &&(string_length=(variable_name, "any_", 4), &&(=(nodes_get_id(nodes, +(i, 1)), NODE_INVOKE), NodeInvokeData.>has_specifier(@cast_*NodeInvokeData(nodes_get_pointer_data(nodes, +(i, 1)))))) {
+                autobuffer_stack8_push(&(stack), &(stack_pointer), variable_name);
             } else {
-                variable function_argument_names2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
-                variable function_arguments2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
+                variable scope_index = -(variable_scope_types_pointer, 1);
+                variable variable_type = @cast_*(0);
+                while &&(=(variable_type, 0), <(scope_index, variable_scope_types_pointer)) {
+                    variable_type = @cast_*(hashmap_string_get(@cast_*HashMap(autobuffer_array8_get(&(variable_scopes_types_map), scope_index)), variable_name));
+                    scope_index = -(scope_index, 1);
+                };
+                scope_index = +(scope_index, 1);
 
-                variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
                 if !(=(variable_type, 0)) {
                     autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                 } else {
-                    variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
+                    variable function_argument_names2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_argument_names_array), current_function_id) } else { hashmap_string_get(&(function_argument_names_map), current_function) });
+                    variable function_arguments2 = @cast_*(if =(current_function, 0) { autobuffer_array8_get(&(function_arguments_array), current_function_id) } else { hashmap_string_get(&(function_arguments_map), current_function) });
 
+                    variable_type = stringarray_get(function_argument_names2, function_arguments2, variable_name, array8_length(function_arguments2));
                     if !(=(variable_type, 0)) {
                         autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                     } else {
-                        variable_type = @cast_*(hashmap_string_get(&(defines_map), variable_name));
+                        variable_type = @cast_*(hashmap_string_get(&(globals_map), variable_name));
 
                         if !(=(variable_type, 0)) {
                             autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                         } else {
-                            if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
-                                variable function_type_buffer = autobuffer_new(64);
-                                variable function_type_buffer_index = 0;
+                            variable_type = @cast_*(hashmap_string_get(&(defines_map), variable_name));
 
-                                autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "*function[");
-                                variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), variable_name));
-                                variable j = 0;
-                                while !(=(array8_get(function_arguments2, j), 0)) {
-                                    variable function_argument = @cast_*(array8_get(function_arguments2, j));
-                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_argument);
-                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
-                                    j = +(j, 1);
-                                };
-                                if >(j, 0) {
-                                    function_type_buffer_index = -(function_type_buffer_index, 1);
-                                };
-
-                                autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ":");
-
-                                variable function_returns2 = @cast_*(hashmap_string_get(&(function_returns_map), variable_name));
-                                variable j = 0;
-                                while !(=(array8_get(function_returns2, j), 0)) {
-                                    variable function_return = @cast_*(array8_get(function_returns2, j));
-                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_return);
-                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
-                                    j = +(j, 1);
-                                };
-                                if >(j, 0) {
-                                    function_type_buffer_index = -(function_type_buffer_index, 1);
-                                };
-
-                                autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "]");
-                                autobuffer_stack8_push(&(stack), &(stack_pointer), AutoBuffer.>buffer(&(function_type_buffer)));
+                            if !(=(variable_type, 0)) {
+                                autobuffer_stack8_push(&(stack), &(stack_pointer), variable_type);
                             } else {
-                                if string=(variable_name, "&") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_&");
-                                } else if string=(variable_name, "+") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_+");
-                                } else if string=(variable_name, "-") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_-");
-                                } else if string=(variable_name, "*") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_*");
-                                } else if string=(variable_name, "/") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_/");
-                                } else if string=(variable_name, "%") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_%");
-                                } else if string=(variable_name, "=") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_=");
-                                } else if string=(variable_name, ">") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_>");
-                                } else if string=(variable_name, "<") {
-                                    autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_<");
+                                if !(=(hashmap_string_get(&(function_arguments_map), variable_name), 0)) {
+                                    variable function_type_buffer = autobuffer_new(64);
+                                    variable function_type_buffer_index = 0;
+
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "*function[");
+                                    variable function_arguments2 = @cast_*(hashmap_string_get(&(function_arguments_map), variable_name));
+                                    variable j = 0;
+                                    while !(=(array8_get(function_arguments2, j), 0)) {
+                                        variable function_argument = @cast_*(array8_get(function_arguments2, j));
+                                        autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_argument);
+                                        autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
+                                        j = +(j, 1);
+                                    };
+                                    if >(j, 0) {
+                                        function_type_buffer_index = -(function_type_buffer_index, 1);
+                                    };
+
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ":");
+
+                                    variable function_returns2 = @cast_*(hashmap_string_get(&(function_returns_map), variable_name));
+                                    variable j = 0;
+                                    while !(=(array8_get(function_returns2, j), 0)) {
+                                        variable function_return = @cast_*(array8_get(function_returns2, j));
+                                        autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), function_return);
+                                        autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), ",");
+                                        j = +(j, 1);
+                                    };
+                                    if >(j, 0) {
+                                        function_type_buffer_index = -(function_type_buffer_index, 1);
+                                    };
+
+                                    autobuffer_push_string(&(function_type_buffer), &(function_type_buffer_index), "]");
+                                    autobuffer_stack8_push(&(stack), &(stack_pointer), AutoBuffer.>buffer(&(function_type_buffer)));
                                 } else {
-                                    print_node_error_beginning(nodes, i);
-                                    print("Retrieve target '");
-                                    print(variable_name);
-                                    println("' not found");
-                                    exit(1);
+                                    if string=(variable_name, "&") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_&");
+                                    } else if string=(variable_name, "+") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_+");
+                                    } else if string=(variable_name, "-") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_-");
+                                    } else if string=(variable_name, "*") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_*");
+                                    } else if string=(variable_name, "/") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_/");
+                                    } else if string=(variable_name, "%") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_%");
+                                    } else if string=(variable_name, "=") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_=");
+                                    } else if string=(variable_name, ">") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_>");
+                                    } else if string=(variable_name, "<") {
+                                        autobuffer_stack8_push(&(stack), &(stack_pointer), "*function_<");
+                                    } else {
+                                        print_node_error_beginning(nodes, i);
+                                        print("Retrieve target '");
+                                        print(variable_name);
+                                        println("' not found");
+                                        exit(1);
+                                    };
                                 };
                             };
                         };
@@ -805,7 +809,7 @@ define type_check = function(nodes: *Nodes) {
 
                 variable stack_popped = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                 
-                if !(is_type2(function_return, stack_popped, nodes, defines_map)) {
+                if !(is_type2(function_return, stack_popped, nodes, defines_map, structure_members_array)) {
                     print_node_error_beginning(nodes, i);
                     print("Return wants '");
                     print(function_return);
@@ -1158,8 +1162,8 @@ define type_check = function(nodes: *Nodes) {
 
                     variable inner = 0;
                     variable j = 10;
-                    while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
-                        variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
+                    while |(!(=(whole_1.>(@cast_*whole_1(+(function_type, j))), 58_whole_1)), >(inner, 0)) {
+                        variable character = whole_1.>(@cast_*whole_1(+(function_type, j)));
                         if &&(|(=(character, 93_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
                             autobuffer_array8_set(&(arguments_buffer), arguments_buffer_index, AutoBuffer.>buffer(&(current_argument_buffer)));
                             arguments_buffer_index = +(arguments_buffer_index, 1);
@@ -1202,8 +1206,7 @@ define type_check = function(nodes: *Nodes) {
                         variable given = @cast_*(autobuffer_stack8_pop(&(stack), &(stack_pointer)));
                         variable wanted = @cast_*(autobuffer_array8_get(&(arguments_buffer), @cast_whole_8(k)));
 
-                        //HERE
-                        if !(is_type2(wanted, given, nodes, defines_map)) {
+                        if !(is_type2(wanted, given, nodes, defines_map, structure_members_array)) {
                             print_node_error_beginning(nodes, i);
                             print("Invoke of '");
 
@@ -1229,8 +1232,8 @@ define type_check = function(nodes: *Nodes) {
 
                     j = +(j, 1);
 
-                    while |(!(=(whole_1->(@cast_*whole_1(+(function_type, j))), 93_whole_1)), >(inner, 0)) {
-                        variable character = whole_1->(@cast_*whole_1(+(function_type, j)));
+                    while |(!(=(whole_1.>(@cast_*whole_1(+(function_type, j))), 93_whole_1)), >(inner, 0)) {
+                        variable character = whole_1.>(@cast_*whole_1(+(function_type, j)));
                         if &&(|(=(character, 58_whole_1), =(character, 44_whole_1)), =(inner, 0)) {
                             variable return_ = AutoBuffer.>buffer(&(current_argument_buffer));
                             autobuffer_stack8_push(&(stack), &(stack_pointer), return_);

@@ -1283,7 +1283,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, output_file: *) {
             variable string_id = program_constant_index;
             program_constant_index = +(program_constant_index, 1);
 
-            variable id_string = any_24();
+            variable id_string = any_24.>0();
             whole_8_to_string(string_id, &(id_string));
 
             variable string_data_index = autobuffer_push_data_string(&(data_buffer), &(data_buffer_index), string_value);
@@ -2028,7 +2028,7 @@ define get_size_linux_x86-643 = function(type: *, nodes: *Nodes, define_values_m
         variable is_type = false;
         variable i = 10;
         while <(i, length(type)) {
-            variable character = any_1->(@cast_*any_1(+(type, i)));
+            variable character = any_1.>(@cast_*any_1(+(type, i)));
 
             if =(character, ASCII_COLON) {
                 is_type = true;

@@ -4,7 +4,7 @@ define is_number = function(string: *): boolean {
     variable has_number = false;
     variable i = 0;
     while <(i, length2) {
-        variable character = whole_1->(@cast_*whole_1(+(string, i)));
+        variable character = whole_1.>(@cast_*whole_1(+(string, i)));
 
         if &&(=(character, 95_whole_1), >(i, 0)) {
             break;
@@ -39,7 +39,7 @@ define to_number_size_signed = function(string: *, size: whole_8, signed: boolea
 
     variable i = 0;
     while <(i, length2) {
-        variable character = whole_1->(@cast_*whole_1(+(string, i)));
+        variable character = whole_1.>(@cast_*whole_1(+(string, i)));
 
         if =(character, 95_whole_1) {
             break;
@@ -72,7 +72,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable whole_82 = whole_8;
 
     if =(whole_8, 0) {
-        any_1<-(@cast_*any_1(buffer), 48_whole_1);
+        any_1.<(@cast_*any_1(buffer), 48_whole_1);
     };
 
     variable length = 0;
@@ -86,14 +86,14 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable i = 0;
     while !(=(whole_82, 0)) {
         variable number = whole_8_to_whole_1(%(whole_82, 10));
-        any_1<-(@cast_*any_1(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
+        any_1.<(@cast_*any_1(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
         whole_82 = /(whole_82, 10);
         i = +(i, 1);
     };
 };
 
 define decrement_whole_8_pointer = function(pointer: *whole_8, amount: whole_8) {
-    whole_8<-(pointer, -(whole_8->(pointer), amount));
+    whole_8.<(pointer, -(whole_8.>(pointer), amount));
 };
 
 define stringarray_get = function(keys: *, values: *, wanted: *, size: whole_8): * {
@@ -121,7 +121,7 @@ define stringarray_get_index = function(keys: *, wanted: *, size: whole_8): whol
 };
 
 define autobuffer_string_push_whole_8 = function(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_8: whole_8) {
-    variable whole_8_buffer = any_24();
+    variable whole_8_buffer = any_24.>0();
     whole_8_to_string(whole_8, &(whole_8_buffer));
     autobuffer_push_string(buffer, buffer_index_pointer, &(whole_8_buffer));
 };
@@ -143,12 +143,12 @@ define exit = function(code: whole_8) {
 
 define array8_set = function(array: *, index: whole_8, value: any_8) {
     variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
-    any_8<-(index_pointer, value);
+    any_8.<(index_pointer, value);
 };
 
 define array8_get = function(array: *, index: whole_8): any_8 {
     variable index_pointer = @cast_*any_8(+(array, *(index, 8)));
-    return any_8->(index_pointer);
+    return any_8.>(index_pointer);
 };
 
 define array8_length = function(array: *): whole_8 {
@@ -160,14 +160,14 @@ define array8_length = function(array: *): whole_8 {
 };
 
 define autobuffer_stack8_push = function(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(whole_8->(stack_pointer), 8));
+    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(whole_8.>(stack_pointer), 8));
     increment_whole_8_pointer(stack_pointer, 1);
 };
 
 define autobuffer_stack8_pop = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
     decrement_whole_8_pointer(stack_pointer, 1);
-    variable index_pointer = @cast_*any_8(autobuffer_get(buffer, *(whole_8->(stack_pointer), 8)));
-    return any_8->(index_pointer);
+    variable index_pointer = @cast_*any_8(autobuffer_get(buffer, *(whole_8.>(stack_pointer), 8)));
+    return any_8.>(index_pointer);
 };
 
 define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
@@ -183,7 +183,7 @@ define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *,
 };
 
 define print_whole_8 = function(whole_8: whole_8) {
-    variable buffer = any_24();
+    variable buffer = any_24.>0();
     whole_8_to_string(whole_8, &(buffer));
     print(&(buffer));
 };
@@ -295,7 +295,7 @@ define string_hash = function(string: *): whole_8 {
     variable hash = 0;
     variable i = 0;
     while <(i, length(string)) {
-        variable character = whole_1_to_whole_8(@cast_whole_1(any_1->(+(@cast_*any_1(string), i))));
+        variable character = whole_1_to_whole_8(@cast_whole_1(any_1.>(+(@cast_*any_1(string), i))));
         hash = +(+(+(hash, *(hash, character)), character), i);
         i = +(i, 1);
     };

@@ -8,15 +8,15 @@ define main = function(arguments: **, argument_count: whole_8) {
 
     variable nodes = nodes_new();
 
-    nodes_append_structure(&(nodes), "whole_8");
-    nodes_append_structure(&(nodes), "whole_4");
-    nodes_append_structure(&(nodes), "whole_2");
-    nodes_append_structure(&(nodes), "whole_1");
-    nodes_append_structure(&(nodes), "integer_8");
-    nodes_append_structure(&(nodes), "integer_4");
-    nodes_append_structure(&(nodes), "integer_2");
-    nodes_append_structure(&(nodes), "integer_1");
-    nodes_append_structure(&(nodes), "*");
+    nodes_append_structure(&(nodes), "whole_8", "any_8");
+    nodes_append_structure(&(nodes), "whole_4", "any_4");
+    nodes_append_structure(&(nodes), "whole_2", "any_2");
+    nodes_append_structure(&(nodes), "whole_1", "any_1");
+    nodes_append_structure(&(nodes), "integer_8", "any_8");
+    nodes_append_structure(&(nodes), "integer_4", "any_4");
+    nodes_append_structure(&(nodes), "integer_2", "any_2");
+    nodes_append_structure(&(nodes), "integer_1", "any_1");
+    nodes_append_structure(&(nodes), "*", "any_8");
 
     add_basic_internal_functions(&(nodes));
 
@@ -57,13 +57,42 @@ define main = function(arguments: **, argument_count: whole_8) {
     variable already_added = autobuffer_new(64);
     variable already_added_index = 0;
 
+    variable already_added2 = autobuffer_new(64);
+    variable already_added2_index = 0;
+
     variable nodes_index_saved = Nodes.>index(&(nodes));
     variable i = 0;
     while <(i, nodes_index_saved) {
         variable id = nodes_get_id(&(nodes), i);
     
         if =(id, NODE_INVOKE) {
-            variable name = NodeInvokeData.>name(@cast_*NodeInvokeData(nodes_get_pointer_data(&(nodes), i)));
+            variable invoke_data = @cast_*NodeInvokeData(nodes_get_pointer_data(&(nodes), i));
+            variable name = NodeInvokeData.>name(invoke_data);
+            variable has_specifier = NodeInvokeData.>has_specifier(invoke_data);
+
+            if has_specifier {
+                if |(string_length=(name, ">", 1), string_length=(name, "<", 1)) {
+                    variable previous_data = @cast_*NodeRetrieveData(nodes_get_pointer_data(&(nodes), -(i, 1)));
+                    variable previous_name = NodeRetrieveData.>name(previous_data);
+
+                    if string_length=(previous_name, "any_", 4) {
+                        variable added = false;
+                        variable j = 0;
+                        while <(j, already_added2_index) {
+                            if string=(@cast_*(autobuffer_array8_get(&(already_added2), j)), previous_name) {
+                                added = true;
+                            };
+                            j = +(j, 1);
+                        };
+
+                        if !(added) {
+                            nodes_append_structure_any(&(nodes), previous_name);
+                            autobuffer_stack8_push(&(already_added2), &(already_added2_index), previous_name);
+                        };
+                    };
+                };
+            };
+
             if string_length=(name, "@cast_*any_", 11) {
                 variable added = false;
                 variable j = 0;
@@ -75,7 +104,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                 };
 
                 if !(added) {
-                    nodes_append_structure(&(nodes), +(name, 7));
+                    nodes_append_structure_old(&(nodes), +(name, 7));
                     autobuffer_stack8_push(&(already_added), &(already_added_index), +(name, 7));
                 };
             } else if string_length=(name, "any_", 4) {
@@ -90,7 +119,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                     };
 
                     if !(added) {
-                        nodes_append_structure(&(nodes), name);
+                        nodes_append_structure_old(&(nodes), name);
                         autobuffer_stack8_push(&(already_added), &(already_added_index), name);
                     };
                 };
@@ -108,7 +137,7 @@ define main = function(arguments: **, argument_count: whole_8) {
                 };
 
                 if !(added) {
-                    nodes_append_structure(&(nodes), type);
+                    nodes_append_structure_old(&(nodes), type);
                     autobuffer_stack8_push(&(already_added), &(already_added_index), type);
                 };
             };
@@ -123,8 +152,9 @@ define main = function(arguments: **, argument_count: whole_8) {
         if =(nodes_get_id(&(nodes), i), NODE_STRUCTURE) {
             variable pointer = @cast_*NodeStructureData(nodes_get_pointer_data(&(nodes), i));
             variable name = NodeStructureData.>name(pointer);
+            variable is_new = NodeStructureData.>is_new(pointer);
 
-            if !(=(name, 0)) {
+            if &&(!(=(name, 0)), !(is_new)) {
                 // Setter for whole value
                 variable allocated = brk_allocate(+(length(name), 3));
                 copy(name, allocated, length(name));
@@ -167,18 +197,18 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
 
-                variable allocated_arguments = brk_allocate(8);
+                //variable allocated_arguments = brk_allocate(8);
 
-                variable allocated_returns = brk_allocate(16);
-                array8_set(allocated_returns, 0, name);
+                //variable allocated_returns = brk_allocate(16);
+                //array8_set(allocated_returns, 0, name);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
-                NodeFunctionData.<name(pointer_store_node, name);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
-                NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
-                NodeFunctionData.<returns(pointer_store_node, allocated_returns);
+                //variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                //NodeFunctionData.<name(pointer_store_node, name);
+                //NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                //NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
+                //NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
-                variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
+                //variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
 
                 variable allocated = brk_allocate(+(length(name), 4));
                 copy(name, allocated, length(name));
@@ -248,7 +278,9 @@ define main = function(arguments: **, argument_count: whole_8) {
                     j = +(j, 1);
                 };
             } else {
-                name = get_structure_string_type(pointer);
+                if =(name, 0) {
+                    name = get_structure_string_type(pointer);
+                };
 
                 // Setter for whole value
                 variable allocated = brk_allocate(+(length(name), 2));
@@ -292,22 +324,22 @@ define main = function(arguments: **, argument_count: whole_8) {
 
                 variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
 
-                variable allocated_arguments = brk_allocate(8);
+                //variable allocated_arguments = brk_allocate(8);
 
-                variable allocated_returns = brk_allocate(16);
-                array8_set(allocated_returns, 0, name);
+                //variable allocated_returns = brk_allocate(16);
+                //array8_set(allocated_returns, 0, name);
 
-                variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
-                NodeFunctionData.<name(pointer_store_node, name);
-                NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
-                NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
-                NodeFunctionData.<returns(pointer_store_node, allocated_returns);
+                //variable pointer_store_node = @cast_*NodeFunctionData(nodes_append_data_anonymous(&(nodes), NODE_FUNCTION));
+                //NodeFunctionData.<name(pointer_store_node, name);
+                //NodeFunctionData.<argument_names(pointer_store_node, @cast_*(0));
+                //NodeFunctionData.<argument_types(pointer_store_node, allocated_arguments);
+                //NodeFunctionData.<returns(pointer_store_node, allocated_returns);
 
-                variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
+                //variable end_node = nodes_append_anonymous(&(nodes), NODE_ENDFUNCTION);
 
-                variable allocated = brk_allocate(+(length(name), 4));
+                variable allocated = brk_allocate(+(length(name), 3));
                 copy(name, allocated, length(name));
-                copy(">0", @cast_*(+(allocated, length(name))), 3);
+                copy(">0", @cast_*(+(allocated, length(name))), 2);
 
                 variable allocated_arguments = brk_allocate(8);
 
@@ -461,7 +493,7 @@ define include_file = function(file_name: *, nodes: *Nodes, already_included: *A
 
     tokenize(file_name, contents, &(tokens));
 
-    variable previous_index = whole_8->(nodes_index);
+    variable previous_index = whole_8.>(nodes_index);
 
     parse(&(tokens), nodes, is_target_internal_function);
 

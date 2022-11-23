@@ -73,13 +73,13 @@ define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *,
 define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
     variable tokens_buffer = &(Tokens.>buffer(tokens));
     variable tokens_index = &(Tokens.>index(tokens));
-    autobuffer_register(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
-    variable to_return = autobuffer_get(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE));
+    autobuffer_register(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
+    variable to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE));
 
-    autobuffer_set_whole_8(tokens_buffer, id, *(whole_8->(tokens_index), TOKEN_SIZE));
-    autobuffer_set_*(tokens_buffer, file_name, +(*(whole_8->(tokens_index), TOKEN_SIZE), 8));
-    autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8->(tokens_index), TOKEN_SIZE), 16));
-    autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8->(tokens_index), TOKEN_SIZE), 24));
+    autobuffer_set_whole_8(tokens_buffer, id, *(whole_8.>(tokens_index), TOKEN_SIZE));
+    autobuffer_set_*(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 8));
+    autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 16));
+    autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 24));
 
     increment_whole_8_pointer(tokens_index, 1);
 
