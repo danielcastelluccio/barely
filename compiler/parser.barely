@@ -9,144 +9,139 @@ define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file
     variable is_keyword = false;
     if string=(buffer, "function") {
         is_keyword = true;
-    };
-    if string=(buffer, "variable") {
+    } else if string=(buffer, "variable") {
         is_keyword = true;
-    };
-    if string=(buffer, "return") {
+    } else if string=(buffer, "return") {
         is_keyword = true;
-    };
-    if string=(buffer, "structure") {
+    } else if string=(buffer, "structure") {
         is_keyword = true;
-    };
-    if string=(buffer, "if") {
+    } else if string=(buffer, "if") {
         is_keyword = true;
-    };
-    if string=(buffer, "else") {
+    } else if string=(buffer, "else") {
         is_keyword = true;
-    };
-    if string=(buffer, "while") {
+    } else if string=(buffer, "while") {
         is_keyword = true;
-    };
-    if string=(buffer, "global") {
+    } else if string=(buffer, "global") {
         is_keyword = true;
-    };
-    if string=(buffer, "define") {
+    } else if string=(buffer, "define") {
         is_keyword = true;
-    };
-    if string=(buffer, "constant") {
-        is_keyword = true;
-    };
-    if string=(buffer, "break") {
+    } else if string=(buffer, "break") {
         is_keyword = true;
     };
 
     if is_keyword {
-        variable allocated = brk_allocate(+(buffer_length, 1));
-        copy(buffer, allocated, buffer_length);
+        variable copied_buffer = copy_string_brk_allocate(buffer);
 
         variable keyword_data = TokenKeywordData.*cast(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, whole_8.>(row), whole_8.>(column)));
-        TokenKeywordData.<keyword(keyword_data, allocated);
+        TokenKeywordData.<keyword(keyword_data, copied_buffer);
     } else if is_number(buffer) {
-        variable whole_8_data = TokenNumberData.*cast(tokens_append_data(tokens, TOKEN_NUMBER, file_name, whole_8.>(row), whole_8.>(column)));
-
-        variable stage = 0;
-        variable type_buffer = autobuffer_new(8);
-        variable type_buffer_index = 0;
-
-        variable size_buffer = autobuffer_new(8);
-        variable size_buffer_index = 0;
-
-        variable number_buffer = autobuffer_new(8);
-        variable number_buffer_index = 0;
-
-        variable j = 0;
-        while <(j, length(buffer)) {
-            variable character = whole_1.>(whole_1.*cast(+(buffer, j)));
-            if =(character, ASCII_UNDERSCORE) {
-                stage = +(stage, 1);
-            } else if =(stage, 1) {
-                autobuffer_push_whole_1(&(type_buffer), &(type_buffer_index), character);
-            } else if =(stage, 2) {
-                autobuffer_push_whole_1(&(size_buffer), &(size_buffer_index), character);
-            } else {
-                autobuffer_push_whole_1(&(number_buffer), &(number_buffer_index), character);
-            };
-            
-            j = +(j, 1);
-        };
-
-        if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
-            if =(length(AutoBuffer.>buffer(&(type_buffer))), 0) {
-                autobuffer_push_pointer(&(type_buffer), &(type_buffer_index), "integer", 5);
-            };
-        } else {
-            if =(length(AutoBuffer.>buffer(&(type_buffer))), 0) {
-                autobuffer_push_pointer(&(type_buffer), &(type_buffer_index), "whole", 5);
-            };
-        };
-
-        if =(length(AutoBuffer.>buffer(&(size_buffer))), 0) {
-            autobuffer_push_pointer(&(size_buffer), &(size_buffer_index), "8", 1);
-        };
-
-        if string=(AutoBuffer.>buffer(&(type_buffer)), "whole") {
-            TokenNumberData.<type(whole_8_data, 0);
-        } else {
-            TokenNumberData.<type(whole_8_data, 1);
-        };
-
-        variable size = to_number(AutoBuffer.>buffer(&(size_buffer)));
-
-        variable size_holdable = 2;
-        variable m = 1;
-        while <(m, *(size, 8)) {
-            size_holdable = *(2, size_holdable);
-            m = +(m, 1);
-        };
-        size_holdable = -(size_holdable, 1);
-        if =(TokenNumberData.>type(whole_8_data), 1) {
-            size_holdable = /(size_holdable, 2);
-        };
-
-        variable number = 0;
-
-        if =(any_1.>(any_1.*cast(buffer)), 45_whole_1) {
-            if =(TokenNumberData.>type(whole_8_data), 0) {
-                number = +(size_holdable, 1);
-            } else {
-                number = -(to_number(+(buffer, 1)), 1);
-            };
-        } else {
-            number = to_number(buffer);
-        };
-
-        if >(number, size_holdable) {
-            print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
-            print("Number literal '");
-            print(AutoBuffer.>buffer(&(number_buffer)));
-            print("' cannot fit in type '");
-            print(AutoBuffer.>buffer(&(type_buffer)));
-            print("_");
-            print(AutoBuffer.>buffer(&(size_buffer)));
-            println("'");
-            exit(1);
-        };
-
-        TokenNumberData.<size(whole_8_data, size);
-        TokenNumberData.<value(whole_8_data, to_number_size_signed(buffer, size, false));
+        tokenize_number(tokens, buffer, file_name, whole_8.>(row), whole_8.>(column));
     } else if |(string=(buffer, "true"), string=(buffer, "false")) {
         variable boolean_data = TokenBooleanData.*cast(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8.>(row), whole_8.>(column)));
         TokenBooleanData.<value(boolean_data, string=(buffer, "true"));
     } else {
-        variable allocated = brk_allocate(+(buffer_length, 1));
-        copy(buffer, allocated, buffer_length);
+        variable copied_buffer = copy_string_brk_allocate(buffer);
 
         variable name_data = TokenNameData.*cast(tokens_append_data(tokens, TOKEN_NAME, file_name, whole_8.>(row), whole_8.>(column)));
-        TokenNameData.<name(name_data, allocated);
+        TokenNameData.<name(name_data, copied_buffer);
     };
     
     increment_whole_8_pointer(column, buffer_length);
+};
+
+define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row: whole_8, column: whole_8) {
+    variable number_data = TokenNumberData.*cast(tokens_append_data(tokens, TOKEN_NUMBER, file_name, row, column));
+
+    // 0 = actual number, 1 = whole/integer, 2 = size
+    variable stage = 0;
+    variable type_buffer = autobuffer_new(8);
+    variable type_buffer_index = 0;
+
+    variable size_buffer = autobuffer_new(8);
+    variable size_buffer_index = 0;
+
+    variable number_buffer = autobuffer_new(8);
+    variable number_buffer_index = 0;
+
+    variable j = 0;
+    while <(j, length(buffer)) {
+        variable character = whole_1.>(whole_1.*cast(+(buffer, j)));
+        if =(character, ASCII_UNDERSCORE) {
+            stage = +(stage, 1);
+        } else if =(stage, 1) {
+            autobuffer_push_whole_1(&(type_buffer), &(type_buffer_index), character);
+        } else if =(stage, 2) {
+            autobuffer_push_whole_1(&(size_buffer), &(size_buffer_index), character);
+        } else {
+            autobuffer_push_whole_1(&(number_buffer), &(number_buffer_index), character);
+        };
+        
+        j = +(j, 1);
+    };
+
+    if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
+        if =(type_buffer_index, 0) {
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "integer");
+        };
+    } else {
+        if =(type_buffer_index, 0) {
+            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "whole");
+        };
+    };
+
+    if =(size_buffer_index, 0) {
+        autobuffer_push_string(&(size_buffer), &(size_buffer_index), "8");
+    };
+
+    if string=(AutoBuffer.>buffer(&(type_buffer)), "whole") {
+        TokenNumberData.<type(number_data, 0);
+    } else {
+        TokenNumberData.<type(number_data, 1);
+    };
+
+    variable size_bytes = to_number(AutoBuffer.>buffer(&(size_buffer)));
+
+    if !(check_number_fits(tokens, size_bytes, TokenNumberData.>type(number_data), buffer)) {
+        print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
+        print("Number literal '");
+        print(AutoBuffer.>buffer(&(number_buffer)));
+        print("' cannot fit in type '");
+        print(AutoBuffer.>buffer(&(type_buffer)));
+        print("_");
+        print(AutoBuffer.>buffer(&(size_buffer)));
+        println("'");
+        exit(1);
+    };
+
+    TokenNumberData.<size(number_data, size_bytes);
+    TokenNumberData.<value(number_data, to_number_size_signed(buffer, size_bytes, false));
+};
+
+define check_number_fits = function(tokens: *Tokens, size_bytes: whole_8, type: whole_8, buffer: *): boolean {
+    variable size_bits = 2;
+    variable m = 1;
+    while <(m, *(size_bytes, 8)) {
+        size_bits = *(2, size_bits);
+        m = +(m, 1);
+    };
+    size_bits = -(size_bits, 1);
+    if =(type, 1) {
+        size_bits = /(size_bits, 2);
+    };
+
+    variable number = 0;
+
+    if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
+        if =(type, 0) {
+            number = +(size_bits, 1);
+        } else {
+            number = -(to_number(+(buffer, 1)), 1);
+        };
+    } else {
+        number = to_number(buffer);
+    };
+
+    return !(>(number, size_bits));
 };
 
 define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
@@ -166,119 +161,25 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
     while <(index, contents_length) {
         variable character_pointer = any_1.*cast(+(contents, index));
         variable character_pointer_next = any_1.*cast(+(contents, +(index, 1)));
-        variable done_anything = false;
+        variable handled = false;
 
         if !(in_quotes) {
             if !(in_comment) {
-                if =(any_1.>(character_pointer), ASCII_SPACE) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_OPEN_PARENTHESIS) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
+                // a macro would probably be better suited for this
+                handle_special_character(any_1.>(character_pointer), ASCII_OPEN_PARENTHESIS, TOKEN_OPEN_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_CLOSED_PARENTHESIS, TOKEN_CLOSED_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_OPEN_CURLY_BRACKETS, TOKEN_OPEN_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_CLOSED_CURLY_BRACKETS, TOKEN_CLOSED_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_OPEN_BRACKET, TOKEN_OPEN_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_CLOSED_BRACKET, TOKEN_CLOSED_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_COMMA, TOKEN_COMMA, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_SEMICOLON, TOKEN_SEMICOLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_PERIOD, TOKEN_PERIOD, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(any_1.>(character_pointer), ASCII_COLON, TOKEN_COLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
 
-                    variable _ = tokens_append(tokens, TOKEN_OPEN_PARENTHESIS, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_CLOSED_PARENTHESIS) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_CLOSED_PARENTHESIS, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_OPEN_CURLY_BRACKETS) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_OPEN_CURLY_BRACKETS, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_CLOSED_CURLY_BRACKETS) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_CLOSED_CURLY_BRACKETS, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_OPEN_BRACKET) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_OPEN_BRACKET, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_CLOSED_BRACKET) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_CLOSED_BRACKET, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_COMMA) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_COMMA, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_SEMICOLON) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_SEMICOLON, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_PERIOD) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_PERIOD, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_LINE_FEED) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-                };
-                if =(any_1.>(character_pointer), ASCII_COLON) {
-                    tokenize_inner(&(buffer), tokens, file_name, &(row), &(column));
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-
-                    variable _ = tokens_append(tokens, TOKEN_COLON, file_name, row, column);
-                    column = +(column, 1);
-                };
-                if =(any_1.>(character_pointer), ASCII_TAB) {
-                    done_anything = true;
-                    autobuffer_reset(&(buffer));
-                    buffer_index = 0;
-                    column = +(column, 1);
-                };
+                handle_break(any_1.>(character_pointer), ASCII_SPACE, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(any_1.>(character_pointer), ASCII_LINE_FEED, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(any_1.>(character_pointer), ASCII_TAB, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
             };
         };
 
@@ -286,11 +187,10 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
             if =(any_1.>(character_pointer), ASCII_QUOTATION) {
                 if in_quotes {
                     variable buffer_length = length(AutoBuffer.>buffer(&(buffer)));
-                    variable allocated = brk_allocate(+(buffer_length, 1));
-                    copy(AutoBuffer.>buffer(&(buffer)), allocated, buffer_length);
+                    variable buffer_copy = copy_string_brk_allocate(AutoBuffer.>buffer(&(buffer)));
 
                     variable string_pointer_data = TokenStringData.*cast(tokens_append_data(tokens, TOKEN_STRING, file_name, row, column));
-                    TokenStringData.<value(string_pointer_data, allocated);
+                    TokenStringData.<value(string_pointer_data, buffer_copy);
 
                     autobuffer_reset(&(buffer));
                     buffer_index = 0;
@@ -298,18 +198,18 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
                 };
 
                 in_quotes = !(in_quotes);
-                done_anything = true;
+                handled = true;
             };
         };
         if =(any_1.>(character_pointer), ASCII_SLASH) {
             if =(any_1.>(character_pointer_next), ASCII_SLASH) {
                 in_comment = true;
-                done_anything = true;
+                handled = true;
             };
             column = +(column, 1);
         };
 
-        if !(done_anything) {
+        if !(handled) {
             if !(in_comment) {
                 autobuffer_set_any_1(&(buffer), any_1.>(any_1.*cast(character_pointer)), buffer_index);
 
@@ -319,7 +219,7 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
 
         if =(any_1.>(character_pointer), ASCII_LINE_FEED) {
             in_comment = false;
-            done_anything = true;
+            handled = true;
             autobuffer_reset(&(buffer));
             buffer_index = 0;
 
@@ -328,6 +228,29 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
         };
 
         index = +(index, 1);
+    };
+};
+
+define handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean) {
+    if =(current_character, desired_character) {
+        tokenize_inner(buffer, tokens, file_name, row, column);
+        boolean.<(handled, true);
+        autobuffer_reset(buffer);
+        whole_8.<(buffer_index, 0);
+
+        variable _ = tokens_append(tokens, token, file_name, whole_8.>(row), whole_8.>(column));
+        increment_whole_8_pointer(column, 1);
+    };
+};
+
+define handle_break = function(current_character: any_1, desired_character: whole_1, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean) {
+    if =(current_character, desired_character) {
+        tokenize_inner(buffer, tokens, file_name, row, column);
+        boolean.<(handled, true);
+        autobuffer_reset(buffer);
+        whole_8.<(buffer_index, 0);
+
+        increment_whole_8_pointer(column, 1);
     };
 };
 
@@ -366,25 +289,22 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
         variable value = brk_allocate(8);
         whole_8.<(whole_8.*cast(value), TokenNumberData.>value(value_token_pointer_data));
-    } else {
-        
     };
 
     if =(type, 0) {
-        if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
-            type = "whole_8";
+        type = if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
+            "whole_8"
         } else if &&(=(tokens_get_id(tokens, +(index, value_offset)), TOKEN_KEYWORD), string=(TokenKeywordData.>keyword(TokenKeywordData.*cast(tokens_get_pointer_data(tokens, +(index, value_offset)))), "function")) {
             variable index_temp = +(+(index, value_offset), 2);
 
-            variable type_buffer = autobuffer_new(16);
-            variable type_buffer_index = 0;
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "*function[");
+            variable type_buffer = autobuffer_buffer_new(16);
+            autobuffer_buffer_push_string(&(type_buffer), "*function[");
 
             variable is_type = false;
             while !(=(tokens_get_id(tokens, index_temp), TOKEN_CLOSED_PARENTHESIS)) {
                 if =(tokens_get_id(tokens, index_temp), TOKEN_NAME) {
                     if is_type {
-                        autobuffer_push_string(&(type_buffer), &(type_buffer_index), parse_name(tokens, &(index_temp)));
+                        autobuffer_buffer_push_string(&(type_buffer), parse_name(tokens, &(index_temp)));
                     } else {
                         index_temp = +(index_temp, 1);
                     };
@@ -393,62 +313,58 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
                     index_temp = +(index_temp, 1);
                 } else if =(tokens_get_id(tokens, index_temp), TOKEN_COMMA) {
                     index_temp = +(index_temp, 1);
-                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), ",");
+                    autobuffer_buffer_push_string(&(type_buffer), ",");
                 };
             };
             index_temp = +(index_temp, 1);
 
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), ":");
+            autobuffer_buffer_push_string(&(type_buffer), ":");
 
             if !(=(tokens_get_id(tokens, index_temp), TOKEN_OPEN_CURLY_BRACKETS)) {
                 index_temp = +(index_temp, 1);
 
                 while !(=(tokens_get_id(tokens, index_temp), TOKEN_OPEN_CURLY_BRACKETS)) {
                     if =(tokens_get_id(tokens, index_temp), TOKEN_NAME) {
-                        autobuffer_push_string(&(type_buffer), &(type_buffer_index), parse_name(tokens, &(index_temp)));
+                        autobuffer_buffer_push_string(&(type_buffer), parse_name(tokens, &(index_temp)));
                     } else {
                         index_temp = +(index_temp, 1);
-                        autobuffer_push_string(&(type_buffer), &(type_buffer_index), ",");
+                        autobuffer_buffer_push_string(&(type_buffer), ",");
                     };
                 };
             };
 
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
+            autobuffer_buffer_push_string(&(type_buffer), "]");
 
-            type = AutoBuffer.>buffer(&(type_buffer));
+            AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(&(type_buffer))))
         } else if &&(=(tokens_get_id(tokens, +(index, value_offset)), TOKEN_KEYWORD), string=(TokenKeywordData.>keyword(TokenKeywordData.*cast(tokens_get_pointer_data(tokens, +(index, value_offset)))), "structure")) {
             variable index_temp = +(+(index, value_offset), 2);
 
-            variable type_buffer = autobuffer_new(16);
-            variable type_buffer_index = 0;
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "structure[");
+            variable type_buffer = autobuffer_buffer_new(16);
+            autobuffer_buffer_push_string(&(type_buffer), "structure[");
 
             while !(=(tokens_get_id(tokens, index_temp), TOKEN_CLOSED_CURLY_BRACKETS)) {
                 if =(tokens_get_id(tokens, index_temp), TOKEN_NAME) {
-                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), parse_name(tokens, &(index_temp)));
+                    autobuffer_buffer_push_string(&(type_buffer), parse_name(tokens, &(index_temp)));
                 } else if =(tokens_get_id(tokens, index_temp), TOKEN_COLON) {
                     index_temp = +(index_temp, 1);
-                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), ":");
+                    autobuffer_buffer_push_string(&(type_buffer), ":");
                 } else if =(tokens_get_id(tokens, index_temp), TOKEN_SEMICOLON) {
                     index_temp = +(index_temp, 1);
-                    autobuffer_push_string(&(type_buffer), &(type_buffer_index), ",");
+                    autobuffer_buffer_push_string(&(type_buffer), ",");
                 };
             };
             index_temp = +(index_temp, 1);
 
-            type_buffer_index = -(type_buffer_index, 1);
+            AutoBufferBuffer.<index(&(type_buffer), -(AutoBufferBuffer.>index(&(type_buffer)), 1));
 
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
+            autobuffer_buffer_push_string(&(type_buffer), "]");
 
-            type = AutoBuffer.>buffer(&(type_buffer));
+            AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(&(type_buffer))))
         } else {
-            variable type_buffer = autobuffer_new(16);
-            variable type_buffer_index = 0;
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "global[");
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, +(+(index, value_offset), 2)))));
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]");
+            variable global_type_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, +(+(index, value_offset), 2))));
+            variable global_type = concatenate3_brk_allocate("global[", global_type_name, "]");
 
-            type = AutoBuffer.>buffer(&(type_buffer));
+            global_type
         };
     };
 
@@ -1181,11 +1097,6 @@ define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nod
         };
 
         if string=(keyword, "define") {
-            parse_define(tokens, index, nodes, is_target_internal_function);
-        };
-
-        //just here until we remove all 'constant' from compiler
-        if string=(keyword, "constant") {
             parse_define(tokens, index, nodes, is_target_internal_function);
         };
     } else {

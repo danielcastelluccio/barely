@@ -366,3 +366,32 @@ define create_size_two_array8_brk_allocate = function(item1: any_8, item2: any_8
     array8_set(array, 1, item2);
     return array;
 };
+
+define copy_string_brk_allocate = function(string: *): * {
+    variable string_length = length(string);
+    variable new_string = brk_allocate(+(string_length, 1));
+    copy(string, new_string, string_length);
+    return new_string;
+};
+
+define AutoBufferBuffer = structure {
+    autobuffer: AutoBuffer;
+    index: whole_8;
+};
+
+define autobuffer_buffer_new = function(size: whole_8): AutoBufferBuffer {
+    variable autobuffer_buffer = AutoBufferBuffer.>0();
+    AutoBufferBuffer.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
+    return autobuffer_buffer;
+};
+
+define autobuffer_buffer_push_string = function(buffer: *AutoBufferBuffer, string: *) {
+    variable autobuffer = &(AutoBufferBuffer.>autobuffer(buffer));
+    variable length2 = length(string);
+    variable buffer_index = AutoBufferBuffer.>index(buffer);
+
+    autobuffer_register(autobuffer, buffer_index, +(length2, 1));
+    autobuffer_set(autobuffer, string, buffer_index, length2);
+
+    AutoBufferBuffer.<index(buffer, +(buffer_index, length2));
+};
