@@ -756,6 +756,8 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
         if string=(name_value, "if") {
             variable end_target = get_target_id();
 
+            variable end_if: *NodeEndIfBlockData;
+
             while =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_KEYWORD) {
                 variable target = get_target_id();
                 variable token_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer)));
@@ -787,12 +789,14 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
                 variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
                 NodeJumpData.<target_id(jump_data, end_target);
 
-                variable end_if = NodeEndIfBlockData.*cast(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, whole_8.>(index_pointer))));
+                end_if = NodeEndIfBlockData.*cast(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, whole_8.>(index_pointer))));
                 NodeEndIfBlockData.<id(end_if, end_target);
 
                 variable target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
                 NodeTargetData.<id(target_node_data, target);
             };
+
+            NodeEndIfBlockData.<is_last(end_if, true);
 
             variable target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
             NodeTargetData.<id(target_node_data, end_target);
@@ -911,16 +915,13 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
 
         Nodes.<index(nodes_in, -(Nodes.>index(nodes_in), 1));
 
-        variable name: *;
-
-        if =(nodes_get_id(nodes_in, Nodes.>index(nodes_in)), NODE_INVOKE_POINTER) {
+        variable name = if =(nodes_get_id(nodes_in, Nodes.>index(nodes_in)), NODE_INVOKE_POINTER) {
             Nodes.<index(nodes_in, -(Nodes.>index(nodes_in), 1));
             variable invoke_retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes_in, Nodes.>index(nodes_in)));
-            // bug w/ using this, not popping stuff off properly
-            name = NodeRetrieveData.>name(invoke_retrieve_data);
+            NodeRetrieveData.>name(invoke_retrieve_data)
         } else {
             variable invoke_retrieve_data = NodeInvokeData.*cast(nodes_get_pointer_data(nodes_in, Nodes.>index(nodes_in)));
-            name = NodeInvokeData.>name(invoke_retrieve_data);
+            NodeInvokeData.>name(invoke_retrieve_data)
         };
 
         copy(added, +(AutoBuffer.>buffer(&(Nodes.>buffer(nodes_in))), *(Nodes.>index(nodes_in), NODE_SIZE)), added_size);

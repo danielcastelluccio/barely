@@ -874,7 +874,10 @@ define type_check = function(nodes: *Nodes) {
         } else if =(id, NODE_STARTIFBLOCK) {
             autobuffer_stack8_push(&(if_blocks), &(if_block_pointer), stack_pointer);
         } else if =(id, NODE_ENDIFBLOCK) {
-            variable end_if_id = NodeEndIfBlockData.>id(NodeEndIfBlockData.*cast(pointer_data));
+            variable end_if_data = NodeEndIfBlockData.*cast(pointer_data);
+            variable end_if_id = NodeEndIfBlockData.>id(end_if_data);
+            variable is_last = NodeEndIfBlockData.>is_last(end_if_data);
+
             variable start_stack = whole_8.cast(autobuffer_stack8_pop(&(if_blocks), &(if_block_pointer)));
             variable previous_results = *.cast(autobuffer_array8_get(&(if_block_results), end_if_id));
             
@@ -885,6 +888,15 @@ define type_check = function(nodes: *Nodes) {
                 copy(array, previous_results, size);
 
                 autobuffer_array8_set(&(if_block_results), end_if_id, previous_results);
+
+                if !(is_last) {
+                    variable j = 0;
+                    while <(j, /(size, 8)) {
+                        variable _ = autobuffer_stack8_pop(&(stack), &(stack_pointer));
+
+                        j = +(j, 1);
+                    };
+                };
             } else {
                 variable array = autobuffer_get_size(&(stack), *(8, start_stack), size);
                 variable previous_array = previous_results;
@@ -908,7 +920,9 @@ define type_check = function(nodes: *Nodes) {
                     } else if !(string=(value, previous_value)) {
                         error = true;
                     } else {
-                        variable _ = autobuffer_stack8_pop(&(stack), &(stack_pointer));
+                        if !(is_last) {
+                            variable _ = autobuffer_stack8_pop(&(stack), &(stack_pointer));
+                        };
                     };
 
                     if error {
