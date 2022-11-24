@@ -85,3 +85,11 @@ define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row:
 
     return to_return;
 };
+
+define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *): boolean {
+    return if =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
+        string=(TokenKeywordData.>keyword(TokenKeywordData.*cast(tokens_get_pointer_data(tokens, index))), keyword)
+    } else {
+        false
+    };
+};
