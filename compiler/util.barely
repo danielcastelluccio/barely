@@ -1,3 +1,26 @@
+// probably should be able to just declare the number as whole_1
+define ASCII_TAB: whole_1 = 9;
+define ASCII_LINE_FEED: whole_1 = 10;
+define ASCII_SPACE: whole_1 = 32;
+define ASCII_QUOTATION: whole_1 = 34;
+define ASCII_OPEN_PARENTHESIS: whole_1 = 40;
+define ASCII_CLOSED_PARENTHESIS: whole_1 = 41;
+define ASCII_COMMA: whole_1 = 44;
+define ASCII_MINUS: whole_1 = 45;
+define ASCII_PERIOD: whole_1 = 46;
+define ASCII_SLASH: whole_1 = 47;
+define ASCII_ZERO: whole_1 = 48;
+define ASCII_NINE: whole_1 = 57;
+define ASCII_COLON: whole_1 = 58;
+define ASCII_SEMICOLON: whole_1 = 59;
+define ASCII_LESS_THAN: whole_1 = 60;
+define ASCII_GREATER_THAN: whole_1 = 62;
+define ASCII_OPEN_BRACKET: whole_1 = 91;
+define ASCII_CLOSED_BRACKET: whole_1 = 93;
+define ASCII_UNDERSCORE: whole_1 = 95;
+define ASCII_OPEN_CURLY_BRACKETS: whole_1 = 123;
+define ASCII_CLOSED_CURLY_BRACKETS: whole_1 = 125;
+
 define is_number = function(string: *): boolean {
     variable length2 = length(string);
 
@@ -6,15 +29,15 @@ define is_number = function(string: *): boolean {
     while <(i, length2) {
         variable character = whole_1.>(whole_1.*cast(+(string, i)));
 
-        if &&(=(character, 95_whole_1), >(i, 0)) {
+        if &&(=(character, ASCII_UNDERSCORE), >(i, 0)) {
             break;
-            character = 48_whole_1;
+            character = ASCII_ZERO;
         };
 
-        if =(character, 45_whole_1) {
-        } else if <(character, 48_whole_1) {
+        if =(character, ASCII_MINUS) {
+        } else if <(character, ASCII_ZERO) {
             return false;
-        } else if >(character, 57_whole_1) {
+        } else if >(character, ASCII_NINE) {
             return false;
         } else {
             has_number = true;
@@ -41,14 +64,14 @@ define to_number_size_signed = function(string: *, size: whole_8, signed: boolea
     while <(i, length2) {
         variable character = whole_1.>(whole_1.*cast(+(string, i)));
 
-        if =(character, 95_whole_1) {
+        if =(character, ASCII_UNDERSCORE) {
             break;
         } else {
-            if =(character, 45_whole_1) {
+            if =(character, ASCII_MINUS) {
                 has_negative = true;
             } else {
                 whole_8 = *(whole_8, 10);
-                whole_8 = +(whole_8, whole_1_to_whole_8(-(character, 48_whole_1)));
+                whole_8 = +(whole_8, whole_1_to_whole_8(-(character, ASCII_ZERO)));
             };
             i = +(i, 1);
         };
@@ -72,7 +95,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable whole_82 = whole_8;
 
     if =(whole_8, 0) {
-        any_1.<(any_1.*cast(buffer), 48_whole_1);
+        any_1.<(any_1.*cast(buffer), ASCII_ZERO);
     };
 
     variable length = 0;
@@ -86,7 +109,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable i = 0;
     while !(=(whole_82, 0)) {
         variable number = whole_8_to_whole_1(%(whole_82, 10));
-        any_1.<(any_1.*cast(+(buffer, -(-(length, 1), i))), +(number, 48_whole_1));
+        any_1.<(any_1.*cast(+(buffer, -(-(length, 1), i))), +(number, ASCII_ZERO));
         whole_82 = /(whole_82, 10);
         i = +(i, 1);
     };
@@ -301,4 +324,45 @@ define string_hash = function(string: *): whole_8 {
     };
 
     return hash;
+};
+
+define concatenate2_brk_allocate = function(string1: *, string2: *): * {
+    variable string1_length = length(string1);
+    variable string2_length = length(string2);
+    variable new_string = brk_allocate(+(+(string1_length, string2_length), 1));
+
+    copy(string1, new_string, string1_length);
+    copy(string2, +(new_string, string1_length), string2_length);
+
+    return new_string;
+};
+
+define concatenate3_brk_allocate = function(string1: *, string2: *, string3: *): * {
+    variable string1_length = length(string1);
+    variable string2_length = length(string2);
+    variable string3_length = length(string3);
+    variable new_string = brk_allocate(+(+(+(string1_length, string2_length), string3_length), 1));
+
+    copy(string1, new_string, string1_length);
+    copy(string2, +(new_string, string1_length), string2_length);
+    copy(string3, +(+(new_string, string1_length), string2_length), string3_length);
+
+    return new_string;
+};
+
+define create_size_zero_array8_brk_allocate = function(): * {
+    return brk_allocate(8);
+};
+
+define create_size_one_array8_brk_allocate = function(item: any_8): * {
+    variable array = brk_allocate(16);
+    array8_set(array, 0, item);
+    return array;
+};
+
+define create_size_two_array8_brk_allocate = function(item1: any_8, item2: any_8): * {
+    variable array = brk_allocate(24);
+    array8_set(array, 0, item1);
+    array8_set(array, 1, item2);
+    return array;
 };

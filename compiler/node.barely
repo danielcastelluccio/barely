@@ -57,7 +57,7 @@ define NodeStructureData = structure {
     name: *;
     item_names: *;
     item_types: *;
-    is_new: boolean;
+    is_internal: boolean;
 };
 
 define NODE_POINTER = 10;
@@ -142,6 +142,10 @@ define nodes_get_pointer_data = function(nodes: *Nodes, index: whole_8): * {
     return autobuffer_get(&(Nodes.>buffer(nodes)), +(*(index, NODE_SIZE), 32));
 };
 
+define nodes_get_id_pointer = function(nodes: *Nodes, index: whole_8): *whole_8 {
+    return whole_8.*cast(nodes_get_pointer(nodes, index));
+};
+
 define nodes_get_location_data = function(nodes: *Nodes, index: whole_8): *NodeLocationData {
     return NodeLocationData.*cast(autobuffer_get(&(Nodes.>buffer(nodes)), +(*(index, NODE_SIZE), 8)));
 };
@@ -165,18 +169,19 @@ define nodes_append_anonymous = function(nodes: *Nodes, id: whole_8): * {
 define nodes_append = function(nodes: *Nodes, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
     variable nodes_buffer = &(Nodes.>buffer(nodes));
     variable nodes_index = &(Nodes.>index(nodes));
-    autobuffer_register(nodes_buffer, *(whole_8.>(nodes_index), NODE_SIZE), NODE_SIZE);
-    variable to_return = autobuffer_get(nodes_buffer, *(whole_8.>(nodes_index), NODE_SIZE));
+    variable node_pointer = autobuffer_get_size(nodes_buffer, *(whole_8.>(nodes_index), NODE_SIZE), NODE_SIZE);
 
-    autobuffer_set_whole_8(nodes_buffer, id, *(whole_8.>(nodes_index), NODE_SIZE));
-    variable location_data = NodeLocationData.*cast(autobuffer_get(nodes_buffer, +(*(whole_8.>(nodes_index), NODE_SIZE), 8)));
+    variable id_pointer = nodes_get_id_pointer(nodes, whole_8.>(nodes_index));
+    whole_8.<(id_pointer, id);
+
+    variable location_data = nodes_get_location_data(nodes, whole_8.>(nodes_index));
     NodeLocationData.<file(location_data, file_name);
     NodeLocationData.<row(location_data, row);
     NodeLocationData.<column(location_data, column);
 
     increment_whole_8_pointer(nodes_index, 1);
 
-    return to_return;
+    return node_pointer;
 };
 
 define nodes_append_structure_old = function(nodes: *Nodes, name: *) {
@@ -187,31 +192,18 @@ define nodes_append_structure_old = function(nodes: *Nodes, name: *) {
 };
 
 define nodes_append_structure = function(nodes: *Nodes, name: *, any_size_type: *) {
-    variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
-    NodeStructureData.<name(structure_data, name);
-    NodeStructureData.<item_names(structure_data, &(empty));
-    NodeStructureData.<item_types(structure_data, &(empty));
-
-    variable item_names = brk_allocate(16);
-    array8_set(item_names, 0, "_");
-    variable item_types = brk_allocate(16);
-    array8_set(item_types, 0, any_size_type);
-
     variable define_data = NodeDefineData.*cast(nodes_append_data_anonymous(nodes, NODE_DEFINE));
     NodeDefineData.<name(define_data, name);
 
-    variable type_buffer = autobuffer_new(16);
-    variable type_buffer_index = 0;
+    variable structure_type = concatenate3_brk_allocate("structure[_:", any_size_type, "]");
+    NodeDefineData.<type(define_data, structure_type);
 
-    autobuffer_push_string(&(type_buffer), &(type_buffer_index), "structure[_:")
-    autobuffer_push_string(&(type_buffer), &(type_buffer_index), any_size_type)
-    autobuffer_push_string(&(type_buffer), &(type_buffer_index), "]")
+    variable item_names = create_size_one_array8_brk_allocate("_");
+    variable item_types = create_size_one_array8_brk_allocate(any_size_type);
 
-    NodeDefineData.<type(define_data, AutoBuffer.>buffer(&(type_buffer)));
-
-    variable structure_data2 = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
-    NodeStructureData.<item_names(structure_data2, item_names);
-    NodeStructureData.<item_types(structure_data2, item_types);
+    variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    NodeStructureData.<item_names(structure_data, item_names);
+    NodeStructureData.<item_types(structure_data, item_types);
 
     variable _ = nodes_append_anonymous(nodes, NODE_ENDDEFINE);
 };
@@ -221,7 +213,16 @@ define nodes_append_structure_any = function(nodes: *Nodes, name: *) {
     NodeStructureData.<name(structure_data, name);
     NodeStructureData.<item_names(structure_data, &(empty));
     NodeStructureData.<item_types(structure_data, &(empty));
-    NodeStructureData.<is_new(structure_data, true);
+    NodeStructureData.<is_internal(structure_data, true);
+};
+
+define nodes_append_pseudo_function = function(nodes: *Nodes, name: *, argument_types: *, returns: *) {
+    variable function_data = NodeFunctionData.*cast(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
+    NodeFunctionData.<name(function_data, name);
+    NodeFunctionData.<argument_types(function_data, argument_types);
+    NodeFunctionData.<returns(function_data, returns);
+
+    variable _ = nodes_append_anonymous(nodes, NODE_ENDFUNCTION);
 };
 
 define nodes_append_function = function(nodes: *Nodes, name: *, arguments: *, returns: *) {
