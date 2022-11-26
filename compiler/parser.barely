@@ -891,8 +891,7 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
 
 define target_id = global(whole_8);
 
-define while_target_id_stack = global(AutoBuffer);
-define while_target_id_stack_index = global(whole_8);
+define while_target_id_stack = global(AutoBufferStack8);
 
 define get_target_id = function(): whole_8 {
     variable return_ = target_id;
@@ -948,7 +947,7 @@ define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, node
 
 define parse_break = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
     variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
-    NodeJumpData.<target_id(jump_data, whole_8.cast(autobuffer_array8_get(&(while_target_id_stack), -(while_target_id_stack_index, 1))));
+    NodeJumpData.<target_id(jump_data, whole_8.cast(autobuffer_stack8_peek(&(while_target_id_stack))));
 
     increment_whole_8_pointer(index_pointer, 2);
 };
@@ -998,7 +997,7 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
             index = +(index, 1);
         } else {
             variable name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
-            autobuffer_stack8_push(&(names), &(name_index), name);
+            autobuffer_stack8_legacy_push(&(names), &(name_index), name);
             index = +(index, 1);
         };
 
@@ -1042,9 +1041,9 @@ define parse_while = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *
     NodeJumpConditionalData.<desired_state(conditional_jump_data, false);
     variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
-    autobuffer_stack8_push(&(while_target_id_stack), &(while_target_id_stack_index), target2);
+    autobuffer_stack8_push(&(while_target_id_stack), target2);
     parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
-    variable _ = autobuffer_stack8_pop(&(while_target_id_stack), &(while_target_id_stack_index));
+    variable _ = autobuffer_stack8_pop(&(while_target_id_stack));
 
     variable jump_node_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeJumpData.<target_id(jump_node_data, target1);

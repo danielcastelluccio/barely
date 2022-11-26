@@ -182,12 +182,12 @@ define array8_length = function(array: *): whole_8 {
     return k;
 };
 
-define autobuffer_stack8_push = function(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
+define autobuffer_stack8_legacy_push = function(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
     autobuffer_set_whole_8(buffer, whole_8.cast(value), *(whole_8.>(stack_pointer), 8));
     increment_whole_8_pointer(stack_pointer, 1);
 };
 
-define autobuffer_stack8_pop = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
+define autobuffer_stack8_legacy_pop = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
     decrement_whole_8_pointer(stack_pointer, 1);
     variable index_pointer = any_8.*cast(autobuffer_get(buffer, *(whole_8.>(stack_pointer), 8)));
     return any_8.>(index_pointer);
@@ -394,4 +394,77 @@ define autobuffer_buffer_push_string = function(buffer: *AutoBufferBuffer, strin
     autobuffer_set(autobuffer, string, buffer_index, length2);
 
     AutoBufferBuffer.<index(buffer, +(buffer_index, length2));
+};
+
+define autobuffer_buffer_string_push_whole_8 = function(buffer: *AutoBufferBuffer, whole_8: whole_8) {
+    variable whole_8_buffer = any_24.>0();
+    whole_8_to_string(whole_8, &(whole_8_buffer));
+    autobuffer_buffer_push_string(buffer, &(whole_8_buffer));
+};
+
+define autobuffer_buffer_get_buffer_pointer = function(buffer: *AutoBufferBuffer): * {
+    return AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(buffer)));
+};
+
+define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
+    variable actual_buffer = autobuffer_buffer_get_buffer_pointer(buffer);
+    variable size = AutoBuffer.>size(&(AutoBufferBuffer.>autobuffer(buffer)));
+    variable i = 0;
+    while <(i, size) {
+        variable done_anything = false;
+        
+        if <(+(i, 8), size) {
+            any_8.<(any_8.*cast(+(actual_buffer, i)), 0_whole_8);
+            i = +(i, 1);
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            any_1.<(any_1.*cast(+(actual_buffer, i)), 0_whole_1);
+            i = +(i, 1);
+        };
+    };
+};
+
+define autobuffer_buffer_push_whole_1 = function(buffer: *AutoBufferBuffer, whole_1: whole_1) {
+    variable buffer_index = AutoBufferBuffer.>index(buffer);
+
+    autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(whole_1), buffer_index, 1);
+
+    AutoBufferBuffer.<index(buffer, +(buffer_index, 1));
+};
+
+define AutoBufferStack8 = structure {
+    autobuffer: AutoBuffer;
+    index: whole_8;
+};
+
+define autobuffer_stack8_new = function(size: whole_8): AutoBufferStack8 {
+    variable autobuffer_buffer = AutoBufferStack8.>0();
+    AutoBufferBuffer.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
+    return autobuffer_buffer;
+};
+
+define autobuffer_stack8_push = function(buffer: *AutoBufferStack8, value: any_8) {
+    variable index = AutoBufferStack8.>index(buffer);
+    autobuffer_set_whole_8(&(AutoBufferStack8.>autobuffer(buffer)), whole_8.cast(value), *(index, 8));
+    AutoBufferStack8.<index(buffer, +(index, 1));
+};
+
+define autobuffer_stack8_pop = function(buffer: *AutoBufferStack8): any_8 {
+    variable index = AutoBufferStack8.>index(buffer);
+    index = -(index, 1);
+
+    variable index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
+
+    AutoBufferStack8.<index(buffer, index);
+    return any_8.>(index_pointer);
+};
+
+define autobuffer_stack8_peek = function(buffer: *AutoBufferStack8): any_8 {
+    variable index = AutoBufferStack8.>index(buffer);
+    index = -(index, 1);
+
+    variable index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
+    return any_8.>(index_pointer);
 };

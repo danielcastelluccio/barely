@@ -8,24 +8,17 @@ define main = function(arguments: **, argument_count: whole_8) {
 
     variable nodes = nodes_new();
 
-    add_basic_internals(&(nodes));
-
     // hardcoded because it's the only platform we current support
     variable current_platform = "linux";
     variable add_target_internal_functions, is_target_internal_function = if string=(current_platform, "linux") {
         add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64
     };
 
-    add_target_internal_functions(&(nodes));
-
     cached_sizes_map = hashmap_new(131072);
     cached_signedness_map = hashmap_new(131072);
-    while_target_id_stack = autobuffer_new(64);
+    while_target_id_stack = autobuffer_stack8_new(64);
 
     variable output_file = "output";
-
-    variable already_included_files = autobuffer_new(64);
-    variable already_included_files_index = 0;
 
     variable i = 1;
     while <(i, argument_count) {
@@ -36,18 +29,20 @@ define main = function(arguments: **, argument_count: whole_8) {
             
             i = +(i, 2);
         } else {
-            include_file(pointer, &(nodes), &(already_included_files), &(already_included_files_index), is_target_internal_function);
+            include_file(pointer, &(nodes), is_target_internal_function);
 
             i = +(i, 1);
         };
 
     };
 
+    add_basic_internals(&(nodes));
     add_used_internal_types(&(nodes));
     add_structure_pseudo_functions(&(nodes));
+    add_target_internal_functions(&(nodes));
 
     println("Checking...");
-    type_check(&(nodes));
+    process(&(nodes));
 
     println("Outputting...");
     output_linux_x86-64_elf(&(nodes), output_file);
@@ -146,7 +141,7 @@ define add_used_internal_types = function(nodes: *Nodes) {
 
                         if !(added) {
                             nodes_append_structure_any(nodes, previous_name);
-                            autobuffer_stack8_push(&(already_added_types), &(already_added_types_index), previous_name);
+                            autobuffer_stack8_legacy_push(&(already_added_types), &(already_added_types_index), previous_name);
                         };
                     };
                 };
@@ -234,7 +229,7 @@ define tokens_new = function(): Tokens {
     return tokens;
 };
 
-define include_file = function(file_name: *, nodes: *Nodes, already_included: *AutoBuffer, already_included_index: *whole_8, is_target_internal_function: *function[*:boolean]) {
+define include_file = function(file_name: *, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
     variable nodes_index = &(Nodes.>index(nodes));
     variable tokens = tokens_new();
 
@@ -245,8 +240,6 @@ define include_file = function(file_name: *, nodes: *Nodes, already_included: *A
     variable previous_index = whole_8.>(nodes_index);
 
     parse(&(tokens), nodes, is_target_internal_function);
-
-    autobuffer_stack8_push(already_included, already_included_index, file_name);
 };
 
 define get_contents = function(name: *): * {
