@@ -37,15 +37,15 @@ define main = function(arguments: **, argument_count: whole_8) {
     };
 
     add_basic_internals(&(nodes));
-    add_used_internal_types(&(nodes));
+    add_used_any_types(&(nodes));
     add_structure_pseudo_functions(&(nodes));
     add_target_internal_functions(&(nodes));
 
     println("Checking...");
-    process(&(nodes));
+    variable program_data = process(&(nodes));
 
     println("Outputting...");
-    output_linux_x86-64_elf(&(nodes), output_file);
+    output_linux_x86-64_elf(&(nodes), program_data, output_file);
 };
 
 define add_structure_pseudo_functions = function(nodes: *Nodes) {
@@ -110,7 +110,7 @@ define add_structure_pseudo_functions = function(nodes: *Nodes) {
     };
 };
 
-define add_used_internal_types = function(nodes: *Nodes) {
+define add_used_any_types = function(nodes: *Nodes) {
     variable already_added_types = autobuffer_new(64);
     variable already_added_types_index = 0;
 
@@ -157,22 +157,22 @@ define get_structure_string_type = function(pointer: *NodeStructureData): * {
     variable main_name_buffer = autobuffer_new(16);
     variable main_name_index = 0;
 
-    autobuffer_push_string(&(main_name_buffer), &(main_name_index), "structure[");
+    autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), "structure[");
 
     variable items = NodeStructureData.>item_types(pointer);
     variable item_names = NodeStructureData.>item_names(pointer);
 
     variable j = 0;
     while !(=(array8_get(items, j), 0)) {
-        autobuffer_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(item_names, j)));
-        autobuffer_push_string(&(main_name_buffer), &(main_name_index), ":");
-        autobuffer_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(items, j)));
-        autobuffer_push_string(&(main_name_buffer), &(main_name_index), ",");
+        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(item_names, j)));
+        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), ":");
+        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(items, j)));
+        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), ",");
         j = +(j, 1);
     };
 
     main_name_index = -(main_name_index, 1);
-    autobuffer_push_string(&(main_name_buffer), &(main_name_index), "]");
+    autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), "]");
 
     return AutoBuffer.>buffer(&(main_name_buffer));
 };

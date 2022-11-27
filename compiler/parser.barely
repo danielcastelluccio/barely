@@ -69,11 +69,11 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
         if =(character, ASCII_UNDERSCORE) {
             stage = +(stage, 1);
         } else if =(stage, 1) {
-            autobuffer_push_whole_1(&(type_buffer), &(type_buffer_index), character);
+            autobuffer_legacy_push_whole_1(&(type_buffer), &(type_buffer_index), character);
         } else if =(stage, 2) {
-            autobuffer_push_whole_1(&(size_buffer), &(size_buffer_index), character);
+            autobuffer_legacy_push_whole_1(&(size_buffer), &(size_buffer_index), character);
         } else {
-            autobuffer_push_whole_1(&(number_buffer), &(number_buffer_index), character);
+            autobuffer_legacy_push_whole_1(&(number_buffer), &(number_buffer_index), character);
         };
         
         j = +(j, 1);
@@ -81,16 +81,16 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
 
     if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
         if =(type_buffer_index, 0) {
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "integer");
+            autobuffer_legacy_push_string(&(type_buffer), &(type_buffer_index), "integer");
         };
     } else {
         if =(type_buffer_index, 0) {
-            autobuffer_push_string(&(type_buffer), &(type_buffer_index), "whole");
+            autobuffer_legacy_push_string(&(type_buffer), &(type_buffer_index), "whole");
         };
     };
 
     if =(size_buffer_index, 0) {
-        autobuffer_push_string(&(size_buffer), &(size_buffer_index), "8");
+        autobuffer_legacy_push_string(&(size_buffer), &(size_buffer_index), "8");
     };
 
     if string=(AutoBuffer.>buffer(&(type_buffer)), "whole") {
@@ -380,6 +380,8 @@ define structure_definition_to_type = function(tokens: *Tokens, index_pointer: *
     variable type_buffer = autobuffer_buffer_new(16);
     autobuffer_buffer_push_string(&(type_buffer), "structure[");
 
+    variable added_any = false;
+
     while !(=(tokens_get_id(tokens, index_temp), TOKEN_CLOSED_CURLY_BRACKETS)) {
         if =(tokens_get_id(tokens, index_temp), TOKEN_NAME) {
             autobuffer_buffer_push_string(&(type_buffer), parse_name(tokens, &(index_temp)));
@@ -389,11 +391,14 @@ define structure_definition_to_type = function(tokens: *Tokens, index_pointer: *
         } else if =(tokens_get_id(tokens, index_temp), TOKEN_SEMICOLON) {
             index_temp = +(index_temp, 1);
             autobuffer_buffer_push_string(&(type_buffer), ",");
+            added_any = true;
         };
     };
     index_temp = +(index_temp, 1);
 
-    AutoBufferBuffer.<index(&(type_buffer), -(AutoBufferBuffer.>index(&(type_buffer)), 1));
+    if added_any {
+        AutoBufferBuffer.<index(&(type_buffer), -(AutoBufferBuffer.>index(&(type_buffer)), 1));
+    };
 
     autobuffer_buffer_push_string(&(type_buffer), "]");
 
