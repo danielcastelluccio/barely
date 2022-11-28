@@ -54,14 +54,9 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
 
     // 0 = actual number, 1 = whole/integer, 2 = size
     variable stage = 0;
-    variable type_buffer = autobuffer_new(8);
-    variable type_buffer_index = 0;
-
-    variable size_buffer = autobuffer_new(8);
-    variable size_buffer_index = 0;
-
-    variable number_buffer = autobuffer_new(8);
-    variable number_buffer_index = 0;
+    variable type_buffer = autobuffer_buffer_new(8);
+    variable size_buffer = autobuffer_buffer_new(8);
+    variable number_buffer = autobuffer_buffer_new(8);
 
     variable j = 0;
     while <(j, length(buffer)) {
@@ -69,46 +64,46 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
         if =(character, ASCII_UNDERSCORE) {
             stage = +(stage, 1);
         } else if =(stage, 1) {
-            autobuffer_legacy_push_whole_1(&(type_buffer), &(type_buffer_index), character);
+            autobuffer_buffer_push_whole_1(&(type_buffer), character);
         } else if =(stage, 2) {
-            autobuffer_legacy_push_whole_1(&(size_buffer), &(size_buffer_index), character);
+            autobuffer_buffer_push_whole_1(&(size_buffer), character);
         } else {
-            autobuffer_legacy_push_whole_1(&(number_buffer), &(number_buffer_index), character);
+            autobuffer_buffer_push_whole_1(&(number_buffer), character);
         };
         
         j = +(j, 1);
     };
 
     if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
-        if =(type_buffer_index, 0) {
-            autobuffer_legacy_push_string(&(type_buffer), &(type_buffer_index), "integer");
+        if =(AutoBufferBuffer.>index(&(type_buffer)), 0) {
+            autobuffer_buffer_push_string(&(type_buffer), "integer");
         };
     } else {
-        if =(type_buffer_index, 0) {
-            autobuffer_legacy_push_string(&(type_buffer), &(type_buffer_index), "whole");
+        if =(AutoBufferBuffer.>index(&(type_buffer)), 0) {
+            autobuffer_buffer_push_string(&(type_buffer), "whole");
         };
     };
 
-    if =(size_buffer_index, 0) {
-        autobuffer_legacy_push_string(&(size_buffer), &(size_buffer_index), "8");
+    if =(AutoBufferBuffer.>index(&(size_buffer)), 0) {
+        autobuffer_buffer_push_string(&(size_buffer), "8");
     };
 
-    if string=(AutoBuffer.>buffer(&(type_buffer)), "whole") {
+    if string=(autobuffer_buffer_get_buffer_pointer(&(type_buffer)), "whole") {
         TokenNumberData.<type(number_data, 0);
     } else {
         TokenNumberData.<type(number_data, 1);
     };
 
-    variable size_bytes = to_number(AutoBuffer.>buffer(&(size_buffer)));
+    variable size_bytes = to_number(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
 
     if !(check_number_fits(tokens, size_bytes, TokenNumberData.>type(number_data), buffer)) {
         print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
         print("Number literal '");
-        print(AutoBuffer.>buffer(&(number_buffer)));
+        print(autobuffer_buffer_get_buffer_pointer(&(number_buffer)));
         print("' cannot fit in type '");
-        print(AutoBuffer.>buffer(&(type_buffer)));
+        print(autobuffer_buffer_get_buffer_pointer(&(type_buffer)));
         print("_");
-        print(AutoBuffer.>buffer(&(size_buffer)));
+        print(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
         println("'");
         exit(1);
     };

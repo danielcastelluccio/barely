@@ -143,12 +143,6 @@ define stringarray_get_index = function(keys: *, wanted: *, size: whole_8): whol
     return 999;
 };
 
-define autobuffer_string_push_whole_8 = function(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_8: whole_8) {
-    variable whole_8_buffer = any_24.>0();
-    whole_8_to_string(whole_8, &(whole_8_buffer));
-    autobuffer_legacy_push_string(buffer, buffer_index_pointer, &(whole_8_buffer));
-};
-
 define print = function(string: *) {
     sys_write(STDOUT, string, length(string));
 };
@@ -366,6 +360,13 @@ define concatenate4_brk_allocate = function(string1: *, string2: *, string3: *, 
     return new_string;
 };
 
+define substring_brk_allocate = function(string: *, start: whole_8, end: whole_8): * {
+    variable substring = brk_allocate(-(end, start));
+    copy(+(string, start), substring, -(end, start));
+
+    return substring;
+};
+
 define create_size_zero_array8_brk_allocate = function(): * {
     return brk_allocate(8);
 };
@@ -440,14 +441,17 @@ define autobuffer_buffer_new = function(size: whole_8): AutoBufferBuffer {
 };
 
 define autobuffer_buffer_push_string = function(buffer: *AutoBufferBuffer, string: *) {
+    autobuffer_buffer_push_string_length(buffer, string, length(string));
+};
+
+define autobuffer_buffer_push_string_length = function(buffer: *AutoBufferBuffer, string: *, length: whole_8) {
     variable autobuffer = &(AutoBufferBuffer.>autobuffer(buffer));
-    variable length2 = length(string);
     variable buffer_index = AutoBufferBuffer.>index(buffer);
 
-    autobuffer_register(autobuffer, buffer_index, +(length2, 1));
-    autobuffer_set(autobuffer, string, buffer_index, length2);
+    autobuffer_register(autobuffer, buffer_index, +(length, 1));
+    autobuffer_set(autobuffer, string, buffer_index, length);
 
-    AutoBufferBuffer.<index(buffer, +(buffer_index, length2));
+    AutoBufferBuffer.<index(buffer, +(buffer_index, length));
 };
 
 define autobuffer_buffer_string_push_whole_8 = function(buffer: *AutoBufferBuffer, whole_8: whole_8) {
@@ -478,6 +482,8 @@ define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
             i = +(i, 1);
         };
     };
+
+    AutoBufferBuffer.<index(buffer, 0);
 };
 
 define autobuffer_buffer_push_whole_1 = function(buffer: *AutoBufferBuffer, whole_1: whole_1) {
@@ -550,4 +556,30 @@ define autobuffer_stack8_peek = function(buffer: *AutoBufferStack8): any_8 {
 define autobuffer_stack8_get = function(buffer: *AutoBufferStack8, index: whole_8): any_8 {
     variable index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
     return any_8.>(index_pointer);
+};
+
+define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
+    variable actual_buffer = autobuffer_stack8_get_buffer_pointer(buffer);
+    variable size = AutoBuffer.>size(&(AutoBufferBuffer.>autobuffer(buffer)));
+    variable i = 0;
+    while <(i, size) {
+        variable done_anything = false;
+        
+        if <(+(i, 8), size) {
+            any_8.<(any_8.*cast(+(actual_buffer, i)), 0_whole_8);
+            i = +(i, 1);
+            done_anything = true;
+        };
+
+        if !(done_anything) {
+            any_1.<(any_1.*cast(+(actual_buffer, i)), 0_whole_1);
+            i = +(i, 1);
+        };
+    };
+
+    AutoBufferBuffer.<index(buffer, 0);
+};
+
+define autobuffer_stack8_get_buffer_pointer = function(buffer: *AutoBufferStack8): * {
+    return AutoBuffer.>buffer(&(AutoBufferStack8.>autobuffer(buffer)));
 };

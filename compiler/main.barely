@@ -154,27 +154,26 @@ define add_used_any_types = function(nodes: *Nodes) {
 };
 
 define get_structure_string_type = function(pointer: *NodeStructureData): * {
-    variable main_name_buffer = autobuffer_new(16);
-    variable main_name_index = 0;
+    variable main_name_buffer = autobuffer_buffer_new(16);
 
-    autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), "structure[");
+    autobuffer_buffer_push_string(&(main_name_buffer), "structure[");
 
     variable items = NodeStructureData.>item_types(pointer);
     variable item_names = NodeStructureData.>item_names(pointer);
 
     variable j = 0;
     while !(=(array8_get(items, j), 0)) {
-        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(item_names, j)));
-        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), ":");
-        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), *.cast(array8_get(items, j)));
-        autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), ",");
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(item_names, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ":");
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(items, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
         j = +(j, 1);
     };
 
-    main_name_index = -(main_name_index, 1);
-    autobuffer_legacy_push_string(&(main_name_buffer), &(main_name_index), "]");
+    AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    autobuffer_buffer_push_string(&(main_name_buffer), "]");
 
-    return AutoBuffer.>buffer(&(main_name_buffer));
+    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
 };
 
 define Nodes = structure {

@@ -46,58 +46,7 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *Pro
     if string_length=(wanted, "any_", 4) {
         variable size = to_number(*.cast(+(wanted, 4)));
         // TODO: fix
-        return =(size, get_size_linux_x86-643_new(given, nodes, program_data));
-    };
-
-    return false;
-};
-
-define is_type_legacy = function(wanted: *, given: *, nodes: *Nodes, defines_map: HashMap, structure_items_array: AutoBuffer): boolean {
-    if string=(wanted, given) {
-        return true;
-    };
-
-    if string=(wanted, "*") {
-        if string_length=(given, "*", 1) {
-            return true;
-        };
-    };
-
-    if string_length=(wanted, "*", 1) {
-        if string_length=(given, "*", 1) {
-            return is_type_legacy(+(wanted, 1), +(given, 1), nodes, defines_map, structure_items_array);
-        };
-    };
-
-    variable defined = *.cast(hashmap_string_get(&(defines_map), given));
-    if !(=(defined, 0)) {
-        if string=(defined, wanted) {
-            return true;
-        };
-    };
-
-    defined = *.cast(hashmap_string_get(&(defines_map), wanted));
-    if !(=(defined, 0)) {
-        if string=(defined, given) {
-            return true;
-        };
-    };
-
-    if string_length=(wanted, "global[", 7) {
-        return string_length=(+(wanted, 7), given, -(length(wanted), 8));
-    };
-
-    if string_length=(given, "global[", 7) {
-        return string_length=(+(given, 7), wanted, -(length(given), 8));
-    };
-
-    if |(&&(string=(wanted, "*structure[_:any_8]"), string=(given, "structure[_:any_8]")), &&(string=(given, "structure[_:any_8]"), string=(wanted, "*structure[_:any_8]"))) {
-        return true;
-    };
-
-    if string_length=(wanted, "any_", 4) {
-        variable size = to_number(*.cast(+(wanted, 4)));
-        return =(size, get_size_linux_x86-643(given, nodes, &(defines_map), &(structure_items_array)));
+        return =(size, get_size_linux_x86-64(given, nodes, program_data));
     };
 
     return false;
@@ -770,7 +719,7 @@ define process_cast = function(nodes: *Nodes, nodes_index: whole_8, stack: *Auto
 
     variable popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
-    if !(=(get_size_linux_x86-643_new(popped, nodes, program_data), get_size_linux_x86-643_new(to_push, nodes, program_data))) {
+    if !(=(get_size_linux_x86-64(popped, nodes, program_data), get_size_linux_x86-64(to_push, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Cast wants equal sized types, given '");
         print(popped);
@@ -866,7 +815,7 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     // removed signdness check -- probably need to add it back
-    if !(=(get_size_linux_x86-643_new(first, nodes, program_data), get_size_linux_x86-643_new(second, nodes, program_data))) {
+    if !(=(get_size_linux_x86-64(first, nodes, program_data), get_size_linux_x86-64(second, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(math_name);
@@ -899,7 +848,7 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     variable first = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
-    if !(=(get_size_linux_x86-643_new(first, nodes, program_data), get_size_linux_x86-643_new(second, nodes, program_data))) {
+    if !(=(get_size_linux_x86-64(first, nodes, program_data), get_size_linux_x86-64(second, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(comparison_name);
