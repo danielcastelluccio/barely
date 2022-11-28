@@ -155,18 +155,7 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
 
     variable start_address = 4194304;
 
-    variable i = 0;
-    while <(i, AutoBufferStack8.>index(&(pushed_functions))) {
-        variable pushed_function_instruction_specific = InstructionIndex.cast(autobuffer_stack8_get(&(pushed_functions), i));
-        variable pushed_function_target = whole_8.cast(autobuffer_stack8_get(&(pushed_function_targets), i));
-
-        variable function_index = InstructionIndex.cast(autobuffer_array8_get(&(function_locations), pushed_function_target));
-
-        variable value_new = +(function_index, 232);
-
-        set_control_flow_value_absolute(&(instructions_buffer), +(pushed_function_instruction_specific, 1), +(start_address, value_new));
-        i = +(i, 1);
-    };
+    adjust_function_calls(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
 
     adjust_jumps(&(jmps), &(jmp_targets), &(targets), set_jmp_value, &(instructions_buffer));
     adjust_jumps(&(jes), &(je_targets), &(targets), set_je_value, &(instructions_buffer));
@@ -201,6 +190,22 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
     autobuffer_set(&(output), &(program_header_bss), 176, 56);
 
     output_executable(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), AutoBuffer.>size(&(output)));
+};
+
+define adjust_function_calls = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
+    variable pushed_function_count = AutoBufferStack8.>index(pushed_functions);
+    variable i = 0;
+    while <(i, pushed_function_count) {
+        variable pushed_function_instruction_specific = InstructionIndex.cast(autobuffer_stack8_get(pushed_functions, i));
+        variable pushed_function_target = whole_8.cast(autobuffer_stack8_get(pushed_function_targets, i));
+
+        variable function_index = InstructionIndex.cast(autobuffer_array8_get(function_locations, pushed_function_target));
+
+        variable value_new = +(function_index, 232);
+
+        set_control_flow_value_absolute(instructions_buffer, +(pushed_function_instruction_specific, 1), +(start_address, value_new));
+        i = +(i, 1);
+    };
 };
 
 define output_define_linux_x86-64 = function(program_data: *ProgramData, function_locations: *AutoBuffer, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
