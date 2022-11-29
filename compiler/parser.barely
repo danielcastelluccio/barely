@@ -762,24 +762,25 @@ define parse_period_invoke_pointer = function(tokens: *Tokens, index: whole_8, n
     NodeInvokeData.<has_specifier(invoke_data, true);
     NodeInvokeData.<is_pointer(invoke_data, true);
 
+    variable nodes_index_before = nodes_index_before_cached;
     variable function_retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(nodes_index_before_cached, 1)));
     variable function_name = NodeRetrieveData.>name(function_retrieve_data);
 
-    variable function_name_new = "";
+    variable modules_combined = "";
 
-    variable before_index = nodes_index_before_cached;
+    variable retrieve_data: *NodeRetrieveData = NodeRetrieveData.*cast(0);
+    variable cached_index = 0;
+
+    variable count = 0;
+    variable before_index = -(nodes_index_before_cached, 1);
     while =(nodes_get_id(nodes, before_index), NODE_RETRIEVE) {
-        variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, before_index));
-        function_name_new = concatenate3_brk_allocate(function_name_new, NodeRetrieveData.>name(retrieve_data), ".");
-
-        nodes_set_skip(nodes, before_index);
-
-        before_index = +(before_index, 1);
+        count = +(count, 1);
+        before_index = -(before_index, 1);
     };
 
-    function_name_new = concatenate2_brk_allocate(function_name_new, function_name);
-
-    NodeRetrieveData.<name(function_retrieve_data, function_name_new);
+    if =(count, 1) {
+        NodeRetrieveData.<using_module(function_retrieve_data, true);
+    };
 };
 
 define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_name: *, is_target_internal_function: *function[*:boolean]) {

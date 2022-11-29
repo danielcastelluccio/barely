@@ -9,9 +9,6 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *Pro
         };
     };
 
-    //println(wanted);
-    //println(given);
-
     if string_length=(wanted, "*", 1) {
         if string_length=(given, "*", 1) {
             return is_type(+(wanted, 1), +(given, 1), nodes, program_data);
@@ -640,7 +637,8 @@ define get_arguments_from_function_type = function(function_type: *): *, * {
 };
 
 define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
-    variable variable_name = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index)));
+    variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
+    variable variable_name = NodeRetrieveData.>name(retrieve_data);
 
     if &&(string_length=(variable_name, "any_", 4), &&(=(nodes_get_id(nodes, +(nodes_index, 1)), NODE_INVOKE), NodeInvokeData.>has_specifier(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, 1)))))) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_name);
@@ -664,6 +662,29 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     if !(=(variable_type, 0)) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
         return;
+    };
+
+    variable define_values = &(ProgramData.>define_values(program_data));
+
+    if NodeRetrieveData.>using_module(retrieve_data) {
+        variable prepended_to_name = "";
+        variable modules_index = +(nodes_index, 1);
+        while =(nodes_get_id(nodes, modules_index), NODE_RETRIEVE) {
+            variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
+            variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
+            variable module_id = whole_8.cast(hashmap_string_get2(define_values, retrieve_name));
+            variable module_id_buffer = any_24.>0();
+
+            whole_8_to_string(module_id, &(module_id_buffer));
+
+            prepended_to_name = concatenate2_brk_allocate(prepended_to_name, &(module_id_buffer));
+
+            nodes_set_skip(nodes, modules_index);
+            modules_index = +(modules_index, 1);
+        };
+
+        variable_name = concatenate2_brk_allocate(prepended_to_name, variable_name);
+        NodeRetrieveData.<name(retrieve_data, variable_name);
     };
 
     variable define_types = &(ProgramData.>define_types(program_data));
@@ -888,6 +909,7 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
     variable declared_function_id = 0;
     variable declared_structure_id = 0;
     variable declared_global_id = 0;
+    variable declared_module_id = 0;
 
     variable i = 0;
     while <(i, node_count) {
@@ -950,6 +972,10 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
             declared_global_id = +(declared_global_id, 1);
         };
 
+        if =(id, NODE_MODULE) {
+            declared_module_id = +(declared_module_id, 1);
+        };
+
         if =(id, NODE_DEFINE) {
             variable define_data = NodeDefineData.*cast(pointer_data);
             variable define_name = NodeDefineData.>name(define_data);
@@ -961,21 +987,26 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
                 variable new_define_name = "";
 
-                variable j = 0;
-                while <(j, AutoBufferStack8.>index(&(module_stack))) {
-                    variable module_name = *.cast(autobuffer_stack8_get(&(module_stack), j));
-                    new_define_name = concatenate3_brk_allocate(new_define_name, module_name, ".");
-                    j = +(j, 1);
+                variable i = 0;
+                while <(i, AutoBufferStack8.>index(&(module_stack))) {
+                    variable module_id = whole_8.cast(autobuffer_stack8_get(&(module_stack), i));
+                    variable module_id_buffer = any_24.>0();
+                    whole_8_to_string(module_id, &(module_id_buffer));
+
+                    new_define_name = concatenate2_brk_allocate(&(module_id_buffer), new_define_name);
+                    i = +(i, 1);
                 };
 
-                new_define_name = concatenate2_brk_allocate(new_define_name, define_name);
-                define_name = new_define_name;
+                define_name = concatenate2_brk_allocate(new_define_name, define_name);
+                
+                NodeDefineData.<name(define_data, define_name);
             } else if string_length=(define_type, "structure", 9) {
                 define_value = declared_structure_id;
             } else if string_length=(define_type, "global", 6) {
                 define_value = declared_global_id;
             } else if string_length=(define_type, "module", 6) {
-                autobuffer_stack8_push(&(module_stack), define_name);
+                define_value = declared_module_id;
+                autobuffer_stack8_push(&(module_stack), declared_module_id);
             } else {
                 define_value = NodeNumberData.>value(NodeNumberData.*cast(nodes_get_pointer_data(nodes, +(i, 1))));
             };
