@@ -124,7 +124,7 @@ define add_used_any_types = function(nodes: *Nodes) {
             variable name = NodeInvokeData.>name(invoke_data);
             variable has_specifier = NodeInvokeData.>has_specifier(invoke_data);
 
-            if has_specifier {
+            if &&(has_specifier, !(=(name, 0))) {
                 if |(string_length=(name, ">", 1), string_length=(name, "<", 1)) {
                     variable previous_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(i, 1)));
                     variable previous_name = NodeRetrieveData.>name(previous_data);

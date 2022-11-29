@@ -34,6 +34,7 @@ define NODE_INVOKE = 5;
 define NodeInvokeData = structure {
     name: *;
     has_specifier: boolean;
+    is_pointer: boolean;
 };
 
 define NODE_DECLARE = 6;
@@ -117,15 +118,21 @@ define NodeEndIfBlockData = structure {
 
 define NODE_ENDSTATEMENT = 22;
 
-define NODE_INVOKE_POINTER = 23;
-
 define NodeInvokePointerData = structure {
     ignore: boolean;
 };
 
 define NODE_ENDDEFINE = 24;
 
+define NodeEndDefineData = structure {
+    type: *;
+};
+
 define NODE_SKIP = 25;
+
+define NODE_MODULE = 26;
+
+define NODE_ENDMODULE = 27;
 
 define NODE_SIZE = 64;
 
@@ -183,6 +190,11 @@ define nodes_append = function(nodes: *Nodes, id: whole_8, file_name: *, row: wh
     increment_whole_8_pointer(nodes_index, 1);
 
     return node_pointer;
+};
+
+define nodes_set_skip = function(nodes: *Nodes, index: whole_8) {
+    variable node_id = nodes_get_id_pointer(nodes, index);
+    whole_8.<(node_id, NODE_SKIP);
 };
 
 define nodes_append_structure_old = function(nodes: *Nodes, name: *) {
@@ -255,12 +267,12 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     } else if =(id, NODE_INVOKE) {
         variable invoke_data = NodeInvokeData.*cast(pointer_data);
         print("Invoke{name='");
-        print(NodeInvokeData.>name(invoke_data));
+        if !(=(NodeInvokeData.>name(invoke_data), 0)) {
+            print(NodeInvokeData.>name(invoke_data));
+        };
         println("'}");
     } else if =(id, NODE_POINTER) {
         println("Pointer{}")
-    } else if =(id, NODE_INVOKE_POINTER) {
-        println("InvokePointer{}")
     } else if =(id, NODE_NUMBER) {
         println("Number{}")
     } else if =(id, NODE_BOOLEAN) {

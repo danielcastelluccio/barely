@@ -1,5 +1,12 @@
-define is_pointer = function(nodes: *Nodes, index: whole_8): boolean {
-    return =(nodes_get_id(nodes, index), NODE_POINTER);
+define is_pointer = function(nodes: *Nodes, index_in: whole_8): boolean {
+    variable index = index_in;
+    while |(=(nodes_get_id(nodes, index), NODE_POINTER), =(nodes_get_id(nodes, index), NODE_SKIP)) {
+        if =(nodes_get_id(nodes, index), NODE_POINTER) {
+            return true;
+        };
+        index = +(index, 1);
+    };
+    return false;
 };
 
 define add_internal_functions_linux_x86-64 = function(nodes: *Nodes) {
@@ -115,7 +122,6 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
         else if =(id, NODE_NUMBER) output_number_linux_x86-64(pointer_data, &(instructions_buffer))
         else if =(id, NODE_BOOLEAN) output_boolean_linux_x86-64(pointer_data, &(instructions_buffer))
         else if =(id, NODE_INVOKE) output_invoke_linux_x86-64(nodes, i, &(program_data), pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), &(instructions_buffer))
-        else if =(id, NODE_INVOKE_POINTER) output_invoke_pointer_linux_x86-64(&(instructions_buffer))
         else if =(id, NODE_STRING) output_string_linux_x86-64(&(data_buffer), &(data_indexes_to_adjust), pointer_data, &(instructions_buffer))
         else if =(id, NODE_DECLARE) output_declare_linux_x86-64(nodes, &(program_data), &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), pointer_data, &(instructions_buffer))
         else if =(id, NODE_ASSIGN) output_assign_linux_x86-64(nodes, i, &(program_data), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, &(global_types), global_locations, &(bss_indexes_to_adjust_relative), pointer_data, &(instructions_buffer))
@@ -135,6 +141,8 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
         else if =(id, NODE_ENDIFBLOCK) {}
         else if =(id, NODE_ENDSTATEMENT) {}
         else if =(id, NODE_ENDDEFINE) {}
+        else if =(id, NODE_MODULE) {}
+        else if =(id, NODE_ENDMODULE) {}
         else if =(id, NODE_SKIP) {}
         else {
             print("Unhandled ");
@@ -702,10 +710,15 @@ define get_variable = function(variable_types: *AutoBufferStack8, variable_name:
 
 define output_invoke_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
     variable invoke_data = NodeInvokeData.*cast(pointer_data);
-    variable function_name = NodeInvokeData.>name(invoke_data);
-    variable next_id = nodes_get_id(nodes, +(nodes_index, 1));
+    variable is_invoke_pointer = NodeInvokeData.>is_pointer(invoke_data);
+    if is_invoke_pointer {
+        output_invoke_pointer_linux_x86-64(instructions_buffer);
+        return;
+    };
 
-    if =(next_id, NODE_POINTER) {
+    variable function_name = NodeInvokeData.>name(invoke_data);
+
+    if is_pointer(nodes, +(nodes_index, 1)) {
         function_name = concatenate2_brk_allocate("*", function_name);
     };
 
