@@ -671,6 +671,12 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
         variable modules_index = +(nodes_index, 1);
         while =(nodes_get_id(nodes, modules_index), NODE_RETRIEVE) {
             variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
+            variable is_module = NodeRetrieveData.>is_module(retrieve_data);
+
+            if !(is_module) {
+                break;
+            };
+
             variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
             variable module_id = whole_8.cast(hashmap_string_get2(define_values, retrieve_name));
             variable module_id_buffer = any_24.>0();
