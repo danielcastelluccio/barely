@@ -747,22 +747,23 @@ define parse_period = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     variable nodes_index_before_cached = Nodes.>index(nodes);
     copy(before_period_cached, +(AutoBuffer.>buffer(&(Nodes.>buffer(nodes))), *(Nodes.>index(nodes), NODE_SIZE)), before_period_size);
     variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index_before_cached));
-    NodeRetrieveData.<is_module(retrieve_data, true);
+    if =(nodes_get_id(nodes, -(nodes_index_before_cached, 1)), NODE_RETRIEVE) {
+        NodeRetrieveData.<is_module(retrieve_data, true);
+    };
 
     Nodes.<index(nodes, +(Nodes.>index(nodes), /(before_period_size, NODE_SIZE)));
 
-    if |(is_pointer, !(is_invoke)) {
-        if is_invoke {
-            variable invoke_data = NodeInvokeData.*cast(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, index)));
-            NodeInvokeData.<has_specifier(invoke_data, true);
-            NodeInvokeData.<is_pointer(invoke_data, true);
-        };
-        parse_period_non_internal(tokens, index, nodes, nodes_index_before_cached);
-    } else {
+    if is_pointer {
+        variable invoke_data = NodeInvokeData.*cast(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, index)));
+        NodeInvokeData.<has_specifier(invoke_data, true);
+        NodeInvokeData.<is_pointer(invoke_data, true);
+    } else if is_invoke {
         variable invoke_data = NodeInvokeData.*cast(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, index)));
         NodeInvokeData.<name(invoke_data, name);
         NodeInvokeData.<has_specifier(invoke_data, true);
+        nodes_index_before_cached = +(nodes_index_before_cached, 1);
     };
+    parse_period_non_internal(tokens, index, nodes, nodes_index_before_cached);
 
     whole_8.<(index_pointer, index);
 };
