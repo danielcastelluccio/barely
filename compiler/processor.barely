@@ -640,6 +640,49 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
     variable variable_name = NodeRetrieveData.>name(retrieve_data);
 
+    variable define_values = &(ProgramData.>define_values(program_data));
+
+    if NodeRetrieveData.>using_module(retrieve_data) {
+        variable original_index = nodes_index;
+        variable modules_index = +(original_index, 1);
+        while =(nodes_get_id(nodes, modules_index), NODE_RETRIEVE) {
+            variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
+            variable is_module = NodeRetrieveData.>is_module(retrieve_data);
+
+            if !(is_module) {
+                break;
+            };
+            modules_index = +(modules_index, 1);
+        };
+
+        modules_index = -(modules_index, 1);
+
+        variable prepended_to_name = "";
+
+        //todo: make actually work
+        while >(modules_index, original_index) {
+            variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
+            variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
+            variable module_name_with_parents = concatenate2_brk_allocate(prepended_to_name, retrieve_name);
+
+            variable module_id = whole_8.cast(hashmap_string_get2(define_values, module_name_with_parents));
+            variable module_id_buffer = any_24.>0();
+
+            whole_8_to_string(module_id, &(module_id_buffer));
+
+            println(module_name_with_parents);
+
+            prepended_to_name = concatenate2_brk_allocate(prepended_to_name, &(module_id_buffer));
+
+            nodes_set_skip(nodes, modules_index);
+
+            modules_index = -(modules_index, 1);
+        };
+
+        variable_name = concatenate2_brk_allocate(prepended_to_name, variable_name);
+        NodeRetrieveData.<name(retrieve_data, variable_name);
+    };
+
     if &&(string_length=(variable_name, "any_", 4), &&(=(nodes_get_id(nodes, +(nodes_index, 1)), NODE_INVOKE), NodeInvokeData.>has_specifier(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, 1)))))) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_name);
         return;
@@ -662,35 +705,6 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     if !(=(variable_type, 0)) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
         return;
-    };
-
-    variable define_values = &(ProgramData.>define_values(program_data));
-
-    if NodeRetrieveData.>using_module(retrieve_data) {
-        variable prepended_to_name = "";
-        variable modules_index = +(nodes_index, 1);
-        while =(nodes_get_id(nodes, modules_index), NODE_RETRIEVE) {
-            variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
-            variable is_module = NodeRetrieveData.>is_module(retrieve_data);
-
-            if !(is_module) {
-                break;
-            };
-
-            variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
-            variable module_id = whole_8.cast(hashmap_string_get2(define_values, retrieve_name));
-            variable module_id_buffer = any_24.>0();
-
-            whole_8_to_string(module_id, &(module_id_buffer));
-
-            prepended_to_name = concatenate2_brk_allocate(prepended_to_name, &(module_id_buffer));
-
-            nodes_set_skip(nodes, modules_index);
-            modules_index = +(modules_index, 1);
-        };
-
-        variable_name = concatenate2_brk_allocate(prepended_to_name, variable_name);
-        NodeRetrieveData.<name(retrieve_data, variable_name);
     };
 
     variable define_types = &(ProgramData.>define_types(program_data));
@@ -1005,6 +1019,11 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 NodeDefineData.<name(define_data, define_name);
             } else if string_length=(define_type, "module", 6) {
                 define_value = declared_module_id;
+
+                define_name = get_define_name_with_module(define_name);
+
+                NodeDefineData.<name(define_data, define_name);
+
                 autobuffer_stack8_push(&(module_stack), declared_module_id);
             } else {
                 define_value = NodeNumberData.>value(NodeNumberData.*cast(nodes_get_pointer_data(nodes, +(i, 1))));
@@ -1038,14 +1057,15 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 define get_define_name_with_module = function(define_name: *): * {
     variable new_define_name = "";
 
-    variable i = 0;
+    variable i = -(AutoBufferStack8.>index(&(module_stack)), 1);
+    // taking advantage of overflow, not good
     while <(i, AutoBufferStack8.>index(&(module_stack))) {
         variable module_id = whole_8.cast(autobuffer_stack8_get(&(module_stack), i));
         variable module_id_buffer = any_24.>0();
         whole_8_to_string(module_id, &(module_id_buffer));
 
         new_define_name = concatenate2_brk_allocate(&(module_id_buffer), new_define_name);
-        i = +(i, 1);
+        i = -(i, 1);
     };
 
     return concatenate2_brk_allocate(new_define_name, define_name);
