@@ -305,6 +305,8 @@ define get_define_type = function(tokens: *Tokens, index_pointer: *whole_8, valu
         structure_definition_to_type(tokens, &(index), value_offset)
     } else if tokens_is_keyword(tokens, +(index, value_offset), "module") {
         "module"
+    } else if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NAME) {
+        "define"
     } else {
         global_definition_to_type(tokens, &(index), value_offset)
     };

@@ -73,7 +73,6 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
     variable global_locations = autobuffer_new(512);
 
     variable define_types = ProgramData.>define_types(&(program_data));
-    variable define_values = ProgramData.>define_values(&(program_data));
 
     variable pushed_functions = autobuffer_stack8_new(512);
     variable pushed_function_targets = autobuffer_stack8_new(512);
@@ -501,7 +500,8 @@ define output_retrieve_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole
     };
 
     variable define_types = &(ProgramData.>define_types(program_data));
-    variable_type = *.cast(hashmap_string_get(define_types, variable_name));
+    variable define_values = &(ProgramData.>define_values(program_data));
+    variable_type = get_type_of_define(define_types, define_values, variable_name);
 
     if !(=(variable_type, 0)) {
         output_retrieve_define_linux_x86-64(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, variable_name, variable_type);
@@ -510,8 +510,9 @@ define output_retrieve_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole
 };
 
 define output_retrieve_define_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, variable_name: *, variable_type: *) {
+    variable define_types = &(ProgramData.>define_types(program_data));
     variable define_values = &(ProgramData.>define_values(program_data));
-    variable define_value = hashmap_string_get(define_values, variable_name);
+    variable define_value = get_value_of_define(define_types, define_values, variable_name);
 
     if string_length=(variable_type, "*function", 9) {
         variable push_function_instruction = autobuffer_buffer_push_push_instruction_pointer(instructions_buffer);

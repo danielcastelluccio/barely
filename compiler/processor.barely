@@ -636,6 +636,74 @@ define get_arguments_from_function_type = function(function_type: *): *, * {
     return AutoBuffer.>buffer(&(arguments_buffer)), AutoBuffer.>buffer(&(returns_buffer));
 };
 
+define get_type_of_define = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
+    variable define_type = *.cast(hashmap_string_get(define_types, define_name));
+    if =(define_type, 0) {
+        return *.cast(0);
+    };
+
+    if string=(define_type, "define") {
+        variable define_value = *.cast(hashmap_string_get(define_values, define_name));
+        variable define_array_length = array8_length(define_value);
+
+        variable current_name = "";
+        variable current_module_index = 999;
+
+        variable index = -(define_array_length, 1);
+        while <(index, define_array_length) {
+            current_name = *.cast(array8_get(define_value, index));
+
+            if !(=(current_module_index, 999)) {
+                variable index_buffer: any_24;
+                whole_8_to_string(current_module_index, &(index_buffer));
+                current_name = concatenate2_brk_allocate(&(index_buffer), current_name);
+            };
+
+            if !(=(hashmap_string_get2(define_types, current_name), 999)) {
+                current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
+            };
+            index = -(index, 1);
+        };
+        return get_type_of_define(define_types, define_values, current_name);
+    };
+
+    return *.cast(hashmap_string_get(define_types, define_name));
+};
+
+define get_value_of_define = function(define_types: *HashMap, define_values: *HashMap, define_name: *): any_8 {
+    variable define_type = *.cast(hashmap_string_get(define_types, define_name));
+    if =(define_type, 0) {
+        return 999;
+    };
+
+    if string=(define_type, "define") {
+        variable define_value = *.cast(hashmap_string_get(define_values, define_name));
+        variable define_array_length = array8_length(define_value);
+
+        variable current_name = "";
+        variable current_module_index = 999;
+
+        variable index = -(define_array_length, 1);
+        while <(index, define_array_length) {
+            current_name = *.cast(array8_get(define_value, index));
+
+            if !(=(current_module_index, 999)) {
+                variable index_buffer = any_24.>0();
+                whole_8_to_string(current_module_index, &(index_buffer));
+                current_name = concatenate2_brk_allocate(&(index_buffer), current_name);
+            };
+
+            if !(=(hashmap_string_get2(define_types, current_name), 999)) {
+                current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
+            };
+            index = -(index, 1);
+        };
+        return get_value_of_define(define_types, define_values, current_name);
+    };
+
+    return hashmap_string_get2(define_values, define_name);
+};
+
 define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
     variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
     variable variable_name = NodeRetrieveData.>name(retrieve_data);
@@ -659,7 +727,6 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
 
         variable prepended_to_name = "";
 
-        //todo: make actually work
         while >(modules_index, original_index) {
             variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
             variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
@@ -670,9 +737,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
 
             whole_8_to_string(module_id, &(module_id_buffer));
 
-            println(module_name_with_parents);
-
-            prepended_to_name = concatenate2_brk_allocate(prepended_to_name, &(module_id_buffer));
+            prepended_to_name = copy_string_brk_allocate(&(module_id_buffer));
 
             nodes_set_skip(nodes, modules_index);
 
@@ -709,7 +774,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
 
     variable define_types = &(ProgramData.>define_types(program_data));
 
-    variable_type = *.cast(hashmap_string_get(define_types, variable_name));
+    variable_type = get_type_of_define(define_types, define_values, variable_name);
 
     if !(=(variable_type, 0)) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
@@ -1001,35 +1066,32 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
             variable define_name = NodeDefineData.>name(define_data);
             variable define_type = NodeDefineData.>type(define_data);
 
+            define_name = get_define_name_with_module(define_name);
+            NodeDefineData.<name(define_data, define_name);
+
             variable define_value: any_8;
             if string_length=(define_type, "*function", 9) {
                 define_value = declared_function_id;
-                define_name = get_define_name_with_module(define_name);
-                
-                NodeDefineData.<name(define_data, define_name);
             } else if string_length=(define_type, "structure", 9) {
                 define_value = declared_structure_id;
-                define_name = get_define_name_with_module(define_name);
-
-                NodeDefineData.<name(define_data, define_name);
             } else if string_length=(define_type, "global", 6) {
                 define_value = declared_global_id;
-                define_name = get_define_name_with_module(define_name);
-
-                NodeDefineData.<name(define_data, define_name);
             } else if string_length=(define_type, "module", 6) {
                 define_value = declared_module_id;
-
-                define_name = get_define_name_with_module(define_name);
-
-                NodeDefineData.<name(define_data, define_name);
-
                 autobuffer_stack8_push(&(module_stack), declared_module_id);
+            } else if string=(define_type, "define") {
+                variable values_buffer = autobuffer_stack8_new(24);
+
+                variable value_index = +(i, 1);
+                while =(nodes_get_id(nodes, value_index), NODE_RETRIEVE) {
+                    variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, value_index));
+                    autobuffer_stack8_push(&(values_buffer), NodeRetrieveData.>name(retrieve_data));
+                    value_index = +(value_index, 1);
+                };
+
+                define_value = autobuffer_stack8_get_buffer_pointer(&(values_buffer));
             } else {
                 define_value = NodeNumberData.>value(NodeNumberData.*cast(nodes_get_pointer_data(nodes, +(i, 1))));
-                define_name = get_define_name_with_module(define_name);
-
-                NodeDefineData.<name(define_data, define_name);
             };
 
             variable define_types = &(ProgramData.>define_types(program_data));
@@ -1058,14 +1120,12 @@ define get_define_name_with_module = function(define_name: *): * {
     variable new_define_name = "";
 
     variable i = -(AutoBufferStack8.>index(&(module_stack)), 1);
-    // taking advantage of overflow, not good
-    while <(i, AutoBufferStack8.>index(&(module_stack))) {
-        variable module_id = whole_8.cast(autobuffer_stack8_get(&(module_stack), i));
+    if >(AutoBufferStack8.>index(&(module_stack)), 0) {
+        variable module_id = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
         variable module_id_buffer = any_24.>0();
         whole_8_to_string(module_id, &(module_id_buffer));
 
-        new_define_name = concatenate2_brk_allocate(&(module_id_buffer), new_define_name);
-        i = -(i, 1);
+        new_define_name = copy_string_brk_allocate(&(module_id_buffer));
     };
 
     return concatenate2_brk_allocate(new_define_name, define_name);
