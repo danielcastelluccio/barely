@@ -82,6 +82,12 @@ define add_structure_pseudo_functions = function(nodes: *Nodes) {
                 variable function_returns = create_size_one_array8_brk_allocate(name);
                 nodes_append_pseudo_function(nodes, function_name, function_arguments, function_returns);
 
+                // Size getter for the whole value
+                variable function_name = concatenate2_brk_allocate(name, "size");
+                variable function_arguments = create_size_zero_array8_brk_allocate();
+                variable function_returns = create_size_one_array8_brk_allocate("whole_8");
+                nodes_append_pseudo_function(nodes, function_name, function_arguments, function_returns);
+
                 variable item_names = NodeStructureData.>item_names(pointer);
                 variable item_types = NodeStructureData.>item_types(pointer);
 
@@ -176,6 +182,41 @@ define get_structure_string_type = function(pointer: *NodeStructureData): * {
     return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
 };
 
+define get_function_string_type = function(pointer: *NodeFunctionData): * {
+    variable main_name_buffer = autobuffer_buffer_new(16);
+
+    autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
+
+    variable arguments = NodeFunctionData.>argument_types(pointer);
+    variable returns = NodeFunctionData.>returns(pointer);
+
+    variable j = 0;
+    while !(=(array8_get(arguments, j), 0)) {
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(arguments, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), ":");
+
+    variable j = 0;
+    while !(=(array8_get(returns, j), 0)) {
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), "]");
+
+    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
+};
+
 define Nodes = structure {
     buffer: AutoBuffer;
     index: whole_8;
@@ -236,9 +277,18 @@ define include_file = function(file_name: *, nodes: *Nodes, is_target_internal_f
 
     tokenize(file_name, contents, &(tokens));
 
-    variable previous_index = whole_8.>(nodes_index);
+    variable tokens_expanded = tokens_new();
+    expand_macros(&(tokens), &(tokens_expanded));
 
-    parse(&(tokens), nodes, is_target_internal_function);
+    //variable i = 0;
+    //while <(i, Tokens.>index(&(tokens_expanded))) {
+    //    print_token_error_beginning(&(tokens_expanded), i);
+    //    print_whole_8(tokens_get_id(&(tokens_expanded), i));
+    //    println("");
+    //    i = +(i, 1);
+    //};
+
+    parse(&(tokens_expanded), nodes, is_target_internal_function);
 };
 
 define get_contents = function(name: *): * {

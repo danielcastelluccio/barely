@@ -10,6 +10,7 @@ define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file
     else if string=(buffer, "variable") true
     else if string=(buffer, "structure") true
     else if string=(buffer, "module") true
+    else if string=(buffer, "macro") true
     else if string=(buffer, "return") true
     else if string=(buffer, "if") true
     else if string=(buffer, "else") true
@@ -877,6 +878,8 @@ define is_special_function = function(name: *, is_target_internal_function: *fun
         true
     } else if string_length=(name, "*cast", 5) {
         true
+    } else if string_length=(name, "size", 4) {
+        true
     } else if is_target_internal_function(name) {
         true
     } else {
@@ -1188,6 +1191,7 @@ define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *wh
         } else if |(=(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_SEMICOLON), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_CLOSED_PARENTHESIS)) {
             print_token_error_beginning(tokens, whole_8.>(index_pointer));
             println("Unexpected token");
+            exit(1);
         } else {
             parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
         };
@@ -1238,7 +1242,7 @@ define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nod
 
 define parse_multiple = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean], ending: whole_8) {
     variable tokens_count = Tokens.>index(tokens);
-    while !(=(tokens_get_id(tokens, whole_8.>(index)), ending)) {
+    while &&(!(=(tokens_get_id(tokens, whole_8.>(index)), ending)), <(whole_8.>(index), Tokens.>index(tokens))) {
         parse_individual(tokens, index, nodes, is_target_internal_function);
     };
 };
