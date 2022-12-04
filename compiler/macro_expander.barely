@@ -10,7 +10,7 @@ define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens) {
         if =(id, TOKEN_NAME) {
             variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, i));
             variable name = TokenNameData.>name(name_data);
-            if !(=(hashmap_string_get2(&(macro_starts), name), 999)) {
+            if &&(!(=(hashmap_string_get2(&(macro_starts), name), 999)), !(=(tokens_get_id(tokens, -(i, 1)), TOKEN_PERIOD))) {
                 if !(tokens_is_keyword(tokens, -(i, 1), "define")) {
                     expand_macro_specific(&(macro_starts), &(macro_ends), &(macro_bindings), tokens, &(i), tokens_expanded);
                 } else {
@@ -79,7 +79,16 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
                     inside = -(inside, 1);
                 } else if =(id, TOKEN_NAME) {
                     variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, whole_8.>(index_in)));
-                    hashmap_string_put(&(bindings_map), *.cast(array8_get(bindings, index)), TokenNameData.>name(name_data));
+                    variable current_binding = *.cast(array8_get(bindings, index));
+                    if =(hashmap_string_get(&(bindings_map), current_binding), 0) {
+                        variable new_autobuffer = AutoBufferStack8.*cast(brk_allocate(AutoBufferStack8.size()));
+                        AutoBufferStack8.<(new_autobuffer, autobuffer_stack8_new(24));
+                        hashmap_string_put(&(bindings_map), current_binding, new_autobuffer);
+                    };
+
+                    variable autobuffer = AutoBufferStack8.*cast(hashmap_string_get(&(bindings_map), current_binding));
+                    autobuffer_stack8_push(autobuffer, TokenNameData.>name(name_data));
+                } else if =(id, TOKEN_COMMA) {
                     index = +(index, 1);
                 };
 
@@ -94,9 +103,22 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
 
                 if =(tokens_get_id(tokens_out, new_index), TOKEN_NAME) {
                     variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_out, new_index));
-                    variable binding = *.cast(hashmap_string_get2(&(bindings_map), TokenNameData.>name(name_data)));
+                    variable name = TokenNameData.>name(name_data);
+
+                    variable binding = AutoBufferStack8.*cast(hashmap_string_get2(&(bindings_map), name));
                     if !(=(binding, 999)) {
-                        TokenNameData.<name(name_data, binding);
+                        Tokens.<index(tokens_out, -(Tokens.>index(tokens_out), 1));
+
+                        variable k = 0;
+                        while <(k, AutoBufferStack8.>index(binding)) {
+                            if >(k, 0) {
+                                variable _ = tokens_append(tokens_out, TOKEN_PERIOD, "", 0, 0);
+                            };
+
+                            variable new_name = TokenNameData.*cast(tokens_append_data(tokens_out, TOKEN_NAME, "", 0, 0));
+                            TokenNameData.<name(new_name, *.cast(autobuffer_stack8_get(binding, k)));
+                            k = +(k, 1);
+                        };
                     };
                 };
 
