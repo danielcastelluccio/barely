@@ -490,7 +490,11 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
 
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_PERIOD) {
         increment_whole_8_pointer(index_pointer, 1);
-        result = concatenate3_brk_allocate(result, ".", parse_name(tokens, index_pointer));
+        if string=(result, "*") {
+            result = concatenate2_brk_allocate(result, parse_name(tokens, index_pointer));
+        } else {
+            result = concatenate3_brk_allocate(result, ".", parse_name(tokens, index_pointer));
+        };
     };
 
     return result;
@@ -770,7 +774,6 @@ define parse_period = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
         variable invoke_data = NodeInvokeData.*cast(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, index)));
         NodeInvokeData.<name(invoke_data, name);
         NodeInvokeData.<has_specifier(invoke_data, true);
-        nodes_index_before_cached = +(nodes_index_before_cached, 1);
     };
     parse_period_non_internal(tokens, index, nodes, nodes_index_before_cached);
 

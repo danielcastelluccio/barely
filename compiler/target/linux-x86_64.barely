@@ -1,6 +1,6 @@
 define is_pointer = function(nodes: *Nodes, index_in: whole_8): boolean {
     variable index = index_in;
-    while |(=(nodes_get_id(nodes, index), NODE_POINTER), =(nodes_get_id(nodes, index), NODE_SKIP)) {
+    while |(|(|(=(nodes_get_id(nodes, index), NODE_POINTER), =(nodes_get_id(nodes, index), NODE_SKIP)), &&(=(nodes_get_id(nodes, index), NODE_RETRIEVE), NodeRetrieveData.>is_module(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, index))))), &&(=(nodes_get_id(nodes, index), NODE_INVOKE), NodeInvokeData.>is_pointer(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, index))))) {
         if =(nodes_get_id(nodes, index), NODE_POINTER) {
             return true;
         };
@@ -514,6 +514,7 @@ define output_retrieve_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole
 
     variable define_types = &(ProgramData.>define_types(program_data));
     variable define_values = &(ProgramData.>define_values(program_data));
+
     variable_type = get_type_of_define(define_types, define_values, variable_name);
 
     if !(=(variable_type, 0)) {
@@ -731,10 +732,6 @@ define output_invoke_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8
     };
 
     variable function_name = NodeInvokeData.>name(invoke_data);
-
-    if is_pointer(nodes, +(nodes_index, 1)) {
-        function_name = concatenate2_brk_allocate("*", function_name);
-    };
 
     variable memory_function = *.cast(hashmap_string_get(internal_function_instructions, function_name));
     if !(=(memory_function, 0)) {
@@ -1403,7 +1400,7 @@ define create_structure_internal_functions = function(program_data: *ProgramData
             variable size = get_size_linux_x86-64(member_type, nodes, program_data);
 
             // Get pointer for individual members
-            variable internal_name = concatenate4_brk_allocate("*", structure_name, ">", member_name);
+            variable internal_name = concatenate3_brk_allocate(structure_name, "*>", member_name);
             variable internal_instructions = autobuffer_buffer_new(8192);
 
             autobuffer_buffer_push_pop_register8(&(internal_instructions), RAX);

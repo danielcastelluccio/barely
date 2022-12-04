@@ -108,6 +108,12 @@ define add_structure_pseudo_functions = function(nodes: *Nodes) {
                     variable function_returns = create_size_one_array8_brk_allocate(item_type);
                     nodes_append_pseudo_function(nodes, function_name, function_arguments, function_returns);
 
+                    // Pointer Getter for individual members
+                    variable function_name = concatenate3_brk_allocate(name, "*>", item_name);
+                    variable function_arguments = create_size_one_array8_brk_allocate(pointer_name);
+                    variable function_returns = create_size_one_array8_brk_allocate(concatenate2_brk_allocate("*", item_type));
+                    nodes_append_pseudo_function(nodes, function_name, function_arguments, function_returns);
+
                     j = +(j, 1);
                 };
             };
