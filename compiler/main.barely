@@ -6,8 +6,6 @@ define cached_signedness_map = global(HashMap);
 define main = function(arguments: **, argument_count: whole_8) {
     println("Parsing...");
 
-    variable nodes = nodes_new();
-
     // hardcoded because it's the only platform we current support
     variable current_platform = "linux";
     variable add_target_internal_functions, is_target_internal_function = if string=(current_platform, "linux") {
@@ -19,6 +17,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     while_target_id_stack = autobuffer_stack8_new(64);
 
     variable output_file = "output";
+    variable tokens = tokens_new();
 
     variable i = 1;
     while <(i, argument_count) {
@@ -29,12 +28,19 @@ define main = function(arguments: **, argument_count: whole_8) {
             
             i = +(i, 2);
         } else {
-            include_file(pointer, &(nodes), is_target_internal_function);
+            include_file(pointer, &(tokens), is_target_internal_function);
 
             i = +(i, 1);
         };
 
     };
+
+    variable nodes = nodes_new();
+
+    variable tokens_expanded = tokens_new();
+    expand_macros(&(tokens), &(tokens_expanded));
+
+    parse(&(tokens_expanded), &(nodes), is_target_internal_function);
 
     add_basic_internals(&(nodes));
     add_used_any_types(&(nodes));
@@ -275,26 +281,10 @@ define tokens_new = function(): Tokens {
     return tokens;
 };
 
-define include_file = function(file_name: *, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
-    variable nodes_index = &(Nodes.>index(nodes));
-    variable tokens = tokens_new();
-
+define include_file = function(file_name: *, tokens: *Tokens, is_target_internal_function: *function[*:boolean]) {
     variable contents = get_contents(file_name);
 
-    tokenize(file_name, contents, &(tokens));
-
-    variable tokens_expanded = tokens_new();
-    expand_macros(&(tokens), &(tokens_expanded));
-
-    //variable i = 0;
-    //while <(i, Tokens.>index(&(tokens_expanded))) {
-    //    print_token_error_beginning(&(tokens_expanded), i);
-    //    print_whole_8(tokens_get_id(&(tokens_expanded), i));
-    //    println("");
-    //    i = +(i, 1);
-    //};
-
-    parse(&(tokens_expanded), nodes, is_target_internal_function);
+    tokenize(file_name, contents, tokens);
 };
 
 define get_contents = function(name: *): * {
