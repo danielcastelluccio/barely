@@ -293,6 +293,10 @@ define process = function(nodes: *Nodes): ProgramData {
                 };
 
                 declared_function_id = +(declared_function_id, 1);
+            } else {
+                variable function_data = NodeFunctionData.*cast(pointer_data);
+                variable type = get_function_string_type(function_data);
+                update_function_data(&(program_data), function_data);
             };
         } else if =(id, NODE_DECLARE) {
             variable structure_datas = &(ProgramData.>structure_datas(&(program_data)));
@@ -499,7 +503,7 @@ define update_function_data = function(program_data: *ProgramData, function_data
             return_ = +(return_, 1);
         };
 
-        if !(string_length=(return_, "any_", 4)) {
+        if is_define(return_) {
             variable structure_id = whole_8.cast(get_value_of_define(define_types, define_values, return_));
             variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
             return_ = get_structure_string_type(structure_data);
@@ -572,6 +576,9 @@ define is_define = function(type: *): boolean {
         return false;
     };
     if string_length=(type, "function[", 9) {
+        return false;
+    };
+    if string_length=(type, "*function[", 10) {
         return false;
     };
     if string_length=(type, "global[", 7) {
@@ -1207,11 +1214,15 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
             return;
         };
 
-        print_node_error_beginning(nodes, nodes_index);
-        print("Retrieve target '");
-        print(variable_name);
-        println("' not found");
-        exit(1);
+        if NodeRetrieveData.>is_module(retrieve_data) {
+            autobuffer_stack8_legacy_push(stack, stack_pointer, variable_name);
+        } else {
+            print_node_error_beginning(nodes, nodes_index);
+            print("Retrieve target '");
+            print(variable_name);
+            println("' not found");
+            exit(1);
+        };
     };
 };
 
