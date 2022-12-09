@@ -93,3 +93,11 @@ define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *)
         false
     };
 };
+
+define tokens_is_name = function(tokens: *Tokens, index: whole_8, name: *): boolean {
+    return if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+        string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), name)
+    } else {
+        false
+    };
+};

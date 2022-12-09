@@ -266,8 +266,13 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
         variable type_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 3)));
         type = TokenNameData.>name(type_token_pointer_data);
         5
-    } else {
+    } else if tokens_is_name(tokens, +(index, 2), "=") {
         3
+    } else {
+        print_token_error_beginning(tokens, +(index, 2));
+        println("Unexpected token");
+        exit(1);
+        0
     };
 
     if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
@@ -875,6 +880,8 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
         variable token_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, index));
         variable token_index = index;
 
+        variable is_bare_else = false;
+
         if tokens_is_keyword(tokens, token_index, "if") {
             index = +(index, 1);
 
@@ -888,6 +895,7 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
             variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
             NodeJumpConditionalData.<target_id(conditional_jump_data, target);
         } else {
+            is_bare_else = true;
             index = +(index, 1);
         };
 
@@ -897,8 +905,9 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
         variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, index)));
         NodeJumpData.<target_id(jump_data, end_target);
 
-        end_if = NodeEndIfBlockData.*cast(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, index)));
+        end_if = NodeEndIfBlockData.*cast(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, -(index, 1))));
         NodeEndIfBlockData.<id(end_if, end_target);
+        NodeEndIfBlockData.<is_bare_else(end_if, is_bare_else);
 
         variable target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, index)));
         NodeTargetData.<id(target_node_data, target);

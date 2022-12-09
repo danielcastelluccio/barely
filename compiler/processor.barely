@@ -296,7 +296,7 @@ define process = function(nodes: *Nodes): ProgramData {
             } else {
                 variable function_data = NodeFunctionData.*cast(pointer_data);
                 variable type = get_function_string_type(function_data);
-                update_function_data(&(program_data), function_data);
+                update_function_data(&(program_data), function_data, nodes, i);
             };
         } else if =(id, NODE_DECLARE) {
             variable structure_datas = &(ProgramData.>structure_datas(&(program_data)));
@@ -314,8 +314,18 @@ define process = function(nodes: *Nodes): ProgramData {
 
                 if is_define(declare_type) {
                     variable structure_id = whole_8.cast(get_value_of_define(define_types, define_values, declare_type));
-                    variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
-                    declare_type = get_structure_string_type(structure_data);
+                    if !(=(structure_id, 999)) {
+                        variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
+                        declare_type = get_structure_string_type(structure_data);
+                    } else {
+                        // TODO: Actually get where the issues is, probably gonna have to rework some 
+                        // stuff to make that info accessable here.
+                        print_node_error_beginning(nodes, i);
+                        print("Could not resolve type '");
+                        print(declare_type);
+                        println("'");
+                        exit(1);
+                    };
                 };
 
                 if is_pointer {
@@ -341,7 +351,7 @@ define process = function(nodes: *Nodes): ProgramData {
             if string_length=(define_type, "*function[", 10) {
                 variable function_datas = &(ProgramData.>function_datas(&(program_data)));
                 variable function_data = NodeFunctionData.*cast(autobuffer_array8_get(function_datas, declared_function_id));
-                update_function_data(&(program_data), function_data);
+                update_function_data(&(program_data), function_data, nodes, +(i, 1));
 
                 define_type = get_function_string_type(function_data);
                 hashmap_string_put(define_types, define_name, define_type);
@@ -454,7 +464,7 @@ define process = function(nodes: *Nodes): ProgramData {
     return program_data;
 };
 
-define update_function_data = function(program_data: *ProgramData, function_data: *NodeFunctionData) {
+define update_function_data = function(program_data: *ProgramData, function_data: *NodeFunctionData, nodes: *Nodes, index: whole_8) {
     variable structure_datas = &(ProgramData.>structure_datas(program_data));
     variable define_types = &(ProgramData.>define_types(program_data));
     variable define_values = &(ProgramData.>define_values(program_data));
@@ -473,14 +483,24 @@ define update_function_data = function(program_data: *ProgramData, function_data
 
         if is_define(argument) {
             variable structure_id = whole_8.cast(get_value_of_define(define_types, define_values, argument));
-            variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
-            argument = get_structure_string_type(structure_data);
+            if !(=(structure_id, 999)) {
+                variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
+                argument = get_structure_string_type(structure_data);
+            } else {
+                // TODO: Actually get where the issues is, probably gonna have to rework some 
+                // stuff to make that info accessable here.
+                print_node_error_beginning(nodes, index);
+                print("Could not resolve type '");
+                print(argument);
+                println("'");
+                exit(1);
+            };
         };
 
         if string_length=(argument, "function[", 9) {
             variable function_data_inner = get_function_from_string_type(argument);
 
-            update_function_data(program_data, &(function_data_inner));
+            update_function_data(program_data, &(function_data_inner), nodes, index);
             argument = get_function_string_type(&(function_data_inner));
             is_pointer = false;
         };
@@ -587,21 +607,6 @@ define is_define = function(type: *): boolean {
     return true;
 };
 
-//define process_structure = function(program_data: *ProgramData, structure_data: *NodeStructureData) {
-//    variable structure_name = NodeStructureData.>name(structure_data);
-//
-//    if =(structure_name, 0) {
-//        structure_name = get_structure_string_type(structure_data);
-//        NodeStructureData.<name(structure_data, structure_name);
-//
-//        variable structure_member_types = &(ProgramData.>structure_member_types(program_data));
-//        variable structure_member_names = &(ProgramData.>structure_member_names(program_data));
-//
-//        autobuffer_array8_set(structure_member_types, define_structure_index, NodeStructureData.>item_types(structure_data));
-//        autobuffer_array8_set(structure_member_names, define_structure_index, NodeStructureData.>item_names(structure_data));
-//    };
-//};
-
 define process_number = function(stack: *AutoBuffer, stack_pointer: *whole_8, pointer_data: *) {
     variable number_data = NodeNumberData.*cast(pointer_data);
 
@@ -679,6 +684,7 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
     variable end_if_data = NodeEndIfBlockData.*cast(pointer_data);
     variable end_if_id = NodeEndIfBlockData.>id(end_if_data);
     variable is_last = NodeEndIfBlockData.>is_last(end_if_data);
+    variable is_bare_else = NodeEndIfBlockData.>is_bare_else(end_if_data);
 
     variable start_stack = whole_8.cast(autobuffer_stack8_legacy_pop(if_blocks, if_block_pointer));
     variable previous_results = *.cast(autobuffer_array8_get(if_block_results, end_if_id));
@@ -698,6 +704,10 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
 
                 j = +(j, 1);
             };
+        } else if &&(!(is_bare_else), >(size, 0)) {
+            print_node_error_beginning(nodes, nodes_index);
+            println("If expression resulting in a value requires an 'else' condition");
+            exit(1);
         };
     } else {
         variable array = autobuffer_get_size(stack, *(8, start_stack), size);
@@ -1027,7 +1037,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
             if string=(define_name_local, "This") {
                 define_type_local = "module";
             };
-            if =(define_type_local, 999) {
+            if =(define_type_local, 0) {
                 return 999;
             };
 
@@ -1078,37 +1088,6 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
     };
 
     return define_value;
-    //variable define_type = *.cast(hashmap_string_get(define_types, define_name));
-    //if =(define_type, 0) {
-    //    return 999;
-    //};
-
-    //if string=(define_type, "define") {
-    //    variable define_value = *.cast(hashmap_string_get(define_values, define_name));
-    //    variable define_array_length = array8_length(define_value);
-
-    //    variable current_name = "";
-    //    variable current_module_index = 999;
-
-    //    variable index = -(define_array_length, 1);
-    //    while <(index, define_array_length) {
-    //        current_name = *.cast(array8_get(define_value, index));
-
-    //        if !(=(current_module_index, 999)) {
-    //            variable index_buffer = any_24.>0();
-    //            whole_8_to_string(current_module_index, &(index_buffer));
-    //            current_name = concatenate2_brk_allocate(&(index_buffer), current_name);
-    //        };
-
-    //        if !(=(hashmap_string_get2(define_types, current_name), 999)) {
-    //            current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
-    //        };
-    //        index = -(index, 1);
-    //    };
-    //    return get_value_of_define(define_types, define_values, current_name);
-    //};
-
-    //return hashmap_string_get2(define_values, define_name);
 };
 
 define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
@@ -1384,7 +1363,7 @@ define process_internal_invoke = function(nodes: *Nodes, nodes_index: whole_8, s
 };
 
 define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, invoke_data: *NodeInvokeData, math_name: *) {
-    if =(whole_8.>(stack_pointer), 0) {
+    if <(whole_8.>(stack_pointer), 2) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(math_name);
