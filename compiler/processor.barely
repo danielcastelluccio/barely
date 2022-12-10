@@ -419,7 +419,7 @@ define process = function(nodes: *Nodes): ProgramData {
         } else if =(id, NODE_STARTIFBLOCK) {
             autobuffer_stack8_legacy_push(&(if_blocks), &(if_block_pointer), stack_pointer);
         } else if =(id, NODE_ENDIFBLOCK) {
-            process_end_if(nodes, i, &(stack), &(stack_pointer), &(if_blocks), &(if_block_results), &(if_block_pointer), pointer_data);
+            process_end_if(nodes, i, &(stack), &(stack_pointer), &(if_blocks), &(if_block_results), &(if_block_pointer), pointer_data, &(program_data));
         } else if =(id, NODE_DEFINE) {
             variable define_node_data = NodeDefineData.*cast(pointer_data);
             if string=(NodeDefineData.>name(define_node_data), "main") {
@@ -680,7 +680,7 @@ define process_return = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
     };
 };
 
-define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, if_blocks: *AutoBuffer, if_block_results: *AutoBuffer, if_block_pointer: *whole_8, pointer_data: *) {
+define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, if_blocks: *AutoBuffer, if_block_results: *AutoBuffer, if_block_pointer: *whole_8, pointer_data: *, program_data: *ProgramData) {
     variable end_if_data = NodeEndIfBlockData.*cast(pointer_data);
     variable end_if_id = NodeEndIfBlockData.>id(end_if_data);
     variable is_last = NodeEndIfBlockData.>is_last(end_if_data);
@@ -729,7 +729,7 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
                 error = true;
             } else if =(previous_value, 0) {
                 error = true;
-            } else if !(string=(value, previous_value)) {
+            } else if !(is_type(value, previous_value, nodes, program_data)) {
                 error = true;
             } else {
                 if !(is_last) {
