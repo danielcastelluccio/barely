@@ -77,23 +77,28 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
                     inside = +(inside, 1);
                 } else if =(id, TOKEN_CLOSED_PARENTHESIS) {
                     inside = -(inside, 1);
-                } else if =(id, TOKEN_NAME) {
-                    variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, whole_8.>(index_in)));
-                    variable current_binding = *.cast(array8_get(bindings, index));
-                    if =(hashmap_string_get(&(bindings_map), current_binding), 0) {
-                        variable new_autobuffer = AutoBufferStack8.*cast(brk_allocate(AutoBufferStack8.size()));
-                        AutoBufferStack8.<(new_autobuffer, autobuffer_stack8_new(24));
-                        hashmap_string_put(&(bindings_map), current_binding, new_autobuffer);
+                    if =(inside, 0) {
+                        break;
                     };
-
-                    variable autobuffer = AutoBufferStack8.*cast(hashmap_string_get(&(bindings_map), current_binding));
-                    autobuffer_stack8_push(autobuffer, TokenNameData.>name(name_data));
-                } else if =(id, TOKEN_COMMA) {
+                } else if &&(=(id, TOKEN_COMMA), =(inside, 0)) {
                     index = +(index, 1);
                 };
 
+                variable data = tokens_get_pointer(tokens_in, whole_8.>(index_in));
+                variable current_binding = *.cast(array8_get(bindings, index));
+                if =(hashmap_string_get(&(bindings_map), current_binding), 0) {
+                    variable new_autobuffer = AutoBufferStack8.*cast(brk_allocate(AutoBufferStack8.size()));
+                    AutoBufferStack8.<(new_autobuffer, autobuffer_stack8_new(24));
+                    hashmap_string_put(&(bindings_map), current_binding, new_autobuffer);
+                };
+
+                variable autobuffer = AutoBufferStack8.*cast(hashmap_string_get(&(bindings_map), current_binding));
+                autobuffer_stack8_push(autobuffer, data);
+
                 increment_whole_8_pointer(index_in, 1);
             };
+
+            increment_whole_8_pointer(index_in, 1);
 
             variable j = whole_8.cast(hashmap_string_get(macro_starts, name));
             variable max = hashmap_string_get(macro_ends, name);
@@ -111,12 +116,8 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
 
                         variable k = 0;
                         while <(k, AutoBufferStack8.>index(binding)) {
-                            if >(k, 0) {
-                                variable _ = tokens_append(tokens_out, TOKEN_PERIOD, "", 0, 0);
-                            };
-
-                            variable new_name = TokenNameData.*cast(tokens_append_data(tokens_out, TOKEN_NAME, "", 0, 0));
-                            TokenNameData.<name(new_name, *.cast(autobuffer_stack8_get(binding, k)));
+                            variable new_token = tokens_append(tokens_out, TOKEN_NAME, "", 0, 0);
+                            copy(*.cast(autobuffer_stack8_get(binding, k)), new_token, TOKEN_SIZE);
                             k = +(k, 1);
                         };
                     };
