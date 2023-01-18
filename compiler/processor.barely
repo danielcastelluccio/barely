@@ -1560,6 +1560,18 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
 };
 
+define is_pointer = function(nodes: *Nodes, index_in: whole_8): boolean {
+    variable index = index_in;
+    while |(|(|(=(nodes_get_id(nodes, index), NODE_POINTER), =(nodes_get_id(nodes, index), NODE_SKIP)), &&(=(nodes_get_id(nodes, index), NODE_RETRIEVE), NodeRetrieveData.>is_module(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, index))))), &&(=(nodes_get_id(nodes, index), NODE_INVOKE), NodeInvokeData.>is_pointer(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, index))))) {
+        if =(nodes_get_id(nodes, index), NODE_POINTER) {
+            return true;
+        };
+        index = +(index, 1);
+    };
+    return false;
+};
+
+
 define get_define_name_with_module = function(define_name: *): * {
     variable new_define_name = "";
 

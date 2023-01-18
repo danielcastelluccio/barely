@@ -1,0 +1,75 @@
+define new_macho_header = function(): MachoHeader {
+    variable header = MachoHeader.>0();
+
+    MachoHeader.<magic(&(header), whole_8_to_whole_4(4277009103));
+
+    return header;
+};
+
+define MachoHeader = structure {
+    magic: any_4;
+    cpu_type: any_4;
+    cpu_subtype: any_4;
+    file_type: any_4;
+    commands_count: any_4;
+    commands_size: any_4;
+    flags: any_4;
+    reserved: any_4;
+};
+
+define MachoSegmentCommand = structure {
+    command: any_4;
+    command_size: any_4;
+    name: any_16;
+    virtual_address: any_8;
+    virtual_size: any_8;
+    file_address: any_8;
+    file_size: any_8;
+    protection_maximum: any_4;
+    protection_initial: any_4;
+    section_count: any_4;
+    flags: any_4;
+};
+
+define MachoUnixThreadCommandX86_64 = structure {
+    command: any_4;
+    command_size: any_4;
+    flavor: any_4;
+    count: any_4;
+    rax: any_8;
+    rbx: any_8;
+    rcx: any_8;
+    rdx: any_8;
+    rdi: any_8;
+    rdi: any_8;
+    rbp: any_8;
+    rsp: any_8;
+    r8: any_8;
+    r9: any_8;
+    r10: any_8;
+    r11: any_8;
+    r12: any_8;
+    r13: any_8;
+    r14: any_8;
+    r15: any_8;
+    rip: any_8;
+    rflags: any_8;
+    cs: any_8;
+    fs: any_8;
+    gs: any_8;
+};
+
+define MachoSegment = structure {
+    section_name: any_16;
+    segment_name: any_16;
+    address: any_8;
+    size: any_8;
+    offset: any_4;
+    align: any_4;
+    relocation_offset: any_4;
+    number_relocations: any_4;
+    flags: any_4;
+    reserved1: any_4;
+    reserved2: any_4;
+    reserved3: any_4;
+};

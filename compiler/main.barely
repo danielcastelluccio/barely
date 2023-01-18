@@ -6,20 +6,12 @@ define cached_signedness_map = global(HashMap);
 define main = function(arguments: **, argument_count: whole_8) {
     println("Parsing...");
 
-    // hardcoded because it's the only platform we current support
-    variable current_platform = "linux";
-    variable add_target_internal_functions, is_target_internal_function = if string=(current_platform, "linux") {
-        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64
-    } else {
-        // temporary
-        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64
-    };
-
     cached_sizes_map = hashmap_new(131072);
     cached_signedness_map = hashmap_new(131072);
     while_target_id_stack = autobuffer_stack8_new(64);
 
     variable output_file = "output";
+    variable platform = "linux-x86_64";
     variable tokens = tokens_new();
 
     variable i = 1;
@@ -30,12 +22,37 @@ define main = function(arguments: **, argument_count: whole_8) {
             output_file = *.cast(array8_get(arguments, +(i, 1)));
             
             i = +(i, 2);
+        } else if string=(pointer, "--target") {
+            platform = *.cast(array8_get(arguments, +(i, 1)));
+
+            i = +(i, 2);
+        } else {
+            i = +(i, 1);
+        };
+    };
+
+    variable add_target_internal_functions, is_target_internal_function, output = if string=(platform, "linux-x86_64") {
+        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64, output_linux_x86-64_elf
+    } else if string=(platform, "macos_x86-64") {
+        add_internal_functions_macos_x86-64, is_internal_function_macos_x86-64, output_macos_x86-64_elf
+    } else {
+        // temporary
+        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64, output_linux_x86-64_elf
+    };
+
+    variable i = 1;
+    while <(i, argument_count) {
+        variable pointer = *.cast(array8_get(arguments, i));
+
+        if string=(pointer, "--output") {
+            i = +(i, 2);
+        } else if string=(pointer, "--target") {
+            i = +(i, 2);
         } else {
             include_file(pointer, &(tokens), is_target_internal_function);
 
             i = +(i, 1);
         };
-
     };
 
     variable nodes = nodes_new();
@@ -54,7 +71,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     variable program_data = process(&(nodes));
 
     println("Outputting...");
-    output_linux_x86-64_elf(&(nodes), program_data, output_file);
+    output(&(nodes), program_data, output_file);
 };
 
 define add_structure_pseudo_functions = function(nodes: *Nodes) {
