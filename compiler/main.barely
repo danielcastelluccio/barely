@@ -11,8 +11,10 @@ define main = function(arguments: **, argument_count: whole_8) {
     while_target_id_stack = autobuffer_stack8_new(64);
 
     variable output_file = "output";
-    variable platform = "linux-x86_64";
+    variable type = "elf:x86_64";
     variable tokens = tokens_new();
+
+    variable flags = hashmap_new(32);
 
     variable i = 1;
     while <(i, argument_count) {
@@ -22,8 +24,12 @@ define main = function(arguments: **, argument_count: whole_8) {
             output_file = *.cast(array8_get(arguments, +(i, 1)));
             
             i = +(i, 2);
-        } else if string=(pointer, "--target") {
-            platform = *.cast(array8_get(arguments, +(i, 1)));
+        } else if string=(pointer, "--type") {
+            type = *.cast(array8_get(arguments, +(i, 1)));
+
+            i = +(i, 2);
+        } else if string_length=(pointer, "--", 2) {
+            hashmap_string_put(&(flags), +(pointer, 2), *.cast(array8_get(arguments, +(i, 1))));
 
             i = +(i, 2);
         } else {
@@ -31,9 +37,9 @@ define main = function(arguments: **, argument_count: whole_8) {
         };
     };
 
-    variable add_target_internal_functions, is_target_internal_function, output = if string=(platform, "linux-x86_64") {
+    variable add_target_internal_functions, is_target_internal_function, output = if string=(type, "elf:x86_64") {
         add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64, output_linux_x86-64_elf
-    } else if string=(platform, "macos_x86-64") {
+    } else if string=(type, "macho:x86_64") {
         add_internal_functions_macos_x86-64, is_internal_function_macos_x86-64, output_macos_x86-64_elf
     } else {
         // temporary
@@ -44,9 +50,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     while <(i, argument_count) {
         variable pointer = *.cast(array8_get(arguments, i));
 
-        if string=(pointer, "--output") {
-            i = +(i, 2);
-        } else if string=(pointer, "--target") {
+        if string_length=(pointer, "--", 2) {
             i = +(i, 2);
         } else {
             include_file(pointer, &(tokens), is_target_internal_function);
@@ -58,7 +62,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     variable nodes = nodes_new();
 
     variable tokens_expanded = tokens_new();
-    expand_macros(&(tokens), &(tokens_expanded));
+    expand_macros(&(tokens), &(tokens_expanded), &(flags));
 
     parse(&(tokens_expanded), &(nodes), is_target_internal_function);
 
@@ -308,14 +312,10 @@ define include_file = function(file_name: *, tokens: *Tokens, is_target_internal
 };
 
 define get_contents = function(name: *): * {
-    variable descriptor = sys_open(name, O_RDONLY, 0);
+    variable size = get_file_size(name);
+    variable contents = brk_allocate(+(size, 1));
 
-    variable stat: Stat;
-    sys_fstat(descriptor, &(stat));
-
-    variable contents = brk_allocate(+(Stat.>size(&(stat)), 1));
-
-    sys_read(descriptor, contents, Stat.>size(&(stat)));
+    read_file_to_buffer(name, contents, size);
 
     return contents;
 };

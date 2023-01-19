@@ -50,6 +50,8 @@ define TokenLocationData = structure {
     column: whole_8;
 };
 
+define TOKEN_DATA_OFFSET = 32;
+
 define tokens_get_id = function(tokens: *Tokens, index: whole_8): whole_8 {
     return autobuffer_get_whole_8(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
 };
@@ -59,7 +61,7 @@ define tokens_get_pointer = function(tokens: *Tokens, index: whole_8): * {
 };
 
 define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 32));
+    return autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), TOKEN_DATA_OFFSET));
 };
 
 define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
@@ -67,7 +69,7 @@ define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *To
 };
 
 define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    return *.cast(+(tokens_append(tokens, id, file_name, row, column), 32));
+    return *.cast(+(tokens_append(tokens, id, file_name, row, column), TOKEN_DATA_OFFSET));
 };
 
 define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {

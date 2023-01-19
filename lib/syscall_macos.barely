@@ -1,84 +1,86 @@
-define SYS_READ: whole_8 = 33554435;
+define MacOS = module {
+    define SYS_READ: whole_8 = 33554435;
 
-define SYS_WRITE: whole_8 = 33554436;
-define STDOUT: whole_8 = 1;
+    define SYS_WRITE: whole_8 = 33554436;
+    define STDOUT: whole_8 = 1;
 
-define SYS_OPEN: whole_8 = 33554437;
-define O_RDONLY: whole_8 = 0;
-define O_WRONLY: whole_8 = 1;
-define O_CREAT: whole_8 = 64;
-define O_TRUNC: whole_8 = 512;
+    define SYS_OPEN: whole_8 = 33554437;
+    define O_RDONLY: whole_8 = 0;
+    define O_WRONLY: whole_8 = 1;
+    define O_CREAT: whole_8 = 64;
+    define O_TRUNC: whole_8 = 512;
 
-define SYS_CLOSE: whole_8 = 33554438;
+    define SYS_CLOSE: whole_8 = 33554438;
 
-define SYS_STAT: whole_8 = 33554620;
+    define SYS_STAT: whole_8 = 33554620;
 
-define SYS_FSTAT: whole_8 = 33554621;
+    define SYS_FSTAT: whole_8 = 33554621;
 
-define SYS_BRK: whole_8 = 33554501;
+    define SYS_BRK: whole_8 = 33554501;
 
-define SYS_FORK: whole_8 = 33554434;
+    define SYS_FORK: whole_8 = 33554434;
 
-define SYS_EXECVE: whole_8 = 33554491;
+    define SYS_EXECVE: whole_8 = 33554491;
 
-define SYS_EXIT: whole_8 = 33554433;
+    define SYS_EXIT: whole_8 = 33554433;
 
-define SYS_MKDIR: whole_8 = 33554568;
+    define SYS_MKDIR: whole_8 = 33554568;
 
-define SYS_MMAP: whole_8 = 33554629;
-define MAP_PRIVATE: whole_8 = 2;
-define MAP_ANONYMOUS: whole_8 = 4096;
+    define SYS_MMAP: whole_8 = 33554629;
+    define MAP_PRIVATE: whole_8 = 2;
+    define MAP_ANONYMOUS: whole_8 = 4096;
 
-define sys_read = function(fd: whole_8, buffer: *, length: whole_8) {
-    variable _: any_8 = @syscall3(SYS_READ, fd, buffer, length);
-};
+    define sys_read = function(fd: whole_8, buffer: *, length: whole_8) {
+        variable _: any_8 = @syscall3(This.SYS_READ, fd, buffer, length);
+    };
 
-define sys_write = function(fd: whole_8, buffer: *, length: whole_8) {
-    variable _: any_8 = @syscall3(SYS_WRITE, fd, buffer, length);
-};
+    define sys_write = function(fd: whole_8, buffer: *, length: whole_8) {
+        variable _: any_8 = @syscall3(This.SYS_WRITE, fd, buffer, length);
+    };
 
-define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
-    return whole_8.cast(@syscall3(SYS_OPEN, path, flags, mode));
-};
+    define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
+        return whole_8.cast(@syscall3(This.SYS_OPEN, path, flags, mode));
+    };
 
-define sys_close = function(fd: whole_8) {
-    variable _: any_8 = @syscall1(SYS_CLOSE, fd);
-};
+    define sys_close = function(fd: whole_8) {
+        variable _: any_8 = @syscall1(This.SYS_CLOSE, fd);
+    };
 
-define Stat = structure {
-    nonsense_0: any_48;
-    size: whole_8;
-    nonsense_1: any_88;
-};
+    define Stat = structure {
+        nonsense_0: any_48;
+        size: whole_8;
+        nonsense_1: any_88;
+    };
 
-define sys_stat = function(name: *, buffer: *Stat) {
-    variable _ = @syscall2(SYS_STAT, name, buffer);
-};
+    define sys_stat = function(name: *, buffer: *This.Stat) {
+        variable _ = @syscall2(This.SYS_STAT, name, buffer);
+    };
 
-define sys_fstat = function(fd: whole_8, buffer: *Stat) {
-    variable _ = @syscall2(SYS_FSTAT, fd, buffer);
-};
+    define sys_fstat = function(fd: whole_8, buffer: *This.Stat) {
+        variable _ = @syscall2(This.SYS_FSTAT, fd, buffer);
+    };
 
-define sys_brk = function(location: *): * {
-    return *.cast(@syscall1(SYS_BRK, location));
-};
+    define sys_brk = function(location: *): * {
+        return *.cast(@syscall1(This.SYS_BRK, location));
+    };
 
-define sys_fork = function(): whole_8 {
-    return whole_8.cast(@syscall0(SYS_FORK));
-};
+    define sys_fork = function(): whole_8 {
+        return whole_8.cast(@syscall0(This.SYS_FORK));
+    };
 
-define sys_execve = function(file: *, args: *, env: **): whole_8 {
-    return whole_8.cast(@syscall3(SYS_EXECVE, file, args, env));
-};
+    define sys_execve = function(file: *, args: *, env: **): whole_8 {
+        return whole_8.cast(@syscall3(This.SYS_EXECVE, file, args, env));
+    };
 
-define sys_exit = function(code: whole_8) {
-    variable _ = @syscall1(SYS_EXIT, code);
-};
+    define sys_exit = function(code: whole_8) {
+        variable _ = @syscall1(This.SYS_EXIT, code);
+    };
 
-define sys_mkdir = function(path: *, mode: whole_8) {
-    variable _ = @syscall2(SYS_MKDIR, path, mode);
-};
+    define sys_mkdir = function(path: *, mode: whole_8) {
+        variable _ = @syscall2(This.SYS_MKDIR, path, mode);
+    };
 
-define sys_mmap = function(address: *, size: whole_8, protection: whole_8, flags: whole_8, fd: whole_8, offset: whole_8): * {
-    return *.cast(@syscall6(SYS_MMAP, address, size, protection, flags, fd, offset));
+    define sys_mmap = function(address: *, size: whole_8, protection: whole_8, flags: whole_8, fd: whole_8, offset: whole_8): * {
+        return *.cast(@syscall6(This.SYS_MMAP, address, size, protection, flags, fd, offset));
+    };
 };

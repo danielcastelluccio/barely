@@ -187,9 +187,9 @@ define output_macos_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
 
     variable instructions_autobuffer = &(AutoBufferBuffer.>autobuffer(&(instructions_buffer)));
 
-    variable data_location = +(start_address, round_up_to_4096(instructions_index));
+    variable data_location = +(start_address, round_up_to_4096(+(instructions_index, 504)));
     adjust_indexes_macos-x86_64(instructions_autobuffer, &(data_indexes_to_adjust), data_location);
-    variable bss_location = +(start_address, +(round_up_to_4096(instructions_index), round_up_to_4096(data_index)));
+    variable bss_location = +(start_address, +(round_up_to_4096(+(instructions_index, 504)), round_up_to_4096(data_index)));
     adjust_indexes_macos-x86_64(instructions_autobuffer, &(bss_indexes_to_adjust), bss_location);
 
     variable i = 0;
@@ -371,9 +371,7 @@ define adjust_indexes_macos-x86_64 = function(instructions_autobuffer: *AutoBuff
 };
 
 define output_executable_macos-x86_64 = function(location: *, buffer: *, size: whole_8) {
-    variable output_file = sys_open(location, +(+(O_WRONLY, O_CREAT), O_TRUNC), 452);
-    sys_write(output_file, buffer, size);
-    sys_close(output_file);
+    create_and_write_file(location, buffer, size);
 };
 
 define round_up_to_4096 = function(in: whole_8): whole_8 {
@@ -423,9 +421,9 @@ define create_headers_macos_x86-64 = function(start_address: whole_8, instructio
     variable segment_data = MachoSegmentCommand.>0();
     MachoSegmentCommand.<command(&(segment_data), 25_whole_4);
     MachoSegmentCommand.<command_size(&(segment_data), 72_whole_4);
-    MachoSegmentCommand.<virtual_address(&(segment_data), +(round_up_to_4096(instructions_index), start_address));
+    MachoSegmentCommand.<virtual_address(&(segment_data), +(round_up_to_4096(+(instructions_index, 504)), start_address));
     MachoSegmentCommand.<virtual_size(&(segment_data), data_index);
-    MachoSegmentCommand.<file_address(&(segment_data), round_up_to_4096(instructions_index));
+    MachoSegmentCommand.<file_address(&(segment_data), round_up_to_4096(+(instructions_index, 504)));
     MachoSegmentCommand.<file_size(&(segment_data), data_index);
     MachoSegmentCommand.<protection_maximum(&(segment_data), 1_whole_4);
     MachoSegmentCommand.<protection_initial(&(segment_data), 1_whole_4);
@@ -433,7 +431,7 @@ define create_headers_macos_x86-64 = function(start_address: whole_8, instructio
     variable segment_bss = MachoSegmentCommand.>0();
     MachoSegmentCommand.<command(&(segment_bss), 25_whole_4);
     MachoSegmentCommand.<command_size(&(segment_bss), 72_whole_4);
-    MachoSegmentCommand.<virtual_address(&(segment_bss), +(round_up_to_4096(instructions_index), +(start_address, round_up_to_4096(data_index))));
+    MachoSegmentCommand.<virtual_address(&(segment_bss), +(round_up_to_4096(+(instructions_index, 504)), +(start_address, round_up_to_4096(data_index))));
     MachoSegmentCommand.<virtual_size(&(segment_bss), bss_index);
     MachoSegmentCommand.<file_address(&(segment_bss), 0);
     MachoSegmentCommand.<file_size(&(segment_bss), 0);

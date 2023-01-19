@@ -368,9 +368,7 @@ define adjust_indexes_linux-x86_64 = function(instructions_autobuffer: *AutoBuff
 };
 
 define output_executable_linux-x86_64 = function(location: *, buffer: *, size: whole_8) {
-    variable output_file = sys_open(location, +(+(O_WRONLY, O_CREAT), O_TRUNC), 452);
-    sys_write(output_file, buffer, size);
-    sys_close(output_file);
+    create_and_write_file(location, buffer, size);
 };
 
 define create_headers_linux_x86-64 = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): ELF64FileHeader, ELF64ProgramHeader, ELF64ProgramHeader, ELF64ProgramHeader {

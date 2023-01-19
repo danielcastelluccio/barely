@@ -144,18 +144,14 @@ define stringarray_get_index = function(keys: *, wanted: *, size: whole_8): whol
 };
 
 define print = function(string: *) {
-    sys_write(STDOUT, string, length(string));
+    print_stdout(string, length(string));
 };
 
 define println = function(string: *) {
     print(string);
 
     variable new_line: whole_8 = 10;
-    sys_write(STDOUT, &(new_line), 1);
-};
-
-define exit = function(code: whole_8) {
-    sys_exit(code);
+    print_stdout(&(new_line), 1);
 };
 
 define array8_set = function(array: *, index: whole_8, value: any_8) {
