@@ -1,4 +1,4 @@
-define is_pointer_linux-x86_64 = function(nodes: *Nodes, index_in: whole_8): boolean {
+define is_pointer_macos-x86_64 = function(nodes: *Nodes, index_in: whole_8): boolean {
     variable index = index_in;
     while |(|(|(=(nodes_get_id(nodes, index), NODE_POINTER), =(nodes_get_id(nodes, index), NODE_SKIP)), &&(=(nodes_get_id(nodes, index), NODE_RETRIEVE), NodeRetrieveData.>is_module(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, index))))), &&(=(nodes_get_id(nodes, index), NODE_INVOKE), NodeInvokeData.>is_pointer(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, index))))) {
         if =(nodes_get_id(nodes, index), NODE_POINTER) {
@@ -9,7 +9,7 @@ define is_pointer_linux-x86_64 = function(nodes: *Nodes, index_in: whole_8): boo
     return false;
 };
 
-define add_internal_functions_linux_x86-64 = function(nodes: *Nodes) {
+define add_internal_functions_macos_x86-64 = function(nodes: *Nodes) {
     variable function_arguments = create_size_one_array8_brk_allocate("whole_8");
     variable function_returns = create_size_one_array8_brk_allocate("any_8");
     nodes_append_function(nodes, "@syscall0", function_arguments, function_returns);
@@ -39,11 +39,11 @@ define add_internal_functions_linux_x86-64 = function(nodes: *Nodes) {
     nodes_append_function(nodes, "@syscall6", function_arguments, function_returns);
 };
 
-define is_internal_function_linux_x86-64 = function(name: *): boolean {
+define is_internal_function_macos_x86-64 = function(name: *): boolean {
     return string_length=(name, "@syscall", 8);
 };
 
-define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramData, output_file: *) {
+define output_macos_x86-64_elf = function(nodes: *Nodes, program_data: ProgramData, output_file: *) {
     variable output = autobuffer_new(1048576);
 
     variable instructions_buffer = autobuffer_buffer_new(524288);
@@ -99,13 +99,13 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
 
     variable node_count = Nodes.>index(nodes);
 
-    variable function_local_sizes = calculate_function_local_sizes_linux-x86_64(nodes, &(program_data), &(function_node_locations), function_count);
+    variable function_local_sizes = calculate_function_local_sizes_macos-x86_64(nodes, &(program_data), &(function_node_locations), function_count);
 
-    variable global_locations, bss_index = calculate_global_locations_linux-x86_64(nodes, &(program_data), &(global_types), global_count)
+    variable global_locations, bss_index = calculate_global_locations_macos-x86_64(nodes, &(program_data), &(global_types), global_count)
 
-    create_structure_internal_functions_linux-x86_64(&(program_data), nodes, &(internal_function_instructions), &(internal_function_instruction_sizes));
+    create_structure_internal_functions_macos-x86_64(&(program_data), nodes, &(internal_function_instructions), &(internal_function_instruction_sizes));
 
-    variable main_call = append_start_instructions_linux-x86_64(&(instructions_buffer));
+    variable main_call = append_start_instructions_macos-x86_64(&(instructions_buffer));
 
     variable current_function_id = -(0, 1);
 
@@ -123,21 +123,21 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
         variable id = nodes_get_id(nodes, i);
         variable pointer_data = nodes_get_pointer_data(nodes, i);
 
-        if =(id, NODE_FUNCTION) output_function_linux_x86-64(nodes, i, function_local_sizes, &(current_function_id), &(variable_index), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_NUMBER) output_number_linux_x86-64(pointer_data, &(instructions_buffer))
-        else if =(id, NODE_BOOLEAN) output_boolean_linux_x86-64(pointer_data, &(instructions_buffer))
-        else if =(id, NODE_INVOKE) output_invoke_linux_x86-64(nodes, i, &(program_data), pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), &(instructions_buffer))
-        else if =(id, NODE_STRING) output_string_linux_x86-64(&(data_buffer), &(data_indexes_to_adjust), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_DECLARE) output_declare_linux_x86-64(nodes, &(program_data), &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_ASSIGN) output_assign_linux_x86-64(nodes, i, &(program_data), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, &(global_types), global_locations, &(bss_indexes_to_adjust_relative), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_RETRIEVE) output_retrieve_linux_x86-64(nodes, i, &(program_data), current_function_id, &(function_argument_names), &(function_argument_types), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, &(global_types), global_locations, &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative), &(pushed_functions), &(pushed_function_targets), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_RETURN) output_return_linux_x86-64(nodes,  &(program_data), current_function_id, &(function_argument_types), &(function_return_types), &(instructions_buffer))
-        else if =(id, NODE_JUMP_CONDITIONAL) output_jump_conditional_linux_x86-64(nodes,  &(program_data), pointer_data, &(jes), &(je_targets), &(instructions_buffer))
-        else if =(id, NODE_JUMP) output_jump_linux_x86-64(nodes, &(jmps), &(jmp_targets), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_TARGET) output_target_linux_x86-64(&(targets), pointer_data, &(instructions_buffer))
-        else if =(id, NODE_SCOPE) output_scope_linux_x86-64(&(variable_types), &(variable_indexes), variable_index, &(instructions_buffer))
-        else if =(id, NODE_ENDSCOPE) output_end_scope_linux_x86-64(&(variable_types), &(variable_indexes))
-        else if =(id, NODE_DEFINE) output_define_linux_x86-64(&(program_data), &(function_locations), pointer_data, declared_module_id, &(instructions_buffer))
+        if =(id, NODE_FUNCTION) output_function_macos_x86-64(nodes, i, function_local_sizes, &(current_function_id), &(variable_index), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_NUMBER) output_number_macos_x86-64(pointer_data, &(instructions_buffer))
+        else if =(id, NODE_BOOLEAN) output_boolean_macos_x86-64(pointer_data, &(instructions_buffer))
+        else if =(id, NODE_INVOKE) output_invoke_macos_x86-64(nodes, i, &(program_data), pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), &(instructions_buffer))
+        else if =(id, NODE_STRING) output_string_macos_x86-64(&(data_buffer), &(data_indexes_to_adjust), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_DECLARE) output_declare_macos_x86-64(nodes, &(program_data), &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_ASSIGN) output_assign_macos_x86-64(nodes, i, &(program_data), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, &(global_types), global_locations, &(bss_indexes_to_adjust_relative), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_RETRIEVE) output_retrieve_macos_x86-64(nodes, i, &(program_data), current_function_id, &(function_argument_names), &(function_argument_types), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, &(global_types), global_locations, &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative), &(pushed_functions), &(pushed_function_targets), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_RETURN) output_return_macos_x86-64(nodes,  &(program_data), current_function_id, &(function_argument_types), &(function_return_types), &(instructions_buffer))
+        else if =(id, NODE_JUMP_CONDITIONAL) output_jump_conditional_macos_x86-64(nodes,  &(program_data), pointer_data, &(jes), &(je_targets), &(instructions_buffer))
+        else if =(id, NODE_JUMP) output_jump_macos_x86-64(nodes, &(jmps), &(jmp_targets), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_TARGET) output_target_macos_x86-64(&(targets), pointer_data, &(instructions_buffer))
+        else if =(id, NODE_SCOPE) output_scope_macos_x86-64(&(variable_types), &(variable_indexes), variable_index, &(instructions_buffer))
+        else if =(id, NODE_ENDSCOPE) output_end_scope_macos_x86-64(&(variable_types), &(variable_indexes))
+        else if =(id, NODE_DEFINE) output_define_macos_x86-64(&(program_data), &(function_locations), pointer_data, declared_module_id, &(instructions_buffer))
         else if =(id, NODE_ENDDEFINE) {
             variable define_data = NodeEndDefineData.*cast(pointer_data);
             variable define_type = NodeEndDefineData.>type(define_data);
@@ -170,51 +170,54 @@ define output_linux_x86-64_elf = function(nodes: *Nodes, program_data: ProgramDa
     variable instructions_index = AutoBufferBuffer.>index(&(instructions_buffer));
     variable data_index = AutoBufferBuffer.>index(&(data_buffer));
 
+    variable start_address = 4294967296;
+
     variable define_values = &(ProgramData.>define_values(&(program_data)));
     variable main_function_index = whole_8.cast(hashmap_string_get(define_values, "main"));
     variable main_index = autobuffer_array8_get(&(function_locations), main_function_index);
     X86_64.set_call_value(&(instructions_buffer), main_call, InstructionIndex.cast(main_index));
 
-    variable start_address = 4194304;
+    adjust_function_calls_macos-x86_64(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
 
-    adjust_function_calls_linux-x86_64(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
-
-    adjust_jumps_linux-x86_64(&(jmps), &(jmp_targets), &(targets), X86_64.set_jmp_value, &(instructions_buffer));
-    adjust_jumps_linux-x86_64(&(jes), &(je_targets), &(targets), X86_64.set_je_value, &(instructions_buffer));
+    adjust_jumps_macos-x86_64(&(jmps), &(jmp_targets), &(targets), X86_64.set_jmp_value, &(instructions_buffer));
+    adjust_jumps_macos-x86_64(&(jes), &(je_targets), &(targets), X86_64.set_je_value, &(instructions_buffer));
 
     variable output_location = autobuffer_buffer_new(32);
     autobuffer_buffer_push_string(&(output_location), output_file);
 
     variable instructions_autobuffer = &(AutoBufferBuffer.>autobuffer(&(instructions_buffer)));
 
-    variable data_location = +(start_address, +(4096, +(instructions_index, 232)));
-    adjust_indexes_linux-x86_64(instructions_autobuffer, &(data_indexes_to_adjust), data_location);
-    variable bss_location = +(4096, +(data_location, data_index));
-    adjust_indexes_linux-x86_64(instructions_autobuffer, &(bss_indexes_to_adjust), bss_location);
+    variable data_location = +(start_address, round_up_to_4096(+(instructions_index, 504)));
+    adjust_indexes_macos-x86_64(instructions_autobuffer, &(data_indexes_to_adjust), data_location);
+    variable bss_location = +(start_address, +(round_up_to_4096(+(instructions_index, 504)), round_up_to_4096(data_index)));
+    adjust_indexes_macos-x86_64(instructions_autobuffer, &(bss_indexes_to_adjust), bss_location);
 
     variable i = 0;
     while <(i, AutoBufferStack8.>index(&(bss_indexes_to_adjust_relative))) {
         variable index = whole_8.cast(autobuffer_stack8_get(&(bss_indexes_to_adjust_relative), i));
-        variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(AutoBufferBuffer.>autobuffer(&(instructions_buffer))), index))), +(instructions_index, data_index));
-        variable actual_value = whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(AutoBufferBuffer.>autobuffer(&(instructions_buffer))), index)));
-        autobuffer_set_any_4(instructions_autobuffer, whole_8_to_whole_4(+(-(value_new, +(index, 4)), 8192)), index);
+        variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(AutoBufferBuffer.>autobuffer(&(instructions_buffer))), index))), +(round_up_to_4096(instructions_index), round_up_to_4096(data_index)));
+        autobuffer_set_any_4(instructions_autobuffer, whole_8_to_whole_4(-(-(value_new, +(index, 4)), 504)), index);
         i = +(i, 1);
     };
 
-    autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(instructions_buffer)), 232, instructions_index);
-    autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(data_buffer)), +(232, instructions_index), data_index);
+    autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(instructions_buffer)), 504, instructions_index);
+    autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(data_buffer)), round_up_to_4096(+(instructions_index, 504)), data_index);
 
-    variable file_header, program_header_instructions, program_header_data, program_header_bss = create_headers_linux_x86-64(start_address, instructions_index, data_index, bss_index);
+    variable header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread = create_headers_macos_x86-64(start_address, instructions_index, data_index, bss_index);
 
-    autobuffer_set(&(output), &(file_header), 0, 64);
-    autobuffer_set(&(output), &(program_header_instructions), 64, 56);
-    autobuffer_set(&(output), &(program_header_data), 120, 56);
-    autobuffer_set(&(output), &(program_header_bss), 176, 56);
+    autobuffer_set(&(output), &(header), 0, 32);
+    autobuffer_set(&(output), &(segment_pagezero), 32, 72);
+    autobuffer_set(&(output), &(segment_instructions), 104, 72);
+    autobuffer_set(&(output), &(segment_data), 176, 72);
+    autobuffer_set(&(output), &(segment_bss), 248, 72);
+    autobuffer_set(&(output), &(unix_thread), 320, 184);
+    
+    variable size = +(+(round_up_to_4096(+(504, instructions_index)), round_up_to_4096(data_index)), 0);
 
-    output_executable_linux-x86_64(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), AutoBuffer.>size(&(output)));
+    output_executable_macos-x86_64(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), size);
 };
 
-define adjust_function_calls_linux-x86_64 = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
+define adjust_function_calls_macos-x86_64 = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
     variable pushed_function_count = AutoBufferStack8.>index(pushed_functions);
     variable i = 0;
     while <(i, pushed_function_count) {
@@ -223,14 +226,14 @@ define adjust_function_calls_linux-x86_64 = function(start_address: whole_8, pus
 
         variable function_index = InstructionIndex.cast(autobuffer_array8_get(function_locations, pushed_function_target));
 
-        variable value_new = +(function_index, 232);
+        variable value_new = +(function_index, 504);
 
         X86_64.set_control_flow_value_absolute(instructions_buffer, +(pushed_function_instruction_specific, 2), +(start_address, value_new));
         i = +(i, 1);
     };
 };
 
-define output_define_linux_x86-64 = function(program_data: *ProgramData, function_locations: *AutoBuffer, pointer_data: *, declared_module_id: whole_8, instructions_buffer: *AutoBufferBuffer) {
+define output_define_macos_x86-64 = function(program_data: *ProgramData, function_locations: *AutoBuffer, pointer_data: *, declared_module_id: whole_8, instructions_buffer: *AutoBufferBuffer) {
     variable define_data = NodeDefineData.*cast(pointer_data);
     variable define_name = NodeDefineData.>name(define_data);
     variable define_type = NodeDefineData.>type(define_data);
@@ -243,12 +246,12 @@ define output_define_linux_x86-64 = function(program_data: *ProgramData, functio
     };
 };
 
-define output_end_scope_linux_x86-64 = function(variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8) {
+define output_end_scope_macos_x86-64 = function(variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8) {
     variable _ = autobuffer_stack8_pop(variable_types);
     variable _ = autobuffer_stack8_pop(variable_indexes);
 };
 
-define output_scope_linux_x86-64 = function(variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_index: whole_8, instructions_buffer: *AutoBufferBuffer) {
+define output_scope_macos_x86-64 = function(variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_index: whole_8, instructions_buffer: *AutoBufferBuffer) {
     variable new_hashmap = hashmap_new(512);
     variable allocated = brk_allocate(24);
     HashMap.<(HashMap.*cast(allocated), new_hashmap);
@@ -257,14 +260,14 @@ define output_scope_linux_x86-64 = function(variable_types: *AutoBufferStack8, v
     autobuffer_stack8_push(variable_indexes, variable_index);
 };
 
-define output_target_linux_x86-64 = function(targets: *AutoBuffer, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_target_macos_x86-64 = function(targets: *AutoBuffer, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable target_data = NodeTargetData.*cast(pointer_data);
     variable target = NodeTargetData.>id(target_data);
     
     autobuffer_array8_set(targets, target, X86_64.get_instruction(instructions_buffer));
 };
 
-define output_jump_linux_x86-64 = function(nodes: *Nodes, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_jump_macos_x86-64 = function(nodes: *Nodes, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable jump_data = NodeJumpData.*cast(pointer_data);
     variable target = NodeJumpData.>target_id(jump_data);
 
@@ -273,7 +276,7 @@ define output_jump_linux_x86-64 = function(nodes: *Nodes, jmps: *AutoBufferStack
     autobuffer_stack8_push(jmp_targets, target);
 };
 
-define output_string_linux_x86-64 = function(data_buffer: *AutoBufferBuffer, data_indexes_to_adjust: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_string_macos_x86-64 = function(data_buffer: *AutoBufferBuffer, data_indexes_to_adjust: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable string_data = NodeStringData.*cast(pointer_data);
     variable string_value = NodeStringData.>value(string_data);
 
@@ -282,12 +285,12 @@ define output_string_linux_x86-64 = function(data_buffer: *AutoBufferBuffer, dat
     ELF_X86_64.autobuffer_buffer_push_push_data(instructions_buffer, data_indexes_to_adjust, string_data_index);
 };
 
-define output_invoke_pointer_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_invoke_pointer_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RAX);
     X86_64.autobuffer_buffer_push_call_far_register8(instructions_buffer, RAX);
 };
 
-define output_function_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_function_macos_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable function_data = NodeFunctionData.*cast(pointer_data);
     variable next_id = nodes_get_id(nodes, +(nodes_index, 1));
 
@@ -308,19 +311,19 @@ define output_function_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole
     };
 };
 
-define output_declare_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_declare_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable declare_data = NodeDeclareData.*cast(pointer_data);
     variable variable_name = NodeDeclareData.>name(declare_data);
     variable variable_type = NodeDeclareData.>type(declare_data);
 
     autobuffer_array8_set(variable_names, whole_8.>(variable_index), variable_name);
-    autobuffer_array8_set(variable_sizes, whole_8.>(variable_index), get_size_linux_x86-64(variable_type, nodes, program_data));
+    autobuffer_array8_set(variable_sizes, whole_8.>(variable_index), get_size_macos_x86-64(variable_type, nodes, program_data));
     increment_whole_8_pointer(variable_index, 1);
 
     hashmap_string_put(HashMap.*cast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type);
 };
 
-define output_jump_conditional_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, pointer_data: *, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, instructions_buffer: *AutoBufferBuffer) {
+define output_jump_conditional_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, pointer_data: *, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, instructions_buffer: *AutoBufferBuffer) {
     variable jump_conditional_data = NodeJumpConditionalData.*cast(pointer_data);
     variable target = NodeJumpConditionalData.>target_id(jump_conditional_data);
     variable conditional = NodeJumpConditionalData.>desired_state(jump_conditional_data);
@@ -342,7 +345,7 @@ define output_jump_conditional_linux_x86-64 = function(nodes: *Nodes, program_da
     autobuffer_stack8_push(je_targets, target);
 };
 
-define adjust_jumps_linux-x86_64 = function(jumps: *AutoBufferStack8, jump_targets: *AutoBufferStack8, targets: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], instructions_buffer: *AutoBufferBuffer) {
+define adjust_jumps_macos-x86_64 = function(jumps: *AutoBufferStack8, jump_targets: *AutoBufferStack8, targets: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], instructions_buffer: *AutoBufferBuffer) {
     variable jump_count = AutoBufferStack8.>index(jumps);
 
     variable i = 0;
@@ -355,7 +358,7 @@ define adjust_jumps_linux-x86_64 = function(jumps: *AutoBufferStack8, jump_targe
     };
 };
 
-define adjust_indexes_linux-x86_64 = function(instructions_autobuffer: *AutoBuffer, indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
+define adjust_indexes_macos-x86_64 = function(instructions_autobuffer: *AutoBuffer, indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
     variable index_count = AutoBufferStack8.>index(indexes_to_adjust);
     variable i = 0;
     while <(i, index_count) {
@@ -367,57 +370,87 @@ define adjust_indexes_linux-x86_64 = function(instructions_autobuffer: *AutoBuff
     };
 };
 
-define output_executable_linux-x86_64 = function(location: *, buffer: *, size: whole_8) {
+define output_executable_macos-x86_64 = function(location: *, buffer: *, size: whole_8) {
     create_and_write_file(location, buffer, size);
 };
 
-define create_headers_linux_x86-64 = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): ELF64FileHeader, ELF64ProgramHeader, ELF64ProgramHeader, ELF64ProgramHeader {
-    variable file_header = new_elf64_file_header();
-    ELF64FileHeader.<format(&(file_header), 2_whole_1);
-    ELF64FileHeader.<endianness(&(file_header), 1_whole_1);
-    ELF64FileHeader.<abi(&(file_header), 3_whole_1);
-    ELF64FileHeader.<object_file_type(&(file_header), 2_whole_2);
-    ELF64FileHeader.<machine(&(file_header), 62_whole_2);
-    ELF64FileHeader.<entry_point(&(file_header), 4194536);
-    ELF64FileHeader.<program_header_table(&(file_header), 64);
-    ELF64FileHeader.<program_header_count(&(file_header), 3_whole_2);
+define round_up_to_4096 = function(in: whole_8): whole_8 {
+    variable modulus = %(in, 4096);
+    if =(modulus, 0) {
+        if =(in, 0) {
+            return 4096;
+        } else {
+            return in;
+        };
+    };
 
-    variable program_header_instructions: ELF64ProgramHeader;
-    ELF64ProgramHeader.<type(&(program_header_instructions), 1_whole_4);
-    ELF64ProgramHeader.<location(&(program_header_instructions), 0);
-    ELF64ProgramHeader.<virtual_address(&(program_header_instructions), start_address);
-    ELF64ProgramHeader.<physical_address(&(program_header_instructions), start_address);
-    ELF64ProgramHeader.<size_file(&(program_header_instructions), +(instructions_index, 232));
-    ELF64ProgramHeader.<size_memory(&(program_header_instructions), +(instructions_index, 232));
-    ELF64ProgramHeader.<flags(&(program_header_instructions), 5_whole_4);
-    ELF64ProgramHeader.<alignment(&(program_header_instructions), 4096);
-
-    variable program_header_data: ELF64ProgramHeader;
-    ELF64ProgramHeader.<type(&(program_header_data), 1_whole_4);
-    ELF64ProgramHeader.<location(&(program_header_data), +(instructions_index, 232));
-    ELF64ProgramHeader.<virtual_address(&(program_header_data), +(232, +(instructions_index, +(start_address, 4096))));
-    ELF64ProgramHeader.<physical_address(&(program_header_data), +(232, +(instructions_index, +(start_address, 4096))));
-    ELF64ProgramHeader.<size_file(&(program_header_data), data_index);
-    ELF64ProgramHeader.<size_memory(&(program_header_data), data_index);
-    ELF64ProgramHeader.<flags(&(program_header_data), 4_whole_4);
-    ELF64ProgramHeader.<alignment(&(program_header_data), 4096);
-
-    variable program_header_bss: ELF64ProgramHeader;
-    ELF64ProgramHeader.<type(&(program_header_bss), 1_whole_4);
-    ELF64ProgramHeader.<location(&(program_header_bss), +(instructions_index, +(data_index, 232)));
-    ELF64ProgramHeader.<virtual_address(&(program_header_bss), +(232, +(instructions_index, +(+(start_address, 8192), data_index))));
-    ELF64ProgramHeader.<physical_address(&(program_header_bss), +(232, +(instructions_index, +(+(start_address, 8192), data_index))));
-    ELF64ProgramHeader.<size_file(&(program_header_bss), 0);
-    ELF64ProgramHeader.<size_memory(&(program_header_bss), bss_index);
-    ELF64ProgramHeader.<flags(&(program_header_bss), 6_whole_4);
-    ELF64ProgramHeader.<alignment(&(program_header_bss), 4096);
-
-    return file_header, program_header_instructions, program_header_data, program_header_bss;
+    return +(in, -(4096, modulus));
 };
 
-define output_return_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
-    variable arguments_size = get_size_multiple_linux_x86-64(*.cast(autobuffer_array8_get(function_argument_types, current_function_id)), 999, nodes, program_data);
-    variable returns_size = get_size_multiple_linux_x86-64(*.cast(autobuffer_array8_get(function_return_types, current_function_id)), 999, nodes, program_data);
+define create_headers_macos_x86-64 = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): MachoHeader, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoUnixThreadCommandX86_64 {
+    variable header = new_macho_header();
+    MachoHeader.<cpu_type(&(header), 16777223_whole_4);
+    MachoHeader.<cpu_subtype(&(header), 2147483651_whole_4);
+    MachoHeader.<file_type(&(header), 2_whole_4);
+    MachoHeader.<commands_count(&(header), 5_whole_4);
+    MachoHeader.<commands_size(&(header), 472_whole_4);
+    MachoHeader.<flags(&(header), 1_whole_4);
+
+    variable segment_pagezero = MachoSegmentCommand.>0();
+    MachoSegmentCommand.<command(&(segment_pagezero), 25_whole_4);
+    MachoSegmentCommand.<command_size(&(segment_pagezero), 72_whole_4);
+    variable page_zero = "__PAGEZERO";
+    copy(page_zero, &(MachoSegmentCommand.>name(&(segment_pagezero))), 10);
+    MachoSegmentCommand.<virtual_address(&(segment_pagezero), 0);
+    MachoSegmentCommand.<virtual_size(&(segment_pagezero), 4096);
+    MachoSegmentCommand.<file_address(&(segment_pagezero), 0);
+    MachoSegmentCommand.<file_size(&(segment_pagezero), 0);
+    MachoSegmentCommand.<protection_maximum(&(segment_pagezero), 0_whole_4);
+    MachoSegmentCommand.<protection_initial(&(segment_pagezero), 0_whole_4);
+
+    variable segment_instructions = MachoSegmentCommand.>0();
+    MachoSegmentCommand.<command(&(segment_instructions), 25_whole_4);
+    MachoSegmentCommand.<command_size(&(segment_instructions), 72_whole_4);
+    MachoSegmentCommand.<virtual_address(&(segment_instructions), start_address);
+    MachoSegmentCommand.<virtual_size(&(segment_instructions), +(504, instructions_index));
+    MachoSegmentCommand.<file_address(&(segment_instructions), 0);
+    MachoSegmentCommand.<file_size(&(segment_instructions), +(504, instructions_index));
+    MachoSegmentCommand.<protection_maximum(&(segment_instructions), 7_whole_4);
+    MachoSegmentCommand.<protection_initial(&(segment_instructions), 5_whole_4);
+
+    variable segment_data = MachoSegmentCommand.>0();
+    MachoSegmentCommand.<command(&(segment_data), 25_whole_4);
+    MachoSegmentCommand.<command_size(&(segment_data), 72_whole_4);
+    MachoSegmentCommand.<virtual_address(&(segment_data), +(round_up_to_4096(+(instructions_index, 504)), start_address));
+    MachoSegmentCommand.<virtual_size(&(segment_data), data_index);
+    MachoSegmentCommand.<file_address(&(segment_data), round_up_to_4096(+(instructions_index, 504)));
+    MachoSegmentCommand.<file_size(&(segment_data), data_index);
+    MachoSegmentCommand.<protection_maximum(&(segment_data), 1_whole_4);
+    MachoSegmentCommand.<protection_initial(&(segment_data), 1_whole_4);
+
+    variable segment_bss = MachoSegmentCommand.>0();
+    MachoSegmentCommand.<command(&(segment_bss), 25_whole_4);
+    MachoSegmentCommand.<command_size(&(segment_bss), 72_whole_4);
+    MachoSegmentCommand.<virtual_address(&(segment_bss), +(round_up_to_4096(+(instructions_index, 504)), +(start_address, round_up_to_4096(data_index))));
+    MachoSegmentCommand.<virtual_size(&(segment_bss), bss_index);
+    MachoSegmentCommand.<file_address(&(segment_bss), 0);
+    MachoSegmentCommand.<file_size(&(segment_bss), 0);
+    MachoSegmentCommand.<protection_maximum(&(segment_bss), 3_whole_4);
+    MachoSegmentCommand.<protection_initial(&(segment_bss), 3_whole_4);
+
+    variable unix_thread = MachoUnixThreadCommandX86_64.>0();
+    MachoUnixThreadCommandX86_64.<command(&(unix_thread), 5_whole_4);
+    MachoUnixThreadCommandX86_64.<command_size(&(unix_thread), 184_whole_4);
+    MachoUnixThreadCommandX86_64.<flavor(&(unix_thread), 4_whole_4);
+    MachoUnixThreadCommandX86_64.<count(&(unix_thread), 42_whole_4);
+    MachoUnixThreadCommandX86_64.<rip(&(unix_thread), +(start_address, 504));
+
+    return header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread;
+};
+
+define output_return_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
+    variable arguments_size = get_size_multiple_macos_x86-64(*.cast(autobuffer_array8_get(function_argument_types, current_function_id)), 999, nodes, program_data);
+    variable returns_size = get_size_multiple_macos_x86-64(*.cast(autobuffer_array8_get(function_return_types, current_function_id)), 999, nodes, program_data);
     variable returns_size_rounded = returns_size;
     if !(=(%(returns_size_rounded, 8), 0)) {
         returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
@@ -474,23 +507,23 @@ define output_return_linux_x86-64 = function(nodes: *Nodes, program_data: *Progr
     X86_64.autobuffer_buffer_push_ret(instructions_buffer);
 };
 
-define output_retrieve_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_retrieve_macos_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable variable_name = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index)));
-    variable variable_type, scope_index = get_variable_linux-x86_64(variable_types, variable_name);
+    variable variable_type, scope_index = get_variable_macos-x86_64(variable_types, variable_name);
 
     variable scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
 
     if !(=(variable_type, 0)) {
-        variable size = get_size_linux_x86-64(variable_type, nodes, program_data);
+        variable size = get_size_macos_x86-64(variable_type, nodes, program_data);
 
-        variable location = calculate_variable_location_linux-x86_64(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
+        variable location = calculate_variable_location_macos-x86_64(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
 
         if is_pointer(nodes, +(nodes_index, 1)) {
             X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RBP, -(0, +(size, location)), RAX);
             X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RAX);
         } else {
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
-            output_copy_local_variable_stack_linux_x86-64(instructions_buffer, location, size);
+            output_copy_local_variable_stack_macos_x86-64(instructions_buffer, location, size);
         };
         return;
     };
@@ -501,15 +534,15 @@ define output_retrieve_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole
     variable_type = stringarray_get(function_argument_names_individual, function_argument_types_individual, variable_name, array8_length(function_argument_types_individual));
 
     if !(=(variable_type, 0)) {
-        variable size = get_size_linux_x86-64(variable_type, nodes, program_data);
-        variable location = get_size_multiple_reversed_linux_x86-64(function_argument_types_individual, stringarray_get_index(function_argument_names_individual, variable_name, array8_length(function_argument_names_individual)), nodes, program_data);
+        variable size = get_size_macos_x86-64(variable_type, nodes, program_data);
+        variable location = get_size_multiple_reversed_macos_x86-64(function_argument_types_individual, stringarray_get_index(function_argument_names_individual, variable_name, array8_length(function_argument_names_individual)), nodes, program_data);
 
         if is_pointer(nodes, +(nodes_index, 1)) {
             X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RBP, +(16, location), RAX);
             X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RAX);
         } else {
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
-            output_copy_parameter_stack_linux_x86-64(instructions_buffer, location, size);
+            output_copy_parameter_stack_macos_x86-64(instructions_buffer, location, size);
         };
         return;
     };
@@ -520,12 +553,12 @@ define output_retrieve_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole
     variable_type = get_type_of_define(define_types, define_values, variable_name);
 
     if !(=(variable_type, 0)) {
-        output_retrieve_define_linux_x86-64(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, variable_name, variable_type);
+        output_retrieve_define_macos_x86-64(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, variable_name, variable_type);
         return;
     };
 };
 
-define output_retrieve_define_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, variable_name: *, variable_type: *) {
+define output_retrieve_define_macos_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, variable_name: *, variable_type: *) {
     variable define_types = &(ProgramData.>define_types(program_data));
     variable define_values = &(ProgramData.>define_values(program_data));
     variable define_value = get_value_of_define(define_types, define_values, variable_name);
@@ -539,7 +572,7 @@ define output_retrieve_define_linux_x86-64 = function(nodes: *Nodes, nodes_index
         variable define_value = hashmap_string_get2(define_values, variable_name);
         variable variable_type = *.cast(autobuffer_array8_get(global_types, whole_8.cast(define_value)));
 
-        variable size = get_size_linux_x86-64(variable_type, nodes, program_data);
+        variable size = get_size_macos_x86-64(variable_type, nodes, program_data);
 
         variable define_value = whole_8.cast(hashmap_string_get2(define_values, variable_name));
         variable global_index = BssIndex.cast(array8_get(global_locations, define_value));
@@ -548,10 +581,10 @@ define output_retrieve_define_linux_x86-64 = function(nodes: *Nodes, nodes_index
             ELF_X86_64.autobuffer_buffer_push_push_bss(instructions_buffer, bss_indexes_to_adjust, global_index);
         } else {
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
-            output_copy_global_stack_linux_x86-64(instructions_buffer, bss_indexes_to_adjust_relative, global_index, size);
+            output_copy_global_stack_macos_x86-64(instructions_buffer, bss_indexes_to_adjust_relative, global_index, size);
         };
     } else {
-        variable size = get_size_linux_x86-64(variable_type, nodes, program_data);
+        variable size = get_size_macos_x86-64(variable_type, nodes, program_data);
         if =(size, 8) {
             X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RAX, whole_8.cast(define_value));
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 8);
@@ -566,7 +599,7 @@ define output_retrieve_define_linux_x86-64 = function(nodes: *Nodes, nodes_index
     };
 };
 
-define output_copy_local_variable_stack_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, location: whole_8, size: whole_8) {
+define output_copy_local_variable_stack_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, location: whole_8, size: whole_8) {
     variable j = 0;
     while <(j, size) {
         if >(-(size, j), 7) {
@@ -591,7 +624,7 @@ define output_copy_local_variable_stack_linux_x86-64 = function(instructions_buf
     };
 };
 
-define output_copy_parameter_stack_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, location: whole_8, size: whole_8) {
+define output_copy_parameter_stack_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, location: whole_8, size: whole_8) {
     variable j = 0;
     while <(j, size) {
         if >(-(size, j), 7) {
@@ -614,7 +647,7 @@ define output_copy_parameter_stack_linux_x86-64 = function(instructions_buffer: 
     };
 };
 
-define output_copy_global_stack_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, bss_indexes_to_adjust_relative: *AutoBufferStack8, global_index: BssIndex, size: whole_8) {
+define output_copy_global_stack_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, bss_indexes_to_adjust_relative: *AutoBufferStack8, global_index: BssIndex, size: whole_8) {
     variable j = 0;
     while <(j, size) {
         if >(-(size, j), 7) {
@@ -637,17 +670,17 @@ define output_copy_global_stack_linux_x86-64 = function(instructions_buffer: *Au
     };
 };
 
-define output_assign_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_assign_macos_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable assign_data = NodeAssignData.*cast(pointer_data);
     variable variable_name = NodeAssignData.>name(assign_data);
 
-    variable variable_type, scope_index = get_variable_linux-x86_64(variable_types, variable_name);
+    variable variable_type, scope_index = get_variable_macos-x86_64(variable_types, variable_name);
     
     variable scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
 
     if !(=(variable_type, 0)) {
-        variable size = get_size_linux_x86-64(variable_type, nodes, program_data);
-        variable location = calculate_variable_location_linux-x86_64(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
+        variable size = get_size_macos_x86-64(variable_type, nodes, program_data);
+        variable location = calculate_variable_location_macos-x86_64(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
 
         variable j = 0;
         while <(j, size) {
@@ -682,7 +715,7 @@ define output_assign_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8
         variable_type = *.cast(autobuffer_array8_get(global_types, global_index));
         variable global_location = BssIndex.cast(array8_get(global_locations, global_index));
 
-        variable size = get_size_linux_x86-64(variable_type, nodes, program_data);
+        variable size = get_size_macos_x86-64(variable_type, nodes, program_data);
 
         variable j = 0;
         while <(j, size) {
@@ -713,7 +746,7 @@ define output_assign_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8
     };
 };
 
-define get_variable_linux-x86_64 = function(variable_types: *AutoBufferStack8, variable_name: *): *, whole_8 {
+define get_variable_macos-x86_64 = function(variable_types: *AutoBufferStack8, variable_name: *): *, whole_8 {
     variable scope_count = AutoBufferStack8.>index(variable_types);
     variable scope_index = -(scope_count, 1);
     variable variable_type = *.cast(0);
@@ -725,11 +758,11 @@ define get_variable_linux-x86_64 = function(variable_types: *AutoBufferStack8, v
     return variable_type, +(scope_index, 1);
 };
 
-define output_invoke_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
+define output_invoke_macos_x86-64 = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
     variable invoke_data = NodeInvokeData.*cast(pointer_data);
     variable is_invoke_pointer = NodeInvokeData.>is_pointer(invoke_data);
     if is_invoke_pointer {
-        output_invoke_pointer_linux_x86-64(instructions_buffer);
+        output_invoke_pointer_macos_x86-64(instructions_buffer);
         return;
     };
 
@@ -740,66 +773,66 @@ define output_invoke_linux_x86-64 = function(nodes: *Nodes, nodes_index: whole_8
         variable memory_function_size = whole_8.cast(hashmap_string_get(internal_function_instruction_sizes, function_name));
         autobuffer_buffer_push_pointer(instructions_buffer, memory_function, memory_function_size);
     }
-    else if string_length=(function_name, "=_", 2) output_equals_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, ">_", 2) output_greater_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, "<_", 2) output_less_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, "+_", 2) output_add_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, "-_", 2) output_subtract_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, "*_", 2) output_multiply_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, "/_", 2) output_divide_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string_length=(function_name, "%_", 2) output_modulo_internal_linux_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
-    else if string=(function_name, "!") output_not_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "|") output_or_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "&&") output_and_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall0") output_syscall0_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall1") output_syscall1_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall2") output_syscall2_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall3") output_syscall3_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall4") output_syscall4_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall5") output_syscall5_internal_linux_x86-64(instructions_buffer)
-    else if string=(function_name, "@syscall6") output_syscall6_internal_linux_x86-64(instructions_buffer);
+    else if string_length=(function_name, "=_", 2) output_equals_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, ">_", 2) output_greater_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, "<_", 2) output_less_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, "+_", 2) output_add_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, "-_", 2) output_subtract_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, "*_", 2) output_multiply_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, "/_", 2) output_divide_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string_length=(function_name, "%_", 2) output_modulo_internal_macos_x86-64(nodes, program_data, +(function_name, 2), instructions_buffer)
+    else if string=(function_name, "!") output_not_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "|") output_or_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "&&") output_and_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall0") output_syscall0_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall1") output_syscall1_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall2") output_syscall2_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall3") output_syscall3_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall4") output_syscall4_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall5") output_syscall5_internal_macos_x86-64(instructions_buffer)
+    else if string=(function_name, "@syscall6") output_syscall6_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_syscall0_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall0_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RAX);
     X86_64.autobuffer_buffer_push_syscall(instructions_buffer);
     X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RAX);
 };
 
-define output_syscall1_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall1_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RDI);
-    output_syscall0_internal_linux_x86-64(instructions_buffer);
+    output_syscall0_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_syscall2_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall2_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RSI);
-    output_syscall1_internal_linux_x86-64(instructions_buffer);
+    output_syscall1_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_syscall3_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall3_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RDX);
-    output_syscall2_internal_linux_x86-64(instructions_buffer);
+    output_syscall2_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_syscall4_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall4_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, R10);
-    output_syscall3_internal_linux_x86-64(instructions_buffer);
+    output_syscall3_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_syscall5_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall5_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, R8);
-    output_syscall4_internal_linux_x86-64(instructions_buffer);
+    output_syscall4_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_syscall6_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_syscall6_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, R9);
-    output_syscall5_internal_linux_x86-64(instructions_buffer);
+    output_syscall5_internal_macos_x86-64(instructions_buffer);
 };
 
-define output_equals_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_equals_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
 
-    output_compare_linux_x86-64(instructions_buffer, size);
+    output_compare_macos_x86-64(instructions_buffer, size);
 
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RCX, 0);
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RBX, 1);
@@ -808,11 +841,11 @@ define output_equals_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, CL, RSP, 0);
 };
 
-define output_greater_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_greater_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
     variable signed = =(is_signed(type, nodes), 1);
 
-    output_compare_linux_x86-64(instructions_buffer, size);
+    output_compare_macos_x86-64(instructions_buffer, size);
 
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RCX, 0);
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RBX, 1);
@@ -825,11 +858,11 @@ define output_greater_internal_linux_x86-64 = function(nodes: *Nodes, program_da
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, CL, RSP, 0);
 };
 
-define output_less_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_less_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
     variable signed = =(is_signed(type, nodes), 1);
 
-    output_compare_linux_x86-64(instructions_buffer, size);
+    output_compare_macos_x86-64(instructions_buffer, size);
 
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RCX, 0);
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RBX, 1);
@@ -842,7 +875,7 @@ define output_less_internal_linux_x86-64 = function(nodes: *Nodes, program_data:
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, CL, RSP, 0);
 };
 
-define output_not_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_not_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RAX, 0);
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 0, AL);
     X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 1);
@@ -856,7 +889,7 @@ define output_not_internal_linux_x86-64 = function(instructions_buffer: *AutoBuf
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, CL, RSP, 0);
 };
 
-define output_or_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_or_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 0, AL);
     X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 1);
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 0, BL);
@@ -866,7 +899,7 @@ define output_or_internal_linux_x86-64 = function(instructions_buffer: *AutoBuff
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RSP, 0);
 };
 
-define output_and_internal_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
+define output_and_internal_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer) {
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 0, AL);
     X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 1);
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 0, BL);
@@ -876,96 +909,96 @@ define output_and_internal_linux_x86-64 = function(instructions_buffer: *AutoBuf
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RSP, 0);
 };
 
-define output_add_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_add_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
 
     if =(size, 8) {
-        output_2pop8_linux_x86-64(instructions_buffer, RAX, RBX);
+        output_2pop8_macos_x86-64(instructions_buffer, RAX, RBX);
         X86_64.autobuffer_buffer_push_add_register8_register8(instructions_buffer, RAX, RBX);
-        output_push8_linux_x86-64(instructions_buffer, RAX);
+        output_push8_macos_x86-64(instructions_buffer, RAX);
     } else if =(size, 4) {
-        output_2pop4_linux_x86-64(instructions_buffer, EAX, EBX);
+        output_2pop4_macos_x86-64(instructions_buffer, EAX, EBX);
         X86_64.autobuffer_buffer_push_add_register8_register8(instructions_buffer, RAX, RBX);
         X86_64.autobuffer_buffer_push_add_register4_register4(instructions_buffer, EAX, EBX);
-        output_push4_linux_x86-64(instructions_buffer, EAX);
+        output_push4_macos_x86-64(instructions_buffer, EAX);
     } else if =(size, 2) {
-        output_2pop2_linux_x86-64(instructions_buffer, AX, BX);
+        output_2pop2_macos_x86-64(instructions_buffer, AX, BX);
         X86_64.autobuffer_buffer_push_add_register2_register2(instructions_buffer, AX, BX);
-        output_push2_linux_x86-64(instructions_buffer, AX);
+        output_push2_macos_x86-64(instructions_buffer, AX);
     } else if =(size, 1) {
-        output_2pop1_linux_x86-64(instructions_buffer, AL, BL);
+        output_2pop1_macos_x86-64(instructions_buffer, AL, BL);
         X86_64.autobuffer_buffer_push_add_register1_register1(instructions_buffer, AL, BL);
-        output_push1_linux_x86-64(instructions_buffer, AL);
+        output_push1_macos_x86-64(instructions_buffer, AL);
     };
 };
 
-define output_subtract_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_subtract_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
 
     if =(size, 8) {
-        output_2pop8_linux_x86-64(instructions_buffer, RAX, RBX);
+        output_2pop8_macos_x86-64(instructions_buffer, RAX, RBX);
         X86_64.autobuffer_buffer_push_sub_register8_register8(instructions_buffer, RBX, RAX);
-        output_push8_linux_x86-64(instructions_buffer, RBX);
+        output_push8_macos_x86-64(instructions_buffer, RBX);
     } else if =(size, 4) {
-        output_2pop4_linux_x86-64(instructions_buffer, EAX, EBX);
+        output_2pop4_macos_x86-64(instructions_buffer, EAX, EBX);
         X86_64.autobuffer_buffer_push_sub_register4_register4(instructions_buffer, EBX, EAX);
-        output_push4_linux_x86-64(instructions_buffer, EBX);
+        output_push4_macos_x86-64(instructions_buffer, EBX);
     } else if =(size, 2) {
-        output_2pop2_linux_x86-64(instructions_buffer, AX, BX);
+        output_2pop2_macos_x86-64(instructions_buffer, AX, BX);
         X86_64.autobuffer_buffer_push_sub_register2_register2(instructions_buffer, BX, AX);
-        output_push2_linux_x86-64(instructions_buffer, BX);
+        output_push2_macos_x86-64(instructions_buffer, BX);
     } else if =(size, 1) {
-        output_2pop1_linux_x86-64(instructions_buffer, AL, BL);
+        output_2pop1_macos_x86-64(instructions_buffer, AL, BL);
         X86_64.autobuffer_buffer_push_sub_register1_register1(instructions_buffer, BL, AL);
-        output_push1_linux_x86-64(instructions_buffer, BL);
+        output_push1_macos_x86-64(instructions_buffer, BL);
     };
 };
 
-define output_multiply_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_multiply_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
     variable signed = =(is_signed(type, nodes), 1);
 
     if =(size, 8) {
-        output_2pop8_linux_x86-64(instructions_buffer, RAX, RBX);
+        output_2pop8_macos_x86-64(instructions_buffer, RAX, RBX);
         if signed {
             X86_64.autobuffer_buffer_push_imul_register8(instructions_buffer, RBX);
         } else {
             X86_64.autobuffer_buffer_push_mul_register8(instructions_buffer, RBX);
         };
-        output_push8_linux_x86-64(instructions_buffer, RAX);
+        output_push8_macos_x86-64(instructions_buffer, RAX);
     } else if =(size, 4) {
-        output_2pop4_linux_x86-64(instructions_buffer, EAX, EBX);
+        output_2pop4_macos_x86-64(instructions_buffer, EAX, EBX);
         if signed {
             X86_64.autobuffer_buffer_push_imul_register4(instructions_buffer, EBX);
         } else {
             X86_64.autobuffer_buffer_push_mul_register4(instructions_buffer, EBX);
         };
-        output_push4_linux_x86-64(instructions_buffer, EAX);
+        output_push4_macos_x86-64(instructions_buffer, EAX);
     } else if =(size, 2) {
-        output_2pop2_linux_x86-64(instructions_buffer, AX, BX);
+        output_2pop2_macos_x86-64(instructions_buffer, AX, BX);
         if signed {
             X86_64.autobuffer_buffer_push_imul_register2(instructions_buffer, BX);
         } else {
             X86_64.autobuffer_buffer_push_mul_register2(instructions_buffer, BX);
         };
-        output_push2_linux_x86-64(instructions_buffer, AX);
+        output_push2_macos_x86-64(instructions_buffer, AX);
     } else if =(size, 1) {
-        output_2pop1_linux_x86-64(instructions_buffer, AL, BL);
+        output_2pop1_macos_x86-64(instructions_buffer, AL, BL);
         if signed {
             X86_64.autobuffer_buffer_push_imul_register1(instructions_buffer, BL);
         } else {
             X86_64.autobuffer_buffer_push_mul_register1(instructions_buffer, BL);
         };
-        output_push1_linux_x86-64(instructions_buffer, AL);
+        output_push1_macos_x86-64(instructions_buffer, AL);
     };
 };
 
-define output_divide_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_divide_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
     variable signed = =(is_signed(type, nodes), 1);
 
     if =(size, 8) {
-        output_2pop8_linux_x86-64(instructions_buffer, RBX, RAX);
+        output_2pop8_macos_x86-64(instructions_buffer, RBX, RAX);
         if signed {
             X86_64.autobuffer_buffer_push_cqo(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register8(instructions_buffer, RBX);
@@ -973,9 +1006,9 @@ define output_divide_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RDX, 0);
             X86_64.autobuffer_buffer_push_div_register8(instructions_buffer, RBX);
         };
-        output_push8_linux_x86-64(instructions_buffer, RAX);
+        output_push8_macos_x86-64(instructions_buffer, RAX);
     } else if =(size, 4) {
-        output_2pop4_linux_x86-64(instructions_buffer, EBX, EAX);
+        output_2pop4_macos_x86-64(instructions_buffer, EBX, EAX);
         if signed {
             X86_64.autobuffer_buffer_push_cdq(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register4(instructions_buffer, EBX);
@@ -983,9 +1016,9 @@ define output_divide_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_4_register4(instructions_buffer, EDX, 0_whole_4);
             X86_64.autobuffer_buffer_push_div_register4(instructions_buffer, EBX);
         };
-        output_push4_linux_x86-64(instructions_buffer, EAX);
+        output_push4_macos_x86-64(instructions_buffer, EAX);
     } else if =(size, 2) {
-        output_2pop2_linux_x86-64(instructions_buffer, BX, AX);
+        output_2pop2_macos_x86-64(instructions_buffer, BX, AX);
         if signed {
             X86_64.autobuffer_buffer_push_cwd(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register2(instructions_buffer, BX);
@@ -993,9 +1026,9 @@ define output_divide_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_2_register2(instructions_buffer, DX, 0_whole_2);
             X86_64.autobuffer_buffer_push_div_register2(instructions_buffer, BX);
         };
-        output_push2_linux_x86-64(instructions_buffer, AX);
+        output_push2_macos_x86-64(instructions_buffer, AX);
     } else if =(size, 1) {
-        output_2pop1_linux_x86-64(instructions_buffer, BL, AL);
+        output_2pop1_macos_x86-64(instructions_buffer, BL, AL);
         if signed {
             X86_64.autobuffer_buffer_push_cbw(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register1(instructions_buffer, BL);
@@ -1003,16 +1036,16 @@ define output_divide_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_1_register1(instructions_buffer, DL, 0_whole_1);
             X86_64.autobuffer_buffer_push_div_register1(instructions_buffer, BL);
         };
-        output_push1_linux_x86-64(instructions_buffer, AL);
+        output_push1_macos_x86-64(instructions_buffer, AL);
     };
 };
 
-define output_modulo_internal_linux_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
-    variable size = get_size_linux_x86-64(type, nodes, program_data);
+define output_modulo_internal_macos_x86-64 = function(nodes: *Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    variable size = get_size_macos_x86-64(type, nodes, program_data);
     variable signed = =(is_signed(type, nodes), 1);
 
     if =(size, 8) {
-        output_2pop8_linux_x86-64(instructions_buffer, RBX, RAX);
+        output_2pop8_macos_x86-64(instructions_buffer, RBX, RAX);
         if signed {
             X86_64.autobuffer_buffer_push_cqo(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register8(instructions_buffer, RBX);
@@ -1020,9 +1053,9 @@ define output_modulo_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RDX, 0);
             X86_64.autobuffer_buffer_push_div_register8(instructions_buffer, RBX);
         };
-        output_push8_linux_x86-64(instructions_buffer, RDX);
+        output_push8_macos_x86-64(instructions_buffer, RDX);
     } else if =(size, 4) {
-        output_2pop4_linux_x86-64(instructions_buffer, EBX, EAX);
+        output_2pop4_macos_x86-64(instructions_buffer, EBX, EAX);
         if signed {
             X86_64.autobuffer_buffer_push_cdq(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register4(instructions_buffer, EBX);
@@ -1030,9 +1063,9 @@ define output_modulo_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_4_register4(instructions_buffer, EDX, 0_whole_4);
             X86_64.autobuffer_buffer_push_div_register4(instructions_buffer, EBX);
         };
-        output_push4_linux_x86-64(instructions_buffer, EDX);
+        output_push4_macos_x86-64(instructions_buffer, EDX);
     } else if =(size, 2) {
-        output_2pop2_linux_x86-64(instructions_buffer, BX, AX);
+        output_2pop2_macos_x86-64(instructions_buffer, BX, AX);
         if signed {
             X86_64.autobuffer_buffer_push_cwd(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register2(instructions_buffer, BX);
@@ -1040,9 +1073,9 @@ define output_modulo_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_2_register2(instructions_buffer, DX, 0_whole_2);
             X86_64.autobuffer_buffer_push_div_register2(instructions_buffer, BX);
         };
-        output_push2_linux_x86-64(instructions_buffer, DX);
+        output_push2_macos_x86-64(instructions_buffer, DX);
     } else if =(size, 1) {
-        output_2pop1_linux_x86-64(instructions_buffer, BL, AL);
+        output_2pop1_macos_x86-64(instructions_buffer, BL, AL);
         if signed {
             X86_64.autobuffer_buffer_push_cbw(instructions_buffer);
             X86_64.autobuffer_buffer_push_idiv_register1(instructions_buffer, BL);
@@ -1050,53 +1083,53 @@ define output_modulo_internal_linux_x86-64 = function(nodes: *Nodes, program_dat
             X86_64.autobuffer_buffer_push_mov_whole_1_register1(instructions_buffer, DL, 0_whole_1);
             X86_64.autobuffer_buffer_push_div_register1(instructions_buffer, BL);
         };
-        output_push1_linux_x86-64(instructions_buffer, DL);
+        output_push1_macos_x86-64(instructions_buffer, DL);
     };
 };
 
-define output_push8_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register8) {
+define output_push8_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register8) {
     X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, register);
 };
 
-define output_push4_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register4) {
+define output_push4_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register4) {
     X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 4);
     X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(instructions_buffer, register, RSP, 0);
 };
 
-define output_push2_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register2) {
+define output_push2_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register2) {
     X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 2);
     X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(instructions_buffer, register, RSP, 0);
 };
 
-define output_push1_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register1) {
+define output_push1_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register: Register1) {
     X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 1);
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, register, RSP, 0);
 };
 
-define output_2pop8_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register8, register2: Register8) {
+define output_2pop8_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register8, register2: Register8) {
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, register1);
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, register2);
 };
 
-define output_2pop4_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register4, register2: Register4) {
+define output_2pop4_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register4, register2: Register4) {
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(instructions_buffer, RSP, 0, register1);
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(instructions_buffer, RSP, 4, register2);
     X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 8);
 };
 
-define output_2pop2_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register2, register2: Register2) {
+define output_2pop2_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register2, register2: Register2) {
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(instructions_buffer, RSP, 0, register1);
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(instructions_buffer, RSP, 2, register2);
     X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 4);
 };
 
-define output_2pop1_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register1, register2: Register1) {
+define output_2pop1_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, register1: Register1, register2: Register1) {
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 0, register1);
     X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, 1, register2);
     X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 2);
 };
 
-define output_compare_linux_x86-64 = function(instructions_buffer: *AutoBufferBuffer, size: whole_8) {
+define output_compare_macos_x86-64 = function(instructions_buffer: *AutoBufferBuffer, size: whole_8) {
     if =(size, 8) {
         X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RAX);
         X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RBX);
@@ -1119,7 +1152,7 @@ define output_compare_linux_x86-64 = function(instructions_buffer: *AutoBufferBu
     };
 };
 
-define output_boolean_linux_x86-64 = function(pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_boolean_macos_x86-64 = function(pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable boolean_data = NodeBooleanData.*cast(pointer_data);
     variable value_boolean = NodeBooleanData.>value(boolean_data);
 
@@ -1134,7 +1167,7 @@ define output_boolean_linux_x86-64 = function(pointer_data: *, instructions_buff
     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RSP, 0);
 };
 
-define output_number_linux_x86-64 = function(pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+define output_number_macos_x86-64 = function(pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
     variable whole_8_data = NodeNumberData.*cast(pointer_data);
     variable value_whole_8 = NodeNumberData.>value(whole_8_data);
 
@@ -1156,7 +1189,7 @@ define output_number_linux_x86-64 = function(pointer_data: *, instructions_buffe
     };
 };
 
-define calculate_global_locations_linux-x86_64 = function(nodes: *Nodes, program_data: *ProgramData, global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
+define calculate_global_locations_macos-x86_64 = function(nodes: *Nodes, program_data: *ProgramData, global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
     variable global_locations = autobuffer_new(512);
     variable bss_index = 0;
 
@@ -1166,14 +1199,14 @@ define calculate_global_locations_linux-x86_64 = function(nodes: *Nodes, program
 
         autobuffer_array8_set(&(global_locations), i, bss_index);
 
-        bss_index = +(bss_index, get_size_linux_x86-64(global_type, nodes, program_data));
+        bss_index = +(bss_index, get_size_macos_x86-64(global_type, nodes, program_data));
         i = +(i, 1);
     };
 
     return AutoBuffer.>buffer(&(global_locations)), bss_index;
 };
 
-define calculate_function_local_sizes_linux-x86_64 = function(nodes: *Nodes, program_data: *ProgramData, function_node_locations: *AutoBuffer, function_count: whole_8): * {
+define calculate_function_local_sizes_macos-x86_64 = function(nodes: *Nodes, program_data: *ProgramData, function_node_locations: *AutoBuffer, function_count: whole_8): * {
     variable function_local_sizes = autobuffer_new(1024);
 
     variable i = 0;
@@ -1188,7 +1221,7 @@ define calculate_function_local_sizes_linux-x86_64 = function(nodes: *Nodes, pro
                 variable declare_data = NodeDeclareData.*cast(pointer_data);
                 variable declare_name = NodeDeclareData.>name(declare_data);
                 variable declare_type = NodeDeclareData.>type(declare_data);
-                total = +(total, get_size_linux_x86-64(declare_type, nodes, program_data));
+                total = +(total, get_size_macos_x86-64(declare_type, nodes, program_data));
             };
 
             j = +(j, 1);
@@ -1201,20 +1234,20 @@ define calculate_function_local_sizes_linux-x86_64 = function(nodes: *Nodes, pro
     return AutoBuffer.>buffer(&(function_local_sizes));
 };
 
-define append_start_instructions_linux-x86_64 = function(instructions_buffer: *AutoBufferBuffer): InstructionIndex {
+define append_start_instructions_macos-x86_64 = function(instructions_buffer: *AutoBufferBuffer): InstructionIndex {
     X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RSP, 8, RAX);
     X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RBX);
     X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RAX);
     X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RBX);
     variable main_call = X86_64.autobuffer_buffer_push_call_near(instructions_buffer);
-    X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RAX, 60);
+    X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RAX, 33554433);
     X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RDI, 0);
     X86_64.autobuffer_buffer_push_syscall(instructions_buffer);
 
     return main_call;
 };
 
-define calculate_variable_location_linux-x86_64 = function(variable_count: whole_8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_name: *, scope_variable_index: whole_8): whole_8 {
+define calculate_variable_location_macos-x86_64 = function(variable_count: whole_8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_name: *, scope_variable_index: whole_8): whole_8 {
     variable location = 0;
     variable j = 0;
     while true {
@@ -1231,7 +1264,7 @@ define calculate_variable_location_linux-x86_64 = function(variable_count: whole
     return location;
 };
 
-define create_structure_internal_functions_linux-x86_64 = function(program_data: *ProgramData, nodes: *Nodes, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap) {
+define create_structure_internal_functions_macos-x86_64 = function(program_data: *ProgramData, nodes: *Nodes, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap) {
     variable structure_datas = &(ProgramData.>structure_datas(program_data));
     variable structure_count = AutoBufferStack8.>index(structure_datas);
 
@@ -1244,7 +1277,7 @@ define create_structure_internal_functions_linux-x86_64 = function(program_data:
         variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, i));
         variable structure_name = NodeStructureData.>name(structure_data);
 
-        variable size = get_size_linux_x86-64(structure_name, nodes, program_data);
+        variable size = get_size_macos_x86-64(structure_name, nodes, program_data);
 
         // Setter for whole value
         variable internal_name = concatenate2_brk_allocate(structure_name, "<");
@@ -1404,8 +1437,8 @@ define create_structure_internal_functions_linux-x86_64 = function(program_data:
             variable member_name = *.cast(array8_get(member_names, j));
             variable member_type = *.cast(array8_get(member_types, j));
 
-            variable location = get_size_multiple_linux_x86-64(member_types, j, nodes, program_data);
-            variable size = get_size_linux_x86-64(member_type, nodes, program_data);
+            variable location = get_size_multiple_macos_x86-64(member_types, j, nodes, program_data);
+            variable size = get_size_macos_x86-64(member_type, nodes, program_data);
 
             // Get pointer for individual members
             variable internal_name = concatenate3_brk_allocate(structure_name, "*>", member_name);
@@ -1498,7 +1531,7 @@ define create_structure_internal_functions_linux-x86_64 = function(program_data:
 
 };
 
-define get_size_linux_x86-64 = function(type: *, nodes: *Nodes, program_data: *ProgramData): whole_8 {
+define get_size_macos_x86-64 = function(type: *, nodes: *Nodes, program_data: *ProgramData): whole_8 {
     if string_length=(type, "*", 1) {
         return 8;
     };
@@ -1542,7 +1575,7 @@ define get_size_linux_x86-64 = function(type: *, nodes: *Nodes, program_data: *P
             variable structure_member_types = &(ProgramData.>structure_member_types(program_data));
             variable member_types = *.cast(autobuffer_array8_get(structure_member_types, defined_value));
 
-            variable size = get_size_multiple_linux_x86-64(member_types, 999, nodes, program_data);
+            variable size = get_size_multiple_macos_x86-64(member_types, 999, nodes, program_data);
             hashmap_string_put(&(cached_sizes_map), type, size);
             return size;
         };
@@ -1561,11 +1594,11 @@ define get_size_linux_x86-64 = function(type: *, nodes: *Nodes, program_data: *P
             if =(character, ASCII_COLON) {
                 is_type = true;
             } else if =(character, ASCII_COMMA) {
-                total = +(total, get_size_linux_x86-64(autobuffer_buffer_get_buffer_pointer(&(buffer)), nodes, program_data));
+                total = +(total, get_size_macos_x86-64(autobuffer_buffer_get_buffer_pointer(&(buffer)), nodes, program_data));
                 autobuffer_buffer_reset(&(buffer));
                 is_type = false;
             } else if =(character, ASCII_CLOSED_BRACKET) {
-                total = +(total, get_size_linux_x86-64(autobuffer_buffer_get_buffer_pointer(&(buffer)), nodes, program_data));
+                total = +(total, get_size_macos_x86-64(autobuffer_buffer_get_buffer_pointer(&(buffer)), nodes, program_data));
                 break;
             } else if is_type {
                 autobuffer_buffer_push_string_length(&(buffer), +(type, i), 1);
@@ -1582,7 +1615,7 @@ define get_size_linux_x86-64 = function(type: *, nodes: *Nodes, program_data: *P
         variable inside = brk_allocate(-(length(type), 7));
         copy(+(type, 7), inside, -(length(type), 8));
 
-        variable size = get_size_linux_x86-64(inside, nodes, program_data);
+        variable size = get_size_macos_x86-64(inside, nodes, program_data);
 
         hashmap_string_put(&(cached_sizes_map), type, size);
         return size;
@@ -1621,7 +1654,7 @@ define get_size_linux_x86-64 = function(type: *, nodes: *Nodes, program_data: *P
     variable current_name = autobuffer_buffer_get_buffer_pointer(&(buffer));
     current_name = concatenate2_brk_allocate(prepended, current_name);
 
-    variable size = get_size_linux_x86-64(current_name, nodes, program_data);
+    variable size = get_size_macos_x86-64(current_name, nodes, program_data);
     if !(=(size, 0)) {
         return size;
     };
@@ -1632,7 +1665,7 @@ define get_size_linux_x86-64 = function(type: *, nodes: *Nodes, program_data: *P
     return 0;
 };
 
-define get_size_multiple_linux_x86-64 = function(array: *, count: whole_8, nodes: *Nodes, program_data: *ProgramData): whole_8 {
+define get_size_multiple_macos_x86-64 = function(array: *, count: whole_8, nodes: *Nodes, program_data: *ProgramData): whole_8 {
     variable total = 0;
 
     variable i = 0;
@@ -1640,20 +1673,20 @@ define get_size_multiple_linux_x86-64 = function(array: *, count: whole_8, nodes
         if =(array8_get(array, i), 0) {
             return total;
         };
-        total = +(total, get_size_linux_x86-64(*.cast(array8_get(array, i)), nodes, program_data));
+        total = +(total, get_size_macos_x86-64(*.cast(array8_get(array, i)), nodes, program_data));
         i = +(i, 1);
     };
 
     return total;
 };
 
-define get_size_multiple_reversed_linux_x86-64 = function(array: *, count: whole_8, nodes: *Nodes, program_data: *ProgramData): whole_8 {
+define get_size_multiple_reversed_macos_x86-64 = function(array: *, count: whole_8, nodes: *Nodes, program_data: *ProgramData): whole_8 {
     variable i = -(array8_length(array), 1);
 
     variable total = 0;
 
     while >(i, count) {
-        total = +(total, get_size_linux_x86-64(*.cast(array8_get(array, i)), nodes, program_data));
+        total = +(total, get_size_macos_x86-64(*.cast(array8_get(array, i)), nodes, program_data));
         i = -(i, 1);
     };
 

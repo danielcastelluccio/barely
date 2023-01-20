@@ -1,241 +1,239 @@
-structure Register1 {
-    value: whole_1;
-};
-
-structure Register2 {
-    value: whole_1;
-};
-
-structure Register4 {
-    value: whole_1;
-};
-
-structure Register8 {
-    value: whole_1;
-};
-
-constant AL: Register1 = 0;
-constant CL: Register1 = 1;
-constant DL: Register1 = 2;
-constant BL: Register1 = 3;
-constant AH: Register1 = 4;
-//constant SPL: Register1 = 4;
-//constant BPL: Register1 = 5;
-
-constant AX: Register2 = 0;
-constant CX: Register2 = 1;
-constant DX: Register2 = 2;
-constant BX: Register2 = 3;
-constant SPX: Register2 = 4;
-constant BPX: Register2 = 5;
-
-constant EAX: Register4 = 0;
-constant ECX: Register4 = 1;
-constant EDX: Register4 = 2;
-constant EBX: Register4 = 3;
-constant ESP: Register4 = 4;
-constant EBp: Register4 = 5;
-
-constant RAX: Register8 = 0;
-constant RCX: Register8 = 1;
-constant RDX: Register8 = 2;
-constant RBX: Register8 = 3;
-constant RSP: Register8 = 4;
-constant RBP: Register8 = 5;
-constant RSI: Register8 = 6;
-constant RDI: Register8 = 7;
-constant R8: Register8 = 8;
-constant R9: Register8 = 9;
-constant R10: Register8 = 10;
-constant R11: Register8 = 11;
-constant R12: Register8 = 12;
-constant R13: Register8 = 13;
-constant R14: Register8 = 14;
-constant R15: Register8 = 15;
-
-structure DataIndex {
+define DataIndex = structure {
     value: whole_8;
 };
 
-structure BssIndex {
+define BssIndex = structure {
     value: whole_8;
 };
 
-structure InstructionIndex {
+define InstructionIndex = structure {
     value: whole_8;
 };
 
-function autobuffer_push_jmp_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
-    variable current_instruction = whole_8->(instruction_index_pointer);
+define ELF_X86_64 = module {
+    define autobuffer_buffer_push_data_string = function(data: *AutoBufferBuffer, string: *): DataIndex {
+        variable index = AutoBufferBuffer.>index(data);
+        autobuffer_buffer_push_string(data, string);
+        AutoBufferBuffer.<index(data, +(AutoBufferBuffer.>index(data), 1));
+        return DataIndex.cast(index);
+    };
 
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 233_whole_1);
+    define autobuffer_buffer_push_push_data = function(buffer: *AutoBufferBuffer, indexes_to_adjust: *AutoBufferStack8, data_index: DataIndex) {
+        autobuffer_stack8_push(indexes_to_adjust, +(AutoBufferBuffer.>index(buffer), 2));
+        X86_64.autobuffer_buffer_push_mov_whole_8_register8(buffer, RAX, whole_8.cast(data_index));
+        X86_64.autobuffer_buffer_push_push_register8(buffer, RAX);
 
-    autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
+        //autobuffer_buffer_push_whole_1(buffer, 104_whole_1);
+        //autobuffer_stack8_push(indexes_to_adjust, AutoBufferBuffer.>index(buffer));
+        //autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
+    };
 
-    return @cast_InstructionIndex(current_instruction);
+    define autobuffer_buffer_push_push_bss = function(buffer: *AutoBufferBuffer, indexes_to_adjust: *AutoBufferStack8, bss_index: BssIndex) {
+        autobuffer_stack8_push(indexes_to_adjust, +(AutoBufferBuffer.>index(buffer), 2));
+        X86_64.autobuffer_buffer_push_mov_whole_8_register8(buffer, RAX, whole_8.cast(bss_index));
+        X86_64.autobuffer_buffer_push_push_register8(buffer, RAX);
+
+        //autobuffer_buffer_push_whole_1(buffer, 104_whole_1);
+        //autobuffer_stack8_push(indexes_to_adjust, AutoBufferBuffer.>index(buffer));
+        //autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(bss_index)));
+    };
+
+    define autobuffer_buffer_push_mov_bss_offset_pointer_register8 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register8) {
+        variable instruction = 72_whole_1;
+
+        if >(register, 7_whole_1) {
+            instruction = +(instruction, 4_whole_1);
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, instruction);
+        autobuffer_buffer_push_whole_1(buffer, 139_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
+    };
+
+    define autobuffer_buffer_push_mov_bss_offset_pointer_register4 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register4) {
+        variable instruction = 64_whole_1;
+
+        if >(register, 7_whole_1) {
+            instruction = +(instruction, 4_whole_1);
+        };
+
+        if !(=(instruction, 64_whole_1)) {
+            autobuffer_buffer_push_whole_1(buffer, instruction);
+        };
+        autobuffer_buffer_push_whole_1(buffer, 139_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
+    };
+
+    define autobuffer_buffer_push_mov_bss_offset_pointer_register2 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register2) {
+        variable instruction = 64_whole_1;
+
+        if >(register, 7_whole_1) {
+            instruction = +(instruction, 4_whole_1);
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, 102_whole_1);
+        if !(=(instruction, 64_whole_1)) {
+            autobuffer_buffer_push_whole_1(buffer, instruction);
+        };
+        autobuffer_buffer_push_whole_1(buffer, 139_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
+    };
+
+    define autobuffer_buffer_push_mov_bss_offset_pointer_register1 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register1) {
+        variable instruction = 64_whole_1;
+
+        if >(register, 7_whole_1) {
+            instruction = +(instruction, 4_whole_1);
+        };
+
+        if !(=(instruction, 64_whole_1)) {
+            autobuffer_buffer_push_whole_1(buffer, instruction);
+        };
+        autobuffer_buffer_push_whole_1(buffer, 138_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
+    };
+
+    define autobuffer_buffer_push_mov_register8_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register8, data_index: BssIndex, offset: whole_8) {
+        variable instruction = 72_whole_1;
+
+        if >(register, 7_whole_1) {
+            instruction = +(instruction, 4_whole_1);
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, instruction);
+        autobuffer_buffer_push_whole_1(buffer, 137_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+    };
+
+    define autobuffer_buffer_push_mov_register4_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register4, data_index: BssIndex, offset: whole_8) {
+        autobuffer_buffer_push_whole_1(buffer, 137_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+    };
+
+    define autobuffer_buffer_push_mov_register2_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register2, data_index: BssIndex, offset: whole_8) {
+        variable instruction = 102_whole_1;
+
+        if >(register, 7_whole_1) {
+            instruction = +(instruction, 4_whole_1);
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, instruction);
+        autobuffer_buffer_push_whole_1(buffer, 137_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+    };
+
+    define autobuffer_buffer_push_mov_register1_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register1, data_index: BssIndex, offset: whole_8) {
+        autobuffer_buffer_push_whole_1(buffer, 136_whole_1);
+
+        variable value = 0_whole_1;
+
+        if >(register, 7_whole_1) {
+            value = +(value, *(-(register, 8_whole_1), 8_whole_1));
+        } else {
+            value = +(value, *(register, 8_whole_1));
+        };
+
+        autobuffer_buffer_push_whole_1(buffer, +(value, 5_whole_1));
+
+        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+    };
 };
 
-function autobuffer_push_je_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
-    variable current_instruction = whole_8->(instruction_index_pointer);
-
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 132_whole_1);
-
-    autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
-
-    return @cast_InstructionIndex(current_instruction);
-};
-
-function autobuffer_push_jne_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
-    variable current_instruction = whole_8->(instruction_index_pointer);
-
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 133_whole_1);
-
-    autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
-
-    return @cast_InstructionIndex(current_instruction);
-};
-
-function set_jmp(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jump: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8->(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(jump, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
-};
-
-function set_jmp_value(instructions: *AutoBuffer, jump: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(@cast_whole_8(value)), whole_8_to_whole_4(@cast_whole_8(+(jump, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jump, 1)));
-};
-
-function set_control_flow_value_absolute(instructions: *AutoBuffer, jump: InstructionIndex, offset: whole_8) {
-    autobuffer_set_any_4(instructions, whole_8_to_whole_4(offset), @cast_whole_8(jump));
-};
-
-function autobuffer_push_call_far_register8(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, register: Register8) {
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 255_whole_1);
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, +(208_whole_1, register));
-};
-
-function autobuffer_push_call_near(instructions: *AutoBuffer, instruction_index_pointer: *whole_8): InstructionIndex {
-    variable current_instruction = whole_8->(instruction_index_pointer);
-
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 232_whole_1);
-
-    autobuffer_push_whole_4(instructions, instruction_index_pointer, 0_whole_4);
-
-    return @cast_InstructionIndex(current_instruction);
-};
-
-function autobuffer_push_ret(instructions: *AutoBuffer, instruction_index_pointer: *whole_8) {
-    autobuffer_push_whole_1(instructions, instruction_index_pointer, 195_whole_1);
-};
-
-function set_call(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, call: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8->(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(call, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(call, 1)));
-};
-
-function set_call_value(instructions: *AutoBuffer, call: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(@cast_whole_8(value)), whole_8_to_whole_4(@cast_whole_8(+(call, 5))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(call, 1)));
-};
-
-function set_je(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, je: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8->(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(je, 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(je, 2)));
-};
-
-function set_je_value(instructions: *AutoBuffer, je: InstructionIndex, value: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(@cast_whole_8(value)), whole_8_to_whole_4(@cast_whole_8(+(je, 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(je, 2)));
-};
-
-function set_jne(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jne: InstructionIndex) {
-    variable offset = -(whole_8_to_whole_4(whole_8->(instruction_index_pointer)), whole_8_to_whole_4(@cast_whole_8(+(jne, 6))));
-    autobuffer_set_any_4(instructions, offset, @cast_whole_8(+(jne, 2)));
-};
-
-function autobuffer_push_data_string(data: *AutoBuffer, data_index_pointer: *whole_8, string: *): DataIndex {
-    variable index = whole_8->(data_index_pointer);
-
-    autobuffer_push_string(data, data_index_pointer, string);
-    increment_whole_8_pointer(data_index_pointer, 1);
-
-    return @cast_DataIndex(index);
-};
-
-function autobuffer_push_data_whole_8(data: *AutoBuffer, data_index_pointer: *whole_8, whole_8: whole_8): DataIndex {
-    variable index = whole_8->(data_index_pointer);
-
-    variable buffer_index = whole_8->(data_index_pointer);
-
-    autobuffer_set(data, &(whole_8), buffer_index, 8);
-
-    whole_8<-(data_index_pointer, +(8, whole_8->(data_index_pointer)));
-
-    return @cast_DataIndex(index);
-};
-
-function get_instruction(instructions: *AutoBuffer, instructions_index_pointer: *whole_8): InstructionIndex {
-    variable index = whole_8->(instructions_index_pointer);
-
-    return @cast_InstructionIndex(index);
-};
-
-function autobuffer_push_mov_data_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, register: Register8, data_index: DataIndex) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 199_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(192_whole_1, register));
-    autobuffer_array8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_index, +(1, whole_8->(indexes_to_adjust_index)));
-};
-
-function autobuffer_push_mov_data_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, register: Register8, data_index: DataIndex, offset: whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 199_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(192_whole_1, register));
-    autobuffer_array8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(+(data_index, offset))));
-
-    whole_8<-(indexes_to_adjust_index, +(1, whole_8->(indexes_to_adjust_index)));
-};
-
-function autobuffer_push_push_data(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, data_index: DataIndex) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
-    autobuffer_array8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_index, +(1, whole_8->(indexes_to_adjust_index)));
-};
-
-function autobuffer_push_push_instruction_pointer(buffer: *AutoBuffer, buffer_index_pointer: *whole_8): InstructionIndex {
-    variable instruction_index = @cast_InstructionIndex(whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, 0_whole_4);
-
-    return instruction_index;
-};
-
-function autobuffer_push_push_bss(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust: *AutoBuffer, indexes_to_adjust_index: *whole_8, bss_index: BssIndex) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
-    autobuffer_array8_set(indexes_to_adjust, whole_8->(indexes_to_adjust_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(bss_index)));
-
-    whole_8<-(indexes_to_adjust_index, +(1, whole_8->(indexes_to_adjust_index)));
-};
-
-function autobuffer_array8_set(buffer: *AutoBuffer, index: whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, @cast_whole_8(value), *(index, 8));
+define autobuffer_array8_set = function(buffer: *AutoBuffer, index: whole_8, value: any_8) {
+    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(index, 8));
     autobuffer_register(buffer, +(*(index, 8), 8), 8);
 };
 
-function autobuffer_array8_get(buffer: *AutoBuffer, index: whole_8): any_8 {
+define autobuffer_array8_get = function(buffer: *AutoBuffer, index: whole_8): any_8 {
     return autobuffer_get_whole_8(buffer, *(index, 8));
 };
 
-function autobuffer_array8_length(buffer: *AutoBuffer): whole_8 {
+define autobuffer_array8_length = function(buffer: *AutoBuffer): whole_8 {
     variable k = 0;
     while !(=(autobuffer_array8_get(buffer, k), 0)) {
         k = +(k, 1);
@@ -243,1741 +241,29 @@ function autobuffer_array8_length(buffer: *AutoBuffer): whole_8 {
     return k;
 };
 
-function autobuffer_push_mov_whole_8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 73_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(176_whole_1, register));
-        autobuffer_push_whole_8(buffer, buffer_index_pointer, value);
-        return;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(184_whole_1, register));
-    autobuffer_push_whole_8(buffer, buffer_index_pointer, value);
-};
-
-function autobuffer_push_mov_whole_4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4, value: whole_4) {
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 65_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(176_whole_1, register));
-        autobuffer_push_whole_4(buffer, buffer_index_pointer, value);
-        return;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(184_whole_1, register));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, value);
-};
-
-function autobuffer_push_mov_whole_2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2, value: whole_2) {
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 65_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(176_whole_1, register));
-        autobuffer_push_whole_2(buffer, buffer_index_pointer, value);
-        return;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(184_whole_1, register));
-    autobuffer_push_whole_2(buffer, buffer_index_pointer, value);
-};
-
-function autobuffer_push_mov_whole_1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1, value: whole_1) {
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 65_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(168_whole_1, register));
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, value);
-        return;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(176_whole_1, register));
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, value);
-};
-
-function autobuffer_push_lea_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, register_to: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 141_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_to, 8_whole_1));
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, -(register_from, 8_whole_1));
-    } else {
-        value = +(value, register_from);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, value);
-};
-
-function autobuffer_push_lea_register8_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 141_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_to, 8_whole_1));
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, -(register_from, 8_whole_1));
-    } else {
-        value = +(value, register_from);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(128_whole_1, value));
-
-    if =(register_from, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_data_offset_pointer_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_data_offset_pointer_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register4) {
-    variable instruction = 64_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_data_offset_pointer_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register2) {
-    variable instruction = 64_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_data_offset_pointer_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: DataIndex, offset: whole_8, register: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 138_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_bss_offset_pointer_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_bss_offset_pointer_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register4) {
-    variable instruction = 64_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_bss_offset_pointer_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register2) {
-    variable instruction = 64_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_bss_offset_pointer_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, data_index: BssIndex, offset: whole_8, register: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 138_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(data_index)));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_register8_bss_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, indexes_to_adjust_relative: *AutoBuffer, indexes_to_adjust_relative_index: *whole_8, register: Register8, data_index: BssIndex, offset: whole_8) {
-    variable instruction = 72_whole_1;
-
-    if >(register, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 137_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register, 7_whole_1) {
-        value = +(value, *(-(register, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 5_whole_1));
-
-    autobuffer_array8_set(indexes_to_adjust_relative, whole_8->(indexes_to_adjust_relative_index), whole_8->(buffer_index_pointer));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(@cast_whole_8(+(data_index, offset))));
-
-    whole_8<-(indexes_to_adjust_relative_index, +(1, whole_8->(indexes_to_adjust_relative_index)));
-};
-
-function autobuffer_push_mov_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, register_to: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 137_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, -(register_to, 8_whole_1));
-    } else {
-        value = +(value, register_to);
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_from, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmp_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 57_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmp_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register4, register2: Register4) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 57_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmp_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register2, register2: Register2) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 57_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmp_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 56_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmove_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 68_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register1, 8_whole_1));
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, -(register2, 8_whole_1));
-    } else {
-        value = +(value, register2);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmova_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 71_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register1, 8_whole_1));
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, -(register2, 8_whole_1));
-    } else {
-        value = +(value, register2);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmovg_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 79_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register1, 8_whole_1));
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, -(register2, 8_whole_1));
-    } else {
-        value = +(value, register2);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmovb_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 66_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register1, 8_whole_1));
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, -(register2, 8_whole_1));
-    } else {
-        value = +(value, register2);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_cmovl_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 76_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, *(-(register1, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register1, 8_whole_1));
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, -(register2, 8_whole_1));
-    } else {
-        value = +(value, register2);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_mov_register8_pointer_offset_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_to, 8_whole_1));
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, -(register_from, 8_whole_1));
-    } else {
-        value = +(value, register_from);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_from, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register8_pointer_offset_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register4) {
-    variable instruction = 64_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_to, 8_whole_1));
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, -(register_from, 8_whole_1));
-    } else {
-        value = +(value, register_from);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_from, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register8_pointer_offset_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register2) {
-    variable instruction = 64_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 139_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_to, 8_whole_1));
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, -(register_from, 8_whole_1));
-    } else {
-        value = +(value, register_from);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_from, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register8_pointer_offset_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8, offset: whole_8, register_to: Register1) {
-    variable instruction = 64_whole_1;
-    variable instruction2 = 138_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-        instruction2 = +(instruction2, 1_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-        instruction2 = +(instruction2, 1_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction2);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, *(-(register_to, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_to, 8_whole_1));
-    };
+define autobuffer_buffer_push_pointer = function(buffer: *AutoBufferBuffer, pointer: *, length: whole_8) {
+    variable buffer_index = AutoBufferBuffer.>index(buffer);
 
-    if >(register_from, 7_whole_1) {
-        value = +(value, -(register_from, 8_whole_1));
-    } else {
-        value = +(value, register_from);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(128_whole_1, value));
-
-    if =(register_from, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register1_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register1, register_to: Register8, offset: whole_8) {
-    variable instruction = 64_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 136_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_from, 8_whole_1));
-    };
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, -(register_to, 8_whole_1));
-    } else {
-        value = +(value, register_to);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_to, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register2_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register2,  register_to: Register8, offset: whole_8) {
-    variable instruction = 64_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 137_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, -(register_to, 8_whole_1));
-    } else {
-        value = +(value, register_to);
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_from, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_to, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register4_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register4,  register_to: Register8, offset: whole_8) {
-    variable instruction = 64_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 137_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, -(register_to, 8_whole_1));
-    } else {
-        value = +(value, register_to);
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_from, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_to, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_mov_register8_register8_pointer_offset(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register_from: Register8,  register_to: Register8, offset: whole_8) {
-    variable instruction = 72_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register_from, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 137_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register_to, 7_whole_1) {
-        value = +(value, -(register_to, 8_whole_1));
-    } else {
-        value = +(value, register_to);
-    };
-
-    if >(register_from, 7_whole_1) {
-        value = +(value, *(-(register_from, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register_from, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 128_whole_1));
-
-    if =(register_to, RSP) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 36_whole_1);
-    };
-
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(offset));
-};
-
-function autobuffer_push_add_register8_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 129_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(192_whole_1, register));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(value));
-};
-
-function autobuffer_push_mul_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    variable instruction = 72_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 73_whole_1;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    };
-};
-
-function autobuffer_push_mul_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    };
-};
-
-function autobuffer_push_mul_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    };
-};
-
-function autobuffer_push_mul_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 246_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(216_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    };
-};
-
-function autobuffer_push_imul_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    variable instruction = 72_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 73_whole_1;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    };
-};
-
-function autobuffer_push_imul_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    };
-};
-
-function autobuffer_push_imul_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    };
-};
-
-function autobuffer_push_imul_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 246_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(224_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    };
-};
-
-function autobuffer_push_div_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    variable instruction = 72_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 73_whole_1;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    };
-};
-
-function autobuffer_push_div_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    };
-};
-
-function autobuffer_push_div_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    };
-};
-
-function autobuffer_push_div_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 246_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    };
-};
-
-function autobuffer_push_idiv_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    variable instruction = 72_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 73_whole_1;
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(248_whole_1, register));
-    };
-};
-
-function autobuffer_push_idiv_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register4) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(248_whole_1, register));
-    };
-};
-
-function autobuffer_push_idiv_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register2) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 247_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(248_whole_1, register));
-    };
-};
-
-function autobuffer_push_idiv_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register1) {
-    variable instruction = 64_whole_1;
-    if >(register, 7_whole_1) {
-        instruction = 65_whole_1;
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 246_whole_1);
-
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(240_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(248_whole_1, register));
-    };
-};
-
-function autobuffer_push_cqo(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 153_whole_1);
-};
-
-function autobuffer_push_cdq(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 153_whole_1);
-};
-
-function autobuffer_push_cwd(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 153_whole_1);
-};
-
-function autobuffer_push_cbw(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 152_whole_1);
-};
-
-function autobuffer_push_add_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 1_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_add_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register4, register2: Register4) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 1_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_add_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register2, register2: Register2) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 1_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_add_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 0_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_or_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 8_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_and_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 32_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_sub_register8_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register8, register2: Register8) {
-    variable instruction = 72_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 41_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_sub_register4_register4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register4, register2: Register4) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 41_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_sub_register2_register2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register2, register2: Register2) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 102_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 41_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_sub_register1_register1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register1: Register1, register2: Register1) {
-    variable instruction = 64_whole_1;
-
-    if >(register1, 7_whole_1) {
-        instruction = +(instruction, 1_whole_1);
-    };
-
-    if >(register2, 7_whole_1) {
-        instruction = +(instruction, 4_whole_1);
-    };
-
-    if !(=(instruction, 64_whole_1)) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, instruction);
-    };
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 40_whole_1);
-
-    variable value = 0_whole_1;
-
-    if >(register1, 7_whole_1) {
-        value = +(value, -(register1, 8_whole_1));
-    } else {
-        value = +(value, register1);
-    };
-
-    if >(register2, 7_whole_1) {
-        value = +(value, *(-(register2, 8_whole_1), 8_whole_1));
-    } else {
-        value = +(value, *(register2, 8_whole_1));
-    };
-
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(value, 192_whole_1));
-};
-
-function autobuffer_push_sub_register8_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8, value: whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 72_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 129_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, +(232_whole_1, register));
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(value));
-};
-
-function autobuffer_push_push_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, value: whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 104_whole_1);
-    autobuffer_push_whole_4(buffer, buffer_index_pointer, whole_8_to_whole_4(value));
-};
-
-function autobuffer_push_pop_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 65_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(80_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(88_whole_1, register));
-    };
-};
-
-function autobuffer_push_push_register8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, register: Register8) {
-    if >(register, 7_whole_1) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 65_whole_1);
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(72_whole_1, register));
-    } else {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, +(80_whole_1, register));
-    };
-};
-
-function autobuffer_push_syscall(buffer: *AutoBuffer, buffer_index_pointer: *whole_8) {
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 15_whole_1);
-    autobuffer_push_whole_1(buffer, buffer_index_pointer, 5_whole_1);
-};
-
-function autobuffer_push_whole_8(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_8: whole_8) {
-    variable buffer_index = whole_8->(buffer_index_pointer);
-
-    autobuffer_set(buffer, &(whole_8), buffer_index, 8);
-
-    increment_whole_8_pointer(buffer_index_pointer, 8);
-};
-
-function autobuffer_push_whole_4(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_4: whole_4) {
-    variable buffer_index = whole_8->(buffer_index_pointer);
-
-    autobuffer_set(buffer, &(whole_4), buffer_index, 4);
-
-    increment_whole_8_pointer(buffer_index_pointer, 4);
-};
-
-function autobuffer_push_whole_2(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_2: whole_2) {
-    variable buffer_index = whole_8->(buffer_index_pointer);
-
-    autobuffer_set(buffer, &(whole_2), buffer_index, 2);
-
-    increment_whole_8_pointer(buffer_index_pointer, 2);
-};
-
-function autobuffer_push_whole_1(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, whole_1: whole_1) {
-    variable buffer_index = whole_8->(buffer_index_pointer);
-
-    autobuffer_set(buffer, &(whole_1), buffer_index, 1);
-
-    increment_whole_8_pointer(buffer_index_pointer, 1);
-};
-
-function autobuffer_push_string(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, string: *) {
-    variable length2 = length(string);
-    variable buffer_index = whole_8->(buffer_index_pointer);
-
-    autobuffer_set(buffer, string, buffer_index, length2);
-
-    whole_8<-(buffer_index_pointer, +(length2, whole_8->(buffer_index_pointer)));
-};
-
-function autobuffer_push_pointer(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, pointer: *, length: whole_8) {
-    variable buffer_index = whole_8->(buffer_index_pointer);
-
-    autobuffer_set(buffer, pointer, buffer_index, length);
-
-    whole_8<-(buffer_index_pointer, +(length, whole_8->(buffer_index_pointer)));
-};
+    autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), pointer, buffer_index, length);
 
-function autobuffer_push_zeros(buffer: *AutoBuffer, buffer_index_pointer: *whole_8, count: whole_8) {
-    variable i = 0;
-    while <(i, count) {
-        autobuffer_push_whole_1(buffer, buffer_index_pointer, 0_whole_1);
-        i = +(i, 1);
-    };
+    AutoBufferBuffer.<index(buffer, +(length, buffer_index));
 };
 
-function new_elf64_file_header(): ELF64FileHeader {
-    variable header = ELF64FileHeader->0();
+define new_elf64_file_header = function(): ELF64FileHeader {
+    variable header = ELF64FileHeader.>0();
 
     variable _ = whole_8_to_whole_4(2);
-    ELF64FileHeader<-magic(&(header), whole_8_to_whole_4(1179403647));
-    ELF64FileHeader<-header_size(&(header), whole_8_to_whole_2(64));
-    ELF64FileHeader<-program_header_size(&(header), whole_8_to_whole_2(56));
-    ELF64FileHeader<-section_header_size(&(header), whole_8_to_whole_2(64));
-    ELF64FileHeader<-version(&(header), 1_whole_1);
-    ELF64FileHeader<-version2(&(header), whole_8_to_whole_4(1));
+    ELF64FileHeader.<magic(&(header), whole_8_to_whole_4(1179403647));
+    ELF64FileHeader.<header_size(&(header), whole_8_to_whole_2(64));
+    ELF64FileHeader.<program_header_size(&(header), whole_8_to_whole_2(56));
+    ELF64FileHeader.<section_header_size(&(header), whole_8_to_whole_2(64));
+    ELF64FileHeader.<version(&(header), 1_whole_1);
+    ELF64FileHeader.<version2(&(header), whole_8_to_whole_4(1));
 
     return header;
 };
 
-structure ELF64FileHeader {
+define ELF64FileHeader = structure {
     magic: any_4;
     format: any_1;
     endianness: any_1;
@@ -2000,7 +286,7 @@ structure ELF64FileHeader {
     section_names: any_2;
 };
 
-structure ELF64ProgramHeader {
+define ELF64ProgramHeader = structure {
     type: any_4;
     flags: any_4;
     location: any_8;
@@ -2011,42 +297,64 @@ structure ELF64ProgramHeader {
     alignment: any_8;
 };
 
-function get_whole_1(pointer: *, offset: whole_8): whole_1 {
-    return whole_1->(@cast_*whole_1(+(pointer, offset)));
+define get_whole_1 = function(pointer: *, offset: whole_8): whole_1 {
+    return whole_1.>(whole_1.*cast(+(pointer, offset)));
 };
 
-function get_whole_2(pointer: *, offset: whole_8): whole_2 {
-    return whole_2->(@cast_*whole_2(+(pointer, offset)));
+define get_whole_2 = function(pointer: *, offset: whole_8): whole_2 {
+    return whole_2.>(whole_2.*cast(+(pointer, offset)));
 };
 
-function get_whole_4(pointer: *, offset: whole_8): whole_4 {
-    return whole_4->(@cast_*whole_4(+(pointer, offset)));
+define get_whole_4 = function(pointer: *, offset: whole_8): whole_4 {
+    return whole_4.>(whole_4.*cast(+(pointer, offset)));
 };
 
-function get_whole_8(pointer: *, offset: whole_8): any_8 {
-    return any_8->(@cast_*any_8(+(pointer, offset)));
+define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
+    return any_8.>(any_8.*cast(+(pointer, offset)));
 };
 
-global BRK: *;
-global REFERENCE_BRK: *;
+//define BRK = global(*);
+//define REFERENCE_BRK = global(*);
+//
+//define brk_allocate = function(size: whole_8): * {
+//    if =(BRK, 0) {
+//        BRK = sys_brk(*.cast(0));
+//        REFERENCE_BRK = BRK;
+//    };
+//
+//    variable allocated = REFERENCE_BRK;
+//    REFERENCE_BRK = *.cast(+(REFERENCE_BRK, size));
+//    
+//    if >(REFERENCE_BRK, BRK) {
+//        variable increment = 67108864;
+//        if >(size, increment) {
+//            increment = size;
+//        };
+//        BRK = *.cast(+(BRK, increment));
+//        variable _ = sys_brk(BRK);
+//    };
+//    return allocated;
+//};
 
-function brk_allocate(size: whole_8): * {
-    if =(BRK, 0) {
-        BRK = sys_brk(@cast_*(0));
-        REFERENCE_BRK = BRK;
-    };
+define CURRENT_MMAP = global(*);
+define MMAP_LEFT = global(whole_8);
 
-    variable allocated = REFERENCE_BRK;
-    REFERENCE_BRK = @cast_*(+(REFERENCE_BRK, size));
-    
-    if >(REFERENCE_BRK, BRK) {
+define brk_allocate = function(size: whole_8): * {
+    variable result: *;
+    if >(size, MMAP_LEFT) {
         variable increment = 67108864;
         if >(size, increment) {
             increment = size;
         };
-        BRK = @cast_*(+(BRK, increment));
-        variable _ = sys_brk(BRK);
+        CURRENT_MMAP = map_memory(increment);
+        result = CURRENT_MMAP;
+	    CURRENT_MMAP = +(result, size);
+	    MMAP_LEFT = increment;
+    } else {
+	    result = CURRENT_MMAP;
+        CURRENT_MMAP = +(result, size);
     };
-    return allocated;
-};
+    MMAP_LEFT = -(MMAP_LEFT, size);
 
+    return result;
+};

@@ -1,86 +1,105 @@
-constant TOKEN_OPEN_PARENTHESIS: whole_8 = 0;
-constant TOKEN_CLOSED_PARENTHESIS: whole_8 = 1;
-constant TOKEN_OPEN_CURLY_BRACKETS: whole_8 = 2;
-constant TOKEN_CLOSED_CURLY_BRACKETS: whole_8 = 3;
-constant TOKEN_COMMA: whole_8 = 4;
-constant TOKEN_SEMICOLON: whole_8 = 5;
-constant TOKEN_KEYWORD: whole_8 = 6;
+define TOKEN_OPEN_PARENTHESIS = 0;
+define TOKEN_CLOSED_PARENTHESIS = 1;
+define TOKEN_OPEN_CURLY_BRACKETS = 2;
+define TOKEN_CLOSED_CURLY_BRACKETS = 3;
+define TOKEN_COMMA = 4;
+define TOKEN_SEMICOLON = 5;
+define TOKEN_KEYWORD = 6;
 
-structure TokenKeywordData {
+define TokenKeywordData = structure {
     keyword: *;
 };
 
-constant TOKEN_NAME: whole_8 = 7;
+define TOKEN_NAME = 7;
 
-structure TokenNameData {
+define TokenNameData = structure {
     name: *;
 };
 
-constant TOKEN_STRING: whole_8 = 8;
+define TOKEN_STRING = 8;
 
-structure TokenStringData {
+define TokenStringData = structure {
     value: *;
 };
 
-constant TOKEN_NUMBER: whole_8 = 9;
+define TOKEN_NUMBER = 9;
 
-structure TokenNumberData {
+define TokenNumberData = structure {
     value: whole_8;
     type: whole_8;
     size: whole_8;
 };
 
-constant TOKEN_COLON: whole_8 = 10;
+define TOKEN_COLON = 10;
 
-constant TOKEN_BOOLEAN: whole_8 = 11;
+define TOKEN_BOOLEAN = 11;
 
-structure TokenBooleanData {
+define TokenBooleanData = structure {
     value: boolean;
 };
 
-constant TOKEN_OPEN_BRACKET: whole_8 = 12;
-constant TOKEN_CLOSED_BRACKET: whole_8 = 13;
+define TOKEN_OPEN_BRACKET = 12;
+define TOKEN_CLOSED_BRACKET = 13;
+define TOKEN_PERIOD = 14;
 
-constant TOKEN_SIZE: whole_8 = 56;
+define TOKEN_SIZE = 56;
 
-structure TokenLocationData {
+define TokenLocationData = structure {
     file: *;
     row: whole_8;
     column: whole_8;
 };
 
-function tokens_get_id(tokens: *Tokens, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
+define TOKEN_DATA_OFFSET = 32;
+
+define tokens_get_id = function(tokens: *Tokens, index: whole_8): whole_8 {
+    return autobuffer_get_whole_8(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
-function tokens_get_pointer(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens->buffer(tokens)), *(index, TOKEN_SIZE));
+define tokens_get_pointer = function(tokens: *Tokens, index: whole_8): * {
+    return autobuffer_get(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
 };
 
-function tokens_get_pointer_data(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 32));
+define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
+    return autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), TOKEN_DATA_OFFSET));
 };
 
-function tokens_get_location_data(tokens: *Tokens, index: whole_8): *TokenLocationData {
-    return @cast_*TokenLocationData(autobuffer_get(&(Tokens->buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
+define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
+    return TokenLocationData.*cast(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
 };
 
-function tokens_append_data(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    return @cast_*(+(tokens_append(tokens, id, file_name, row, column), 32));
+define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    return *.cast(+(tokens_append(tokens, id, file_name, row, column), TOKEN_DATA_OFFSET));
 };
 
-function tokens_append(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    variable tokens_buffer = &(Tokens->buffer(tokens));
-    variable tokens_index = &(Tokens->index(tokens));
-    autobuffer_register(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
-    variable to_return = autobuffer_get(tokens_buffer, *(whole_8->(tokens_index), TOKEN_SIZE));
+define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    variable tokens_buffer = &(Tokens.>buffer(tokens));
+    variable tokens_index = &(Tokens.>index(tokens));
+    autobuffer_register(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
+    variable to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE));
 
-    autobuffer_set_whole_8(tokens_buffer, id, *(whole_8->(tokens_index), TOKEN_SIZE));
-    autobuffer_set_*(tokens_buffer, file_name, +(*(whole_8->(tokens_index), TOKEN_SIZE), 8));
-    autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8->(tokens_index), TOKEN_SIZE), 16));
-    autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8->(tokens_index), TOKEN_SIZE), 24));
+    autobuffer_set_whole_8(tokens_buffer, id, *(whole_8.>(tokens_index), TOKEN_SIZE));
+    autobuffer_set_*(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 8));
+    autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 16));
+    autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 24));
 
     increment_whole_8_pointer(tokens_index, 1);
 
     return to_return;
+};
+
+define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *): boolean {
+    return if =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
+        string=(TokenKeywordData.>keyword(TokenKeywordData.*cast(tokens_get_pointer_data(tokens, index))), keyword)
+    } else {
+        false
+    };
+};
+
+define tokens_is_name = function(tokens: *Tokens, index: whole_8, name: *): boolean {
+    return if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+        string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), name)
+    } else {
+        false
+    };
 };
