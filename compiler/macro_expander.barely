@@ -31,10 +31,8 @@ define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens, flags
                         i = +(i, 1);
                     };
 
-                    i = +(i, 2);
-
-                    variable inside = 1;
-                    while >(inside, 0) {
+                    variable inside = 0;
+                    while |(>(inside, 0), !(=(tokens_get_id(tokens, i), TOKEN_SEMICOLON))) {
                         variable id = tokens_get_id(tokens, i);
 
                         if =(id, TOKEN_OPEN_CURLY_BRACKETS) {
@@ -62,6 +60,7 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
     if =(tokens_get_id(tokens_in, whole_8.>(index_in)), TOKEN_NAME) {
         variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, whole_8.>(index_in)));
         variable name = TokenNameData.>name(name_data);
+
         if !(=(hashmap_string_get2(macro_starts, name), 999)) {
             variable bindings = *.cast(hashmap_string_get(macro_bindings, name));
             variable bindings_map = hashmap_new(32);
@@ -104,7 +103,7 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
             increment_whole_8_pointer(index_in, 1);
 
             variable j = whole_8.cast(hashmap_string_get(macro_starts, name));
-            variable max = hashmap_string_get(macro_ends, name);
+            variable max = whole_8.cast(hashmap_string_get(macro_ends, name));
             while <(j, max) {
                 output_macro_element(tokens_in, tokens_out, &(j), &(bindings_map), flags);
             };
@@ -152,8 +151,11 @@ define output_macro_element = function(tokens_in: *Tokens, tokens_out: *Tokens, 
                 };
             };
 
+	    variable go_next = true;
+
             variable index = +(whole_8.>(tokens_in_location), 3);
-            while |(!(=(tokens_get_id(tokens_in, index), TOKEN_SEMICOLON)), >(inside, 0)) {
+            while |(go_next, >(inside, 0)) {
+		        go_next = false;
                 variable id = tokens_get_id(tokens_in, index);
 
                 if |(=(id, TOKEN_OPEN_PARENTHESIS), =(id, TOKEN_OPEN_CURLY_BRACKETS)) {
@@ -167,12 +169,12 @@ define output_macro_element = function(tokens_in: *Tokens, tokens_out: *Tokens, 
                 } else {
                     index = +(index, 1);
                 };
-            };
-            if is_true {
-                tokens_copy_append(tokens_in, index, tokens_out);
+
+		        if =(tokens_get_id(tokens_in, index), TOKEN_PERIOD) {
+		            go_next = true;
+		        };
             };
 
-            index = +(index, 1);
             whole_8.<(tokens_in_location, index);
         } else {
             increment_whole_8_pointer(tokens_in_location, 1);
@@ -218,13 +220,12 @@ define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, Hash
                 i = +(i, 1);
             };
             hashmap_string_put(&(macro_bindings), name, autobuffer_stack8_get_buffer_pointer(&(bindings)));
+	        i = +(i, 1);
 
-            i = +(i, 2);
+            hashmap_string_put(&(macro_starts), name, +(i, 1));
 
-            hashmap_string_put(&(macro_starts), name, i);
-
-            variable inside = 1;
-            while >(inside, 0) {
+            variable inside = 0;
+            while |(>(inside, 0), !(=(tokens_get_id(tokens, i), TOKEN_SEMICOLON))) {
                 variable id = tokens_get_id(tokens, i);
 
                 if =(id, TOKEN_OPEN_CURLY_BRACKETS) {

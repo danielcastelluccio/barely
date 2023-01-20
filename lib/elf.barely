@@ -336,6 +336,25 @@ define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
 //    return allocated;
 //};
 
+define CURRENT_MMAP = global(*);
+define MMAP_LEFT = global(whole_8);
+
 define brk_allocate = function(size: whole_8): * {
-    return map_memory(size);
+    variable result: *;
+    if >(size, MMAP_LEFT) {
+        variable increment = 67108864;
+        if >(size, increment) {
+            increment = size;
+        };
+        CURRENT_MMAP = map_memory(increment);
+        result = CURRENT_MMAP;
+	    CURRENT_MMAP = +(result, size);
+	    MMAP_LEFT = increment;
+    } else {
+	    result = CURRENT_MMAP;
+        CURRENT_MMAP = +(result, size);
+    };
+    MMAP_LEFT = -(MMAP_LEFT, size);
+
+    return result;
 };
