@@ -1,0 +1,81 @@
+define InstructionSetFunctions = structure {
+    main: *function[*Nodes,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex];
+    get_size: *function[*,*Nodes,*ProgramData:whole_8];
+    get_size_multiple: *function[*,whole_8,*Nodes,*ProgramData:whole_8];
+    get_size_multiple_reversed: *function[*,whole_8,*Nodes,*ProgramData:whole_8];
+};
+
+define calculate_global_locations = function(nodes: *Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes,*ProgramData:whole_8], global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
+    variable global_locations = autobuffer_new(512);
+    variable bss_index = 0;
+
+    variable i = 0;
+    while <(i, global_count) {
+        variable global_type = *.cast(autobuffer_array8_get(global_types, i));
+
+        autobuffer_array8_set(&(global_locations), i, bss_index);
+
+        variable size = function_size(global_type, nodes, program_data);
+        bss_index = +(bss_index, size);
+        i = +(i, 1);
+    };
+
+    return AutoBuffer.>buffer(&(global_locations)), bss_index;
+};
+
+define calculate_function_local_sizes = function(nodes: *Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
+    variable function_local_sizes = autobuffer_new(1024);
+
+    variable i = 0;
+    while <(i, function_count) {
+        variable total = 0;
+        variable j = whole_8.cast(autobuffer_array8_get(function_node_locations, i));
+        while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
+            variable id = nodes_get_id(nodes, j);
+            variable pointer_data = nodes_get_pointer_data(nodes, j);
+            
+            if =(id, NODE_DECLARE) {
+                variable declare_data = NodeDeclareData.*cast(pointer_data);
+                variable declare_name = NodeDeclareData.>name(declare_data);
+                variable declare_type = NodeDeclareData.>type(declare_data);
+                total = +(total, function_size(declare_type, nodes, program_data));
+            };
+
+            j = +(j, 1);
+        };
+
+        autobuffer_array8_set(&(function_local_sizes), i, total);
+        i = +(i, 1);
+    };
+
+    return AutoBuffer.>buffer(&(function_local_sizes));
+};
+
+define calculate_variable_location = function(variable_count: whole_8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_name: *, scope_variable_index: whole_8): whole_8 {
+    variable location = 0;
+    variable j = 0;
+    while true {
+        if !(<(j, variable_count)) {
+            break;
+        } else if !(|(!(string=(variable_name, *.cast(autobuffer_array8_get(variable_names, j)))), <(j, scope_variable_index))) {
+            break;
+        } else {
+            location = +(location, autobuffer_array8_get(variable_sizes, j));
+            j = +(j, 1);
+        };
+    };
+
+    return location;
+};
+
+define adjust_indexes = function(instructions_autobuffer: *AutoBuffer, indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
+    variable index_count = AutoBufferStack8.>index(indexes_to_adjust);
+    variable i = 0;
+    while <(i, index_count) {
+        variable index = whole_8.cast(autobuffer_stack8_get(indexes_to_adjust, i));
+        variable previous_value = whole_4_to_whole_8(autobuffer_get_whole_4(instructions_autobuffer, index));
+        variable new_value = +(previous_value, offset);
+        autobuffer_set_any_8(instructions_autobuffer, new_value, index);
+        i = +(i, 1);
+    };
+};

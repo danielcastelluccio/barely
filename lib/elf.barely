@@ -225,8 +225,8 @@ define ELF_X86_64 = module {
 };
 
 define autobuffer_array8_set = function(buffer: *AutoBuffer, index: whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(index, 8));
     autobuffer_register(buffer, +(*(index, 8), 8), 8);
+    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(index, 8));
 };
 
 define autobuffer_array8_get = function(buffer: *AutoBuffer, index: whole_8): any_8 {
@@ -318,7 +318,7 @@ define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
 //
 //define brk_allocate = function(size: whole_8): * {
 //    if =(BRK, 0) {
-//        BRK = sys_brk(*.cast(0));
+//        BRK = Linux.sys_brk(*.cast(0));
 //        REFERENCE_BRK = BRK;
 //    };
 //
@@ -331,7 +331,7 @@ define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
 //            increment = size;
 //        };
 //        BRK = *.cast(+(BRK, increment));
-//        variable _ = sys_brk(BRK);
+//        variable _ = Linux.sys_brk(BRK);
 //    };
 //    return allocated;
 //};

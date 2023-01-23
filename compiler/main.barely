@@ -11,8 +11,9 @@ define main = function(arguments: **, argument_count: whole_8) {
     while_target_id_stack = autobuffer_stack8_new(64);
 
     variable output_file = "output";
-    variable type = "elf:x86_64";
-    variable tokens = tokens_new();
+    variable format = "";
+    variable instruction_set = "";
+    variable target_os = "";
 
     variable flags = hashmap_new(32);
 
@@ -24,8 +25,12 @@ define main = function(arguments: **, argument_count: whole_8) {
             output_file = *.cast(array8_get(arguments, +(i, 1)));
             
             i = +(i, 2);
-        } else if string=(pointer, "--type") {
-            type = *.cast(array8_get(arguments, +(i, 1)));
+        } else if string=(pointer, "--target") {
+            variable target = *.cast(array8_get(arguments, +(i, 1)));
+            format = substring_brk_allocate(target, 0, first_index(target, 58_whole_1));
+            instruction_set = substring_brk_allocate(target, +(first_index(target, 58_whole_1), 1), nth_index(target, 58_whole_1, 1));
+            target_os = +(target, +(nth_index(target, 58_whole_1, 1), 1));
+            hashmap_string_put(&(flags), "target", target_os);
 
             i = +(i, 2);
         } else if string_length=(pointer, "--", 2) {
@@ -37,14 +42,27 @@ define main = function(arguments: **, argument_count: whole_8) {
         };
     };
 
-    variable add_target_internal_functions, is_target_internal_function, output = if string=(type, "elf:x86_64") {
-        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64, output_linux_x86-64_elf
-    } else if string=(type, "macho:x86_64") {
-        add_internal_functions_macos_x86-64, is_internal_function_macos_x86-64, output_macos_x86-64_elf
+    if =(length(format), 0) {
+        println("No output format specified!");
+        exit(1);
+    };
+
+    variable output_instruction_set = if string=(instruction_set, "x86_64") {
+        Target/X86_64.get_functions()
+    } else {
+        Target/X86_64.get_functions()
+    };
+
+    variable output_format = if string=(format, "elf") {
+        Target/Elf.output
+    } else if string=(format, "macho") {
+        Target/Macho.output
     } else {
         // temporary
-        add_internal_functions_linux_x86-64, is_internal_function_linux_x86-64, output_linux_x86-64_elf
+        Target/Elf.output
     };
+
+    variable tokens = tokens_new();
 
     variable i = 1;
     while <(i, argument_count) {
@@ -53,7 +71,7 @@ define main = function(arguments: **, argument_count: whole_8) {
         if string_length=(pointer, "--", 2) {
             i = +(i, 2);
         } else {
-            include_file(pointer, &(tokens), is_target_internal_function);
+            include_file(pointer, &(tokens));
 
             i = +(i, 1);
         };
@@ -64,18 +82,48 @@ define main = function(arguments: **, argument_count: whole_8) {
     variable tokens_expanded = tokens_new();
     expand_macros(&(tokens), &(tokens_expanded), &(flags));
 
-    parse(&(tokens_expanded), &(nodes), is_target_internal_function);
+    parse(&(tokens_expanded), &(nodes));
 
     add_basic_internals(&(nodes));
     add_used_any_types(&(nodes));
     add_structure_pseudo_functions(&(nodes));
-    add_target_internal_functions(&(nodes));
+    add_internal_functions(&(nodes));
 
     println("Processing...");
-    variable program_data = process(&(nodes));
+    variable program_data = process(&(nodes), InstructionSetFunctions.>get_size(&(output_instruction_set)));
 
     println("Outputting...");
-    output(&(nodes), program_data, output_file);
+    output_format(&(nodes), program_data, target_os, output_file, output_instruction_set);
+};
+
+define add_internal_functions = function(nodes: *Nodes) {
+    variable function_arguments = create_size_one_array8_brk_allocate("whole_8");
+    variable function_returns = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall0", function_arguments, function_returns);
+
+    variable function_arguments = create_size_two_array8_brk_allocate("whole_8", "any_8");
+    variable function_returns = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall1", function_arguments, function_returns);
+
+    variable function_arguments = create_size_three_array8_brk_allocate("whole_8", "any_8", "any_8");
+    variable function_returns = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall2", function_arguments, function_returns);
+
+    variable function_arguments = create_size_four_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8");
+    variable function_returns2 = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall3", function_arguments, function_returns);
+
+    variable function_arguments = create_size_five_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8", "any_8");
+    variable function_returns = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall4", function_arguments, function_returns);
+
+    variable function_arguments = create_size_six_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8", "any_8", "any_8");
+    variable function_returns = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall5", function_arguments, function_returns);
+
+    variable function_arguments = create_size_seven_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8", "any_8", "any_8", "any_8");
+    variable function_returns = create_size_one_array8_brk_allocate("any_8");
+    nodes_append_function(nodes, "@syscall6", function_arguments, function_returns);
 };
 
 define add_structure_pseudo_functions = function(nodes: *Nodes) {
@@ -305,7 +353,7 @@ define tokens_new = function(): Tokens {
     return tokens;
 };
 
-define include_file = function(file_name: *, tokens: *Tokens, is_target_internal_function: *function[*:boolean]) {
+define include_file = function(file_name: *, tokens: *Tokens) {
     variable contents = get_contents(file_name);
 
     tokenize(file_name, contents, tokens);

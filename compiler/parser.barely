@@ -256,7 +256,7 @@ define print_token_error_beginning = function(tokens: *Tokens, location: whole_8
     print(": ");
 };
 
-define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8.>(index_pointer);
     variable name_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 1)));
     variable name = TokenNameData.>name(name_token_pointer_data);
@@ -292,7 +292,7 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     increment_whole_8_pointer(index_pointer, value_offset);
 
-    parse_individual(tokens, index_pointer, nodes, is_target_internal_function);
+    parse_individual(tokens, index_pointer, nodes);
 
     variable end_define_node_data = NodeEndDefineData.*cast(nodes_append_data(nodes, NODE_ENDDEFINE, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeEndDefineData.<type(end_define_node_data, type);
@@ -505,7 +505,7 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
     return result;
 };
 
-define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8.>(index_pointer);
 
     variable function_data = NodeFunctionData.*cast(nodes_append_data(nodes, NODE_FUNCTION, get_token_location_data(tokens, whole_8.>(index_pointer))));
@@ -525,7 +525,7 @@ define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes
 
         variable _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
         while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
-            parse_statement(tokens, &(index), nodes, is_target_internal_function);
+            parse_statement(tokens, &(index), nodes);
         };
 
         index = +(index, 1);
@@ -594,15 +594,15 @@ define parse_function_definition = function(tokens: *Tokens, index_pointer: *who
     return AutoBuffer.>buffer(&(function_argument_names)), AutoBuffer.>buffer(&(function_arguments)), AutoBuffer.>buffer(&(function_returns));
 };
 
-define parse_invoke_parenthesis = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_invoke_parenthesis = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     increment_whole_8_pointer(index_pointer, 1);
 
-    parse_multiple_expressions(tokens, index_pointer, nodes, is_target_internal_function, TOKEN_CLOSED_PARENTHESIS);
+    parse_multiple_expressions(tokens, index_pointer, nodes, TOKEN_CLOSED_PARENTHESIS);
 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define parse_invoke_parenthesis_ending = function(tokens: *Tokens, index_in: whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_invoke_parenthesis_ending = function(tokens: *Tokens, index_in: whole_8, nodes: *Nodes) {
     variable index = index_in;
 
     variable inner = 0_integer_8;
@@ -626,8 +626,8 @@ define parse_invoke_parenthesis_ending = function(tokens: *Tokens, index_in: who
 
                     inside_index = +(inside_index, 1);
                 };
-                parse_invoke_parenthesis_ending(tokens, inside_index, nodes, is_target_internal_function);
-                parse_invoke_parenthesis(tokens, &(index), nodes, is_target_internal_function);
+                parse_invoke_parenthesis_ending(tokens, inside_index, nodes);
+                parse_invoke_parenthesis(tokens, &(index), nodes);
                 return;
             } else {
                 inner = +(inner, 1_integer_8);
@@ -640,7 +640,7 @@ define parse_invoke_parenthesis_ending = function(tokens: *Tokens, index_in: who
     };
 };
 
-define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *Nodes) {
     variable index = whole_8.>(index_pointer);
 
     variable id = tokens_get_id(tokens, index);
@@ -658,7 +658,7 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
         variable _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
         index = +(index, 1);
         while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
-            parse_statement(tokens, &(index), nodes, is_target_internal_function);
+            parse_statement(tokens, &(index), nodes);
         };
         index = +(index, 1);
         variable _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
@@ -667,23 +667,23 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
     if =(id, TOKEN_KEYWORD) {
         variable name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
         if string=(name_value, "if") {
-            parse_if(tokens, &(index), nodes, is_target_internal_function);
+            parse_if(tokens, &(index), nodes);
         };
     };
 
-    check_parse_invoke_parenthesis_chain(tokens, &(index), nodes, nodes_in, is_target_internal_function);
+    check_parse_invoke_parenthesis_chain(tokens, &(index), nodes, nodes_in);
 
     whole_8.<(index_pointer, index);
 };
 
-define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, nodes_in: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, nodes_in: *Nodes) {
     variable index = whole_8.>(index_pointer);
 
     variable nodes_moved_count = Nodes.>index(nodes);
 
     variable nodes_index = Nodes.>index(nodes);
 
-    parse_invoke_parenthesis_ending(tokens, index, nodes_in, is_target_internal_function);
+    parse_invoke_parenthesis_ending(tokens, index, nodes_in);
 
     variable nodes_in_index = Nodes.>index(nodes_in);
 
@@ -704,7 +704,7 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
             nodes_index = +(nodes_index, 1);
         };
 
-        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, +(nodes_index, nodes_in_index), executed, is_target_internal_function);
+        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, +(nodes_index, nodes_in_index), executed);
     };
 
     whole_8.<(index_pointer, index);
@@ -777,7 +777,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
     whole_8.<(index_pointer, index);
 };
 
-define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8, has_specifier: boolean, is_target_internal_function: *function[*:boolean]) {
+define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8, has_specifier: boolean) {
     variable index = whole_8.>(index_pointer);
     variable inner = 0_integer_8;
 
@@ -791,7 +791,7 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
                 variable is_pointer = false;
                 variable retrieve_name = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index)));
                 if is_first {
-                    is_special = is_special_function(retrieve_name, is_target_internal_function);
+                    is_special = is_special_function(retrieve_name);
                     if string=(retrieve_name, "&") {
                         is_pointer = true;
                     };
@@ -826,7 +826,7 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
     whole_8.<(index_pointer, index);
 };
 
-define is_special_function = function(name: *, is_target_internal_function: *function[*:boolean]): boolean {
+define is_special_function = function(name: *): boolean {
     return if string=(name, "+") {
         true
     } else if string=(name, "-") {
@@ -859,16 +859,16 @@ define is_special_function = function(name: *, is_target_internal_function: *fun
         true
     } else if string_length=(name, "*cast", 5) {
         true
-    } else if string_length=(name, "size", 4) {
+    } else if &&(string_length=(name, "size", 4), =(length(name), 4)) {
         true
-    } else if is_target_internal_function(name) {
+    } else if string_length=(name, "@syscall", 8) {
         true
     } else {
         false
     };
 };
 
-define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8.>(index_pointer);
 
     variable end_target = get_target_id();
@@ -885,13 +885,13 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
         if tokens_is_keyword(tokens, token_index, "if") {
             index = +(index, 1);
 
-            parse_expression(tokens, &(index), nodes, is_target_internal_function);
+            parse_expression(tokens, &(index), nodes);
             variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
             NodeJumpConditionalData.<target_id(conditional_jump_data, target);
         } else if &&(tokens_is_keyword(tokens, token_index, "else"), tokens_is_keyword(tokens, token_index, "if")) {
             index = +(index, 2);
 
-            parse_expression(tokens, &(index), nodes, is_target_internal_function);
+            parse_expression(tokens, &(index), nodes);
             variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
             NodeJumpConditionalData.<target_id(conditional_jump_data, target);
         } else {
@@ -900,7 +900,7 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
         };
 
         variable _ = nodes_append(nodes, NODE_STARTIFBLOCK, get_token_location_data(tokens, index));
-        parse_expression(tokens, &(index), nodes, is_target_internal_function);
+        parse_expression(tokens, &(index), nodes);
 
         variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, index)));
         NodeJumpData.<target_id(jump_data, end_target);
@@ -932,7 +932,7 @@ define get_target_id = function(): whole_8 {
     return return_;
 };
 
-define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     while =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_COMMA) {
         increment_whole_8_pointer(index_pointer, 1);
     };
@@ -940,34 +940,34 @@ define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, node
     variable done_anything = false;
 
     if tokens_is_keyword(tokens, whole_8.>(index_pointer), "variable") {
-        parse_declare_variable(tokens, index_pointer, nodes, is_target_internal_function);
+        parse_declare_variable(tokens, index_pointer, nodes);
         done_anything = true;
     };
 
     if &&(tokens_is_keyword(tokens, whole_8.>(index_pointer), "return"), !(done_anything)) {
-        parse_return(tokens, index_pointer, nodes, is_target_internal_function);
+        parse_return(tokens, index_pointer, nodes);
         done_anything = true;
         return;
     };
 
     if &&(tokens_is_keyword(tokens, whole_8.>(index_pointer), "while"), !(done_anything)) {
-        parse_while(tokens, index_pointer, nodes, is_target_internal_function);
+        parse_while(tokens, index_pointer, nodes);
         done_anything = true;
     };
 
     if !(done_anything) {
-        if check_parse_assign(tokens, index_pointer, nodes, is_target_internal_function) {
+        if check_parse_assign(tokens, index_pointer, nodes) {
             done_anything = true;
         };
     };
 
     if &&(tokens_is_keyword(tokens, whole_8.>(index_pointer), "break"), !(done_anything)) {
-        parse_break(tokens, index_pointer, nodes, is_target_internal_function);
+        parse_break(tokens, index_pointer, nodes);
         done_anything = true;
     };
 
     if !(done_anything) {
-        parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
+        parse_expression(tokens, index_pointer, nodes);
         if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_SEMICOLON) {
             variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
             increment_whole_8_pointer(index_pointer, 1);
@@ -977,23 +977,23 @@ define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, node
     };
 };
 
-define parse_break = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_break = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeJumpData.<target_id(jump_data, whole_8.cast(autobuffer_stack8_peek(&(while_target_id_stack))));
 
     increment_whole_8_pointer(index_pointer, 2);
 };
 
-define parse_return = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_return = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     increment_whole_8_pointer(index_pointer, 1);
 
-    parse_multiple_expressions(tokens, index_pointer, nodes, is_target_internal_function, TOKEN_SEMICOLON);
+    parse_multiple_expressions(tokens, index_pointer, nodes, TOKEN_SEMICOLON);
 
     variable node = nodes_append(nodes, NODE_RETURN, get_token_location_data(tokens, whole_8.>(index_pointer)));
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]): boolean {
+define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes): boolean {
     variable is_assign = true;
     variable index = whole_8.>(index_pointer);
     while true {
@@ -1012,14 +1012,14 @@ define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, n
     };
 
     if is_assign {
-        parse_assign(tokens, index_pointer, nodes, is_target_internal_function);
+        parse_assign(tokens, index_pointer, nodes);
         return true;
     };
 
     return false;
 };
 
-define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable names = autobuffer_new(40);
     variable name_index = 0;
 
@@ -1042,7 +1042,7 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     index = +(index, 1);
 
-    parse_multiple_expressions(tokens, &(index), nodes, is_target_internal_function, TOKEN_SEMICOLON);
+    parse_multiple_expressions(tokens, &(index), nodes, TOKEN_SEMICOLON);
 
     index = +(index, 1);
 
@@ -1057,7 +1057,7 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     whole_8.<(index_pointer, index);
 };
 
-define parse_while = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_while = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     increment_whole_8_pointer(index_pointer, 1);
 
     variable target1 = get_target_id();
@@ -1067,14 +1067,14 @@ define parse_while = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *
     variable target_node1_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeTargetData.<id(target_node1_data, target1);
 
-    parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
+    parse_expression(tokens, index_pointer, nodes);
     variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeJumpConditionalData.<target_id(conditional_jump_data, target2);
     NodeJumpConditionalData.<desired_state(conditional_jump_data, false);
     variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
     autobuffer_stack8_push(&(while_target_id_stack), target2);
-    parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
+    parse_expression(tokens, index_pointer, nodes);
     variable _ = autobuffer_stack8_pop(&(while_target_id_stack));
 
     variable jump_node_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
@@ -1086,7 +1086,7 @@ define parse_while = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define parse_declare_variable = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_declare_variable = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable index = whole_8.>(index_pointer);
 
     variable parse_expression, variable_names = parse_declare_variable_declaration(tokens, &(index), nodes);
@@ -1094,7 +1094,7 @@ define parse_declare_variable = function(tokens: *Tokens, index_pointer: *whole_
     if parse_expression {
         index = +(index, 1);
 
-        parse_multiple_expressions(tokens, &(index), nodes, is_target_internal_function, TOKEN_SEMICOLON);
+        parse_multiple_expressions(tokens, &(index), nodes, TOKEN_SEMICOLON);
 
         variable temp = array8_length(variable_names);
         variable i = -(array8_length(variable_names), 1);
@@ -1169,7 +1169,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
     return parse_expression, AutoBuffer.>buffer(&(names));
 };
 
-define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean], breaker: whole_8) {
+define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, breaker: whole_8) {
     while !(=(tokens_get_id(tokens, whole_8.>(index_pointer)), breaker)) {
         if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_COMMA) {
             increment_whole_8_pointer(index_pointer, 1);
@@ -1178,31 +1178,31 @@ define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *wh
             println("Unexpected token");
             exit(1);
         } else {
-            parse_expression(tokens, index_pointer, nodes, is_target_internal_function);
+            parse_expression(tokens, index_pointer, nodes);
         };
     };
 };
 
-define parse_module = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_module = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     variable _ = nodes_append(nodes, NODE_MODULE, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
     increment_whole_8_pointer(index_pointer, 2);
 
-    parse_multiple(tokens, index_pointer, nodes, is_target_internal_function, TOKEN_CLOSED_CURLY_BRACKETS);
+    parse_multiple(tokens, index_pointer, nodes, TOKEN_CLOSED_CURLY_BRACKETS);
 
     variable _ = nodes_append(nodes, NODE_ENDMODULE, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes) {
     variable id = tokens_get_id(tokens, whole_8.>(index));
     if =(id, TOKEN_KEYWORD) {
         variable keyword_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index)));
         variable keyword = TokenKeywordData.>keyword(keyword_data);
 
         if string=(keyword, "function") {
-            parse_function(tokens, index, nodes, is_target_internal_function);
+            parse_function(tokens, index, nodes);
         };
 
         if string=(keyword, "structure") {
@@ -1214,25 +1214,25 @@ define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nod
         };
 
         if string=(keyword, "module") {
-            parse_module(tokens, index, nodes, is_target_internal_function);
+            parse_module(tokens, index, nodes);
         };
 
         if string=(keyword, "define") {
-            parse_define(tokens, index, nodes, is_target_internal_function);
+            parse_define(tokens, index, nodes);
         };
     } else {
-        parse_expression(tokens, index, nodes, is_target_internal_function);
+        parse_expression(tokens, index, nodes);
     };
 };
 
-define parse_multiple = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes, is_target_internal_function: *function[*:boolean], ending: whole_8) {
+define parse_multiple = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes, ending: whole_8) {
     variable tokens_count = Tokens.>index(tokens);
     while &&(!(=(tokens_get_id(tokens, whole_8.>(index)), ending)), <(whole_8.>(index), Tokens.>index(tokens))) {
-        parse_individual(tokens, index, nodes, is_target_internal_function);
+        parse_individual(tokens, index, nodes);
     };
 };
 
-define parse = function(tokens: *Tokens, nodes: *Nodes, is_target_internal_function: *function[*:boolean]) {
+define parse = function(tokens: *Tokens, nodes: *Nodes) {
     variable index = 0;
-    parse_multiple(tokens, &(index), nodes, is_target_internal_function, 0);
+    parse_multiple(tokens, &(index), nodes, 0);
 };

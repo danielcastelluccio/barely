@@ -1,4 +1,17 @@
-define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *ProgramData): boolean {
+define expand_type = function(nodes: *Nodes, program_data: *ProgramData, type: *): * {
+    variable type2 = type;
+    if string_length=(type, "function[", 9) {
+        variable function_data_inner = get_function_from_string_type(type);
+
+        update_function_data(program_data, &(function_data_inner), nodes, 0);
+        type2 = get_function_string_type(&(function_data_inner));
+    };
+    return type2;
+};
+
+define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data: *ProgramData): boolean {
+    variable wanted = expand_type(nodes, program_data, wanted_in);
+    variable given = expand_type(nodes, program_data, given_in);
     if string=(wanted, given) {
         return true;
     };
@@ -53,8 +66,8 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *Pro
 
     if string_length=(wanted, "any_", 4) {
         variable size = to_number(*.cast(+(wanted, 4)));
-        // TODO: don't use linux stuff directly
-        return =(size, get_size_linux_x86-64(given, nodes, program_data));
+        variable size_function = ProgramData.>get_size(program_data);
+        return =(size, size_function(given, nodes, program_data));
     };
 
     variable define_values = &(ProgramData.>define_values(program_data));
@@ -201,11 +214,14 @@ define ProgramData = structure {
     internal_function_argument_names: HashMap;
     internal_function_return_types: HashMap;
     global_types: AutoBuffer;
+
+    // possible should be in a separate structure
+    get_size: *function[*,*Nodes,*ProgramData:whole_8];
 };
 
 define module_stack = global(AutoBufferStack8);
 
-define process = function(nodes: *Nodes): ProgramData {
+define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*ProgramData:whole_8]): ProgramData {
     variable node_count = Nodes.>index(nodes);
 
     module_stack = autobuffer_stack8_new(32);
@@ -230,6 +246,8 @@ define process = function(nodes: *Nodes): ProgramData {
     ProgramData.<structure_member_names(&(program_data), autobuffer_new(1024));
 
     ProgramData.<global_types(&(program_data), autobuffer_new(512));
+
+    ProgramData.<get_size(&(program_data), size_function);
 
     setup_process(nodes, &(program_data));
 
@@ -572,8 +590,10 @@ define get_function_from_string_type = function(type: *): NodeFunctionData {
             };
         } else if string_length=(character_pointer, "[", 1) {
             inside = +(inside, 1);
+            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
         } else if string_length=(character_pointer, "]", 1) {
             inside = -(inside, 1);
+            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
         } else {
             autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
         };
@@ -1215,32 +1235,31 @@ define process_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
 
     if is_pointer2 {
         process_invoke_pointer(nodes, nodes_index, stack, stack_pointer, program_data, pointer_data);
-        return;
-    };
-
-    variable has_specifier = NodeInvokeData.>has_specifier(invoke_data);
-    variable function_name = NodeInvokeData.>name(invoke_data);
-
-    if &&(!(has_specifier), string=(function_name, "+")) {
-        process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "+");
-    } else if &&(!(has_specifier), string=(function_name, "-")) {
-        process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "-");
-    } else if &&(!(has_specifier), string=(function_name, "*")) {
-        process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "*");
-    } else if &&(!(has_specifier), string=(function_name, "/")) {
-        process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "/");
-    } else if &&(!(has_specifier), string=(function_name, "%")) {
-        process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "%");
-    } else if &&(!(has_specifier), string=(function_name, "=")) {
-        process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "=");
-    } else if &&(!(has_specifier), string=(function_name, ">")) {
-        process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, ">");
-    } else if &&(!(has_specifier), string=(function_name, "<")) {
-        process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "<");
-    } else if &&(has_specifier, |(string=(function_name, "cast"), string=(function_name, "*cast"))) {
-        process_cast(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data);
     } else {
-        process_internal_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data);
+        variable has_specifier = NodeInvokeData.>has_specifier(invoke_data);
+        variable function_name = NodeInvokeData.>name(invoke_data);
+
+        if &&(!(has_specifier), string=(function_name, "+")) {
+            process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "+");
+        } else if &&(!(has_specifier), string=(function_name, "-")) {
+            process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "-");
+        } else if &&(!(has_specifier), string=(function_name, "*")) {
+            process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "*");
+        } else if &&(!(has_specifier), string=(function_name, "/")) {
+            process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "/");
+        } else if &&(!(has_specifier), string=(function_name, "%")) {
+            process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "%");
+        } else if &&(!(has_specifier), string=(function_name, "=")) {
+            process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "=");
+        } else if &&(!(has_specifier), string=(function_name, ">")) {
+            process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, ">");
+        } else if &&(!(has_specifier), string=(function_name, "<")) {
+            process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data, "<");
+        } else if &&(has_specifier, |(string=(function_name, "cast"), string=(function_name, "*cast"))) {
+            process_cast(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data);
+        } else {
+            process_internal_invoke(nodes, nodes_index, stack, stack_pointer, program_data, invoke_data);
+        };
     };
 };
 
@@ -1261,7 +1280,8 @@ define process_cast = function(nodes: *Nodes, nodes_index: whole_8, stack: *Auto
 
     variable popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
-    if !(=(get_size_linux_x86-64(popped, nodes, program_data), get_size_linux_x86-64(to_push, nodes, program_data))) {
+    variable size_function = ProgramData.>get_size(program_data);
+    if !(=(size_function(popped, nodes, program_data), size_function(to_push, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Cast wants equal sized types, given '");
         print(popped);
@@ -1375,7 +1395,8 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     // removed signdness check -- probably need to add it back
-    if !(=(get_size_linux_x86-64(first, nodes, program_data), get_size_linux_x86-64(second, nodes, program_data))) {
+    variable size_function = ProgramData.>get_size(program_data);
+    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(math_name);
@@ -1408,7 +1429,8 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     variable first = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
-    if !(=(get_size_linux_x86-64(first, nodes, program_data), get_size_linux_x86-64(second, nodes, program_data))) {
+    variable size_function = ProgramData.>get_size(program_data);
+    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(comparison_name);

@@ -1,0 +1,192 @@
+define Target/Macho = module {
+    define output = function(nodes: *Nodes, program_data: ProgramData, target_os: *, output_file: *, output_instruction_set: InstructionSetFunctions) {
+        variable output = autobuffer_new(1048576);
+
+        variable instructions_buffer = autobuffer_buffer_new(524288);
+
+        variable data_buffer = autobuffer_buffer_new(32768);
+
+        variable function_locations = autobuffer_new(1024);
+
+        variable pushed_functions = autobuffer_stack8_new(512);
+        variable pushed_function_targets = autobuffer_stack8_new(512);
+
+        variable jmps = autobuffer_stack8_new(512);
+        variable jmp_targets = autobuffer_stack8_new(512);
+
+        variable jes = autobuffer_stack8_new(512);
+        variable je_targets = autobuffer_stack8_new(512);
+
+        variable targets = autobuffer_new(512);
+
+        variable data_indexes_to_adjust = autobuffer_stack8_new(512);
+        variable bss_indexes_to_adjust = autobuffer_stack8_new(512);
+        variable bss_indexes_to_adjust_relative = autobuffer_stack8_new(512);
+
+        variable instruction_set_get_size_fn = InstructionSetFunctions.>get_size(&(output_instruction_set));
+
+        variable global_types = ProgramData.>global_types(&(program_data));
+        variable global_count = autobuffer_array8_length(&(global_types));
+        variable global_locations, bss_index = calculate_global_locations(nodes, &(program_data), instruction_set_get_size_fn, &(global_types), global_count);
+
+        variable function_argument_names = ProgramData.>function_argument_names(&(program_data));
+        variable function_node_locations = ProgramData.>function_locations(&(program_data));
+        variable function_count = autobuffer_array8_length(&(function_argument_names));
+        variable function_local_sizes = calculate_function_local_sizes(nodes, &(program_data), instruction_set_get_size_fn, &(function_node_locations), function_count);
+
+        variable main_function = InstructionSetFunctions.>main(&(output_instruction_set));
+        variable main_call = main_function(nodes, &(program_data), target_os, &(instructions_buffer), &(data_buffer), &(function_locations), &(pushed_functions), &(pushed_function_targets), &(jmps), &(jmp_targets), &(jes), &(je_targets), &(targets), &(global_types), global_locations, function_local_sizes, &(data_indexes_to_adjust), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative));
+
+        variable instructions_index = AutoBufferBuffer.>index(&(instructions_buffer));
+        variable data_index = AutoBufferBuffer.>index(&(data_buffer));
+
+        variable start_address = 4294967296;
+
+        variable define_values = &(ProgramData.>define_values(&(program_data)));
+        variable main_function_index = whole_8.cast(hashmap_string_get(define_values, "main"));
+        variable main_index = autobuffer_array8_get(&(function_locations), main_function_index);
+        X86_64.set_call_value(&(instructions_buffer), main_call, InstructionIndex.cast(main_index));
+
+        This.adjust_function_calls(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
+
+        This.adjust_jumps(&(jmps), &(jmp_targets), &(targets), X86_64.set_jmp_value, &(instructions_buffer));
+        This.adjust_jumps(&(jes), &(je_targets), &(targets), X86_64.set_je_value, &(instructions_buffer));
+
+        variable output_location = autobuffer_buffer_new(32);
+        autobuffer_buffer_push_string(&(output_location), output_file);
+
+        variable instructions_autobuffer = &(AutoBufferBuffer.>autobuffer(&(instructions_buffer)));
+
+        variable data_location = +(start_address, This.round_up_to_4096(+(instructions_index, 504)));
+        adjust_indexes(instructions_autobuffer, &(data_indexes_to_adjust), data_location);
+        variable bss_location = +(start_address, +(This.round_up_to_4096(+(instructions_index, 504)), This.round_up_to_4096(data_index)));
+        adjust_indexes(instructions_autobuffer, &(bss_indexes_to_adjust), bss_location);
+
+        variable i = 0;
+        while <(i, AutoBufferStack8.>index(&(bss_indexes_to_adjust_relative))) {
+            variable index = whole_8.cast(autobuffer_stack8_get(&(bss_indexes_to_adjust_relative), i));
+            variable value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(AutoBufferBuffer.>autobuffer(&(instructions_buffer))), index))), +(This.round_up_to_4096(instructions_index), This.round_up_to_4096(data_index)));
+            autobuffer_set_any_4(instructions_autobuffer, whole_8_to_whole_4(-(-(value_new, +(index, 4)), 504)), index);
+            i = +(i, 1);
+        };
+
+        autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(instructions_buffer)), 504, instructions_index);
+        autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(data_buffer)), This.round_up_to_4096(+(instructions_index, 504)), data_index);
+
+        variable header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread = This.create_headers(start_address, instructions_index, data_index, bss_index);
+
+        autobuffer_set(&(output), &(header), 0, 32);
+        autobuffer_set(&(output), &(segment_pagezero), 32, 72);
+        autobuffer_set(&(output), &(segment_instructions), 104, 72);
+        autobuffer_set(&(output), &(segment_data), 176, 72);
+        autobuffer_set(&(output), &(segment_bss), 248, 72);
+        autobuffer_set(&(output), &(unix_thread), 320, 184);
+        
+        variable size = +(+(This.round_up_to_4096(+(504, instructions_index)), This.round_up_to_4096(data_index)), 0);
+
+        create_and_write_file(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), size);
+    };
+
+    define adjust_function_calls = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
+        variable pushed_function_count = AutoBufferStack8.>index(pushed_functions);
+        variable i = 0;
+        while <(i, pushed_function_count) {
+            variable pushed_function_instruction_specific = InstructionIndex.cast(autobuffer_stack8_get(pushed_functions, i));
+            variable pushed_function_target = whole_8.cast(autobuffer_stack8_get(pushed_function_targets, i));
+
+            variable function_index = InstructionIndex.cast(autobuffer_array8_get(function_locations, pushed_function_target));
+
+            variable value_new = +(function_index, 504);
+
+            X86_64.set_control_flow_value_absolute(instructions_buffer, +(pushed_function_instruction_specific, 2), +(start_address, value_new));
+            i = +(i, 1);
+        };
+    };
+
+    define adjust_jumps = function(jumps: *AutoBufferStack8, jump_targets: *AutoBufferStack8, targets: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], instructions_buffer: *AutoBufferBuffer) {
+        variable jump_count = AutoBufferStack8.>index(jumps);
+
+        variable i = 0;
+        while <(i, jump_count) {
+            variable jmp_instruction2 = InstructionIndex.cast(autobuffer_stack8_get(jumps, i));
+            variable jmp_target = whole_8.cast(autobuffer_stack8_get(jump_targets, i));
+            variable target_location = autobuffer_array8_get(targets, jmp_target);
+            setter(instructions_buffer, jmp_instruction2, InstructionIndex.cast(target_location));
+            i = +(i, 1);
+        };
+    };
+
+    define round_up_to_4096 = function(in: whole_8): whole_8 {
+        variable modulus = %(in, 4096);
+        if =(modulus, 0) {
+            if =(in, 0) {
+                return 4096;
+            } else {
+                return in;
+            };
+        };
+
+        return +(in, -(4096, modulus));
+    };
+
+    define create_headers = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): MachoHeader, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoUnixThreadCommandX86_64 {
+        variable header = new_macho_header();
+        MachoHeader.<cpu_type(&(header), 16777223_whole_4);
+        MachoHeader.<cpu_subtype(&(header), 2147483651_whole_4);
+        MachoHeader.<file_type(&(header), 2_whole_4);
+        MachoHeader.<commands_count(&(header), 5_whole_4);
+        MachoHeader.<commands_size(&(header), 472_whole_4);
+        MachoHeader.<flags(&(header), 1_whole_4);
+
+        variable segment_pagezero = MachoSegmentCommand.>0();
+        MachoSegmentCommand.<command(&(segment_pagezero), 25_whole_4);
+        MachoSegmentCommand.<command_size(&(segment_pagezero), 72_whole_4);
+        variable page_zero = "__PAGEZERO";
+        copy(page_zero, &(MachoSegmentCommand.>name(&(segment_pagezero))), 10);
+        MachoSegmentCommand.<virtual_address(&(segment_pagezero), 0);
+        MachoSegmentCommand.<virtual_size(&(segment_pagezero), 4096);
+        MachoSegmentCommand.<file_address(&(segment_pagezero), 0);
+        MachoSegmentCommand.<file_size(&(segment_pagezero), 0);
+        MachoSegmentCommand.<protection_maximum(&(segment_pagezero), 0_whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_pagezero), 0_whole_4);
+
+        variable segment_instructions = MachoSegmentCommand.>0();
+        MachoSegmentCommand.<command(&(segment_instructions), 25_whole_4);
+        MachoSegmentCommand.<command_size(&(segment_instructions), 72_whole_4);
+        MachoSegmentCommand.<virtual_address(&(segment_instructions), start_address);
+        MachoSegmentCommand.<virtual_size(&(segment_instructions), +(504, instructions_index));
+        MachoSegmentCommand.<file_address(&(segment_instructions), 0);
+        MachoSegmentCommand.<file_size(&(segment_instructions), +(504, instructions_index));
+        MachoSegmentCommand.<protection_maximum(&(segment_instructions), 7_whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_instructions), 5_whole_4);
+
+        variable segment_data = MachoSegmentCommand.>0();
+        MachoSegmentCommand.<command(&(segment_data), 25_whole_4);
+        MachoSegmentCommand.<command_size(&(segment_data), 72_whole_4);
+        MachoSegmentCommand.<virtual_address(&(segment_data), +(This.round_up_to_4096(+(instructions_index, 504)), start_address));
+        MachoSegmentCommand.<virtual_size(&(segment_data), data_index);
+        MachoSegmentCommand.<file_address(&(segment_data), This.round_up_to_4096(+(instructions_index, 504)));
+        MachoSegmentCommand.<file_size(&(segment_data), data_index);
+        MachoSegmentCommand.<protection_maximum(&(segment_data), 1_whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_data), 1_whole_4);
+
+        variable segment_bss = MachoSegmentCommand.>0();
+        MachoSegmentCommand.<command(&(segment_bss), 25_whole_4);
+        MachoSegmentCommand.<command_size(&(segment_bss), 72_whole_4);
+        MachoSegmentCommand.<virtual_address(&(segment_bss), +(This.round_up_to_4096(+(instructions_index, 504)), +(start_address, This.round_up_to_4096(data_index))));
+        MachoSegmentCommand.<virtual_size(&(segment_bss), bss_index);
+        MachoSegmentCommand.<file_address(&(segment_bss), 0);
+        MachoSegmentCommand.<file_size(&(segment_bss), 0);
+        MachoSegmentCommand.<protection_maximum(&(segment_bss), 3_whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_bss), 3_whole_4);
+
+        variable unix_thread = MachoUnixThreadCommandX86_64.>0();
+        MachoUnixThreadCommandX86_64.<command(&(unix_thread), 5_whole_4);
+        MachoUnixThreadCommandX86_64.<command_size(&(unix_thread), 184_whole_4);
+        MachoUnixThreadCommandX86_64.<flavor(&(unix_thread), 4_whole_4);
+        MachoUnixThreadCommandX86_64.<count(&(unix_thread), 42_whole_4);
+        MachoUnixThreadCommandX86_64.<rip(&(unix_thread), +(start_address, 504));
+
+        return header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread;
+    };
+};
