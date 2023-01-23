@@ -47,10 +47,10 @@ define Target/Elf = module {
 
         variable start_address = 4194304;
 
-        This.adjust_function_calls(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
+        .adjust_function_calls(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
 
-        This.adjust_jumps(&(jmps), &(jmp_targets), &(targets), X86_64.set_jmp_value, &(instructions_buffer));
-        This.adjust_jumps(&(jes), &(je_targets), &(targets), X86_64.set_je_value, &(instructions_buffer));
+        .adjust_jumps(&(jmps), &(jmp_targets), &(targets), X86_64.set_jmp_value, &(instructions_buffer));
+        .adjust_jumps(&(jes), &(je_targets), &(targets), X86_64.set_je_value, &(instructions_buffer));
 
         variable output_location = autobuffer_buffer_new(32);
         autobuffer_buffer_push_string(&(output_location), output_file);
@@ -74,7 +74,7 @@ define Target/Elf = module {
         autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(instructions_buffer)), 232, instructions_index);
         autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(data_buffer)), +(232, instructions_index), data_index);
 
-        variable file_header, program_header_instructions, program_header_data, program_header_bss = This.create_headers(start_address, instructions_index, data_index, bss_index);
+        variable file_header, program_header_instructions, program_header_data, program_header_bss = .create_headers(start_address, instructions_index, data_index, bss_index);
 
         autobuffer_set(&(output), &(file_header), 0, 64);
         autobuffer_set(&(output), &(program_header_instructions), 64, 56);

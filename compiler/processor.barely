@@ -82,7 +82,7 @@ define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data
             variable current_name = autobuffer_buffer_get_buffer_pointer(&(buffer));
             current_name = concatenate2_brk_allocate(prepended, current_name);
 
-            variable module_id = if string=(current_name, "This") {
+            variable module_id = if string=(current_name, "@current_module") {
                 whole_8.cast(autobuffer_stack8_pop(&(module_stack)))
             } else {
                 whole_8.cast(hashmap_string_get2(define_values, current_name))
@@ -112,7 +112,7 @@ define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data
             variable current_name = autobuffer_buffer_get_buffer_pointer(&(buffer));
             current_name = concatenate2_brk_allocate(prepended, current_name);
 
-            variable module_id = if string=(current_name, "This") {
+            variable module_id = if string=(current_name, "@current_module") {
                 whole_8.cast(autobuffer_stack8_pop(&(module_stack)))
             } else {
                 whole_8.cast(hashmap_string_get2(define_values, current_name))
@@ -987,7 +987,7 @@ define get_type_of_define = function(define_types: *HashMap, define_values: *Has
             variable define_name_local = autobuffer_buffer_get_buffer_pointer(&(buffer));
 
             variable define_type_local = *.cast(hashmap_string_get(define_types, define_name_local));
-            if string=(define_name_local, "This") {
+            if string=(define_name_local, "@current_module") {
                 define_type_local = "module";
             };
 
@@ -1014,7 +1014,7 @@ define get_type_of_define = function(define_types: *HashMap, define_values: *Has
 
                     if !(=(hashmap_string_get2(define_types, current_name), 999)) {
                         current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
-                    } else if string=(current_name, "This") {
+                    } else if string=(current_name, "@current_module") {
                         current_module_index = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
                     };
                     index = -(index, 1);
@@ -1054,7 +1054,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
             variable define_type_local = *.cast(hashmap_string_get(define_types, define_name_local));
             variable define_value_local = *.cast(hashmap_string_get2(define_values, define_name_local));
 
-            if string=(define_name_local, "This") {
+            if string=(define_name_local, "@current_module") {
                 define_type_local = "module";
             };
             if =(define_type_local, 0) {
@@ -1080,7 +1080,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
 
                     if !(=(hashmap_string_get2(define_types, current_name), 999)) {
                         current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
-                    } else if string=(current_name, "This") {
+                    } else if string=(current_name, "@current_module") {
                         current_module_index = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
                     };
                     index = -(index, 1);
@@ -1088,7 +1088,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
 
                 define_value = get_value_of_define(define_types, define_values, current_name);
             } else {
-                if string=(define_name_local, "This") {
+                if string=(define_name_local, "@current_module") {
                     define_value = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
                 } else {
                     define_value = define_value_local;
@@ -1177,7 +1177,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
             variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
             variable module_name_with_parents = concatenate2_brk_allocate(prepended_to_name, retrieve_name);
 
-            variable module_id = if string=(module_name_with_parents, "This") {
+            variable module_id = if string=(module_name_with_parents, "@current_module") {
                 whole_8.cast(autobuffer_stack8_peek(&(module_stack)))
             } else {
                 whole_8.cast(hashmap_string_get2(define_values, module_name_with_parents))

@@ -496,7 +496,7 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_PERIOD) {
         increment_whole_8_pointer(index_pointer, 1);
         if string=(result, "*") {
-            result = concatenate2_brk_allocate(result, parse_name(tokens, index_pointer));
+            result = concatenate3_brk_allocate(result, "@current_module.", parse_name(tokens, index_pointer));
         } else {
             result = concatenate3_brk_allocate(result, ".", parse_name(tokens, index_pointer));
         };
@@ -713,8 +713,13 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
 define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, token_id: whole_8, token_pointer_data: *) {
     variable index = whole_8.>(index_pointer);
 
-    if =(token_id, TOKEN_NAME) {
+    if |(=(token_id, TOKEN_NAME), =(token_id, TOKEN_PERIOD)) {
         variable modules = autobuffer_stack8_new(24);
+
+        if =(token_id, TOKEN_PERIOD) {
+            autobuffer_stack8_push(&(modules), "@current_module");
+            index = +(index, 1);
+        };
 
         index = -(index, 1);
         variable name_name: * = *.cast(0);
