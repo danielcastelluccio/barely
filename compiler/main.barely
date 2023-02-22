@@ -129,15 +129,22 @@ define add_internal_functions = function(nodes: *Nodes) {
 define add_structure_pseudo_functions = function(nodes: *Nodes) {
     variable nodes_index_saved = Nodes.>index(nodes);
     variable i = 0;
+
+    variable module_stack = autobuffer_stack8_new(32);
+
     while <(i, nodes_index_saved) {
-        if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
+        if =(nodes_get_id(nodes, i), NODE_MODULE) {
+            variable module_data = nodes_get_id(nodes, i);
+            //print_node_info(nodes, -(i, 1));
+        } else if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
             variable pointer = NodeStructureData.*cast(nodes_get_pointer_data(nodes, i));
             variable name = NodeStructureData.>name(pointer);
             variable is_internal = NodeStructureData.>is_internal(pointer);
 
             if |(=(name, 0), is_internal) {
                 if =(name, 0) {
-                    name = get_structure_string_type(pointer);
+                    variable define_data = NodeDefineData.*cast(nodes_get_pointer_data(nodes, -(i, 1)));
+                    name = NodeDefineData.>name(define_data);
                 };
 
                 variable pointer_name = concatenate2_brk_allocate("*", name);
