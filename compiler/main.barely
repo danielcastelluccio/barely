@@ -165,6 +165,10 @@ define expand_modules = function(nodes: *Nodes) {
                 // Possibly the define type could be set after doing this computation?
                 NodeDefineData.<type(define_data, get_function_string_type(function_data));
             };
+        } else if =(id, NODE_DECLARE) {
+            variable declare_data = NodeDeclareData.*cast(pointer_data);
+            variable declare_type = NodeDeclareData.>type(declare_data);
+            NodeDeclareData.<type(declare_data, expand_module_name(declare_type, &(module_id_map), &(module_stack)));
         } else if =(id, NODE_DEFINE) {
             variable define_data = NodeDefineData.*cast(pointer_data);
 

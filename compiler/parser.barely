@@ -707,13 +707,16 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
         nodes_index = -(nodes_index, 1);
         variable executed = false;
         variable previous_retrieve = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-        while NodeRetrieveData.>is_module(previous_retrieve) {
+        while NodeRetrieveData.>is_data(previous_retrieve) {
             previous_retrieve = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
             nodes_index = -(nodes_index, 1);
             executed = true;
         };
 
         if executed {
+            nodes_index = +(nodes_index, 1);
+        };
+        if >(nodes_index, 999) {
             nodes_index = +(nodes_index, 1);
         };
 
@@ -753,16 +756,30 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
 
         variable retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
         NodeRetrieveData.<name(retrieve_node_data, name_name);
+
+        variable special_skip = false;
+        if is_special_function(name_name) {
+            special_skip = true;
+        };
+
         if >(AutoBufferStack8.>index(&(modules)), 0) {
             NodeRetrieveData.<using_module(retrieve_node_data, true);
+            if !(special_skip) {
+                //NodeRetrieveData.<is_data(retrieve_node_data, true);
+            };
         };
 
         while >(AutoBufferStack8.>index(&(modules)), 0) {
             variable name = *.cast(autobuffer_stack8_pop(&(modules)));
             variable retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
             NodeRetrieveData.<name(retrieve_node_data, name);
-            NodeRetrieveData.<is_module(retrieve_node_data, true);
+            if !(special_skip) {
+                NodeRetrieveData.<is_module(retrieve_node_data, true);
+            } else {
+                special_skip = false;
+            };
             NodeRetrieveData.<using_module(retrieve_node_data, true);
+            NodeRetrieveData.<is_data(retrieve_node_data, true);
         };
 
         if =(tokens_get_id(tokens, index), TOKEN_COLON) {
