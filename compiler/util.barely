@@ -554,7 +554,7 @@ define AutoBufferStack8 = structure {
 
 define autobuffer_stack8_new = function(size: whole_8): AutoBufferStack8 {
     variable autobuffer_buffer = AutoBufferStack8.>0();
-    AutoBufferBuffer.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
+    AutoBufferStack8.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
     return autobuffer_buffer;
 };
 
@@ -590,7 +590,7 @@ define autobuffer_stack8_get = function(buffer: *AutoBufferStack8, index: whole_
 
 define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
     variable actual_buffer = autobuffer_stack8_get_buffer_pointer(buffer);
-    variable size = AutoBuffer.>size(&(AutoBufferBuffer.>autobuffer(buffer)));
+    variable size = AutoBuffer.>size(&(AutoBufferStack8.>autobuffer(buffer)));
     variable i = 0;
     while <(i, size) {
         variable done_anything = false;
@@ -607,7 +607,7 @@ define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
         };
     };
 
-    AutoBufferBuffer.<index(buffer, 0);
+    AutoBufferStack8.<index(buffer, 0);
 };
 
 define autobuffer_stack8_get_buffer_pointer = function(buffer: *AutoBufferStack8): * {

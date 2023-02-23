@@ -7,7 +7,9 @@ define expand_type = function(nodes: *Nodes, program_data: *ProgramData, type: *
     if &&(!(string_length=(type, "any_", 4)), !(string_length=(type, "structure[", 9))) {
         variable actual_type2 = get_type_of_define(define_types, define_values, type);
         if !(=(actual_type2, 0)) {
-            actual_type = expand_type(nodes, program_data, actual_type2);
+            if !(string_length=(actual_type2, "structure[", 10)) {
+                actual_type = expand_type(nodes, program_data, actual_type2);
+            };
         };
     };
 
@@ -63,10 +65,6 @@ define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data
     if string_length=(given, "global[", 7) {
         variable given_substring = substring_brk_allocate(given, 7, -(length(given), 1));
         return is_type(given_substring, wanted, nodes, program_data);
-    };
-
-    if |(&&(string=(wanted, "*structure[_:any_8]"), string=(given, "structure[_:any_8]")), &&(string=(wanted, "structure[_:any_8]"), string=(given, "*structure[_:any_8]"))) {
-        return true;
     };
 
     if string_length=(wanted, "any_", 4) {
@@ -394,7 +392,7 @@ define get_function_from_string_type = function(type: *): NodeFunctionData {
         variable character_pointer = +(type, i);
         
         if &&(=(inside, 0), |(string_length=(character_pointer, ":", 1), &&(string_length=(character_pointer, ",", 1), !(is_return)))) {
-            if >(AutoBufferStack8.>index(&(buffer)), 0) {
+            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
                 autobuffer_stack8_push(&(argument_types), copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
                 autobuffer_buffer_reset(&(buffer));
             };
@@ -403,7 +401,7 @@ define get_function_from_string_type = function(type: *): NodeFunctionData {
                 is_return = true;
             };
         } else if &&(=(inside, 0), |(string_length=(character_pointer, "]", 1), string_length=(character_pointer, ",", 1))) {
-            if >(AutoBufferStack8.>index(&(buffer)), 0) {
+            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
                 autobuffer_stack8_push(&(return_types), copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
                 autobuffer_buffer_reset(&(buffer));
             };
@@ -444,6 +442,9 @@ define is_define = function(type: *): boolean {
         return false;
     };
     if string_length=(type, "global[", 7) {
+        return false;
+    };
+    if string=(type, "*") {
         return false;
     };
     return true;
@@ -1107,17 +1108,25 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     };
 
     if !(=(variable_type, 0)) {
+        if is_define(variable_type) {
+            variable variable_type_temp = get_type_of_define(define_types, define_values, variable_type);
+
+            if string_length=(variable_type_temp, "global[", 7) {
+                variable_type = substring_brk_allocate(variable_type_temp, 7, -(length(variable_type_temp), 1));
+            };
+        };
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
-        return;
     } else {
         variable_type = get_type_of_define(define_types, define_values, +(variable_name, 1));
+
         if !(=(variable_type, 0)) {
+            if string_length=(variable_type, "global[", 7) {
+                variable_type = substring_brk_allocate(variable_type, 7, -(length(variable_type), 1));
+            };
+
             NodeRetrieveData.<name(retrieve_data, +(variable_name, 1));
             autobuffer_stack8_legacy_push(stack, stack_pointer, concatenate2_brk_allocate("*", variable_type));
-            return;
-        };
-
-        if NodeRetrieveData.>is_module(retrieve_data) {
+        } else if NodeRetrieveData.>is_module(retrieve_data) {
             autobuffer_stack8_legacy_push(stack, stack_pointer, variable_name);
         } else {
             print_node_error_beginning(nodes, nodes_index);
