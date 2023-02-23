@@ -495,7 +495,7 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
 
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_PERIOD) {
         increment_whole_8_pointer(index_pointer, 1);
-        if string=(result, "*") {
+        if is_only_asterisks(result) {
             result = concatenate3_brk_allocate(result, "@current_module.", parse_name(tokens, index_pointer));
         } else {
             result = concatenate3_brk_allocate(result, ".", parse_name(tokens, index_pointer));
@@ -503,6 +503,19 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
     };
 
     return result;
+};
+
+define is_only_asterisks = function(string: *): boolean {
+    variable i = 0;
+    while <(i, length(string)) {
+        variable character = any_1.>(any_1.*cast(+(string, i)));
+        if !(=(character, ASCII_ASTERISK)) {
+            return false;
+        };
+        i = +(i, 1);
+    };
+
+    return true;
 };
 
 define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
@@ -750,6 +763,12 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
             NodeRetrieveData.<name(retrieve_node_data, name);
             NodeRetrieveData.<is_module(retrieve_node_data, true);
             NodeRetrieveData.<using_module(retrieve_node_data, true);
+        };
+
+        if =(tokens_get_id(tokens, index), TOKEN_COLON) {
+            index = +(index, 1);
+            variable name = parse_name(tokens, &(index));
+            NodeRetrieveData.<coercion(retrieve_node_data, name);
         };
     };
 

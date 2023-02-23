@@ -1,12 +1,17 @@
 define expand_type = function(nodes: *Nodes, program_data: *ProgramData, type: *): * {
-    variable type2 = type;
-    if string_length=(type, "function[", 9) {
-        variable function_data_inner = get_function_from_string_type(type);
+    variable define_types = &(ProgramData.>define_types(program_data));
+    variable define_values = &(ProgramData.>define_values(program_data));
 
-        update_function_data(program_data, &(function_data_inner), nodes, 0);
-        type2 = get_function_string_type(&(function_data_inner));
+    variable actual_type = type;
+
+    if &&(!(string_length=(type, "any_", 4)), !(string_length=(type, "structure[", 9))) {
+        variable actual_type2 = get_type_of_define(define_types, define_values, type);
+        if !(=(actual_type2, 0)) {
+            actual_type = expand_type(nodes, program_data, actual_type2);
+        };
     };
-    return type2;
+
+    return actual_type;
 };
 
 define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data: *ProgramData): boolean {
@@ -374,81 +379,6 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
     return program_data;
 };
 
-define update_function_data = function(program_data: *ProgramData, function_data: *NodeFunctionData, nodes: *Nodes, index: whole_8) {
-    variable structure_datas = &(ProgramData.>structure_datas(program_data));
-    variable define_types = &(ProgramData.>define_types(program_data));
-    variable define_values = &(ProgramData.>define_values(program_data));
-
-    variable function_argument_types = NodeFunctionData.>argument_types(function_data);
-    variable function_return_types = NodeFunctionData.>returns(function_data);
-
-    variable j = 0;
-    while !(=(array8_get(function_argument_types, j), 0)) {
-        variable argument = *.cast(array8_get(function_argument_types, j));
-
-        variable is_pointer = &&(string_length=(argument, "*", 1), >(length(argument), 1));
-        if is_pointer {
-            argument = +(argument, 1);
-        };
-
-        if is_define(argument) {
-            variable structure_id = whole_8.cast(get_value_of_define(define_types, define_values, argument));
-            if !(=(structure_id, 999)) {
-                variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
-                argument = get_structure_string_type(structure_data);
-            } else {
-                // TODO: Actually get where the issues is, probably gonna have to rework some 
-                // stuff to make that info accessable here.
-                print_node_error_beginning(nodes, index);
-                print("Could not resolve type '");
-                print(argument);
-                println("'");
-                exit(1);
-            };
-        };
-
-        if string_length=(argument, "function[", 9) {
-            variable function_data_inner = get_function_from_string_type(argument);
-
-            update_function_data(program_data, &(function_data_inner), nodes, index);
-            argument = get_function_string_type(&(function_data_inner));
-            is_pointer = false;
-        };
-
-        if is_pointer {
-            argument = concatenate2_brk_allocate("*", argument);
-        };
-
-        array8_set(function_argument_types, j, argument);
-
-        j = +(j, 1);
-    };
-
-    variable j = 0;
-    while !(=(array8_get(function_return_types, j), 0)) {
-        variable return_ = *.cast(array8_get(function_return_types, j));
-
-        variable is_pointer = &&(string_length=(return_, "*", 1), >(length(return_), 1));
-        if is_pointer {
-            return_ = +(return_, 1);
-        };
-
-        if is_define(return_) {
-            variable structure_id = whole_8.cast(get_value_of_define(define_types, define_values, return_));
-            variable structure_data = NodeStructureData.*cast(autobuffer_stack8_get(structure_datas, structure_id));
-            return_ = get_structure_string_type(structure_data);
-        };
-
-        if is_pointer {
-            return_ = concatenate2_brk_allocate("*", return_);
-        };
-
-        array8_set(function_return_types, j, return_);
-
-        j = +(j, 1);
-    };
-};
-
 define get_function_from_string_type = function(type: *): NodeFunctionData {
     variable argument_types = autobuffer_stack8_new(24);
     variable return_types = autobuffer_stack8_new(24);
@@ -747,9 +677,11 @@ define get_variable_info = function(variable_scopes_types_map: AutoBuffer, varia
 define process_invoke_pointer = function(nodes: *Nodes, nodes_index: whole_8,  stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, pointer_data: *) {
     variable function_type = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
-    variable define_types = &(ProgramData.>define_types(program_data));
-    variable define_values = &(ProgramData.>define_values(program_data));
-    function_type = get_type_of_define(define_types, define_values, function_type);
+    if !(string_length=(function_type, "*function[", 10)) {
+        variable define_types = &(ProgramData.>define_types(program_data));
+        variable define_values = &(ProgramData.>define_values(program_data));
+        function_type = get_type_of_define(define_types, define_values, function_type);
+    };
 
     if string_length=(function_type, "*function[", 10) {
         variable arguments_buffer, returns_buffer = get_arguments_from_function_type(function_type);
@@ -1081,6 +1013,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
 define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
     variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
     variable variable_name = NodeRetrieveData.>name(retrieve_data);
+    variable coercion = NodeRetrieveData.>coercion(retrieve_data);
 
     variable variable_type: * = *.cast(0);
 
@@ -1169,6 +1102,9 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     variable define_types = &(ProgramData.>define_types(program_data));
 
     variable_type = get_define_end_type(define_types, define_values, variable_name);
+    if !(=(coercion, 0)) {
+        variable_type = coercion;
+    };
 
     if !(=(variable_type, 0)) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
@@ -1249,7 +1185,7 @@ define process_cast = function(nodes: *Nodes, nodes_index: whole_8, stack: *Auto
     variable popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(popped, nodes, program_data), size_function(to_push, nodes, program_data))) {
+    if !(=(size_function(expand_type(nodes, program_data, popped), nodes, program_data), size_function(expand_type(nodes, program_data, to_push), nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Cast wants equal sized types, given '");
         print(popped);
@@ -1360,7 +1296,7 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
 
     // removed signdness check -- probably need to add it back
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
+    if !(=(size_function(expand_type(nodes, program_data, first), nodes, program_data), size_function(expand_type(nodes, program_data, second), nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(math_name);
@@ -1374,11 +1310,15 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
 
     autobuffer_stack8_legacy_push(stack, stack_pointer, second);
 
-    variable new_+_name = autobuffer_new(16);
-    autobuffer_set(&(new_+_name), concatenate2_brk_allocate(math_name, "_"), 0, 2);
-    autobuffer_set(&(new_+_name), first, 2, length(first));
+    variable define_types = &(ProgramData.>define_types(program_data));
+    variable define_values = &(ProgramData.>define_values(program_data));
 
-    NodeInvokeData.<name(invoke_data, AutoBuffer.>buffer(&(new_+_name)));
+    if is_define(first) {
+        first = get_type_of_define(define_types, define_values, first);
+    };
+    variable new_+_name = concatenate3_brk_allocate(math_name, "_" first);
+
+    NodeInvokeData.<name(invoke_data, new_+_name);
 };
 
 define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, invoke_data: *NodeInvokeData, comparison_name: *) {
@@ -1394,7 +1334,7 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
+    if !(=(size_function(expand_type(nodes, program_data, first), nodes, program_data), size_function(expand_type(nodes, program_data, second), nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(comparison_name);
@@ -1408,11 +1348,15 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
 
     autobuffer_stack8_legacy_push(stack, stack_pointer, "boolean");
 
-    variable new_+_name = autobuffer_new(16);
-    autobuffer_set(&(new_+_name), concatenate2_brk_allocate(comparison_name, "_"), 0, 2);
-    autobuffer_set(&(new_+_name), first, 2, length(first));
+    variable define_types = &(ProgramData.>define_types(program_data));
+    variable define_values = &(ProgramData.>define_values(program_data));
 
-    NodeInvokeData.<name(invoke_data, AutoBuffer.>buffer(&(new_+_name)));
+    if is_define(first) {
+        first = get_type_of_define(define_types, define_values, first);
+    };
+    variable new_+_name = concatenate3_brk_allocate(comparison_name, "_" first);
+
+    NodeInvokeData.<name(invoke_data, new_+_name);
 };
 
 define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
@@ -1448,11 +1392,6 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 variable function_argument_types = &(ProgramData.>function_argument_types(program_data));
                 variable function_return_types = &(ProgramData.>function_return_types(program_data));
 
-                variable k = 0;
-                while <(k, array8_length(NodeFunctionData.>argument_types(function_data))) {
-                    k = +(k, 1);
-                };
-
                 autobuffer_array8_set(function_locations, declared_function_id, i);
                 autobuffer_array8_set(function_datas, declared_function_id, function_data);
                 autobuffer_array8_set(function_argument_types, declared_function_id, NodeFunctionData.>argument_types(function_data));
@@ -1471,7 +1410,8 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 autobuffer_array8_set(structure_member_types, declared_structure_id, NodeStructureData.>item_types(structure_data));
                 autobuffer_array8_set(structure_members_names, declared_structure_id, NodeStructureData.>item_names(structure_data));
 
-                variable structure_name = get_structure_string_type(structure_data);
+                // TODO: Also depending on defines existing where it probably should not be.
+                variable structure_name = NodeDefineData.>name(NodeDefineData.*cast(nodes_get_pointer_data(nodes, -(i, 1))));
                 NodeStructureData.<name(structure_data, structure_name);
 
                 declared_structure_id = +(declared_structure_id, 1);
@@ -1548,7 +1488,6 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
         i = +(i, 1);
     };
-
 };
 
 define is_pointer = function(nodes: *Nodes, index_in: whole_8): boolean {
