@@ -5,7 +5,7 @@ define expand_type = function(nodes: *Nodes, program_data: *ProgramData, type: *
     variable actual_type = type;
 
     if &&(!(string_length=(type, "any_", 4)), !(string_length=(type, "structure[", 9))) {
-        variable actual_type2 = get_define_end_type(define_types, define_values, type);
+        variable actual_type2 = get_define_retrieve_type(define_types, define_values, type);
         if !(=(actual_type2, 0)) {
             if !(string_length=(actual_type2, type, 10)) {
                 actual_type = expand_type(nodes, program_data, actual_type2);
@@ -48,14 +48,14 @@ define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data
     variable define_types = &(ProgramData.>define_types(program_data));
     variable define_values = &(ProgramData.>define_values(program_data));
 
-    variable defined = get_define_end_type(define_types, define_values, given);
+    variable defined = get_define_retrieve_type(define_types, define_values, given);
     if !(=(defined, 0)) {
         if string=(defined, wanted) {
             return true;
         };
     };
 
-    defined = get_define_end_type(define_types, define_values, wanted);
+    defined = get_define_retrieve_type(define_types, define_values, wanted);
     if !(=(defined, 0)) {
         if string=(defined, given) {
             return true;
@@ -617,7 +617,7 @@ define process_invoke_pointer = function(nodes: *Nodes, nodes_index: whole_8,  s
     if !(string_length=(function_type, "*function[", 10)) {
         variable define_types = &(ProgramData.>define_types(program_data));
         variable define_values = &(ProgramData.>define_values(program_data));
-        function_type = get_define_end_type(define_types, define_values, function_type);
+        function_type = get_define_retrieve_type(define_types, define_values, function_type);
     };
 
     if string_length=(function_type, "*function[", 10) {
@@ -745,205 +745,19 @@ define get_arguments_from_function_type = function(function_type: *): *, * {
     return AutoBuffer.>buffer(&(arguments_buffer)), AutoBuffer.>buffer(&(returns_buffer));
 };
 
-define get_define_end_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
-    variable define_type = "";
-    variable buffer = autobuffer_buffer_new(24);
-    variable define_name_extra = concatenate2_brk_allocate(define_name, ".");
-    variable i = 0;
-    while <(i, length(define_name_extra)) {
-        variable character_pointer = +(define_name_extra, i);
-        if string_length=(character_pointer, ".", 1) {
-            variable define_name_local = autobuffer_buffer_get_buffer_pointer(&(buffer));
+define get_define_retrieve_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
+    variable define_type = *.cast(hashmap_string_get(define_types, define_name));
+    if =(define_type, 0) {
 
-            variable define_type_local = *.cast(hashmap_string_get(define_types, define_name_local));
-            if string=(define_name_local, "@current_module") {
-                define_type_local = "module";
-            };
-
-            if =(define_type_local, 0) {
-                return *.cast(0);
-            };
-
-            if string=(define_type_local, "define") {
-                variable define_value = *.cast(hashmap_string_get(define_values, define_name_local));
-                variable define_array_length = array8_length(define_value);
-
-                variable current_name = "";
-                variable current_module_index = 999;
-
-                variable index = -(define_array_length, 1);
-                while <(index, define_array_length) {
-                    current_name = *.cast(array8_get(define_value, index));
-
-                    if !(=(current_module_index, 999)) {
-                        variable index_buffer = any_24.>0();
-                        whole_8_to_string(current_module_index, &(index_buffer));
-                        current_name = concatenate2_brk_allocate(&(index_buffer), current_name);
-                    };
-
-                    if !(=(hashmap_string_get2(define_types, current_name), 999)) {
-                        current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
-                    } else if string=(current_name, "@current_module") {
-                        current_module_index = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
-                    };
-                    index = -(index, 1);
-                };
-
-                variable index_buffer = any_24.>0();
-                whole_8_to_string(whole_8.cast(get_value_of_define(define_types, define_values, current_name)), &(index_buffer));
-
-                define_type = get_define_end_type(define_types, define_values, current_name);
-            } else {
-                if string_length=(define_type_local, "structure[", 10) {
-                    define_type = copy_string_brk_allocate(define_name_local);
-                } else {
-                    define_type = define_type_local;
-                };
-            };
-
-            autobuffer_buffer_reset(&(buffer));
-        } else {
-            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
-        };
-
-        i = +(i, 1);
-    };
-
-    return define_type;
-};
-
-define get_type_of_define = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
-    variable define_type = "";
-    variable buffer = autobuffer_buffer_new(24);
-    variable define_name_extra = concatenate2_brk_allocate(define_name, ".");
-    variable i = 0;
-    while <(i, length(define_name_extra)) {
-        variable character_pointer = +(define_name_extra, i);
-        if string_length=(character_pointer, ".", 1) {
-            variable define_name_local = autobuffer_buffer_get_buffer_pointer(&(buffer));
-
-            variable define_type_local = *.cast(hashmap_string_get(define_types, define_name_local));
-            if string=(define_name_local, "@current_module") {
-                define_type_local = "module";
-            };
-
-            if =(define_type_local, 0) {
-                return *.cast(0);
-            };
-
-            if string=(define_type_local, "define") {
-                variable define_value = *.cast(hashmap_string_get(define_values, define_name_local));
-                variable define_array_length = array8_length(define_value);
-
-                variable current_name = "";
-                variable current_module_index = 999;
-
-                variable index = -(define_array_length, 1);
-                while <(index, define_array_length) {
-                    current_name = *.cast(array8_get(define_value, index));
-
-                    if !(=(current_module_index, 999)) {
-                        variable index_buffer = any_24.>0();
-                        whole_8_to_string(current_module_index, &(index_buffer));
-                        current_name = concatenate2_brk_allocate(&(index_buffer), current_name);
-                    };
-
-                    if !(=(hashmap_string_get2(define_types, current_name), 999)) {
-                        current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
-                    } else if string=(current_name, "@current_module") {
-                        current_module_index = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
-                    };
-                    index = -(index, 1);
-                };
-
-                variable index_buffer = any_24.>0();
-                whole_8_to_string(whole_8.cast(get_value_of_define(define_types, define_values, current_name)), &(index_buffer));
-
-                define_type = get_type_of_define(define_types, define_values, current_name);
-            } else {
-                define_type = define_type_local;
-            };
-
-            autobuffer_buffer_reset(&(buffer));
-        } else {
-            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
-        };
-
-        i = +(i, 1);
+    } else if string_length=(define_type, "structure[", 10) {
+        define_type = define_name;
     };
 
     return define_type;
 };
 
 define get_value_of_define = function(define_types: *HashMap, define_values: *HashMap, define_name: *): any_8 {
-    variable prepended = "";
-    variable define_value: any_8 = 999;
-    variable buffer = autobuffer_buffer_new(24);
-    variable define_name_extra = concatenate2_brk_allocate(define_name, ".");
-    variable i = 0;
-    while <(i, length(define_name_extra)) {
-        variable character_pointer = +(define_name_extra, i);
-        if string_length=(character_pointer, ".", 1) {
-            variable define_name_local = autobuffer_buffer_get_buffer_pointer(&(buffer));
-            define_name_local = concatenate2_brk_allocate(prepended, define_name_local);
-
-            variable define_type_local = *.cast(hashmap_string_get(define_types, define_name_local));
-            variable define_value_local = *.cast(hashmap_string_get2(define_values, define_name_local));
-
-            if string=(define_name_local, "@current_module") {
-                define_type_local = "module";
-            };
-            if =(define_type_local, 0) {
-                return 999;
-            };
-
-            if string=(define_type_local, "define") {
-                variable define_value_local = *.cast(hashmap_string_get2(define_values, define_name_local));
-                variable define_array_length = array8_length(define_value_local);
-
-                variable current_name = "";
-                variable current_module_index = 999;
-
-                variable index = -(define_array_length, 1);
-                while <(index, define_array_length) {
-                    current_name = *.cast(array8_get(define_value_local, index));
-
-                    if !(=(current_module_index, 999)) {
-                        variable index_buffer = any_24.>0();
-                        whole_8_to_string(current_module_index, &(index_buffer));
-                        current_name = concatenate2_brk_allocate(&(index_buffer), current_name);
-                    };
-
-                    if !(=(hashmap_string_get2(define_types, current_name), 999)) {
-                        current_module_index = whole_8.cast(hashmap_string_get2(define_values, current_name));
-                    } else if string=(current_name, "@current_module") {
-                        current_module_index = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
-                    };
-                    index = -(index, 1);
-                };
-
-                define_value = get_value_of_define(define_types, define_values, current_name);
-            } else {
-                if string=(define_name_local, "@current_module") {
-                    define_value = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
-                } else {
-                    define_value = define_value_local;
-                };
-            };
-
-            variable index_buffer = any_24.>0();
-            whole_8_to_string(whole_8.cast(define_value), &(index_buffer));
-            prepended = copy_string_brk_allocate(&(index_buffer));
-
-            autobuffer_buffer_reset(&(buffer));
-        } else {
-            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
-        };
-
-        i = +(i, 1);
-    };
-
-    return define_value;
+    return *.cast(hashmap_string_get2(define_values, define_name));
 };
 
 define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
@@ -954,11 +768,6 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     variable variable_type: * = *.cast(0);
 
     if !(NodeRetrieveData.>using_module(retrieve_data)) {
-        if &&(string_length=(variable_name, "any_", 4), &&(=(nodes_get_id(nodes, +(nodes_index, 1)), NODE_INVOKE), NodeInvokeData.>has_specifier(NodeInvokeData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, 1)))))) {
-            autobuffer_stack8_legacy_push(stack, stack_pointer, variable_name);
-            return;
-        };
-
         variable scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, variable_name);
 
         if !(=(variable_type, 0)) {
@@ -1038,14 +847,14 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
 
     variable define_types = &(ProgramData.>define_types(program_data));
 
-    variable_type = get_define_end_type(define_types, define_values, variable_name);
+    variable_type = get_define_retrieve_type(define_types, define_values, variable_name);
     if !(=(coercion, 0)) {
         variable_type = coercion;
     };
 
     if !(=(variable_type, 0)) {
         if is_define(variable_type) {
-            variable_type = get_define_end_type(define_types, define_values, variable_type);
+            variable_type = get_define_retrieve_type(define_types, define_values, variable_type);
         };
 
         if string_length=(variable_type, "global[", 7) {
@@ -1054,7 +863,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
 
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
     } else {
-        variable_type = get_define_end_type(define_types, define_values, +(variable_name, 1));
+        variable_type = get_define_retrieve_type(define_types, define_values, +(variable_name, 1));
 
         if !(=(variable_type, 0)) {
             if string_length=(variable_type, "global[", 7) {
@@ -1268,7 +1077,7 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
     variable define_values = &(ProgramData.>define_values(program_data));
 
     if is_define(first) {
-        first = get_define_end_type(define_types, define_values, first);
+        first = get_define_retrieve_type(define_types, define_values, first);
     };
     variable new_+_name = concatenate3_brk_allocate(math_name, "_" first);
 
@@ -1306,7 +1115,7 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     variable define_values = &(ProgramData.>define_values(program_data));
 
     if is_define(first) {
-        first = get_define_end_type(define_types, define_values, first);
+        first = get_define_retrieve_type(define_types, define_values, first);
     };
     variable new_+_name = concatenate3_brk_allocate(comparison_name, "_" first);
 
