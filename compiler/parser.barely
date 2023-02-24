@@ -283,7 +283,7 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     };
 
     if =(type, 0) {
-        type = get_define_type(tokens, &(index), value_offset);
+        type = get_define_type_parser(tokens, &(index), value_offset);
     };
 
     variable define_node_data = NodeDefineData.*cast(nodes_append_data(nodes, NODE_DEFINE, get_token_location_data(tokens, whole_8.>(index_pointer))));
@@ -300,7 +300,7 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define get_define_type = function(tokens: *Tokens, index_pointer: *whole_8, value_offset: whole_8): * {
+define get_define_type_parser = function(tokens: *Tokens, index_pointer: *whole_8, value_offset: whole_8): * {
     variable index = whole_8.>(index_pointer);
 
     variable type = if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {

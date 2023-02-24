@@ -26,23 +26,6 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *Pro
         return =(size, size_function(given, nodes, program_data));
     };
 
-    variable define_types = &(ProgramData.>define_types(program_data));
-    variable define_values = &(ProgramData.>define_values(program_data));
-
-    variable defined = get_define_retrieve_type(define_types, define_values, given);
-    if !(=(defined, 0)) {
-        if string=(defined, wanted) {
-            return true;
-        };
-    };
-
-    defined = get_define_retrieve_type(define_types, define_values, wanted);
-    if !(=(defined, 0)) {
-        if string=(defined, given) {
-            return true;
-        };
-    };
-
     return false;
 };
 
@@ -726,13 +709,24 @@ define get_arguments_from_function_type = function(function_type: *): *, * {
     return AutoBuffer.>buffer(&(arguments_buffer)), AutoBuffer.>buffer(&(returns_buffer));
 };
 
-define get_define_retrieve_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
+define get_define_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
     variable define_type = *.cast(hashmap_string_get(define_types, define_name));
     variable define_value = *.cast(hashmap_string_get(define_values, define_name));
     if =(define_type, 0) {
 
     } else if string_length=(define_type, "structure[", 10) {
         define_type = define_name;
+    };
+    return define_type;
+
+};
+
+define get_define_retrieve_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
+    variable define_type = get_define_type(define_types, define_values, define_name);
+    if =(define_type, 0) {
+
+    } else if string_length=(define_type, "global[", 7) {
+        define_type = substring_brk_allocate(define_type, 7, -(length(define_type), 1));
     };
 
     return define_type;
@@ -747,7 +741,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     variable variable_name = NodeRetrieveData.>name(retrieve_data);
     variable coercion = NodeRetrieveData.>coercion(retrieve_data);
 
-    variable variable_type: * = *.cast(0);
+    variable variable_type = *.cast(0);
 
     if !(NodeRetrieveData.>using_module(retrieve_data)) {
         variable scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, variable_name);
@@ -781,49 +775,6 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
 
     if is_pointer(nodes, +(nodes_index, 1)) {
         variable_name = concatenate2_brk_allocate("*", variable_name);
-        NodeRetrieveData.<name(retrieve_data, variable_name);
-    };
-
-    if NodeRetrieveData.>using_module(retrieve_data) {
-        variable original_index = nodes_index;
-        variable modules_index = +(original_index, 1);
-        while =(nodes_get_id(nodes, modules_index), NODE_RETRIEVE) {
-            variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
-            variable is_module = NodeRetrieveData.>is_module(retrieve_data);
-
-            if !(is_module) {
-                break;
-            };
-            modules_index = +(modules_index, 1);
-        };
-
-        modules_index = -(modules_index, 1);
-
-        variable prepended_to_name = "";
-
-        while >(modules_index, original_index) {
-            variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, modules_index));
-            variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
-            variable module_name_with_parents = concatenate2_brk_allocate(prepended_to_name, retrieve_name);
-
-            variable module_id = if string=(module_name_with_parents, "@current_module") {
-                whole_8.cast(autobuffer_stack8_peek(&(module_stack)))
-            } else {
-                whole_8.cast(get_value_of_define(define_types, define_values,  module_name_with_parents))
-            };
-
-            variable module_id_buffer = any_24.>0();
-
-            whole_8_to_string(module_id, &(module_id_buffer));
-
-            prepended_to_name = copy_string_brk_allocate(&(module_id_buffer));
-
-            nodes_set_skip(nodes, modules_index);
-
-            modules_index = -(modules_index, 1);
-        };
-
-        variable_name = concatenate2_brk_allocate(prepended_to_name, variable_name);
         NodeRetrieveData.<name(retrieve_data, variable_name);
     };
 
