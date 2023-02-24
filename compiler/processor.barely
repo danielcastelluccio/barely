@@ -1052,9 +1052,8 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
     variable first = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
-    // removed signdness check -- probably need to add it back
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
+    if |(!(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(math_name);
@@ -1092,7 +1091,7 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
+    if |(!(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))), !(=(is_signed(first, nodes), is_signed(second, nodes)))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(comparison_name);
