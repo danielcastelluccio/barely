@@ -179,11 +179,19 @@ define expand_modules = function(nodes: *Nodes) {
         if =(id, NODE_FUNCTION) {
             variable function_data = NodeFunctionData.*cast(pointer_data);
             variable argument_types = NodeFunctionData.>argument_types(function_data);
+            variable return_types = NodeFunctionData.>returns(function_data);
 
             variable j = 0;
             while <(j, array8_length(argument_types)) {
                 variable argument_type = *.cast(array8_get(argument_types, j));
                 array8_set(argument_types, j, expand_module_name(argument_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
+                j = +(j, 1);
+            };
+
+            variable j = 0;
+            while <(j, array8_length(return_types)) {
+                variable return_type = *.cast(array8_get(return_types, j));
+                array8_set(return_types, j, expand_module_name(return_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
                 j = +(j, 1);
             };
 
