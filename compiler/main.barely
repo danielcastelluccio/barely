@@ -183,7 +183,7 @@ define expand_modules = function(nodes: *Nodes) {
             variable j = 0;
             while <(j, array8_length(argument_types)) {
                 variable argument_type = *.cast(array8_get(argument_types, j));
-                array8_set(argument_types, j, expand_module_name(argument_type, &(module_id_map), &(module_references_map), &(module_stack)));
+                array8_set(argument_types, j, expand_module_name(argument_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
                 j = +(j, 1);
             };
 
@@ -197,7 +197,7 @@ define expand_modules = function(nodes: *Nodes) {
         } else if =(id, NODE_DECLARE) {
             variable declare_data = NodeDeclareData.*cast(pointer_data);
             variable declare_type = NodeDeclareData.>type(declare_data);
-            NodeDeclareData.<type(declare_data, expand_module_name(declare_type, &(module_id_map), &(module_references_map), &(module_stack)));
+            NodeDeclareData.<type(declare_data, expand_module_name(declare_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
         } else if =(id, NODE_RETRIEVE) {
             variable retrieve_data = NodeRetrieveData.*cast(pointer_data);
             variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
@@ -242,7 +242,7 @@ define expand_modules = function(nodes: *Nodes) {
                     nodes_set_skip(nodes, index);
                 };
 
-                NodeRetrieveData.<name(retrieve_data, expand_module_name(full_name, &(module_id_map), &(module_references_map), &(module_stack)));
+                NodeRetrieveData.<name(retrieve_data, expand_module_name(full_name, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
             };
         } else if =(id, NODE_DEFINE) {
             variable define_data = NodeDefineData.*cast(pointer_data);
@@ -265,7 +265,14 @@ define expand_modules = function(nodes: *Nodes) {
     };
 };
 
-define expand_module_name = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8): * {
+define create_previous_results_list = function(): *AutoBufferStack8 {
+    variable new = autobuffer_stack8_new(32);
+    variable allocated = AutoBufferStack8.*cast(brk_allocate(AutoBufferStack8.size()));
+    AutoBufferStack8.<(allocated, new);
+    return allocated;
+};
+
+define expand_module_name = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, previous_results_list: *AutoBufferStack8): * {
     variable name = name_in;
     variable pointer_count = 0;
     while =(any_1.>(any_1.*cast(+(name, pointer_count))), ASCII_ASTERISK) {
@@ -289,7 +296,7 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
 
                 if =(temp_id, 999) {
                     variable temp_name = *.cast(hashmap_string_get2(module_references_map, current_module));
-                    temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack);
+                    temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
                     temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
                 };
                 temp_id
@@ -302,7 +309,7 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
 
                 if =(temp_id, 999) {
                     variable temp_name = *.cast(hashmap_string_get2(module_references_map, current_module_full));
-                    temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack);
+                    temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
                     temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
                 };
                 temp_id
@@ -325,7 +332,16 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
 
     variable possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
     if !(=(possible_reference, 999)) {
-        name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack);
+        variable i = 0;
+        while <(i, AutoBufferStack8.>index(previous_results_list)) {
+            if string=(*.cast(autobuffer_stack8_get(previous_results_list, i)), name) {
+                return name;
+            };
+            i = +(i, 1);
+        };
+        autobuffer_stack8_push(previous_results_list, name);
+
+        name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
     };
 
     variable i = 0;
