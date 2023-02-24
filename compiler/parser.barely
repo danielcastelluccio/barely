@@ -467,9 +467,11 @@ define parse_structure = function(tokens: *Tokens, index_pointer: *whole_8, node
 
 define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
     variable buffer = autobuffer_buffer_new(64);
-    variable token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
-    autobuffer_buffer_push_string(&(buffer), token_name);
-    increment_whole_8_pointer(index_pointer, 1);
+    if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
+        variable token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
+        autobuffer_buffer_push_string(&(buffer), token_name);
+        increment_whole_8_pointer(index_pointer, 1);
+    };
 
     variable inner = 0;
     while |(>(inner, 0), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_OPEN_BRACKET)) {
@@ -592,7 +594,7 @@ define parse_function_definition = function(tokens: *Tokens, index_pointer: *who
     while &&(!(=(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS)), !(=(tokens_get_id(tokens, index), TOKEN_SEMICOLON))) {
         variable id = tokens_get_id(tokens, index);
 
-        if =(id, TOKEN_NAME) {
+        if |(=(id, TOKEN_NAME), =(id, TOKEN_PERIOD)) {
             variable token_name = parse_name(tokens, &(index));
             autobuffer_array8_set(&(function_returns), returns_index, token_name);
             returns_index = +(returns_index, 1);
