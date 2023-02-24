@@ -1,24 +1,5 @@
-define expand_type = function(nodes: *Nodes, program_data: *ProgramData, type: *): * {
-    variable define_types = &(ProgramData.>define_types(program_data));
-    variable define_values = &(ProgramData.>define_values(program_data));
-
-    variable actual_type = type;
-
-    if &&(!(string_length=(type, "any_", 4)), !(string_length=(type, "structure[", 9))) {
-        variable actual_type2 = get_define_retrieve_type(define_types, define_values, type);
-        if !(=(actual_type2, 0)) {
-            if !(string_length=(actual_type2, type, 10)) {
-                actual_type = expand_type(nodes, program_data, actual_type2);
-            };
-        };
-    };
-
-    return actual_type;
-};
-
-define is_type = function(wanted_in: *, given_in: *, nodes: *Nodes, program_data: *ProgramData): boolean {
-    variable wanted = expand_type(nodes, program_data, wanted_in);
-    variable given = expand_type(nodes, program_data, given_in);
+// TODO: Currently using a define to define a type as another will result in two equal types, I would prefer them to be unique, but is that really a good idea?
+define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *ProgramData): boolean {
     if string=(wanted, given) {
         return true;
     };
@@ -747,6 +728,7 @@ define get_arguments_from_function_type = function(function_type: *): *, * {
 
 define get_define_retrieve_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
     variable define_type = *.cast(hashmap_string_get(define_types, define_name));
+    variable define_value = *.cast(hashmap_string_get(define_values, define_name));
     if =(define_type, 0) {
 
     } else if string_length=(define_type, "structure[", 10) {
@@ -853,6 +835,19 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     };
 
     if !(=(variable_type, 0)) {
+        if string=(variable_type, "define") {
+            variable value = *.cast(get_value_of_define(define_types, define_values, variable_name));
+            variable i = 0;
+            while <(i, array8_length(value)) {
+                i = +(i, 1);
+            };
+
+            variable value2 = *.cast(array8_get(value, 0));
+            variable_type = *.cast(get_define_retrieve_type(define_types, define_values, value2));
+        };
+    };
+
+    if !(=(variable_type, 0)) {
         if is_define(variable_type) {
             variable_type = get_define_retrieve_type(define_types, define_values, variable_type);
         };
@@ -943,7 +938,7 @@ define process_cast = function(nodes: *Nodes, nodes_index: whole_8, stack: *Auto
     variable popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(expand_type(nodes, program_data, popped), nodes, program_data), size_function(expand_type(nodes, program_data, to_push), nodes, program_data))) {
+    if !(=(size_function(popped, nodes, program_data), size_function(to_push, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Cast wants equal sized types, given '");
         print(popped);
@@ -1059,7 +1054,7 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
 
     // removed signdness check -- probably need to add it back
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(expand_type(nodes, program_data, first), nodes, program_data), size_function(expand_type(nodes, program_data, second), nodes, program_data))) {
+    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(math_name);
@@ -1097,7 +1092,7 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     variable second = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
     variable size_function = ProgramData.>get_size(program_data);
-    if !(=(size_function(expand_type(nodes, program_data, first), nodes, program_data), size_function(expand_type(nodes, program_data, second), nodes, program_data))) {
+    if !(=(size_function(first, nodes, program_data), size_function(second, nodes, program_data))) {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
         print(comparison_name);

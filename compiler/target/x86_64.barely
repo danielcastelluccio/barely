@@ -287,7 +287,9 @@ define Target/X86_64 = module {
     };
 
     define output_retrieve = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        variable variable_name = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index)));
+        variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
+        variable variable_name = NodeRetrieveData.>name(retrieve_data);
+
         variable variable_type, scope_index = .get_variable_linux-x86_64(variable_types, variable_name);
 
         variable scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
@@ -339,10 +341,27 @@ define Target/X86_64 = module {
         };
     };
 
-    define output_retrieve_define = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, variable_name: *, variable_type: *) {
+    define output_retrieve_define = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, variable_name: *, variable_type_in: *) {
+        variable variable_type = variable_type_in;
         variable define_types = &(ProgramData.>define_types(program_data));
         variable define_values = &(ProgramData.>define_values(program_data));
         variable define_value = get_value_of_define(define_types, define_values, variable_name);
+
+        if string=(variable_type, "define") {
+            variable value = *.cast(get_value_of_define(define_types, define_values, variable_name));
+            variable i = 0;
+            while <(i, array8_length(value)) {
+                i = +(i, 1);
+            };
+
+            variable value2 = *.cast(array8_get(value, 0));
+            variable_type = *.cast(get_define_retrieve_type(define_types, define_values, value2));
+            define_value = *.cast(get_value_of_define(define_types, define_values, value2));
+
+            if string=(variable_type, "module") {
+                return;
+            };
+        };
 
         if string_length=(variable_type, "*function", 9) {
             variable push_function_instruction = X86_64.autobuffer_buffer_push_push_instruction_pointer(instructions_buffer);
@@ -1299,6 +1318,7 @@ define Target/X86_64 = module {
 
         print("unknown type ");
         println(type);
+        exit(1);
 
         return 0;
     };

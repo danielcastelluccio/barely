@@ -103,6 +103,7 @@ define main = function(arguments: **, argument_count: whole_8) {
 define expand_modules = function(nodes: *Nodes) {
     variable module_stack = autobuffer_stack8_new(32);
     variable module_id_map = hashmap_new(64);
+    variable module_references_map = hashmap_new(64);
     variable current_module_id = 0;
     variable i = 0;
     while <(i, Nodes.>index(nodes)) {
@@ -111,21 +112,49 @@ define expand_modules = function(nodes: *Nodes) {
 
         if =(id, NODE_DEFINE) {
             variable define_data = NodeDefineData.*cast(pointer_data);
+            variable define_name = NodeDefineData.>name(define_data);
+            variable define_type = NodeDefineData.>type(define_data);
 
-            if string=(NodeDefineData.>type(define_data), "module") {
-                variable name = NodeDefineData.>name(define_data);
+            variable name = NodeDefineData.>name(define_data);
+            if >(AutoBufferStack8.>index(&(module_stack)), 0) {
+                variable top_module = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
+                variable top_module_string = any_16.>0();
+                whole_8_to_string(top_module, &(top_module_string));
 
-                if >(AutoBufferStack8.>index(&(module_stack)), 0) {
-                    variable top_module = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
-                    variable top_module_string = any_16.>0();
-                    whole_8_to_string(top_module, &(top_module_string));
+                name = concatenate2_brk_allocate(&(top_module_string), name);
+            };
 
-                    name = concatenate2_brk_allocate(&(top_module_string), name);
-                };
+            if string=(define_type, "module") {
                 hashmap_string_put(&(module_id_map), name, current_module_id);
 
                 autobuffer_stack8_push(&(module_stack), current_module_id);
                 current_module_id = +(current_module_id, 1);
+            } else if string=(define_type, "define") {
+                variable full_define = "";
+                variable j = +(i, 1);
+                while =(nodes_get_id(nodes, j), NODE_RETRIEVE) {
+                    j = +(j, 1);
+                };
+
+                j = -(j, 1);
+
+                while >(j, i) {
+                    variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, j));
+                    variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
+                    if string=(retrieve_name, "@current_module") {
+                        variable top_module = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
+                        variable top_module_string = any_16.>0();
+                        whole_8_to_string(top_module, &(top_module_string));
+
+                        full_define = concatenate2_brk_allocate(full_define, &(top_module_string));
+                    } else {
+                        full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
+                    };
+
+                    j = -(j, 1);
+                };
+                full_define = substring_brk_allocate(full_define, 0, -(length(full_define), 1));
+                hashmap_string_put(&(module_references_map), name, full_define);
             };
         } else if =(id, NODE_ENDDEFINE) {
             variable define_data = NodeEndDefineData.*cast(pointer_data);
@@ -154,7 +183,7 @@ define expand_modules = function(nodes: *Nodes) {
             variable j = 0;
             while <(j, array8_length(argument_types)) {
                 variable argument_type = *.cast(array8_get(argument_types, j));
-                array8_set(argument_types, j, expand_module_name(argument_type, &(module_id_map), &(module_stack)));
+                array8_set(argument_types, j, expand_module_name(argument_type, &(module_id_map), &(module_references_map), &(module_stack)));
                 j = +(j, 1);
             };
 
@@ -168,7 +197,53 @@ define expand_modules = function(nodes: *Nodes) {
         } else if =(id, NODE_DECLARE) {
             variable declare_data = NodeDeclareData.*cast(pointer_data);
             variable declare_type = NodeDeclareData.>type(declare_data);
-            NodeDeclareData.<type(declare_data, expand_module_name(declare_type, &(module_id_map), &(module_stack)));
+            NodeDeclareData.<type(declare_data, expand_module_name(declare_type, &(module_id_map), &(module_references_map), &(module_stack)));
+        } else if =(id, NODE_RETRIEVE) {
+            variable retrieve_data = NodeRetrieveData.*cast(pointer_data);
+            variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
+
+            if NodeRetrieveData.>using_module(retrieve_data) {
+                variable index_stack = autobuffer_stack8_new(16);
+
+                variable module_stack2 = autobuffer_stack8_new(16);
+                variable running = true;
+                variable j = +(i, 1);
+                while running {
+                    variable node_id = nodes_get_id(nodes, j);
+                    variable node_pointer_data = nodes_get_pointer_data(nodes, j);
+
+                    if =(node_id, NODE_SKIP) {
+                    } else if =(node_id, NODE_RETRIEVE) {
+                        variable retrieve_data2 = NodeRetrieveData.*cast(node_pointer_data);
+
+                        if NodeRetrieveData.>is_module(retrieve_data2) {
+                            autobuffer_stack8_push(&(module_stack2), NodeRetrieveData.>name(retrieve_data2));
+                            autobuffer_stack8_push(&(index_stack), j);
+                        } else {
+                            running = false;
+                        };
+                    } else {
+                        running = false;
+                    };
+
+                    j = +(j, 1);
+                };
+
+                variable full_name = "";
+                while >(AutoBufferStack8.>index(&(module_stack2)), 0) {
+                    variable module_name = *.cast(autobuffer_stack8_pop(&(module_stack2)));
+                    full_name = concatenate3_brk_allocate(full_name, module_name, ".");
+                };
+
+                full_name = concatenate2_brk_allocate(full_name, retrieve_name);
+
+                while >(AutoBufferStack8.>index(&(index_stack)), 0) {
+                    variable index = whole_8.cast(autobuffer_stack8_pop(&(index_stack)));
+                    nodes_set_skip(nodes, index);
+                };
+
+                NodeRetrieveData.<name(retrieve_data, expand_module_name(full_name, &(module_id_map), &(module_references_map), &(module_stack)));
+            };
         } else if =(id, NODE_DEFINE) {
             variable define_data = NodeDefineData.*cast(pointer_data);
 
@@ -190,7 +265,7 @@ define expand_modules = function(nodes: *Nodes) {
     };
 };
 
-define expand_module_name = function(name_in: *, module_id_map: *HashMap, module_stack: *AutoBufferStack8): * {
+define expand_module_name = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8): * {
     variable name = name_in;
     variable pointer_count = 0;
     while =(any_1.>(any_1.*cast(+(name, pointer_count))), ASCII_ASTERISK) {
@@ -210,13 +285,27 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
             variable new_id = if string=(current_module, "@current_module") {
                 whole_8.cast(autobuffer_stack8_peek(module_stack))
             } else if =(current_module_id, 999) {
-                whole_8.cast(hashmap_string_get2(module_id_map, current_module))
+                variable temp_id = whole_8.cast(hashmap_string_get2(module_id_map, current_module));
+
+                if =(temp_id, 999) {
+                    variable temp_name = *.cast(hashmap_string_get2(module_references_map, current_module));
+                    temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack);
+                    temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
+                };
+                temp_id
             } else {
                 variable current_module_id_string = any_16.>0();
                 whole_8_to_string(current_module_id, &(current_module_id_string));
 
                 variable current_module_full = concatenate2_brk_allocate(&(current_module_id_string), current_module);
-                whole_8.cast(hashmap_string_get2(module_id_map, current_module))
+                variable temp_id = whole_8.cast(hashmap_string_get2(module_id_map, current_module_full));
+
+                if =(temp_id, 999) {
+                    variable temp_name = *.cast(hashmap_string_get2(module_references_map, current_module_full));
+                    temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack);
+                    temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
+                };
+                temp_id
             };
 
             current_module_id = new_id;
@@ -232,6 +321,11 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
         variable current_module_id_string = any_16.>0();
         whole_8_to_string(current_module_id, &(current_module_id_string));
         name = concatenate2_brk_allocate(&(current_module_id_string), autobuffer_buffer_get_buffer_pointer(&(buffer)));
+    };
+
+    variable possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
+    if !(=(possible_reference, 999)) {
+        name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack);
     };
 
     variable i = 0;
