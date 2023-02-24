@@ -309,6 +309,10 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
 
                 if =(temp_id, 999) {
                     variable temp_name = *.cast(hashmap_string_get2(module_references_map, current_module_full));
+                    if =(temp_name, 999) {
+                        return name;
+                    };
+
                     temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
                     temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
                 };
