@@ -1307,16 +1307,6 @@ define Target/X86_64 = module {
             };
         };
 
-        if string_length=(type, "global[", 7) {
-            variable inside = brk_allocate(-(length(type), 7));
-            copy(+(type, 7), inside, -(length(type), 8));
-
-            variable size = .get_size(inside, nodes, program_data);
-
-            hashmap_string_put(&(cached_sizes_map), type, size);
-            return size;
-        };
-
         print("unknown type ");
         println(type);
         exit(1);
