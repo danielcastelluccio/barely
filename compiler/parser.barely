@@ -302,16 +302,23 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
 define get_define_type_parser = function(tokens: *Tokens, index_pointer: *whole_8, value_offset: whole_8): * {
     variable index = whole_8.>(index_pointer);
+    variable token_location = +(index, value_offset);
 
-    variable type = if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
+    if =(tokens_get_id(tokens, token_location), TOKEN_SEMICOLON) {
+        print_token_error_beginning(tokens, -(token_location, 1));
+        println("Unexpected token");
+        exit(1);
+    };
+
+    variable type = if =(tokens_get_id(tokens, token_location), TOKEN_NUMBER) {
         "whole_8"
-    } else if tokens_is_keyword(tokens, +(index, value_offset), "function") {
+    } else if tokens_is_keyword(tokens, token_location, "function") {
         function_definition_to_type(tokens, &(index), value_offset)
-    } else if tokens_is_keyword(tokens, +(index, value_offset), "structure") {
+    } else if tokens_is_keyword(tokens, token_location, "structure") {
         structure_definition_to_type(tokens, &(index), value_offset)
-    } else if tokens_is_keyword(tokens, +(index, value_offset), "module") {
+    } else if tokens_is_keyword(tokens, token_location, "module") {
         "module"
-    } else if |(=(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NAME), =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_PERIOD)) {
+    } else if |(=(tokens_get_id(tokens, token_location), TOKEN_NAME), =(tokens_get_id(tokens, token_location), TOKEN_PERIOD)) {
         "define"
     } else {
         global_definition_to_type(tokens, &(index), value_offset)
@@ -1220,7 +1227,7 @@ define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *wh
     while !(=(tokens_get_id(tokens, whole_8.>(index_pointer)), breaker)) {
         if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_COMMA) {
             increment_whole_8_pointer(index_pointer, 1);
-        } else if |(=(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_SEMICOLON), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_CLOSED_PARENTHESIS)) {
+        } else if |(|(=(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_SEMICOLON), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_CLOSED_PARENTHESIS)), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_CLOSED_CURLY_BRACKETS)) {
             print_token_error_beginning(tokens, whole_8.>(index_pointer));
             println("Unexpected token");
             exit(1);

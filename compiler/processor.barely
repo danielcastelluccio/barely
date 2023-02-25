@@ -320,9 +320,6 @@ define get_function_from_string_type = function(type: *): NodeFunctionData {
 };
 
 define is_define = function(type: *): boolean {
-    if string_length=(type, "structure[", 10) {
-        return false;
-    };
     if string_length=(type, "any_", 4) {
         return false;
     };
@@ -335,13 +332,7 @@ define is_define = function(type: *): boolean {
     if string_length=(type, "boolean", 6) {
         return false;
     };
-    if string_length=(type, "function[", 9) {
-        return false;
-    };
     if string_length=(type, "*function[", 10) {
-        return false;
-    };
-    if string_length=(type, "global[", 7) {
         return false;
     };
     if string=(type, "*") {
@@ -799,12 +790,16 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
     };
 
     if !(=(variable_type, 0)) {
+        if string=(variable_type, "module") {
+            print_node_error_beginning(nodes, nodes_index);
+            println("Cannot retrieve a module");
+            exit(1);
+        };
+    };
+
+    if !(=(variable_type, 0)) {
         if is_define(variable_type) {
             variable_type = get_define_retrieve_type(define_types, define_values, variable_type);
-        };
-
-        if string_length=(variable_type, "global[", 7) {
-            variable_type = substring_brk_allocate(variable_type, 7, -(length(variable_type), 1));
         };
 
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
@@ -812,10 +807,6 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, stack: *
         variable_type = get_define_retrieve_type(define_types, define_values, +(variable_name, 1));
 
         if !(=(variable_type, 0)) {
-            if string_length=(variable_type, "global[", 7) {
-                variable_type = substring_brk_allocate(variable_type, 7, -(length(variable_type), 1));
-            };
-
             NodeRetrieveData.<name(retrieve_data, +(variable_name, 1));
             autobuffer_stack8_legacy_push(stack, stack_pointer, concatenate2_brk_allocate("*", variable_type));
         } else if NodeRetrieveData.>is_module(retrieve_data) {
