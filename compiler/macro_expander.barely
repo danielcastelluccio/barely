@@ -11,7 +11,7 @@ define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens, flags
             variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, i));
             variable name = TokenNameData.>name(name_data);
 
-            if &&(!(=(hashmap_string_get2(&(macro_starts), name), 999)), !(=(tokens_get_id(tokens, -(i, 1)), TOKEN_PERIOD))) {
+            if &&(!(=(hashmap_string_get2(&(macro_starts), name), 999)), &&(!(=(tokens_get_id(tokens, -(i, 1)), TOKEN_PERIOD)), =(tokens_get_id(tokens, +(i, 1)), TOKEN_OPEN_PARENTHESIS))) {
                 if !(tokens_is_keyword(tokens, -(i, 1), "macro")) {
                     expand_macro_specific(&(macro_starts), &(macro_ends), &(macro_bindings), tokens, &(i), tokens_expanded, flags);
                 } else {
@@ -214,6 +214,12 @@ define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, Hash
 
             variable name_token = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(i, 1)));
             variable name = TokenNameData.>name(name_token);
+
+            if !(string_length=(name, "#", 1)) {
+                print_token_error_beginning(tokens, i);
+                println("Macro name must begin with '#'");
+                exit(1);
+            };
 
             i = +(i, 3);
 
