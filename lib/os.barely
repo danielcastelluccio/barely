@@ -1,5 +1,5 @@
 define get_file_size = function(file: *): whole_8 {
-    compile_if(target, linux, return {
+    #compile_if(target, linux, return {
         variable descriptor = Linux.sys_open(file, Linux.O_RDONLY, 0);
 
         variable stat: Linux.Stat;
@@ -8,7 +8,7 @@ define get_file_size = function(file: *): whole_8 {
         Linux.Stat.>size(&(stat))
     };)
 
-    compile_if(target, macos, return {
+    #compile_if(target, macos, return {
         variable descriptor = MacOS.sys_open(file, MacOS.O_RDONLY, 0);
 
         variable stat: MacOS.Stat;
@@ -19,44 +19,44 @@ define get_file_size = function(file: *): whole_8 {
 };
 
 define read_file_to_buffer = function(file: *, buffer: *, size: whole_8) {
-    compile_if(target, linux, {
+    #compile_if(target, linux, {
         variable descriptor = Linux.sys_open(file, Linux.O_RDONLY, 0);
         Linux.sys_read(descriptor, buffer, size);
     };)
-    compile_if(target, macos, {
+    #compile_if(target, macos, {
         variable descriptor = MacOS.sys_open(file, MacOS.O_RDONLY, 0);
         MacOS.sys_read(descriptor, buffer, size);
     };)
 };
 
 define print_stdout = function(string: *, length: whole_8) {
-    compile_if(target, linux, Linux.sys_write(Linux.STDOUT, string, length);)
-    compile_if(target, macos, MacOS.sys_write(MacOS.STDOUT, string, length);)
+    #compile_if(target, linux, Linux.sys_write(Linux.STDOUT, string, length);)
+    #compile_if(target, macos, MacOS.sys_write(MacOS.STDOUT, string, length);)
 };
 
 define exit = function(code: whole_8) {
-    compile_if(target, linux, Linux.sys_exit(code);)
-    compile_if(target, macos, MacOS.sys_exit(code);)
+    #compile_if(target, linux, Linux.sys_exit(code);)
+    #compile_if(target, macos, MacOS.sys_exit(code);)
 };
 
 define map_memory = function(size: whole_8): * {
-    compile_if(target, linux, return Linux.sys_mmap(*.cast(0), size, 3, +(Linux.MAP_ANONYMOUS, Linux.MAP_PRIVATE), whole_8.cast(-1_integer_8), 0);)
-    compile_if(target, macos, return MacOS.sys_mmap(*.cast(0), size, 3, +(MacOS.MAP_ANONYMOUS, MacOS.MAP_PRIVATE), whole_8.cast(-1_integer_8), 0);)
+    #compile_if(target, linux, return Linux.sys_mmap(*.cast(0), size, 3, +(Linux.MAP_ANONYMOUS, Linux.MAP_PRIVATE), whole_8.cast(-1_integer_8), 0);)
+    #compile_if(target, macos, return MacOS.sys_mmap(*.cast(0), size, 3, +(MacOS.MAP_ANONYMOUS, MacOS.MAP_PRIVATE), whole_8.cast(-1_integer_8), 0);)
 };
 
 define create_and_write_file = function(file: *, buffer: *, size: whole_8) {
-    compile_if(target, linux, {
+    #compile_if(target, linux, {
         variable output_file = Linux.sys_open(file, +(+(Linux.O_WRONLY, Linux.O_CREAT), Linux.O_TRUNC), 452);
         Linux.sys_write(output_file, buffer, size);
         Linux.sys_close(output_file);
     };)
-    compile_if(target, macos, {
+    #compile_if(target, macos, {
         variable output_file = MacOS.sys_open(file, +(+(MacOS.O_WRONLY, MacOS.O_CREAT), MacOS.O_TRUNC), 452);
         MacOS.sys_write(output_file, buffer, size);
         MacOS.sys_close(output_file);
     };)
 };
 
-macro compile_if(id, value, instruction) {
+macro #compile_if(id, value, instruction) {
     #if_set_equal id value instruction
 };
