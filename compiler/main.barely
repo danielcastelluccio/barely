@@ -98,12 +98,17 @@ define main = function(arguments: **, argument_count: whole_8) {
     output_format(&(nodes), program_data, target_os, output_file, output_instruction_set);
 };
 
+define module_id_map = global(HashMap);
+define module_references_map = global(HashMap);
+define define_module_map = global(HashMap);
+
 // First go through and correlate module ids with the names to access them ("0Foo" -> 1) (Foo module inside of "Test" module 0)
 // Modify stuff to reflect the modules with their number forms
 define expand_modules = function(nodes: *Nodes) {
     variable module_stack = autobuffer_stack8_new(32);
-    variable module_id_map = hashmap_new(64);
-    variable module_references_map = hashmap_new(64);
+    module_id_map = hashmap_new(64);
+    module_references_map = hashmap_new(64);
+    define_module_map = hashmap_new(64);
     variable current_module_id = 0;
     variable i = 0;
     while <(i, Nodes.>index(nodes)) {
@@ -124,6 +129,8 @@ define expand_modules = function(nodes: *Nodes) {
                 name = concatenate2_brk_allocate(&(top_module_string), name);
             };
 
+            hashmap_string_put(&(define_module_map), name, whole_8.cast(autobuffer_stack8_peek(&(module_stack))));
+
             if string=(define_type, "module") {
                 hashmap_string_put(&(module_id_map), name, current_module_id);
 
@@ -131,16 +138,12 @@ define expand_modules = function(nodes: *Nodes) {
                 current_module_id = +(current_module_id, 1);
             } else if string=(define_type, "define") {
                 variable full_define = "";
-                variable j = +(i, 1);
-                while =(nodes_get_id(nodes, j), NODE_RETRIEVE) {
-                    j = +(j, 1);
-                };
 
-                j = -(j, 1);
-
-                while >(j, i) {
-                    variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, j));
-                    variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
+                variable j = 0;
+                variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, +(i, 1)));
+                variable retrieve_names = NodeRetrieveData.>names(retrieve_data);
+                while <(j, array8_length(retrieve_names)) {
+                    variable retrieve_name = *.cast(array8_get(retrieve_names, j));
                     if string=(retrieve_name, "@current_module") {
                         variable top_module = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
                         variable top_module_string = any_16.>0();
@@ -151,114 +154,11 @@ define expand_modules = function(nodes: *Nodes) {
                         full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
                     };
 
-                    j = -(j, 1);
-                };
-                full_define = substring_brk_allocate(full_define, 0, -(length(full_define), 1));
-                hashmap_string_put(&(module_references_map), name, full_define);
-            };
-        } else if =(id, NODE_ENDDEFINE) {
-            variable define_data = NodeEndDefineData.*cast(pointer_data);
-
-            if !(=(NodeEndDefineData.>type(define_data), 0)) {
-                if string=(NodeEndDefineData.>type(define_data), "module") {
-                    variable _ = autobuffer_stack8_pop(&(module_stack));
-                };
-            };
-        };
-
-        i = +(i, 1);
-    };
-
-    variable current_module_id = 0;
-    variable module_stack = autobuffer_stack8_new(32);
-    variable i = 0;
-    while <(i, Nodes.>index(nodes)) {
-        variable id = nodes_get_id(nodes, i);
-        variable pointer_data = nodes_get_pointer_data(nodes, i);
-
-        if =(id, NODE_FUNCTION) {
-            variable function_data = NodeFunctionData.*cast(pointer_data);
-            variable argument_types = NodeFunctionData.>argument_types(function_data);
-            variable return_types = NodeFunctionData.>returns(function_data);
-
-            variable j = 0;
-            while <(j, array8_length(argument_types)) {
-                variable argument_type = *.cast(array8_get(argument_types, j));
-                array8_set(argument_types, j, expand_module_name(argument_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
-                j = +(j, 1);
-            };
-
-            variable j = 0;
-            while <(j, array8_length(return_types)) {
-                variable return_type = *.cast(array8_get(return_types, j));
-                array8_set(return_types, j, expand_module_name(return_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
-                j = +(j, 1);
-            };
-
-            if =(nodes_get_id(nodes, -(i, 1)), NODE_DEFINE) {
-                variable define_data = NodeDefineData.*cast(nodes_get_pointer_data(nodes, -(i, 1)));
-
-                // I feel like there should be a better way to do this.
-                // Possibly the define type could be set after doing this computation?
-                NodeDefineData.<type(define_data, get_function_string_type(function_data));
-            };
-        } else if =(id, NODE_DECLARE) {
-            variable declare_data = NodeDeclareData.*cast(pointer_data);
-            variable declare_type = NodeDeclareData.>type(declare_data);
-            NodeDeclareData.<type(declare_data, expand_module_name(declare_type, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
-        } else if =(id, NODE_RETRIEVE) {
-            variable retrieve_data = NodeRetrieveData.*cast(pointer_data);
-            variable retrieve_name = NodeRetrieveData.>name(retrieve_data);
-
-            if NodeRetrieveData.>using_module(retrieve_data) {
-                variable index_stack = autobuffer_stack8_new(16);
-
-                variable module_stack2 = autobuffer_stack8_new(16);
-                variable running = true;
-                variable j = +(i, 1);
-                while running {
-                    variable node_id = nodes_get_id(nodes, j);
-                    variable node_pointer_data = nodes_get_pointer_data(nodes, j);
-
-                    if =(node_id, NODE_SKIP) {
-                    } else if =(node_id, NODE_RETRIEVE) {
-                        variable retrieve_data2 = NodeRetrieveData.*cast(node_pointer_data);
-
-                        if NodeRetrieveData.>is_module(retrieve_data2) {
-                            autobuffer_stack8_push(&(module_stack2), NodeRetrieveData.>name(retrieve_data2));
-                            autobuffer_stack8_push(&(index_stack), j);
-                        } else {
-                            running = false;
-                        };
-                    } else {
-                        running = false;
-                    };
-
                     j = +(j, 1);
                 };
 
-                variable full_name = "";
-                while >(AutoBufferStack8.>index(&(module_stack2)), 0) {
-                    variable module_name = *.cast(autobuffer_stack8_pop(&(module_stack2)));
-                    full_name = concatenate3_brk_allocate(full_name, module_name, ".");
-                };
-
-                full_name = concatenate2_brk_allocate(full_name, retrieve_name);
-
-                while >(AutoBufferStack8.>index(&(index_stack)), 0) {
-                    variable index = whole_8.cast(autobuffer_stack8_pop(&(index_stack)));
-                    nodes_set_skip(nodes, index);
-                };
-
-                NodeRetrieveData.<name(retrieve_data, expand_module_name(full_name, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list()));
-                NodeRetrieveData.<using_module(retrieve_data, false);
-            };
-        } else if =(id, NODE_DEFINE) {
-            variable define_data = NodeDefineData.*cast(pointer_data);
-
-            if string=(NodeDefineData.>type(define_data), "module") {
-                autobuffer_stack8_push(&(module_stack), current_module_id);
-                current_module_id = +(current_module_id, 1);
+                full_define = substring_brk_allocate(full_define, 0, -(length(full_define), 1));
+                hashmap_string_put(&(module_references_map), name, full_define);
             };
         } else if =(id, NODE_ENDDEFINE) {
             variable define_data = NodeEndDefineData.*cast(pointer_data);
@@ -525,9 +425,28 @@ define add_used_any_types = function(nodes: *Nodes) {
                     };
                 };
             };
+        } else if =(id, NODE_INVOKE_INTERNAL) {
+            variable invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, i));
+            variable names = NodeInvokeInternalData.>names(invoke_data);
+            variable name_first = *.cast(array8_get(names, 0));
+            if &&(>(array8_length(names), 1), string_length=(name_first, "any_", 4)) {
+                variable added = false;
+                variable j = 0;
+                while <(j, already_added_types_index) {
+                    if string=(*.cast(autobuffer_array8_get(&(already_added_types), j)), name_first) {
+                        added = true;
+                    };
+                    j = +(j, 1);
+                };
+
+                if !(added) {
+                    nodes_append_structure_any(nodes, name_first);
+                    autobuffer_stack8_legacy_push(&(already_added_types), &(already_added_types_index), name_first);
+                };
+            };
         };
 
-         i = +(i, 1);
+        i = +(i, 1);
     };
 
 };

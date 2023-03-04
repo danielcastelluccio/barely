@@ -4,6 +4,7 @@ define NodeFunctionData = structure {
     name: *;
     argument_names: *;
     argument_types: *;
+    argument_types_array: *;
     returns: *;
 };
 
@@ -13,6 +14,7 @@ define NODE_RETRIEVE = 2;
 
 define NodeRetrieveData = structure {
     name: *;
+    names: *;
     using_module: boolean;
     is_module: boolean;
     coercion: *;
@@ -45,6 +47,7 @@ define NODE_DECLARE = 6;
 
 define NodeDeclareData = structure {
     name: *;
+    type_names: *;
     type: *;
 };
 
@@ -107,6 +110,12 @@ define NodeDefineData = structure {
     data: *;
 };
 
+define NODE_INVOKE_INTERNAL = 17;
+
+define NodeInvokeInternalData = structure {
+    names: *;
+};
+
 define NODE_SCOPE = 18;
 
 define NODE_ENDSCOPE = 19;
@@ -139,7 +148,7 @@ define NODE_MODULE = 26;
 
 define NODE_ENDMODULE = 27;
 
-define NODE_SIZE = 64;
+define NODE_SIZE = 72;
 
 define NodeLocationData = structure {
     file: *;
@@ -256,9 +265,41 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     variable pointer_data = nodes_get_pointer_data(nodes, index);
     if =(id, NODE_RETRIEVE) {
         variable retrieve_data = NodeRetrieveData.*cast(pointer_data);
-        print("Retrieve{name='");
-        print(NodeRetrieveData.>name(retrieve_data));
-        println("'}");
+        print("Retrieve{name=");
+        if !(=(NodeRetrieveData.>name(retrieve_data), 0)) {
+            print("'");
+            print(NodeRetrieveData.>name(retrieve_data));
+            print("'");
+        } else {
+            print("null");
+        };
+        print(", names=");
+        if !(=(NodeRetrieveData.>names(retrieve_data), 0)) {
+            print("'");
+            variable i = 0;
+            while <(i, array8_length(NodeRetrieveData.>names(retrieve_data))) {
+                print(*.cast(array8_get(NodeRetrieveData.>names(retrieve_data), i)));
+                print(", ");
+                i = +(i, 1);
+            };
+            print("'");
+        };
+        println("}");
+    } else if =(id, NODE_INVOKE_INTERNAL) {
+        variable invoke_data = NodeInvokeInternalData.*cast(pointer_data);
+        print("InternalInvoke{names=");
+        variable names = NodeInvokeInternalData.>names(invoke_data);
+        if !(=(names, 0)) {
+            print("'");
+            variable i = 0;
+            while <(i, array8_length(names)) {
+                print(*.cast(array8_get(names, i)));
+                print(", ");
+                i = +(i, 1);
+            };
+            print("'");
+        };
+        println("}");
     } else if =(id, NODE_ASSIGN) {
         variable assign_data = NodeAssignData.*cast(pointer_data);
         print("Assign{name='");
