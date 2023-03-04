@@ -1,26 +1,28 @@
 // probably should be able to just declare the number as whole_1
-define ASCII_TAB: whole_1 = 9;
-define ASCII_LINE_FEED: whole_1 = 10;
-define ASCII_SPACE: whole_1 = 32;
-define ASCII_QUOTATION: whole_1 = 34;
-define ASCII_OPEN_PARENTHESIS: whole_1 = 40;
-define ASCII_CLOSED_PARENTHESIS: whole_1 = 41;
-define ASCII_ASTERISK: whole_1 = 42;
-define ASCII_COMMA: whole_1 = 44;
-define ASCII_MINUS: whole_1 = 45;
-define ASCII_PERIOD: whole_1 = 46;
-define ASCII_SLASH: whole_1 = 47;
-define ASCII_ZERO: whole_1 = 48;
-define ASCII_NINE: whole_1 = 57;
-define ASCII_COLON: whole_1 = 58;
-define ASCII_SEMICOLON: whole_1 = 59;
-define ASCII_LESS_THAN: whole_1 = 60;
-define ASCII_GREATER_THAN: whole_1 = 62;
-define ASCII_OPEN_BRACKET: whole_1 = 91;
-define ASCII_CLOSED_BRACKET: whole_1 = 93;
-define ASCII_UNDERSCORE: whole_1 = 95;
-define ASCII_OPEN_CURLY_BRACKETS: whole_1 = 123;
-define ASCII_CLOSED_CURLY_BRACKETS: whole_1 = 125;
+define ASCII = module {
+    define TAB: whole_1 = 9;
+    define LINE_FEED: whole_1 = 10;
+    define SPACE: whole_1 = 32;
+    define QUOTATION: whole_1 = 34;
+    define OPEN_PARENTHESIS: whole_1 = 40;
+    define CLOSED_PARENTHESIS: whole_1 = 41;
+    define ASTERISK: whole_1 = 42;
+    define COMMA: whole_1 = 44;
+    define MINUS: whole_1 = 45;
+    define PERIOD: whole_1 = 46;
+    define SLASH: whole_1 = 47;
+    define ZERO: whole_1 = 48;
+    define NINE: whole_1 = 57;
+    define COLON: whole_1 = 58;
+    define SEMICOLON: whole_1 = 59;
+    define LESS_THAN: whole_1 = 60;
+    define GREATER_THAN: whole_1 = 62;
+    define OPEN_BRACKET: whole_1 = 91;
+    define CLOSED_BRACKET: whole_1 = 93;
+    define UNDERSCORE: whole_1 = 95;
+    define OPEN_CURLY_BRACKETS: whole_1 = 123;
+    define CLOSED_CURLY_BRACKETS: whole_1 = 125;
+};
 
 define is_number = function(string: *): boolean {
     variable length2 = length(string);
@@ -30,15 +32,15 @@ define is_number = function(string: *): boolean {
     while <(i, length2) {
         variable character = whole_1.>(whole_1.*cast(+(string, i)));
 
-        if &&(=(character, ASCII_UNDERSCORE), >(i, 0)) {
+        if &&(=(character, ASCII.UNDERSCORE), >(i, 0)) {
             break;
-            character = ASCII_ZERO;
+            character = ASCII.ZERO;
         };
 
-        if =(character, ASCII_MINUS) {
-        } else if <(character, ASCII_ZERO) {
+        if =(character, ASCII.MINUS) {
+        } else if <(character, ASCII.ZERO) {
             return false;
-        } else if >(character, ASCII_NINE) {
+        } else if >(character, ASCII.NINE) {
             return false;
         } else {
             has_number = true;
@@ -50,11 +52,11 @@ define is_number = function(string: *): boolean {
     return has_number;
 };
 
-define to_number = function(string: *): whole_8 {
-    return to_number_size_signed(string, 8, false);
+define string_to_whole_8 = function(string: *): whole_8 {
+    return string_to_number(string, 8, false);
 };
 
-define to_number_size_signed = function(string: *, size: whole_8, signed: boolean): whole_8 {
+define string_to_number = function(string: *, size: whole_8, signed: boolean): whole_8 {
     variable length2 = length(string);
 
     variable whole_8 = 0;
@@ -65,14 +67,14 @@ define to_number_size_signed = function(string: *, size: whole_8, signed: boolea
     while <(i, length2) {
         variable character = whole_1.>(whole_1.*cast(+(string, i)));
 
-        if =(character, ASCII_UNDERSCORE) {
+        if =(character, ASCII.UNDERSCORE) {
             break;
         } else {
-            if =(character, ASCII_MINUS) {
+            if =(character, ASCII.MINUS) {
                 has_negative = true;
             } else {
                 whole_8 = *(whole_8, 10);
-                whole_8 = +(whole_8, whole_1_to_whole_8(-(character, ASCII_ZERO)));
+                whole_8 = +(whole_8, whole_1_to_whole_8(-(character, ASCII.ZERO)));
             };
             i = +(i, 1);
         };
@@ -96,7 +98,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable whole_82 = whole_8;
 
     if =(whole_8, 0) {
-        any_1.<(any_1.*cast(buffer), ASCII_ZERO);
+        any_1.<(any_1.*cast(buffer), ASCII.ZERO);
     };
 
     variable length = 0;
@@ -110,7 +112,7 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
     variable i = 0;
     while !(=(whole_82, 0)) {
         variable number = whole_8_to_whole_1(%(whole_82, 10));
-        any_1.<(any_1.*cast(+(buffer, -(-(length, 1), i))), +(number, ASCII_ZERO));
+        any_1.<(any_1.*cast(+(buffer, -(-(length, 1), i))), +(number, ASCII.ZERO));
         whole_82 = /(whole_82, 10);
         i = +(i, 1);
     };
@@ -613,3 +615,121 @@ define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
 define autobuffer_stack8_get_buffer_pointer = function(buffer: *AutoBufferStack8): * {
     return AutoBuffer.>buffer(&(AutoBufferStack8.>autobuffer(buffer)));
 };
+
+define to_type_array = function(type: *): * {
+    variable new_array = autobuffer_new(24);
+    variable new_array_index = 0;
+
+    variable buffer = autobuffer_buffer_new(24);
+
+    variable i = 0;
+    while <(i, length(type)) {
+        variable character_pointer = +(type, i);
+        
+        if string_length=(character_pointer, ".", 1) {
+            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
+                autobuffer_array8_set(&(new_array), new_array_index, copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
+                new_array_index = +(new_array_index, 1);
+                autobuffer_buffer_reset(&(buffer));
+            };
+        } else {
+            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
+        };
+
+        i = +(i, 1);
+    };
+
+    if >(AutoBufferBuffer.>index(&(buffer)), 0) {
+        autobuffer_array8_set(&(new_array), new_array_index, copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
+        new_array_index = +(new_array_index, 1);
+    };
+
+    return AutoBuffer.>buffer(&(new_array));
+};
+
+define string_to_function_data = function(type: *): NodeFunctionData {
+    variable argument_types = autobuffer_stack8_new(24);
+    variable return_types = autobuffer_stack8_new(24);
+
+    variable argument_index = 0;
+    variable return_index = 0;
+
+    variable inside = 0;
+    variable is_return = false;
+    variable buffer = autobuffer_buffer_new(24);
+    variable i = 10;
+    while <(i, length(type)) {
+        variable character_pointer = +(type, i);
+        
+        if &&(=(inside, 0), |(string_length=(character_pointer, ":", 1), &&(string_length=(character_pointer, ",", 1), !(is_return)))) {
+            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
+                autobuffer_stack8_push(&(argument_types), copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
+                autobuffer_buffer_reset(&(buffer));
+            };
+
+            if string_length=(character_pointer, ":", 1) {
+                is_return = true;
+            };
+        } else if &&(=(inside, 0), |(string_length=(character_pointer, "]", 1), string_length=(character_pointer, ",", 1))) {
+            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
+                autobuffer_stack8_push(&(return_types), copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
+                autobuffer_buffer_reset(&(buffer));
+            };
+            if string_length=(character_pointer, "]", 1) {
+                break;
+            };
+        } else if string_length=(character_pointer, "[", 1) {
+            inside = +(inside, 1);
+            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
+        } else if string_length=(character_pointer, "]", 1) {
+            inside = -(inside, 1);
+            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
+        } else {
+            autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
+        };
+
+        i = +(i, 1);
+    };
+
+    variable data = NodeFunctionData.>0();
+    NodeFunctionData.<argument_types(&(data), autobuffer_stack8_get_buffer_pointer(&(argument_types)));
+    NodeFunctionData.<returns(&(data), autobuffer_stack8_get_buffer_pointer(&(return_types)));
+
+    return data;
+};
+
+define function_data_to_string = function(pointer: *NodeFunctionData): * {
+    variable main_name_buffer = autobuffer_buffer_new(16);
+
+    autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
+
+    variable arguments = NodeFunctionData.>argument_types(pointer);
+    variable returns = NodeFunctionData.>returns(pointer);
+
+    variable j = 0;
+    while !(=(array8_get(arguments, j), 0)) {
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(arguments, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), ":");
+
+    variable j = 0;
+    while !(=(array8_get(returns, j), 0)) {
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), "]");
+
+    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
+};
+

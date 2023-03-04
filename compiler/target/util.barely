@@ -37,7 +37,7 @@ define calculate_function_local_sizes = function(nodes: *Nodes, program_data: *P
             if =(id, NODE_DECLARE) {
                 variable declare_data = NodeDeclareData.*cast(pointer_data);
                 variable declare_name = NodeDeclareData.>name(declare_data);
-                variable declare_type_names = NodeDeclareData.>type_names(declare_data);
+                variable declare_type_names = NodeDeclareData.>type(declare_data);
                 variable declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
                 total = +(total, function_size(declare_type, nodes, program_data));
             };

@@ -1,5 +1,4 @@
 define NODE_FUNCTION = 0;
-
 define NodeFunctionData = structure {
     name: *;
     argument_names: *;
@@ -11,24 +10,18 @@ define NodeFunctionData = structure {
 define NODE_ENDFUNCTION = 1;
 
 define NODE_RETRIEVE = 2;
-
 define NodeRetrieveData = structure {
+    // Array of strings
     name: *;
-    names: *;
-    using_module: boolean;
-    is_module: boolean;
     coercion: *;
-    is_data: boolean;
 };
 
 define NODE_STRING = 3;
-
 define NodeStringData = structure {
     value: *;
 };
 
 define NODE_NUMBER = 4;
-
 define NodeNumberData = structure {
     value: whole_8;
     type: whole_8;
@@ -37,22 +30,13 @@ define NodeNumberData = structure {
 
 define NODE_INVOKE = 5;
 
-define NodeInvokeData = structure {
-    name: *;
-    has_specifier: boolean;
-    is_pointer: boolean;
-};
-
 define NODE_DECLARE = 6;
-
 define NodeDeclareData = structure {
     name: *;
-    type_names: *;
     type: *;
 };
 
 define NODE_ASSIGN = 7;
-
 define NodeAssignData = structure {
     name: *;
 };
@@ -60,7 +44,6 @@ define NodeAssignData = structure {
 define NODE_RETURN = 8;
 
 define NODE_STRUCTURE = 9;
-
 define NodeStructureData = structure {
     name: *;
     item_names: *;
@@ -71,39 +54,33 @@ define NodeStructureData = structure {
 define NODE_POINTER = 10;
 
 define NODE_BOOLEAN = 11;
-
 define NodeBooleanData = structure {
     value: boolean;
 };
 
 define NODE_JUMP_CONDITIONAL = 12;
-
 define NodeJumpConditionalData = structure {
     target_id: whole_8;
     desired_state: boolean;
 };
 
 define NODE_TARGET = 13;
-
 define NodeTargetData = structure {
     id: whole_8;
 };
 
 define NODE_JUMP = 14;
-
 define NodeJumpData = structure {
     target_id: whole_8;
 };
 
 define NODE_GLOBAL = 15;
-
 define NodeGlobalData = structure {
     name: *;
     type: *;
 };
 
 define NODE_DEFINE = 16;
-
 define NodeDefineData = structure {
     name: *;
     type: *;
@@ -111,9 +88,9 @@ define NodeDefineData = structure {
 };
 
 define NODE_INVOKE_INTERNAL = 17;
-
 define NodeInvokeInternalData = structure {
-    names: *;
+    // Array of strings
+    name: *;
 };
 
 define NODE_SCOPE = 18;
@@ -123,7 +100,6 @@ define NODE_ENDSCOPE = 19;
 define NODE_STARTIFBLOCK = 20;
 
 define NODE_ENDIFBLOCK = 21;
-
 define NodeEndIfBlockData = structure {
     id: whole_8;
     is_last: boolean;
@@ -132,21 +108,16 @@ define NodeEndIfBlockData = structure {
 
 define NODE_ENDSTATEMENT = 22;
 
-define NodeInvokePointerData = structure {
-    ignore: boolean;
-};
-
-define NODE_ENDDEFINE = 24;
-
+define NODE_ENDDEFINE = 23;
 define NodeEndDefineData = structure {
     type: *;
 };
 
-define NODE_SKIP = 25;
+define NODE_SKIP = 24;
 
-define NODE_MODULE = 26;
+define NODE_MODULE = 25;
 
-define NODE_ENDMODULE = 27;
+define NODE_ENDMODULE = 26;
 
 define NODE_SIZE = 72;
 
@@ -154,6 +125,20 @@ define NodeLocationData = structure {
     file: *;
     row: whole_8;
     column: whole_8;
+};
+
+define Nodes = structure {
+    buffer: AutoBuffer;
+    index: whole_8;
+};
+
+define nodes_new = function(): Nodes {
+    variable nodes: Nodes;
+
+    Nodes.<buffer(&(nodes), autobuffer_new(131072));
+    Nodes.<index(&(nodes), 0);
+
+    return nodes;
 };
 
 define nodes_get_id = function(nodes: *Nodes, index: whole_8): whole_8 {
@@ -211,22 +196,19 @@ define nodes_set_skip = function(nodes: *Nodes, index: whole_8) {
     whole_8.<(node_id, NODE_SKIP);
 };
 
-define nodes_append_structure_old = function(nodes: *Nodes, name: *) {
-    variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
-    NodeStructureData.<name(structure_data, name);
-    NodeStructureData.<item_names(structure_data, &(empty));
-    NodeStructureData.<item_types(structure_data, &(empty));
-};
+define nodes_append_structure = function(nodes: *Nodes, name: *, size: whole_8) {
+    variable size_string = any_24.>0();
+    whole_8_to_string(size, &(size_string));
 
-define nodes_append_structure = function(nodes: *Nodes, name: *, any_size_type: *) {
     variable define_data = NodeDefineData.*cast(nodes_append_data_anonymous(nodes, NODE_DEFINE));
     NodeDefineData.<name(define_data, name);
 
-    variable structure_type = concatenate3_brk_allocate("structure[_:", any_size_type, "]");
+    // TODO: Make this type be based on the structure data
+    variable structure_type = concatenate3_brk_allocate("structure[_:any_", &(size_string), "]");
     NodeDefineData.<type(define_data, structure_type);
 
     variable item_names = create_size_one_array8_brk_allocate("_");
-    variable item_types = create_size_one_array8_brk_allocate(any_size_type);
+    variable item_types = create_size_one_array8_brk_allocate(concatenate2_brk_allocate("any_", &(size_string)));
 
     variable structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<item_names(structure_data, item_names);
@@ -243,15 +225,6 @@ define nodes_append_structure_any = function(nodes: *Nodes, name: *) {
     NodeStructureData.<is_internal(structure_data, true);
 };
 
-define nodes_append_pseudo_function = function(nodes: *Nodes, name: *, argument_types: *, returns: *) {
-    variable function_data = NodeFunctionData.*cast(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
-    NodeFunctionData.<name(function_data, name);
-    NodeFunctionData.<argument_types(function_data, argument_types);
-    NodeFunctionData.<returns(function_data, returns);
-
-    variable _ = nodes_append_anonymous(nodes, NODE_ENDFUNCTION);
-};
-
 define nodes_append_function = function(nodes: *Nodes, name: *, arguments: *, returns: *) {
     variable function_data = NodeFunctionData.*cast(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
     NodeFunctionData.<name(function_data, name);
@@ -265,20 +238,12 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     variable pointer_data = nodes_get_pointer_data(nodes, index);
     if =(id, NODE_RETRIEVE) {
         variable retrieve_data = NodeRetrieveData.*cast(pointer_data);
-        print("Retrieve{name=");
+        print("Retrieve{names=");
         if !(=(NodeRetrieveData.>name(retrieve_data), 0)) {
             print("'");
-            print(NodeRetrieveData.>name(retrieve_data));
-            print("'");
-        } else {
-            print("null");
-        };
-        print(", names=");
-        if !(=(NodeRetrieveData.>names(retrieve_data), 0)) {
-            print("'");
             variable i = 0;
-            while <(i, array8_length(NodeRetrieveData.>names(retrieve_data))) {
-                print(*.cast(array8_get(NodeRetrieveData.>names(retrieve_data), i)));
+            while <(i, array8_length(NodeRetrieveData.>name(retrieve_data))) {
+                print(*.cast(array8_get(NodeRetrieveData.>name(retrieve_data), i)));
                 print(", ");
                 i = +(i, 1);
             };
@@ -288,7 +253,7 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     } else if =(id, NODE_INVOKE_INTERNAL) {
         variable invoke_data = NodeInvokeInternalData.*cast(pointer_data);
         print("InternalInvoke{names=");
-        variable names = NodeInvokeInternalData.>names(invoke_data);
+        variable names = NodeInvokeInternalData.>name(invoke_data);
         if !(=(names, 0)) {
             print("'");
             variable i = 0;
@@ -311,12 +276,7 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         print(NodeDeclareData.>name(declare_data));
         println("'}");
     } else if =(id, NODE_INVOKE) {
-        variable invoke_data = NodeInvokeData.*cast(pointer_data);
-        print("Invoke{name='");
-        if !(=(NodeInvokeData.>name(invoke_data), 0)) {
-            print(NodeInvokeData.>name(invoke_data));
-        };
-        println("'}");
+        println("Invoke{}");
     } else if =(id, NODE_POINTER) {
         println("Pointer{}")
     } else if =(id, NODE_NUMBER) {

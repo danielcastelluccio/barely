@@ -52,6 +52,20 @@ define TokenLocationData = structure {
 
 define TOKEN_DATA_OFFSET = 32;
 
+define Tokens = structure {
+    buffer: AutoBuffer;
+    index: whole_8;
+};
+
+define tokens_new = function(): Tokens {
+    variable tokens: Tokens;
+
+    Tokens.<buffer(&(tokens), autobuffer_new(131072));
+    Tokens.<index(&(tokens), 0);
+
+    return tokens;
+};
+
 define tokens_get_id = function(tokens: *Tokens, index: whole_8): whole_8 {
     return autobuffer_get_whole_8(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
 };

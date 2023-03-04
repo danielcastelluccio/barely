@@ -197,7 +197,7 @@ define Target/X86_64 = module {
     define output_declare = function(nodes: *Nodes, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         variable declare_data = NodeDeclareData.*cast(pointer_data);
         variable variable_name = NodeDeclareData.>name(declare_data);
-        variable variable_type_names = NodeDeclareData.>type_names(declare_data);
+        variable variable_type_names = NodeDeclareData.>type(declare_data);
         variable variable_type = expand_module_name_array(variable_type_names, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
 
         autobuffer_array8_set(variable_names, whole_8.>(variable_index), variable_name);
@@ -290,8 +290,8 @@ define Target/X86_64 = module {
 
     define output_retrieve = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-        variable variable_names2 = NodeRetrieveData.>names(retrieve_data);
-        variable variable_name_simple = *.cast(array8_get(variable_names2, 0));
+        variable variable_names_array = NodeRetrieveData.>name(retrieve_data);
+        variable variable_name_simple = *.cast(array8_get(variable_names_array, 0));
 
         variable variable_type, scope_index = .get_variable_linux-x86_64(variable_types, variable_name_simple);
         if !(=(variable_type, 0)) {
@@ -340,7 +340,7 @@ define Target/X86_64 = module {
         variable define_types = &(ProgramData.>define_types(program_data));
         variable define_values = &(ProgramData.>define_values(program_data));
 
-        variable module_expanded_name = expand_module_name_array(variable_names2, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+        variable module_expanded_name = expand_module_name_array(variable_names_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
         variable_type = get_define_type(define_types, define_values, module_expanded_name);
 
         if !(=(variable_type, 0)) {
@@ -579,8 +579,8 @@ define Target/X86_64 = module {
 
     define output_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
         variable retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(nodes_index, 1)));
-        variable function_names = NodeRetrieveData.>names(retrieve_data);
-        variable function_name = *.cast(array8_get(function_names, 0));
+        variable function_name_array = NodeRetrieveData.>name(retrieve_data);
+        variable function_name = *.cast(array8_get(function_name_array, 0));
 
         variable memory_function = *.cast(hashmap_string_get(internal_function_instructions, function_name));
         if !(=(memory_function, 0)) {
@@ -1285,21 +1285,21 @@ define Target/X86_64 = module {
         };
 
         if string_length=(type, "any_", 4) {
-            variable number = to_number(*.cast(+(type, 4)));
+            variable number = string_to_whole_8(*.cast(+(type, 4)));
             hashmap_string_put(&(cached_sizes_map), type, number);
 
             return number;
         };
 
         if string_length=(type, "whole_", 6) {
-            variable number = to_number(*.cast(+(type, 6)));
+            variable number = string_to_whole_8(*.cast(+(type, 6)));
             hashmap_string_put(&(cached_sizes_map), type, number);
 
             return number;
         };
 
         if string_length=(type, "integer_", 8) {
-            variable number = to_number(*.cast(+(type, 8)));
+            variable number = string_to_whole_8(*.cast(+(type, 8)));
             hashmap_string_put(&(cached_sizes_map), type, number);
 
             return number;

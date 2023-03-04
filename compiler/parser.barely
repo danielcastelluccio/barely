@@ -52,7 +52,7 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
     variable j = 0;
     while <(j, length(buffer)) {
         variable character = whole_1.>(whole_1.*cast(+(buffer, j)));
-        if =(character, ASCII_UNDERSCORE) {
+        if =(character, ASCII.UNDERSCORE) {
             stage = +(stage, 1);
         } else if =(stage, 1) {
             autobuffer_buffer_push_whole_1(&(type_buffer), character);
@@ -65,7 +65,7 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
         j = +(j, 1);
     };
 
-    if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
+    if =(any_1.>(any_1.*cast(buffer)), ASCII.MINUS) {
         if =(AutoBufferBuffer.>index(&(type_buffer)), 0) {
             autobuffer_buffer_push_string(&(type_buffer), "integer");
         };
@@ -85,9 +85,9 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
         TokenNumberData.<type(number_data, 1);
     };
 
-    variable size_bytes = to_number(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
+    variable size_bytes = string_to_whole_8(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
 
-    if !(check_number_fits(tokens, size_bytes, TokenNumberData.>type(number_data), buffer)) {
+    if !(check_number_fits(tokens, size_bytes, =(TokenNumberData.>type(number_data), 1), buffer)) {
         print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
         print("Number literal '");
         print(autobuffer_buffer_get_buffer_pointer(&(number_buffer)));
@@ -100,10 +100,10 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
     };
 
     TokenNumberData.<size(number_data, size_bytes);
-    TokenNumberData.<value(number_data, to_number_size_signed(buffer, size_bytes, false));
+    TokenNumberData.<value(number_data, string_to_number(buffer, size_bytes, false));
 };
 
-define check_number_fits = function(tokens: *Tokens, size_bytes: whole_8, type: whole_8, buffer: *): boolean {
+define check_number_fits = function(tokens: *Tokens, size_bytes: whole_8, wants_signed: boolean, input_string: *): boolean {
     variable size_bits = 2;
     variable m = 1;
     while <(m, *(size_bytes, 8)) {
@@ -111,20 +111,21 @@ define check_number_fits = function(tokens: *Tokens, size_bytes: whole_8, type: 
         m = +(m, 1);
     };
     size_bits = -(size_bits, 1);
-    if =(type, 1) {
+    if wants_signed {
         size_bits = /(size_bits, 2);
     };
 
     variable number = 0;
 
-    if =(any_1.>(any_1.*cast(buffer)), ASCII_MINUS) {
-        if =(type, 0) {
-            number = +(size_bits, 1);
+    variable is_input_negative = =(any_1.>(any_1.*cast(input_string)), ASCII.MINUS);
+    if is_input_negative {
+        if wants_signed {
+            number = -(string_to_whole_8(+(input_string, 1)), 1);
         } else {
-            number = -(to_number(+(buffer, 1)), 1);
+            return false;
         };
     } else {
-        number = to_number(buffer);
+        number = string_to_whole_8(input_string);
     };
 
     return !(>(number, size_bits));
@@ -152,25 +153,26 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
         if !(in_quotes) {
             if !(in_comment) {
                 // a macro would probably be better suited for this
-                handle_special_character(any_1.>(character_pointer), ASCII_OPEN_PARENTHESIS, TOKEN_OPEN_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_CLOSED_PARENTHESIS, TOKEN_CLOSED_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_OPEN_CURLY_BRACKETS, TOKEN_OPEN_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_CLOSED_CURLY_BRACKETS, TOKEN_CLOSED_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_OPEN_BRACKET, TOKEN_OPEN_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_CLOSED_BRACKET, TOKEN_CLOSED_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_COMMA, TOKEN_COMMA, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_SEMICOLON, TOKEN_SEMICOLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_PERIOD, TOKEN_PERIOD, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(any_1.>(character_pointer), ASCII_COLON, TOKEN_COLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                variable current_character = any_1.>(character_pointer);
+                handle_special_character(current_character, ASCII.OPEN_PARENTHESIS, TOKEN_OPEN_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.CLOSED_PARENTHESIS, TOKEN_CLOSED_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.OPEN_CURLY_BRACKETS, TOKEN_OPEN_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.CLOSED_CURLY_BRACKETS, TOKEN_CLOSED_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.OPEN_BRACKET, TOKEN_OPEN_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.CLOSED_BRACKET, TOKEN_CLOSED_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.COMMA, TOKEN_COMMA, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.SEMICOLON, TOKEN_SEMICOLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.PERIOD, TOKEN_PERIOD, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(current_character, ASCII.COLON, TOKEN_COLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
 
-                handle_break(any_1.>(character_pointer), ASCII_SPACE, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_break(any_1.>(character_pointer), ASCII_LINE_FEED, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_break(any_1.>(character_pointer), ASCII_TAB, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(any_1.>(character_pointer), ASCII.SPACE, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(any_1.>(character_pointer), ASCII.LINE_FEED, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(any_1.>(character_pointer), ASCII.TAB, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
             };
         };
 
         if !(in_comment) {
-            if =(any_1.>(character_pointer), ASCII_QUOTATION) {
+            if =(any_1.>(character_pointer), ASCII.QUOTATION) {
                 if in_quotes {
                     variable buffer_length = length(AutoBuffer.>buffer(&(buffer)));
                     variable buffer_copy = copy_string_brk_allocate(AutoBuffer.>buffer(&(buffer)));
@@ -187,8 +189,8 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
                 handled = true;
             };
         };
-        if =(any_1.>(character_pointer), ASCII_SLASH) {
-            if =(any_1.>(character_pointer_next), ASCII_SLASH) {
+        if =(any_1.>(character_pointer), ASCII.SLASH) {
+            if =(any_1.>(character_pointer_next), ASCII.SLASH) {
                 in_comment = true;
                 handled = true;
             };
@@ -203,7 +205,7 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
             };
         };
 
-        if =(any_1.>(character_pointer), ASCII_LINE_FEED) {
+        if =(any_1.>(character_pointer), ASCII.LINE_FEED) {
             in_comment = false;
             handled = true;
             autobuffer_reset(&(buffer));
@@ -521,8 +523,6 @@ define parse_name_array = function(tokens: *Tokens, index_pointer: *whole_8): * 
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
         variable token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
         autobuffer_buffer_push_string(&(buffer), token_name);
-        //autobuffer_array8_set(&(array), array_index, token_name);
-        //array_index = +(array_index, 1);
         increment_whole_8_pointer(index_pointer, 1);
     };
 
@@ -585,7 +585,7 @@ define is_only_asterisks = function(string: *): boolean {
     variable i = 0;
     while <(i, length(string)) {
         variable character = any_1.>(any_1.*cast(+(string, i)));
-        if !(=(character, ASCII_ASTERISK)) {
+        if !(=(character, ASCII.ASTERISK)) {
             return false;
         };
         i = +(i, 1);
@@ -606,7 +606,6 @@ define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes
     variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
 
     NodeFunctionData.<argument_names(function_data, function_argument_names);
-    //NodeFunctionData.<argument_types(function_data, function_arguments);
     NodeFunctionData.<argument_types_array(function_data, function_arguments_array);
     NodeFunctionData.<returns(function_data, function_returns);
 
@@ -653,8 +652,6 @@ define parse_function_definition = function(tokens: *Tokens, index_pointer: *who
                 autobuffer_array8_set(&(function_argument_names), arguments_index, token_name);
                 index = +(index, 1);
             } else {
-                //token_name = parse_name(tokens, &(index));
-                //autobuffer_array8_set(&(function_arguments), arguments_index, token_name);
                 token_name = parse_name_array(tokens, &(index));
                 autobuffer_array8_set(&(function_arguments_array), arguments_index, token_name);
                 arguments_index = +(arguments_index, 1);
@@ -785,22 +782,7 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
 
     if =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS) {
         nodes_index = -(nodes_index, 1);
-        variable executed = false;
-        //variable previous_retrieve = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-        //while NodeRetrieveData.>is_data(previous_retrieve) {
-        //    previous_retrieve = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-        //    nodes_index = -(nodes_index, 1);
-        //    executed = true;
-        //};
-
-        //if executed {
-        //    nodes_index = +(nodes_index, 1);
-        //};
-        //if >(nodes_index, 999) {
-        //    nodes_index = +(nodes_index, 1);
-        //};
-
-        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, +(nodes_in_index, nodes_index), executed);
+        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, +(nodes_in_index, nodes_index));
     };
 
     whole_8.<(index_pointer, index);
@@ -840,39 +822,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
         };
 
         autobuffer_array8_set(&(names_buffer), j, name_name);
-        NodeRetrieveData.<names(retrieve_node_data, AutoBuffer.>buffer(&(names_buffer)));
-
-        //variable retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
-        //NodeRetrieveData.<name(retrieve_node_data, name_name);
-
-        //variable special_skip = 0;
-        //variable non_special_skip = false;
-        //if is_special_function(name_name) {
-        //    special_skip = +(special_skip, 1);
-        //} else {
-        //    non_special_skip = true;
-        //};
-
-        //if >(AutoBufferStack8.>index(&(modules)), 0) {
-        //    NodeRetrieveData.<using_module(retrieve_node_data, true);
-        //};
-
-        //variable first_run = true;
-        //while >(AutoBufferStack8.>index(&(modules)), 0) {
-        //    variable name = *.cast(autobuffer_stack8_pop(&(modules)));
-        //    variable retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
-        //    NodeRetrieveData.<name(retrieve_node_data, name);
-        //    if =(special_skip, 0) {
-        //        NodeRetrieveData.<is_module(retrieve_node_data, true);
-        //    } else {
-        //        special_skip = -(special_skip, 1);
-        //    };
-        //    if &&(!(non_special_skip), >(AutoBufferStack8.>index(&(modules)), 0)) {
-        //        NodeRetrieveData.<using_module(retrieve_node_data, true);
-        //    };
-        //    NodeRetrieveData.<is_data(retrieve_node_data, true);
-        //    non_special_skip = false;
-        //};
+        NodeRetrieveData.<name(retrieve_node_data, AutoBuffer.>buffer(&(names_buffer)));
 
         if =(tokens_get_id(tokens, index), TOKEN_COLON) {
             index = +(index, 1);
@@ -910,7 +860,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
     whole_8.<(index_pointer, index);
 };
 
-define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8, has_specifier: boolean) {
+define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8) {
     variable index = whole_8.>(index_pointer);
     variable inner = 0_integer_8;
 
@@ -922,10 +872,10 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
             if =(inner, 0_integer_8) {
                 variable is_special = false;
                 variable is_pointer = false;
-                variable retrieve_names = NodeRetrieveData.>names(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index)));
+                variable retrieve_name_array = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index)));
                 if is_first {
-                    is_special = is_special_function(retrieve_names);
-                    if string=(*.cast(array8_get(retrieve_names, 0)), "&") {
+                    is_special = is_special_function(retrieve_name_array);
+                    if string=(*.cast(array8_get(retrieve_name_array, 0)), "&") {
                         is_pointer = true;
                     };
                 };
@@ -938,11 +888,10 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
                         variable _ = nodes_append(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8.>(index_pointer)));
                     } else {
                         variable invoke_data = NodeInvokeInternalData.*cast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
-                        NodeInvokeInternalData.<names(invoke_data, retrieve_names);
+                        NodeInvokeInternalData.<name(invoke_data, retrieve_name_array);
                     };
                 } else {
-                    variable invoke_data = NodeInvokeData.*cast(nodes_append_data(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8.>(index_pointer))));
-                    NodeInvokeData.<is_pointer(invoke_data, true);
+                    variable _ = nodes_append(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8.>(index_pointer)));
                 };
 
                 is_first = false;
@@ -1292,7 +1241,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
     while !(=(autobuffer_array8_get(&(names), i), 0)) {
         variable node_data = NodeDeclareData.*cast(nodes_append_data(nodes, NODE_DECLARE, get_token_location_data(tokens, whole_8.>(index_pointer))));
         NodeDeclareData.<name(node_data, *.cast(autobuffer_array8_get(&(names), i)));
-        NodeDeclareData.<type_names(node_data, *.cast(autobuffer_array8_get(&(types), i)));
+        NodeDeclareData.<type(node_data, *.cast(autobuffer_array8_get(&(types), i)));
 
         i = +(i, 1);
     };
