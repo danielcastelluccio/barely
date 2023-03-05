@@ -1,15 +1,15 @@
 define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens, flags: *HashMap) {
     //map that points macro name to start and end of macro tokens in 'tokens'
-    variable macro_starts, macro_ends, macro_bindings = get_macro_definitions(tokens);
+    declare macro_starts, macro_ends, macro_bindings = get_macro_definitions(tokens);
 
-    variable i = 0;
+    declare i = 0;
     while <(i, Tokens.>index(tokens)) {
-        variable id = tokens_get_id(tokens, i);
-        variable handled = false;
+        declare id = tokens_get_id(tokens, i);
+        declare handled = false;
 
         if =(id, TOKEN_NAME) {
-            variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, i));
-            variable name = TokenNameData.>name(name_data);
+            declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, i));
+            declare name = TokenNameData.>name(name_data);
 
             if &&(!(=(hashmap_string_get2(&(macro_starts), name), 999)), &&(!(=(tokens_get_id(tokens, -(i, 1)), TOKEN_PERIOD)), =(tokens_get_id(tokens, +(i, 1)), TOKEN_OPEN_PARENTHESIS))) {
                 if !(tokens_is_keyword(tokens, -(i, 1), "macro")) {
@@ -19,9 +19,9 @@ define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens, flags
 
                     i = +(i, 2);
 
-                    variable inside = 1;
+                    declare inside = 1;
                     while >(inside, 0) {
-                        variable id = tokens_get_id(tokens, i);
+                        declare id = tokens_get_id(tokens, i);
 
                         if =(id, TOKEN_OPEN_PARENTHESIS) {
                             inside = +(inside, 1);
@@ -32,9 +32,9 @@ define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens, flags
                         i = +(i, 1);
                     };
 
-                    variable inside = 0;
+                    declare inside = 0;
                     while |(>(inside, 0), !(=(tokens_get_id(tokens, i), TOKEN_SEMICOLON))) {
-                        variable id = tokens_get_id(tokens, i);
+                        declare id = tokens_get_id(tokens, i);
 
                         if =(id, TOKEN_OPEN_CURLY_BRACKETS) {
                             inside = +(inside, 1);
@@ -59,19 +59,19 @@ define expand_macros = function(tokens: *Tokens, tokens_expanded: *Tokens, flags
 
 define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *HashMap, macro_bindings: *HashMap, tokens_in: *Tokens, index_in: *whole_8, tokens_out: *Tokens, flags: *HashMap) {
     if =(tokens_get_id(tokens_in, whole_8.>(index_in)), TOKEN_NAME) {
-        variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, whole_8.>(index_in)));
-        variable name = TokenNameData.>name(name_data);
+        declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, whole_8.>(index_in)));
+        declare name = TokenNameData.>name(name_data);
 
         if !(=(hashmap_string_get2(macro_starts, name), 999)) {
-            variable bindings = *.cast(hashmap_string_get(macro_bindings, name));
-            variable bindings_map = hashmap_new(32);
+            declare bindings = *.cast(hashmap_string_get(macro_bindings, name));
+            declare bindings_map = hashmap_new(32);
 
             increment_whole_8_pointer(index_in, 2);
 
-            variable inside = 1;
-            variable index = 0;
+            declare inside = 1;
+            declare index = 0;
             while >(inside, 0) {
-                variable id = tokens_get_id(tokens_in, whole_8.>(index_in));
+                declare id = tokens_get_id(tokens_in, whole_8.>(index_in));
 
                 if =(id, TOKEN_OPEN_PARENTHESIS) {
                     inside = +(inside, 1);
@@ -86,15 +86,15 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
                     index = +(index, 1);
                     increment_whole_8_pointer(index_in, 1);
                 } else {
-                    variable data = tokens_get_pointer(tokens_in, whole_8.>(index_in));
-                    variable current_binding = *.cast(array8_get(bindings, index));
+                    declare data = tokens_get_pointer(tokens_in, whole_8.>(index_in));
+                    declare current_binding = *.cast(array8_get(bindings, index));
                     if =(hashmap_string_get(&(bindings_map), current_binding), 0) {
-                        variable new_autobuffer = AutoBufferStack8.*cast(brk_allocate(AutoBufferStack8.size()));
+                        declare new_autobuffer = AutoBufferStack8.*cast(brk_allocate(AutoBufferStack8.size()));
                         AutoBufferStack8.<(new_autobuffer, autobuffer_stack8_new(24));
                         hashmap_string_put(&(bindings_map), current_binding, new_autobuffer);
                     };
 
-                    variable autobuffer = AutoBufferStack8.*cast(hashmap_string_get(&(bindings_map), current_binding));
+                    declare autobuffer = AutoBufferStack8.*cast(hashmap_string_get(&(bindings_map), current_binding));
                     autobuffer_stack8_push(autobuffer, data);
 
                     increment_whole_8_pointer(index_in, 1);
@@ -103,8 +103,8 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
 
             increment_whole_8_pointer(index_in, 1);
 
-            variable j = whole_8.cast(hashmap_string_get(macro_starts, name));
-            variable max = whole_8.cast(hashmap_string_get(macro_ends, name));
+            declare j = whole_8.cast(hashmap_string_get(macro_starts, name));
+            declare max = whole_8.cast(hashmap_string_get(macro_ends, name));
             while <(j, max) {
                 output_macro_element(tokens_in, tokens_out, &(j), &(bindings_map), flags);
             };
@@ -113,20 +113,20 @@ define expand_macro_specific = function(macro_starts: *HashMap, macro_ends: *Has
 };
 
 define output_macro_element = function(tokens_in: *Tokens, tokens_out: *Tokens, tokens_in_location: *whole_8, bindings_map: *HashMap, flags: *HashMap) {
-    variable new_index = Tokens.>index(tokens_out);
+    declare new_index = Tokens.>index(tokens_out);
     tokens_copy_append(tokens_in, whole_8.>(tokens_in_location), tokens_out);
 
     if =(tokens_get_id(tokens_out, new_index), TOKEN_NAME) {
-        variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_out, new_index));
-        variable name = TokenNameData.>name(name_data);
+        declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens_out, new_index));
+        declare name = TokenNameData.>name(name_data);
 
-        variable binding = AutoBufferStack8.*cast(hashmap_string_get2(bindings_map, name));
+        declare binding = AutoBufferStack8.*cast(hashmap_string_get2(bindings_map, name));
         if !(=(binding, 999)) {
             Tokens.<index(tokens_out, -(Tokens.>index(tokens_out), 1));
 
-            variable k = 0;
+            declare k = 0;
             while <(k, AutoBufferStack8.>index(binding)) {
-                variable new_token = tokens_append(tokens_out, TOKEN_NAME, "", 0, 0);
+                declare new_token = tokens_append(tokens_out, TOKEN_NAME, "", 0, 0);
                 copy(*.cast(autobuffer_stack8_get(binding, k)), new_token, TOKEN_SIZE);
                 k = +(k, 1);
             };
@@ -135,29 +135,29 @@ define output_macro_element = function(tokens_in: *Tokens, tokens_out: *Tokens, 
         } else if string=(name, "#if_set_equal") {
             Tokens.<index(tokens_out, -(Tokens.>index(tokens_out), 1));
 
-            variable id_token = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, +(whole_8.>(tokens_in_location), 1)));
-            variable id_name = TokenNameData.>name(id_token);
+            declare id_token = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, +(whole_8.>(tokens_in_location), 1)));
+            declare id_name = TokenNameData.>name(id_token);
             id_name = apply_bindings_to_name(id_name, bindings_map);
-            variable value_token = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, +(whole_8.>(tokens_in_location), 2)));
-            variable value_name = TokenNameData.>name(value_token);
+            declare value_token = TokenNameData.*cast(tokens_get_pointer_data(tokens_in, +(whole_8.>(tokens_in_location), 2)));
+            declare value_name = TokenNameData.>name(value_token);
             value_name = apply_bindings_to_name(value_name, bindings_map);
 
-            variable inside = 0;
+            declare inside = 0;
 
-            variable is_true = false;
-            variable value = *.cast(hashmap_string_get2(flags, id_name));
+            declare is_true = false;
+            declare value = *.cast(hashmap_string_get2(flags, id_name));
             if !(=(value, 999)) {
                 if string=(value, value_name) {
                     is_true = true;
                 };
             };
 
-	    variable go_next = true;
+	    declare go_next = true;
 
-            variable index = +(whole_8.>(tokens_in_location), 3);
+            declare index = +(whole_8.>(tokens_in_location), 3);
             while |(go_next, >(inside, 0)) {
 		        go_next = false;
-                variable id = tokens_get_id(tokens_in, index);
+                declare id = tokens_get_id(tokens_in, index);
 
                 if |(=(id, TOKEN_OPEN_PARENTHESIS), =(id, TOKEN_OPEN_CURLY_BRACKETS)) {
                     inside = +(inside, 1);
@@ -186,9 +186,9 @@ define output_macro_element = function(tokens_in: *Tokens, tokens_out: *Tokens, 
 };
 
 define apply_bindings_to_name = function(name: *, bindings_map: *HashMap): * {
-    variable binding = AutoBufferStack8.*cast(hashmap_string_get2(bindings_map, name));
+    declare binding = AutoBufferStack8.*cast(hashmap_string_get2(bindings_map, name));
     if !(=(binding, 999)) {
-        variable new_name_data = TokenNameData.*cast(+(autobuffer_stack8_get(binding, 0), TOKEN_DATA_OFFSET));
+        declare new_name_data = TokenNameData.*cast(+(autobuffer_stack8_get(binding, 0), TOKEN_DATA_OFFSET));
 
         return TokenNameData.>name(new_name_data);
     };
@@ -197,13 +197,13 @@ define apply_bindings_to_name = function(name: *, bindings_map: *HashMap): * {
 };
 
 define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, HashMap {
-    variable macro_starts = hashmap_new(512);
-    variable macro_ends = hashmap_new(512);
-    variable macro_bindings = hashmap_new(512);
+    declare macro_starts = hashmap_new(512);
+    declare macro_ends = hashmap_new(512);
+    declare macro_bindings = hashmap_new(512);
 
-    variable inside_module = false;
-    variable inside_module_brackets = 0;
-    variable i = 0;
+    declare inside_module = false;
+    declare inside_module_brackets = 0;
+    declare i = 0;
     while <(i, Tokens.>index(tokens)) {
         if tokens_is_keyword(tokens, i, "macro") {
             if inside_module {
@@ -212,8 +212,8 @@ define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, Hash
                 exit(1);
             };
 
-            variable name_token = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(i, 1)));
-            variable name = TokenNameData.>name(name_token);
+            declare name_token = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(i, 1)));
+            declare name = TokenNameData.>name(name_token);
 
             if !(string_length=(name, "#", 1)) {
                 print_token_error_beginning(tokens, i);
@@ -223,12 +223,12 @@ define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, Hash
 
             i = +(i, 3);
 
-            variable bindings = autobuffer_stack8_new(24);
+            declare bindings = autobuffer_stack8_new(24);
             while !(=(tokens_get_id(tokens, i), TOKEN_CLOSED_PARENTHESIS)) {
-                variable id = tokens_get_id(tokens, i);
+                declare id = tokens_get_id(tokens, i);
 
                 if =(id, TOKEN_NAME) {
-                    variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, i));
+                    declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, i));
                     autobuffer_stack8_push(&(bindings), TokenNameData.>name(name_data));
                 };
 
@@ -239,9 +239,9 @@ define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, Hash
 
             hashmap_string_put(&(macro_starts), name, +(i, 1));
 
-            variable inside = 0;
+            declare inside = 0;
             while |(>(inside, 0), !(=(tokens_get_id(tokens, i), TOKEN_SEMICOLON))) {
-                variable id = tokens_get_id(tokens, i);
+                declare id = tokens_get_id(tokens, i);
 
                 if =(id, TOKEN_OPEN_CURLY_BRACKETS) {
                     inside = +(inside, 1);
@@ -272,8 +272,8 @@ define get_macro_definitions = function(tokens: *Tokens): HashMap, HashMap, Hash
 };
 
 define tokens_copy_append = function(tokens_from: *Tokens, index: whole_8, tokens_to: *Tokens) {
-    variable old_token = tokens_get_pointer(tokens_from, index);
-    variable location_data = tokens_get_location_data(tokens_from, index);
-    variable new_token = tokens_append(tokens_to, 0, "", 0, 0);
+    declare old_token = tokens_get_pointer(tokens_from, index);
+    declare location_data = tokens_get_location_data(tokens_from, index);
+    declare new_token = tokens_append(tokens_to, 0, "", 0, 0);
     copy(old_token, new_token, TOKEN_SIZE);
 };

@@ -25,12 +25,12 @@ define ASCII = module {
 };
 
 define is_number = function(string: *): boolean {
-    variable length2 = length(string);
+    declare length2 = length(string);
 
-    variable has_number = false;
-    variable i = 0;
+    declare has_number = false;
+    declare i = 0;
     while <(i, length2) {
-        variable character = whole_1.>(whole_1.*cast(+(string, i)));
+        declare character = whole_1.>(whole_1.*cast(+(string, i)));
 
         if &&(=(character, ASCII.UNDERSCORE), >(i, 0)) {
             break;
@@ -57,15 +57,15 @@ define string_to_whole_8 = function(string: *): whole_8 {
 };
 
 define string_to_number = function(string: *, size: whole_8, signed: boolean): whole_8 {
-    variable length2 = length(string);
+    declare length2 = length(string);
 
-    variable whole_8 = 0;
+    declare whole_8 = 0;
 
-    variable has_negative = false;
+    declare has_negative = false;
 
-    variable i = 0;
+    declare i = 0;
     while <(i, length2) {
-        variable character = whole_1.>(whole_1.*cast(+(string, i)));
+        declare character = whole_1.>(whole_1.*cast(+(string, i)));
 
         if =(character, ASCII.UNDERSCORE) {
             break;
@@ -95,13 +95,13 @@ define string_to_number = function(string: *, size: whole_8, signed: boolean): w
 };
 
 define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
-    variable whole_82 = whole_8;
+    declare whole_82 = whole_8;
 
     if =(whole_8, 0) {
         any_1.<(any_1.*cast(buffer), ASCII.ZERO);
     };
 
-    variable length = 0;
+    declare length = 0;
     while !(=(whole_82, 0)) {
         whole_82 = /(whole_82, 10);
         length = +(length, 1);
@@ -109,9 +109,9 @@ define whole_8_to_string = function(whole_8: whole_8, buffer: *) {
 
     whole_82 = whole_8;
 
-    variable i = 0;
+    declare i = 0;
     while !(=(whole_82, 0)) {
-        variable number = whole_8_to_whole_1(%(whole_82, 10));
+        declare number = whole_8_to_whole_1(%(whole_82, 10));
         any_1.<(any_1.*cast(+(buffer, -(-(length, 1), i))), +(number, ASCII.ZERO));
         whole_82 = /(whole_82, 10);
         i = +(i, 1);
@@ -123,7 +123,7 @@ define decrement_whole_8_pointer = function(pointer: *whole_8, amount: whole_8) 
 };
 
 define stringarray_get = function(keys: *, values: *, wanted: *, size: whole_8): * {
-    variable j = 0;
+    declare j = 0;
     while <(j, size) {
         if string=(*.cast(array8_get(keys, j)), wanted) {
             return *.cast(array8_get(values, j));
@@ -135,7 +135,7 @@ define stringarray_get = function(keys: *, values: *, wanted: *, size: whole_8):
 };
 
 define stringarray_get_index = function(keys: *, wanted: *, size: whole_8): whole_8 {
-    variable j = 0;
+    declare j = 0;
     while <(j, size) {
         if string=(*.cast(array8_get(keys, j)), wanted) {
             return j;
@@ -153,22 +153,22 @@ define print = function(string: *) {
 define println = function(string: *) {
     print(string);
 
-    variable new_line: whole_8 = 10;
+    declare new_line: whole_8 = 10;
     print_stdout(&(new_line), 1);
 };
 
 define array8_set = function(array: *, index: whole_8, value: any_8) {
-    variable index_pointer = any_8.*cast(+(array, *(index, 8)));
+    declare index_pointer = any_8.*cast(+(array, *(index, 8)));
     any_8.<(index_pointer, value);
 };
 
 define array8_get = function(array: *, index: whole_8): any_8 {
-    variable index_pointer = any_8.*cast(+(array, *(index, 8)));
+    declare index_pointer = any_8.*cast(+(array, *(index, 8)));
     return any_8.>(index_pointer);
 };
 
 define array8_length = function(array: *): whole_8 {
-    variable k = 0;
+    declare k = 0;
     while !(=(array8_get(array, k), 0)) {
         k = +(k, 1);
     };
@@ -182,12 +182,12 @@ define autobuffer_stack8_legacy_push = function(buffer: *AutoBuffer, stack_point
 
 define autobuffer_stack8_legacy_pop = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
     decrement_whole_8_pointer(stack_pointer, 1);
-    variable index_pointer = any_8.*cast(autobuffer_get(buffer, *(whole_8.>(stack_pointer), 8)));
+    declare index_pointer = any_8.*cast(autobuffer_get(buffer, *(whole_8.>(stack_pointer), 8)));
     return any_8.>(index_pointer);
 };
 
 define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
-    variable j = 0;
+    declare j = 0;
     while <(j, size) {
         if string=(*.cast(autobuffer_array8_get(keys, j)), wanted) {
             return j;
@@ -199,7 +199,7 @@ define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *,
 };
 
 define print_whole_8 = function(whole_8: whole_8) {
-    variable buffer = any_24.>0();
+    declare buffer = any_24.>0();
     whole_8_to_string(whole_8, &(buffer));
     print(&(buffer));
 };
@@ -215,9 +215,9 @@ define BucketData = structure {
 };
 
 define hashmap_new = function(size: whole_8): HashMap {
-    variable hashmap: HashMap;
+    declare hashmap: HashMap;
 
-    variable buffer = autobuffer_new(size);
+    declare buffer = autobuffer_new(size);
 
     HashMap.<buffer(&(hashmap), buffer);
 
@@ -225,20 +225,20 @@ define hashmap_new = function(size: whole_8): HashMap {
 };
 
 define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
-    variable buffer = &(HashMap.>buffer(hashmap));
+    declare buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
+    declare bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if =(bucket_pointer, 0) {
-        variable allocated_autobuffer = AutoBuffer.*cast(brk_allocate(24));
-        variable autobuffer = autobuffer_new(48);
+        declare allocated_autobuffer = AutoBuffer.*cast(brk_allocate(24));
+        declare autobuffer = autobuffer_new(48);
         AutoBuffer.<(allocated_autobuffer, autobuffer);
 
         bucket_pointer = allocated_autobuffer;
         autobuffer_set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8));
     };
 
-    variable searching = true;
-    variable i = 0;
+    declare searching = true;
+    declare i = 0;
     while searching {
         if =(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0) {
             searching = false;
@@ -249,20 +249,20 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
         };
     };
 
-    variable bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+    declare bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
     BucketData.<data(bucket_data, 1);
     BucketData.<hash(bucket_data, hash);
     BucketData.<value(bucket_data, value);
 };
 
 define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    variable buffer = &(HashMap.>buffer(hashmap));
+    declare buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
+    declare bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
-        variable i = 0;
+        declare i = 0;
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            variable bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+            declare bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
 
             if =(BucketData.>hash(bucket_data), hash) {
                 return BucketData.>value(bucket_data);
@@ -276,13 +276,13 @@ define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
 };
 
 define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    variable buffer = &(HashMap.>buffer(hashmap));
+    declare buffer = &(HashMap.>buffer(hashmap));
 
-    variable bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
+    declare bucket_pointer = AutoBuffer.*cast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
     if !(=(bucket_pointer, 0)) {
-        variable i = 0;
+        declare i = 0;
         while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            variable bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+            declare bucket_data = BucketData.*cast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
 
             if =(BucketData.>hash(bucket_data), hash) {
                 return BucketData.>value(bucket_data);
@@ -308,10 +308,10 @@ define hashmap_string_get2 = function(hashmap: *HashMap, string: *): any_8 {
 };
 
 define string_hash = function(string: *): whole_8 {
-    variable hash = 5381;
-    variable i = 0;
+    declare hash = 5381;
+    declare i = 0;
     while <(i, length(string)) {
-        variable character = whole_1_to_whole_8(whole_1.cast(any_1.>(+(any_1.*cast(string), i))));
+        declare character = whole_1_to_whole_8(whole_1.cast(any_1.>(+(any_1.*cast(string), i))));
         //hash = +(+(hash, *(hash, character)), *(character, i));
         hash = +(*(hash, 33), character);
         i = +(i, 1);
@@ -321,9 +321,9 @@ define string_hash = function(string: *): whole_8 {
 };
 
 define concatenate2_brk_allocate = function(string1: *, string2: *): * {
-    variable string1_length = length(string1);
-    variable string2_length = length(string2);
-    variable new_string = brk_allocate(+(+(string1_length, string2_length), 1));
+    declare string1_length = length(string1);
+    declare string2_length = length(string2);
+    declare new_string = brk_allocate(+(+(string1_length, string2_length), 1));
 
     copy(string1, new_string, string1_length);
     copy(string2, +(new_string, string1_length), string2_length);
@@ -332,10 +332,10 @@ define concatenate2_brk_allocate = function(string1: *, string2: *): * {
 };
 
 define concatenate3_brk_allocate = function(string1: *, string2: *, string3: *): * {
-    variable string1_length = length(string1);
-    variable string2_length = length(string2);
-    variable string3_length = length(string3);
-    variable new_string = brk_allocate(+(+(+(string1_length, string2_length), string3_length), 1));
+    declare string1_length = length(string1);
+    declare string2_length = length(string2);
+    declare string3_length = length(string3);
+    declare new_string = brk_allocate(+(+(+(string1_length, string2_length), string3_length), 1));
 
     copy(string1, new_string, string1_length);
     copy(string2, +(new_string, string1_length), string2_length);
@@ -345,11 +345,11 @@ define concatenate3_brk_allocate = function(string1: *, string2: *, string3: *):
 };
 
 define concatenate4_brk_allocate = function(string1: *, string2: *, string3: *, string4: *): * {
-    variable string1_length = length(string1);
-    variable string2_length = length(string2);
-    variable string3_length = length(string3);
-    variable string4_length = length(string4);
-    variable new_string = brk_allocate(+(+(+(+(string1_length, string2_length), string3_length), string4_length), 1));
+    declare string1_length = length(string1);
+    declare string2_length = length(string2);
+    declare string3_length = length(string3);
+    declare string4_length = length(string4);
+    declare new_string = brk_allocate(+(+(+(+(string1_length, string2_length), string3_length), string4_length), 1));
 
     copy(string1, new_string, string1_length);
     copy(string2, +(new_string, string1_length), string2_length);
@@ -360,15 +360,15 @@ define concatenate4_brk_allocate = function(string1: *, string2: *, string3: *, 
 };
 
 define substring_brk_allocate = function(string: *, start: whole_8, end: whole_8): * {
-    variable substring = brk_allocate(+(-(end, start), 1));
+    declare substring = brk_allocate(+(-(end, start), 1));
     copy(+(string, start), substring, -(end, start));
 
     return substring;
 };
 
 define nth_index = function(string: *, character: any_1, n: whole_8): whole_8 {
-    variable i = 0;
-    variable count = 0;
+    declare i = 0;
+    declare count = 0;
     while <(i, length(string)) {
         if =(any_1.>(any_1.*cast(+(string, i))), character) {
             if =(count, n) {
@@ -391,20 +391,20 @@ define create_size_zero_array8_brk_allocate = function(): * {
 };
 
 define create_size_one_array8_brk_allocate = function(item: any_8): * {
-    variable array = brk_allocate(16);
+    declare array = brk_allocate(16);
     array8_set(array, 0, item);
     return array;
 };
 
 define create_size_two_array8_brk_allocate = function(item1: any_8, item2: any_8): * {
-    variable array = brk_allocate(24);
+    declare array = brk_allocate(24);
     array8_set(array, 0, item1);
     array8_set(array, 1, item2);
     return array;
 };
 
 define create_size_three_array8_brk_allocate = function(item1: any_8, item2: any_8, item3: any_8): * {
-    variable array = brk_allocate(32);
+    declare array = brk_allocate(32);
     array8_set(array, 0, item1);
     array8_set(array, 1, item2);
     array8_set(array, 2, item3);
@@ -412,7 +412,7 @@ define create_size_three_array8_brk_allocate = function(item1: any_8, item2: any
 };
 
 define create_size_four_array8_brk_allocate = function(item1: any_8, item2: any_8, item3: any_8, item4: any_8): * {
-    variable array = brk_allocate(40);
+    declare array = brk_allocate(40);
     array8_set(array, 0, item1);
     array8_set(array, 1, item2);
     array8_set(array, 2, item3);
@@ -421,7 +421,7 @@ define create_size_four_array8_brk_allocate = function(item1: any_8, item2: any_
 };
 
 define create_size_five_array8_brk_allocate = function(item1: any_8, item2: any_8, item3: any_8, item4: any_8, item5: any_8): * {
-    variable array = brk_allocate(48);
+    declare array = brk_allocate(48);
     array8_set(array, 0, item1);
     array8_set(array, 1, item2);
     array8_set(array, 2, item3);
@@ -431,7 +431,7 @@ define create_size_five_array8_brk_allocate = function(item1: any_8, item2: any_
 };
 
 define create_size_six_array8_brk_allocate = function(item1: any_8, item2: any_8, item3: any_8, item4: any_8, item5: any_8, item6: any_8): * {
-    variable array = brk_allocate(56);
+    declare array = brk_allocate(56);
     array8_set(array, 0, item1);
     array8_set(array, 1, item2);
     array8_set(array, 2, item3);
@@ -442,7 +442,7 @@ define create_size_six_array8_brk_allocate = function(item1: any_8, item2: any_8
 };
 
 define create_size_seven_array8_brk_allocate = function(item1: any_8, item2: any_8, item3: any_8, item4: any_8, item5: any_8, item6: any_8, item7: any_8): * {
-    variable array = brk_allocate(64);
+    declare array = brk_allocate(64);
     array8_set(array, 0, item1);
     array8_set(array, 1, item2);
     array8_set(array, 2, item3);
@@ -454,8 +454,8 @@ define create_size_seven_array8_brk_allocate = function(item1: any_8, item2: any
 };
 
 define copy_string_brk_allocate = function(string: *): * {
-    variable string_length = length(string);
-    variable new_string = brk_allocate(+(string_length, 1));
+    declare string_length = length(string);
+    declare new_string = brk_allocate(+(string_length, 1));
     copy(string, new_string, string_length);
     return new_string;
 };
@@ -466,7 +466,7 @@ define AutoBufferBuffer = structure {
 };
 
 define autobuffer_buffer_new = function(size: whole_8): AutoBufferBuffer {
-    variable autobuffer_buffer = AutoBufferBuffer.>0();
+    declare autobuffer_buffer = AutoBufferBuffer.>0();
     AutoBufferBuffer.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
     return autobuffer_buffer;
 };
@@ -476,8 +476,8 @@ define autobuffer_buffer_push_string = function(buffer: *AutoBufferBuffer, strin
 };
 
 define autobuffer_buffer_push_string_length = function(buffer: *AutoBufferBuffer, string: *, length: whole_8) {
-    variable autobuffer = &(AutoBufferBuffer.>autobuffer(buffer));
-    variable buffer_index = AutoBufferBuffer.>index(buffer);
+    declare autobuffer = &(AutoBufferBuffer.>autobuffer(buffer));
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
 
     autobuffer_register(autobuffer, buffer_index, +(length, 1));
     autobuffer_set(autobuffer, string, buffer_index, length);
@@ -486,7 +486,7 @@ define autobuffer_buffer_push_string_length = function(buffer: *AutoBufferBuffer
 };
 
 define autobuffer_buffer_string_push_whole_8 = function(buffer: *AutoBufferBuffer, whole_8: whole_8) {
-    variable whole_8_buffer = any_24.>0();
+    declare whole_8_buffer = any_24.>0();
     whole_8_to_string(whole_8, &(whole_8_buffer));
     autobuffer_buffer_push_string(buffer, &(whole_8_buffer));
 };
@@ -496,11 +496,11 @@ define autobuffer_buffer_get_buffer_pointer = function(buffer: *AutoBufferBuffer
 };
 
 define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
-    variable actual_buffer = autobuffer_buffer_get_buffer_pointer(buffer);
-    variable size = AutoBuffer.>size(&(AutoBufferBuffer.>autobuffer(buffer)));
-    variable i = 0;
+    declare actual_buffer = autobuffer_buffer_get_buffer_pointer(buffer);
+    declare size = AutoBuffer.>size(&(AutoBufferBuffer.>autobuffer(buffer)));
+    declare i = 0;
     while <(i, size) {
-        variable done_anything = false;
+        declare done_anything = false;
         
         if <(+(i, 8), size) {
             any_8.<(any_8.*cast(+(actual_buffer, i)), 0);
@@ -518,7 +518,7 @@ define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
 };
 
 define autobuffer_buffer_push_whole_1 = function(buffer: *AutoBufferBuffer, whole_1: whole_1) {
-    variable buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
 
     autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(whole_1), buffer_index, 1);
 
@@ -526,7 +526,7 @@ define autobuffer_buffer_push_whole_1 = function(buffer: *AutoBufferBuffer, whol
 };
 
 define autobuffer_buffer_push_whole_2 = function(buffer: *AutoBufferBuffer, whole_2: whole_2) {
-    variable buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
 
     autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(whole_2), buffer_index, 2);
 
@@ -534,7 +534,7 @@ define autobuffer_buffer_push_whole_2 = function(buffer: *AutoBufferBuffer, whol
 };
 
 define autobuffer_buffer_push_whole_4 = function(buffer: *AutoBufferBuffer, whole_4: whole_4) {
-    variable buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
 
     autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(whole_4), buffer_index, 4);
 
@@ -542,7 +542,7 @@ define autobuffer_buffer_push_whole_4 = function(buffer: *AutoBufferBuffer, whol
 };
 
 define autobuffer_buffer_push_whole_8 = function(buffer: *AutoBufferBuffer, whole_8: whole_8) {
-    variable buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
 
     autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(whole_8), buffer_index, 8);
 
@@ -555,47 +555,47 @@ define AutoBufferStack8 = structure {
 };
 
 define autobuffer_stack8_new = function(size: whole_8): AutoBufferStack8 {
-    variable autobuffer_buffer = AutoBufferStack8.>0();
+    declare autobuffer_buffer = AutoBufferStack8.>0();
     AutoBufferStack8.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
     return autobuffer_buffer;
 };
 
 define autobuffer_stack8_push = function(buffer: *AutoBufferStack8, value: any_8) {
-    variable index = AutoBufferStack8.>index(buffer);
+    declare index = AutoBufferStack8.>index(buffer);
     autobuffer_register(&(AutoBufferStack8.>autobuffer(buffer)), +(*(index, 8), 8), 8);
     autobuffer_set_whole_8(&(AutoBufferStack8.>autobuffer(buffer)), whole_8.cast(value), *(index, 8));
     AutoBufferStack8.<index(buffer, +(index, 1));
 };
 
 define autobuffer_stack8_pop = function(buffer: *AutoBufferStack8): any_8 {
-    variable index = AutoBufferStack8.>index(buffer);
+    declare index = AutoBufferStack8.>index(buffer);
     index = -(index, 1);
 
-    variable index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
+    declare index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
 
     AutoBufferStack8.<index(buffer, index);
     return any_8.>(index_pointer);
 };
 
 define autobuffer_stack8_peek = function(buffer: *AutoBufferStack8): any_8 {
-    variable index = AutoBufferStack8.>index(buffer);
+    declare index = AutoBufferStack8.>index(buffer);
     index = -(index, 1);
 
-    variable index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
+    declare index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
     return any_8.>(index_pointer);
 };
 
 define autobuffer_stack8_get = function(buffer: *AutoBufferStack8, index: whole_8): any_8 {
-    variable index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
+    declare index_pointer = any_8.*cast(autobuffer_get(&(AutoBufferStack8.>autobuffer(buffer)), *(index, 8)));
     return any_8.>(index_pointer);
 };
 
 define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
-    variable actual_buffer = autobuffer_stack8_get_buffer_pointer(buffer);
-    variable size = AutoBuffer.>size(&(AutoBufferStack8.>autobuffer(buffer)));
-    variable i = 0;
+    declare actual_buffer = autobuffer_stack8_get_buffer_pointer(buffer);
+    declare size = AutoBuffer.>size(&(AutoBufferStack8.>autobuffer(buffer)));
+    declare i = 0;
     while <(i, size) {
-        variable done_anything = false;
+        declare done_anything = false;
         
         if <(+(i, 8), size) {
             any_8.<(any_8.*cast(+(actual_buffer, i)), 0:whole_8);
@@ -617,14 +617,14 @@ define autobuffer_stack8_get_buffer_pointer = function(buffer: *AutoBufferStack8
 };
 
 define to_type_array = function(type: *): * {
-    variable new_array = autobuffer_new(24);
-    variable new_array_index = 0;
+    declare new_array = autobuffer_new(24);
+    declare new_array_index = 0;
 
-    variable buffer = autobuffer_buffer_new(24);
+    declare buffer = autobuffer_buffer_new(24);
 
-    variable i = 0;
+    declare i = 0;
     while <(i, length(type)) {
-        variable character_pointer = +(type, i);
+        declare character_pointer = +(type, i);
         
         if string_length=(character_pointer, ".", 1) {
             if >(AutoBufferBuffer.>index(&(buffer)), 0) {
@@ -648,18 +648,18 @@ define to_type_array = function(type: *): * {
 };
 
 define string_to_function_data = function(type: *): NodeFunctionData {
-    variable argument_types = autobuffer_stack8_new(24);
-    variable return_types = autobuffer_stack8_new(24);
+    declare argument_types = autobuffer_stack8_new(24);
+    declare return_types = autobuffer_stack8_new(24);
 
-    variable argument_index = 0;
-    variable return_index = 0;
+    declare argument_index = 0;
+    declare return_index = 0;
 
-    variable inside = 0;
-    variable is_return = false;
-    variable buffer = autobuffer_buffer_new(24);
-    variable i = 10;
+    declare inside = 0;
+    declare is_return = false;
+    declare buffer = autobuffer_buffer_new(24);
+    declare i = 10;
     while <(i, length(type)) {
-        variable character_pointer = +(type, i);
+        declare character_pointer = +(type, i);
         
         if &&(=(inside, 0), |(string_length=(character_pointer, ":", 1), &&(string_length=(character_pointer, ",", 1), !(is_return)))) {
             if >(AutoBufferBuffer.>index(&(buffer)), 0) {
@@ -691,7 +691,7 @@ define string_to_function_data = function(type: *): NodeFunctionData {
         i = +(i, 1);
     };
 
-    variable data = NodeFunctionData.>0();
+    declare data = NodeFunctionData.>0();
     NodeFunctionData.<argument_types(&(data), autobuffer_stack8_get_buffer_pointer(&(argument_types)));
     NodeFunctionData.<returns(&(data), autobuffer_stack8_get_buffer_pointer(&(return_types)));
 
@@ -699,14 +699,14 @@ define string_to_function_data = function(type: *): NodeFunctionData {
 };
 
 define function_data_to_string_old = function(pointer: *NodeFunctionData): * {
-    variable main_name_buffer = autobuffer_buffer_new(16);
+    declare main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
 
-    variable arguments = NodeFunctionData.>argument_types(pointer);
-    variable returns = NodeFunctionData.>returns(pointer);
+    declare arguments = NodeFunctionData.>argument_types(pointer);
+    declare returns = NodeFunctionData.>returns(pointer);
 
-    variable j = 0;
+    declare j = 0;
     while !(=(array8_get(arguments, j), 0)) {
         autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(arguments, j)));
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
@@ -718,7 +718,7 @@ define function_data_to_string_old = function(pointer: *NodeFunctionData): * {
     };
     autobuffer_buffer_push_string(&(main_name_buffer), ":");
 
-    variable j = 0;
+    declare j = 0;
     while !(=(array8_get(returns, j), 0)) {
         autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
@@ -734,17 +734,17 @@ define function_data_to_string_old = function(pointer: *NodeFunctionData): * {
 };
 
 define function_data_to_string = function(pointer: *NodeFunctionData): * {
-    variable main_name_buffer = autobuffer_buffer_new(16);
+    declare main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
 
-    variable arguments = NodeFunctionData.>argument_types_array(pointer);
-    variable returns = NodeFunctionData.>returns(pointer);
+    declare arguments = NodeFunctionData.>argument_types_array(pointer);
+    declare returns = NodeFunctionData.>returns(pointer);
 
-    variable j = 0;
+    declare j = 0;
     while !(=(array8_get(arguments, j), 0)) {
-        variable argument_type_array = *.cast(array8_get(arguments, j));
-        variable argument_type = expand_module_name_array(argument_type_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+        declare argument_type_array = *.cast(array8_get(arguments, j));
+        declare argument_type = expand_module_name_array(argument_type_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
         autobuffer_buffer_push_string(&(main_name_buffer), argument_type);
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
         j = +(j, 1);
@@ -755,7 +755,7 @@ define function_data_to_string = function(pointer: *NodeFunctionData): * {
     };
     autobuffer_buffer_push_string(&(main_name_buffer), ":");
 
-    variable j = 0;
+    declare j = 0;
     while !(=(array8_get(returns, j), 0)) {
         autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
@@ -771,14 +771,14 @@ define function_data_to_string = function(pointer: *NodeFunctionData): * {
 };
 
 define structure_data_to_string = function(pointer: *NodeStructureData): * {
-    variable main_name_buffer = autobuffer_buffer_new(16);
+    declare main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "structure[");
 
-    variable items = NodeStructureData.>item_types(pointer);
-    variable item_names = NodeStructureData.>item_names(pointer);
+    declare items = NodeStructureData.>item_types(pointer);
+    declare item_names = NodeStructureData.>item_names(pointer);
 
-    variable j = 0;
+    declare j = 0;
     while !(=(array8_get(items, j), 0)) {
         autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(item_names, j)));
         autobuffer_buffer_push_string(&(main_name_buffer), ":");

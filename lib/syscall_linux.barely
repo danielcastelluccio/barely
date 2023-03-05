@@ -31,11 +31,11 @@ define Linux = module {
     define MAP_ANONYMOUS: whole_8 = 32;
 
     define sys_read = function(fd: whole_8, buffer: *, length: whole_8) {
-        variable _: any_8 = @syscall3(.SYS_READ, fd, buffer, length);
+        declare _: any_8 = @syscall3(.SYS_READ, fd, buffer, length);
     };
 
     define sys_write = function(fd: whole_8, buffer: *, length: whole_8) {
-        variable _: any_8 = @syscall3(.SYS_WRITE, fd, buffer, length);
+        declare _: any_8 = @syscall3(.SYS_WRITE, fd, buffer, length);
     };
 
     define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
@@ -43,7 +43,7 @@ define Linux = module {
     };
 
     define sys_close = function(fd: whole_8) {
-        variable _: any_8 = @syscall1(.SYS_CLOSE, fd);
+        declare _: any_8 = @syscall1(.SYS_CLOSE, fd);
     };
 
     define Stat = structure {
@@ -53,11 +53,11 @@ define Linux = module {
     };
 
     define sys_stat = function(name: *, buffer: *.Stat) {
-        variable _ = @syscall2(.SYS_STAT, name, buffer);
+        declare _ = @syscall2(.SYS_STAT, name, buffer);
     };
 
     define sys_fstat = function(fd: whole_8, buffer: *.Stat) {
-        variable _ = @syscall2(.SYS_FSTAT, fd, buffer);
+        declare _ = @syscall2(.SYS_FSTAT, fd, buffer);
     };
 
     define sys_brk = function(location: *): * {
@@ -73,11 +73,11 @@ define Linux = module {
     };
 
     define sys_exit = function(code: whole_8) {
-        variable _ = @syscall1(.SYS_EXIT, code);
+        declare _ = @syscall1(.SYS_EXIT, code);
     };
 
     define sys_mkdir = function(path: *, mode: whole_8) {
-        variable _ = @syscall2(.SYS_MKDIR, path, mode);
+        declare _ = @syscall2(.SYS_MKDIR, path, mode);
     };
 
     define sys_mmap = function(address: *, size: whole_8, protection: whole_8, flags: whole_8, fd: whole_8, offset: whole_8): * {

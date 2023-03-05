@@ -1,13 +1,13 @@
 define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
-    variable buffer = AutoBuffer.>buffer(auto_buffer);
-    variable buffer_length = length(AutoBuffer.>buffer(auto_buffer));
+    declare buffer = AutoBuffer.>buffer(auto_buffer);
+    declare buffer_length = length(AutoBuffer.>buffer(auto_buffer));
 
     if =(buffer_length, 0) {
         return;
     };
 
-    variable is_keyword = if string=(buffer, "function") true
-    else if string=(buffer, "variable") true
+    declare is_keyword = if string=(buffer, "function") true
+    else if string=(buffer, "declare") true
     else if string=(buffer, "structure") true
     else if string=(buffer, "module") true
     else if string=(buffer, "macro") true
@@ -21,19 +21,19 @@ define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file
     else false;
 
     if is_keyword {
-        variable copied_buffer = copy_string_brk_allocate(buffer);
+        declare copied_buffer = copy_string_brk_allocate(buffer);
 
-        variable keyword_data = TokenKeywordData.*cast(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, whole_8.>(row), whole_8.>(column)));
+        declare keyword_data = TokenKeywordData.*cast(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, whole_8.>(row), whole_8.>(column)));
         TokenKeywordData.<keyword(keyword_data, copied_buffer);
     } else if is_number(buffer) {
         tokenize_number(tokens, buffer, file_name, whole_8.>(row), whole_8.>(column));
     } else if |(string=(buffer, "true"), string=(buffer, "false")) {
-        variable boolean_data = TokenBooleanData.*cast(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8.>(row), whole_8.>(column)));
+        declare boolean_data = TokenBooleanData.*cast(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8.>(row), whole_8.>(column)));
         TokenBooleanData.<value(boolean_data, string=(buffer, "true"));
     } else {
-        variable copied_buffer = copy_string_brk_allocate(buffer);
+        declare copied_buffer = copy_string_brk_allocate(buffer);
 
-        variable name_data = TokenNameData.*cast(tokens_append_data(tokens, TOKEN_NAME, file_name, whole_8.>(row), whole_8.>(column)));
+        declare name_data = TokenNameData.*cast(tokens_append_data(tokens, TOKEN_NAME, file_name, whole_8.>(row), whole_8.>(column)));
         TokenNameData.<name(name_data, copied_buffer);
     };
     
@@ -41,17 +41,17 @@ define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file
 };
 
 define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row: whole_8, column: whole_8) {
-    variable number_data = TokenNumberData.*cast(tokens_append_data(tokens, TOKEN_NUMBER, file_name, row, column));
+    declare number_data = TokenNumberData.*cast(tokens_append_data(tokens, TOKEN_NUMBER, file_name, row, column));
 
     // 0 = actual number, 1 = whole/integer, 2 = size
-    variable stage = 0;
-    variable type_buffer = autobuffer_buffer_new(8);
-    variable size_buffer = autobuffer_buffer_new(8);
-    variable number_buffer = autobuffer_buffer_new(8);
+    declare stage = 0;
+    declare type_buffer = autobuffer_buffer_new(8);
+    declare size_buffer = autobuffer_buffer_new(8);
+    declare number_buffer = autobuffer_buffer_new(8);
 
-    variable j = 0;
+    declare j = 0;
     while <(j, length(buffer)) {
-        variable character = whole_1.>(whole_1.*cast(+(buffer, j)));
+        declare character = whole_1.>(whole_1.*cast(+(buffer, j)));
         if =(character, ASCII.UNDERSCORE) {
             stage = +(stage, 1);
         } else if =(stage, 1) {
@@ -65,72 +65,32 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
         j = +(j, 1);
     };
 
-    //if !(check_number_fits(tokens, size_bytes, =(TokenNumberData.>type(number_data), 1), buffer)) {
-    //    print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
-    //    print("Number literal '");
-    //    print(autobuffer_buffer_get_buffer_pointer(&(number_buffer)));
-    //    print("' cannot fit in type '");
-    //    print(autobuffer_buffer_get_buffer_pointer(&(type_buffer)));
-    //    print("_");
-    //    print(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
-    //    println("'");
-    //    exit(1);
-    //};
-
     TokenNumberData.<value(number_data, string_to_whole_8(buffer));
 };
 
-define check_number_fits = function(tokens: *Tokens, size_bytes: whole_8, wants_signed: boolean, input_string: *): boolean {
-    variable size_bits = 2;
-    variable m = 1;
-    while <(m, *(size_bytes, 8)) {
-        size_bits = *(2, size_bits);
-        m = +(m, 1);
-    };
-    size_bits = -(size_bits, 1);
-    if wants_signed {
-        size_bits = /(size_bits, 2);
-    };
-
-    variable number = 0;
-
-    variable is_input_negative = =(any_1.>(any_1.*cast(input_string)), ASCII.MINUS);
-    if is_input_negative {
-        if wants_signed {
-            number = -(string_to_whole_8(+(input_string, 1)), 1);
-        } else {
-            return false;
-        };
-    } else {
-        number = string_to_whole_8(input_string);
-    };
-
-    return !(>(number, size_bits));
-};
-
 define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
-    variable index = 0;
-    variable row = 1;
-    variable column = 1;
-    variable column_cache = 1;
+    declare index = 0;
+    declare row = 1;
+    declare column = 1;
+    declare column_cache = 1;
 
-    variable contents_length = length(contents);
+    declare contents_length = length(contents);
 
-    variable buffer = autobuffer_new(64);
-    variable buffer_index = 0;
+    declare buffer = autobuffer_new(64);
+    declare buffer_index = 0;
 
-    variable in_quotes = false;
-    variable in_comment = false;
+    declare in_quotes = false;
+    declare in_comment = false;
 
     while <(index, contents_length) {
-        variable character_pointer = any_1.*cast(+(contents, index));
-        variable character_pointer_next = any_1.*cast(+(contents, +(index, 1)));
-        variable handled = false;
+        declare character_pointer = any_1.*cast(+(contents, index));
+        declare character_pointer_next = any_1.*cast(+(contents, +(index, 1)));
+        declare handled = false;
 
         if !(in_quotes) {
             if !(in_comment) {
                 // a macro would probably be better suited for this
-                variable current_character = any_1.>(character_pointer);
+                declare current_character = any_1.>(character_pointer);
                 handle_special_character(current_character, ASCII.OPEN_PARENTHESIS, TOKEN_OPEN_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
                 handle_special_character(current_character, ASCII.CLOSED_PARENTHESIS, TOKEN_CLOSED_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
                 handle_special_character(current_character, ASCII.OPEN_CURLY_BRACKETS, TOKEN_OPEN_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
@@ -151,10 +111,10 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
         if !(in_comment) {
             if =(any_1.>(character_pointer), ASCII.QUOTATION) {
                 if in_quotes {
-                    variable buffer_length = length(AutoBuffer.>buffer(&(buffer)));
-                    variable buffer_copy = copy_string_brk_allocate(AutoBuffer.>buffer(&(buffer)));
+                    declare buffer_length = length(AutoBuffer.>buffer(&(buffer)));
+                    declare buffer_copy = copy_string_brk_allocate(AutoBuffer.>buffer(&(buffer)));
 
-                    variable string_pointer_data = TokenStringData.*cast(tokens_append_data(tokens, TOKEN_STRING, file_name, row, column));
+                    declare string_pointer_data = TokenStringData.*cast(tokens_append_data(tokens, TOKEN_STRING, file_name, row, column));
                     TokenStringData.<value(string_pointer_data, buffer_copy);
 
                     autobuffer_reset(&(buffer));
@@ -203,7 +163,7 @@ define handle_special_character = function(current_character: any_1, desired_cha
         autobuffer_reset(buffer);
         whole_8.<(buffer_index, 0);
 
-        variable _ = tokens_append(tokens, token, file_name, whole_8.>(row), whole_8.>(column));
+        declare _ = tokens_append(tokens, token, file_name, whole_8.>(row), whole_8.>(column));
         increment_whole_8_pointer(column, 1);
     };
 };
@@ -220,12 +180,12 @@ define handle_break = function(current_character: any_1, desired_character: whol
 };
 
 define get_token_location_data = function(tokens: *Tokens, index: whole_8): *, whole_8, whole_8 {
-    variable data = tokens_get_location_data(tokens, index);
+    declare data = tokens_get_location_data(tokens, index);
     return TokenLocationData.>file(data), TokenLocationData.>row(data), TokenLocationData.>column(data);
 };
 
 define print_token_error_beginning = function(tokens: *Tokens, location: whole_8) {
-    variable location_data = tokens_get_location_data(tokens, location);
+    declare location_data = tokens_get_location_data(tokens, location);
     print("[ERROR] ");
     print(TokenLocationData.>file(location_data));
     print(":");
@@ -236,13 +196,13 @@ define print_token_error_beginning = function(tokens: *Tokens, location: whole_8
 };
 
 define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8.>(index_pointer);
-    variable name_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 1)));
-    variable name = TokenNameData.>name(name_token_pointer_data);
+    declare index = whole_8.>(index_pointer);
+    declare name_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 1)));
+    declare name = TokenNameData.>name(name_token_pointer_data);
 
-    variable type = *.cast(0);
-    variable value_offset = if =(tokens_get_id(tokens, +(index, 2)), TOKEN_COLON) {
-        variable type_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 3)));
+    declare type = *.cast(0);
+    declare value_offset = if =(tokens_get_id(tokens, +(index, 2)), TOKEN_COLON) {
+        declare type_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 3)));
         type = TokenNameData.>name(type_token_pointer_data);
         5
     } else if tokens_is_name(tokens, +(index, 2), "=") {
@@ -255,14 +215,14 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     };
 
     if =(tokens_get_id(tokens, +(index, value_offset)), TOKEN_NUMBER) {
-        variable value_token_pointer_data = TokenNumberData.*cast(tokens_get_pointer_data(tokens, +(index, value_offset)));
+        declare value_token_pointer_data = TokenNumberData.*cast(tokens_get_pointer_data(tokens, +(index, value_offset)));
 
-        variable value = brk_allocate(8);
+        declare value = brk_allocate(8);
         whole_8.<(whole_8.*cast(value), TokenNumberData.>value(value_token_pointer_data));
     };
 
-    variable define_index = Nodes.>index(nodes);
-    variable define_node_data = NodeDefineData.*cast(nodes_append_data(nodes, NODE_DEFINE, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare define_index = Nodes.>index(nodes);
+    declare define_node_data = NodeDefineData.*cast(nodes_append_data(nodes, NODE_DEFINE, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeDefineData.<name(define_node_data, name);
     NodeDefineData.<type(define_node_data, type);
 
@@ -270,37 +230,37 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     parse_individual(tokens, index_pointer, nodes);
 
-    variable end_define_index = Nodes.>index(nodes);
-    variable end_define_node_data = NodeEndDefineData.*cast(nodes_append_data(nodes, NODE_ENDDEFINE, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare end_define_index = Nodes.>index(nodes);
+    declare end_define_node_data = NodeEndDefineData.*cast(nodes_append_data(nodes, NODE_ENDDEFINE, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeEndDefineData.<type(end_define_node_data, type);
 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
 define parse_global = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8.>(index_pointer);
-    variable type_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 2)));
-    variable type = TokenNameData.>name(type_token_pointer_data);
+    declare index = whole_8.>(index_pointer);
+    declare type_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 2)));
+    declare type = TokenNameData.>name(type_token_pointer_data);
 
-    variable global_node_data = NodeGlobalData.*cast(nodes_append_data(nodes, NODE_GLOBAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare global_node_data = NodeGlobalData.*cast(nodes_append_data(nodes, NODE_GLOBAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeGlobalData.<type(global_node_data, type);
 
     increment_whole_8_pointer(index_pointer, 4);
 };
 
 define parse_structure = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
-    variable member_names = autobuffer_new(40);
-    variable member_types = autobuffer_new(40);
-    variable member_index = 0;
+    declare member_names = autobuffer_new(40);
+    declare member_types = autobuffer_new(40);
+    declare member_index = 0;
 
     index = +(index, 2);
 
-    variable seen_item_name = false;
+    declare seen_item_name = false;
 
     while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
-        variable id = tokens_get_id(tokens, index);
+        declare id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_NAME) {
             if seen_item_name {
@@ -318,7 +278,7 @@ define parse_structure = function(tokens: *Tokens, index_pointer: *whole_8, node
         };
     };
 
-    variable structure_data = NodeStructureData.*cast(nodes_append_data(nodes, NODE_STRUCTURE, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare structure_data = NodeStructureData.*cast(nodes_append_data(nodes, NODE_STRUCTURE, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeStructureData.<item_names(structure_data, AutoBuffer.>buffer(&(member_names)));
     NodeStructureData.<item_types(structure_data, AutoBuffer.>buffer(&(member_types)));
 
@@ -328,17 +288,17 @@ define parse_structure = function(tokens: *Tokens, index_pointer: *whole_8, node
 };
 
 define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
-    variable buffer = autobuffer_buffer_new(64);
+    declare buffer = autobuffer_buffer_new(64);
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
-        variable token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
+        declare token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
         autobuffer_buffer_push_string(&(buffer), token_name);
         increment_whole_8_pointer(index_pointer, 1);
     };
 
-    variable inner = 0;
+    declare inner = 0;
     while |(>(inner, 0), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_OPEN_BRACKET)) {
-        variable id = tokens_get_id(tokens, whole_8.>(index_pointer));
-        variable pointer_data = tokens_get_pointer_data(tokens, whole_8.>(index_pointer));
+        declare id = tokens_get_id(tokens, whole_8.>(index_pointer));
+        declare pointer_data = tokens_get_pointer_data(tokens, whole_8.>(index_pointer));
         if =(id, TOKEN_OPEN_BRACKET) {
             autobuffer_buffer_push_string(&(buffer), "[");
             inner = +(inner, 1);
@@ -355,7 +315,7 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
         increment_whole_8_pointer(index_pointer, 1);
     };
 
-    variable result = AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(&(buffer))));
+    declare result = AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(&(buffer))));
 
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_PERIOD) {
         increment_whole_8_pointer(index_pointer, 1);
@@ -370,19 +330,19 @@ define parse_name = function(tokens: *Tokens, index_pointer: *whole_8): * {
 };
 
 define parse_name_array = function(tokens: *Tokens, index_pointer: *whole_8): * {
-    variable buffer = autobuffer_buffer_new(32);
-    variable array = autobuffer_new(24);
-    variable array_index = 0;
+    declare buffer = autobuffer_buffer_new(32);
+    declare array = autobuffer_new(24);
+    declare array_index = 0;
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
-        variable token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
+        declare token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
         autobuffer_buffer_push_string(&(buffer), token_name);
         increment_whole_8_pointer(index_pointer, 1);
     };
 
-    variable inner = 0;
+    declare inner = 0;
     while |(>(inner, 0), =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_OPEN_BRACKET)) {
-        variable id = tokens_get_id(tokens, whole_8.>(index_pointer));
-        variable pointer_data = tokens_get_pointer_data(tokens, whole_8.>(index_pointer));
+        declare id = tokens_get_id(tokens, whole_8.>(index_pointer));
+        declare pointer_data = tokens_get_pointer_data(tokens, whole_8.>(index_pointer));
         if =(id, TOKEN_OPEN_BRACKET) {
             autobuffer_buffer_push_string(&(buffer), "[");
             inner = +(inner, 1);
@@ -408,21 +368,21 @@ define parse_name_array = function(tokens: *Tokens, index_pointer: *whole_8): * 
         increment_whole_8_pointer(index_pointer, 1);
         if is_only_asterisks(*.cast(autobuffer_array8_get(&(array), -(autobuffer_array8_length(&(array)), 1)))) {
             array_index = -(array_index, 1);
-            variable first_index_contents = *.cast(autobuffer_array8_get(&(array), array_index));
+            declare first_index_contents = *.cast(autobuffer_array8_get(&(array), array_index));
             autobuffer_array8_set(&(array), array_index, concatenate2_brk_allocate(first_index_contents, "@current_module"));
             array_index = +(array_index, 1);
-            variable next_array = parse_name_array(tokens, index_pointer);
+            declare next_array = parse_name_array(tokens, index_pointer);
 
-            variable i = 0;
+            declare i = 0;
             while <(i, array8_length(next_array)) {
                 autobuffer_array8_set(&(array), array_index, *.cast(array8_get(next_array, i)));
                 array_index = +(array_index, 1);
                 i = +(i, 1);
             };
         } else {
-            variable next_array = parse_name_array(tokens, index_pointer);
+            declare next_array = parse_name_array(tokens, index_pointer);
 
-            variable i = 0;
+            declare i = 0;
             while <(i, array8_length(next_array)) {
                 autobuffer_array8_set(&(array), array_index, *.cast(array8_get(next_array, i)));
                 array_index = +(array_index, 1);
@@ -435,9 +395,9 @@ define parse_name_array = function(tokens: *Tokens, index_pointer: *whole_8): * 
 };
 
 define is_only_asterisks = function(string: *): boolean {
-    variable i = 0;
+    declare i = 0;
     while <(i, length(string)) {
-        variable character = any_1.>(any_1.*cast(+(string, i)));
+        declare character = any_1.>(any_1.*cast(+(string, i)));
         if !(=(character, ASCII.ASTERISK)) {
             return false;
         };
@@ -448,15 +408,15 @@ define is_only_asterisks = function(string: *): boolean {
 };
 
 define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
-    variable function_data = NodeFunctionData.*cast(nodes_append_data(nodes, NODE_FUNCTION, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare function_data = NodeFunctionData.*cast(nodes_append_data(nodes, NODE_FUNCTION, get_token_location_data(tokens, whole_8.>(index_pointer))));
 
     index = +(index, 2);
 
-    variable function_argument_names, function_arguments, function_arguments_array, function_returns = parse_function_definition(tokens, &(index), nodes);
+    declare function_argument_names, function_arguments, function_arguments_array, function_returns = parse_function_definition(tokens, &(index), nodes);
 
-    variable has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
+    declare has_body = =(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS);
 
     NodeFunctionData.<argument_names(function_data, function_argument_names);
     NodeFunctionData.<argument_types_array(function_data, function_arguments_array);
@@ -465,7 +425,7 @@ define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes
     if has_body {
         index = +(index, 1);
 
-        variable _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
         while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
             parse_statement(tokens, &(index), nodes);
         };
@@ -474,32 +434,32 @@ define parse_function = function(tokens: *Tokens, index_pointer: *whole_8, nodes
 
         
         if !(=(nodes_get_id(nodes, -(Nodes.>index(nodes), 1)), NODE_RETURN)) {
-            variable _ = nodes_append(nodes, NODE_RETURN, get_token_location_data(tokens, -(index, 1)));
+            declare _ = nodes_append(nodes, NODE_RETURN, get_token_location_data(tokens, -(index, 1)));
         };
 
-        variable _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
     };
 
-    variable _ = nodes_append(nodes, NODE_ENDFUNCTION, get_token_location_data(tokens, index));
+    declare _ = nodes_append(nodes, NODE_ENDFUNCTION, get_token_location_data(tokens, index));
 
     whole_8.<(index_pointer, index);
 };
 
 define parse_function_definition = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes): *, *, *, * {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
-    variable function_argument_names = autobuffer_new(40);
-    variable function_arguments = autobuffer_new(40);
-    variable function_arguments_array = autobuffer_new(40);
-    variable function_returns = autobuffer_new(40);
+    declare function_argument_names = autobuffer_new(40);
+    declare function_arguments = autobuffer_new(40);
+    declare function_arguments_array = autobuffer_new(40);
+    declare function_returns = autobuffer_new(40);
 
-    variable is_name = true;
-    variable arguments_index = 0;
+    declare is_name = true;
+    declare arguments_index = 0;
     while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_PARENTHESIS)) {
-        variable id = tokens_get_id(tokens, index);
+        declare id = tokens_get_id(tokens, index);
 
         if =(id, TOKEN_NAME) {
-            variable token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
+            declare token_name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
 
             if is_name {
                 autobuffer_array8_set(&(function_argument_names), arguments_index, token_name);
@@ -518,12 +478,12 @@ define parse_function_definition = function(tokens: *Tokens, index_pointer: *who
     
     index = +(index, 1);
 
-    variable returns_index = 0;
+    declare returns_index = 0;
     while &&(!(=(tokens_get_id(tokens, index), TOKEN_OPEN_CURLY_BRACKETS)), !(=(tokens_get_id(tokens, index), TOKEN_SEMICOLON))) {
-        variable id = tokens_get_id(tokens, index);
+        declare id = tokens_get_id(tokens, index);
 
         if |(=(id, TOKEN_NAME), =(id, TOKEN_PERIOD)) {
-            variable token_name = parse_name(tokens, &(index));
+            declare token_name = parse_name(tokens, &(index));
             autobuffer_array8_set(&(function_returns), returns_index, token_name);
             returns_index = +(returns_index, 1);
         } else if |(=(id, TOKEN_COMMA), =(id, TOKEN_COLON)) {
@@ -546,17 +506,17 @@ define parse_invoke_parenthesis = function(tokens: *Tokens, index_pointer: *whol
 };
 
 define parse_invoke_parenthesis_ending = function(tokens: *Tokens, index_in: whole_8, nodes: *Nodes) {
-    variable index = index_in;
+    declare index = index_in;
 
-    variable inner = 0_integer_8;
+    declare inner = 0_integer_8;
     while |(>(inner, 0_integer_8), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
-        variable id = tokens_get_id(tokens, index);
+        declare id = tokens_get_id(tokens, index);
         if =(id, TOKEN_OPEN_PARENTHESIS) {
             if =(inner, 0_integer_8) {
-                variable inside_index = +(index, 1);
-                variable inside_inner = 1_integer_8;
+                declare inside_index = +(index, 1);
+                declare inside_inner = 1_integer_8;
                 while >(inside_inner, 0_integer_8) {
-                    variable id3 = tokens_get_id(tokens, inside_index);
+                    declare id3 = tokens_get_id(tokens, inside_index);
                     if =(id3, TOKEN_OPEN_PARENTHESIS) {
                         inside_inner = +(inside_inner, 1_integer_8);
                     } else if =(id3, TOKEN_CLOSED_PARENTHESIS) {
@@ -584,31 +544,31 @@ define parse_invoke_parenthesis_ending = function(tokens: *Tokens, index_in: who
 };
 
 define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nodes_in: *Nodes) {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
-    variable id = tokens_get_id(tokens, index);
-    variable pointer_data = tokens_get_pointer_data(tokens, index);
+    declare id = tokens_get_id(tokens, index);
+    declare pointer_data = tokens_get_pointer_data(tokens, index);
 
-    variable nodes_temp = nodes_new();
-    variable nodes = &(nodes_temp);
+    declare nodes_temp = nodes_new();
+    declare nodes = &(nodes_temp);
 
-    variable nodes_index = Nodes.>index(nodes);
-    variable nodes_initial_index = Nodes.>index(nodes_in);
+    declare nodes_index = Nodes.>index(nodes);
+    declare nodes_initial_index = Nodes.>index(nodes_in);
 
     check_parse_simple_expressions(tokens, &(index), nodes, id, pointer_data);
 
     if =(id, TOKEN_OPEN_CURLY_BRACKETS) {
-        variable _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
         index = +(index, 1);
         while !(=(tokens_get_id(tokens, index), TOKEN_CLOSED_CURLY_BRACKETS)) {
             parse_statement(tokens, &(index), nodes);
         };
         index = +(index, 1);
-        variable _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
     };
 
     if =(id, TOKEN_KEYWORD) {
-        variable name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
+        declare name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
         if string=(name_value, "if") {
             parse_if(tokens, &(index), nodes);
         };
@@ -620,15 +580,15 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
 };
 
 define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, nodes_in: *Nodes) {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
-    variable nodes_moved_count = Nodes.>index(nodes);
+    declare nodes_moved_count = Nodes.>index(nodes);
 
-    variable nodes_index = Nodes.>index(nodes);
+    declare nodes_index = Nodes.>index(nodes);
 
     parse_invoke_parenthesis_ending(tokens, index, nodes_in);
 
-    variable nodes_in_index = Nodes.>index(nodes_in);
+    declare nodes_in_index = Nodes.>index(nodes_in);
 
     autobuffer_set(&(Nodes.>buffer(nodes_in)), AutoBuffer.>buffer(&(Nodes.>buffer(nodes))), *(Nodes.>index(nodes_in), NODE_SIZE), *(nodes_moved_count, NODE_SIZE));
     Nodes.<index(nodes_in, +(Nodes.>index(nodes_in), nodes_moved_count));
@@ -642,11 +602,11 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
 };
 
 define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, token_id: whole_8, token_pointer_data: *) {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
     if |(=(token_id, TOKEN_NAME), =(token_id, TOKEN_PERIOD)) {
-        variable names_buffer = autobuffer_new(24);
-        variable j = 0;
+        declare names_buffer = autobuffer_new(24);
+        declare j = 0;
         if =(token_id, TOKEN_PERIOD) {
             autobuffer_array8_set(&(names_buffer), j, "@current_module");
             j = +(j, 1);
@@ -655,10 +615,10 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
 
         index = -(index, 1);
 
-        variable retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
+        declare retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
 
-        variable name_name: * = *.cast(0);
-        variable first = true;
+        declare name_name: * = *.cast(0);
+        declare first = true;
         while |(=(tokens_get_id(tokens, index), TOKEN_PERIOD), first) {
             index = +(index, 1);
 
@@ -667,7 +627,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
                 j = +(j, 1);
             };
 
-            variable name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, index));
+            declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, index));
             name_name = TokenNameData.>name(name_data);
 
             index = +(index, 1);
@@ -679,37 +639,55 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
 
         if =(tokens_get_id(tokens, index), TOKEN_COLON) {
             index = +(index, 1);
-            variable name = parse_name(tokens, &(index));
+            declare name = parse_name(tokens, &(index));
             NodeRetrieveData.<coercion(retrieve_node_data, name);
         };
     };
 
     if =(token_id, TOKEN_STRING) {
-        variable string_value = TokenStringData.>value(TokenStringData.*cast(token_pointer_data));
-        variable string_pointer_data = NodeStringData.*cast(nodes_append_data(nodes, NODE_STRING, get_token_location_data(tokens, index)));
+        declare string_value = TokenStringData.>value(TokenStringData.*cast(token_pointer_data));
+        declare string_pointer_data = NodeStringData.*cast(nodes_append_data(nodes, NODE_STRING, get_token_location_data(tokens, index)));
         NodeStringData.<value(string_pointer_data, string_value);
 
         index = +(index, 1);
     };
 
     if =(token_id, TOKEN_NUMBER) {
-        variable number_token_data = TokenNumberData.*cast(token_pointer_data);
-        variable number_node_data = NodeNumberData.*cast(nodes_append_data(nodes, NODE_NUMBER, get_token_location_data(tokens, index)));
-        NodeNumberData.<value(number_node_data, TokenNumberData.>value(number_token_data));
+        declare number_token_data = TokenNumberData.*cast(token_pointer_data);
+        declare number_value = TokenNumberData.>value(number_token_data);
+        declare number_node_data = NodeNumberData.*cast(nodes_append_data(nodes, NODE_NUMBER, get_token_location_data(tokens, index)));
+        NodeNumberData.<value(number_node_data, number_value);
 
         index = +(index, 1);
 
+        declare coerced_value = "whole_8";
         if =(tokens_get_id(tokens, index), TOKEN_COLON) {
             index = +(index, 1);
 
-            variable coerced_value = parse_name_array(tokens, &(index));
+            coerced_value = parse_name_array(tokens, &(index));
             NodeNumberData.<coersion(number_node_data, coerced_value);
         };
+
+        // TODO: Making sure that numbers fit in the type they are declared to be
+        // probably need to retain some information about the input string in order to do this correctly
+
+        //declare number_size, number_signedness = type_string_to_size_byte(coerced_value);
+        //if !(check_number_fits(tokens, number_size, number_signedness, number_value)) {
+        //    print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
+        //    print("Number literal '");
+        //    print(autobuffer_buffer_get_buffer_pointer(&(number_buffer)));
+        //    print("' cannot fit in type '");
+        //    print(autobuffer_buffer_get_buffer_pointer(&(type_buffer)));
+        //    print("_");
+        //    print(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
+        //    println("'");
+        //    exit(1);
+        //};
     };
 
     if =(token_id, TOKEN_BOOLEAN) {
-        variable boolean_value = TokenBooleanData.>value(TokenBooleanData.*cast(token_pointer_data));
-        variable boolean_node_data = NodeBooleanData.*cast(nodes_append_data(nodes, NODE_BOOLEAN, get_token_location_data(tokens, index)));
+        declare boolean_value = TokenBooleanData.>value(TokenBooleanData.*cast(token_pointer_data));
+        declare boolean_node_data = NodeBooleanData.*cast(nodes_append_data(nodes, NODE_BOOLEAN, get_token_location_data(tokens, index)));
         NodeBooleanData.<value(boolean_node_data, boolean_value);
 
         index = +(index, 1);
@@ -718,38 +696,58 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
     whole_8.<(index_pointer, index);
 };
 
-define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8) {
-    variable index = whole_8.>(index_pointer);
-    variable inner = 0_integer_8;
+define check_number_fits = function(size_bytes: whole_8, wants_signed: boolean, input_string: *): boolean {
+    declare size_bits = 2;
+    declare m = 1;
+    while <(m, *(size_bytes, 8)) {
+        size_bits = *(2, size_bits);
+        m = +(m, 1);
+    };
+    size_bits = -(size_bits, 1);
+    if wants_signed {
+        size_bits = /(size_bits, 2);
+    };
 
-    variable is_first = true;
+    declare number = 0;
+
+    declare is_input_negative = =(any_1.>(any_1.*cast(input_string)), ASCII.MINUS);
+    if is_input_negative {
+        if wants_signed {
+            number = -(string_to_whole_8(+(input_string, 1)), 1);
+        } else {
+            return false;
+        };
+    } else {
+        number = string_to_whole_8(input_string);
+    };
+
+    return !(>(number, size_bits));
+};
+
+define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8) {
+    declare index = whole_8.>(index_pointer);
+    declare inner = 0_integer_8;
+
+    declare is_first = true;
 
     while |(>(inner, 0_integer_8), =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS)) {
-        variable id2 = tokens_get_id(tokens, index);
+        declare id2 = tokens_get_id(tokens, index);
         if =(id2, TOKEN_OPEN_PARENTHESIS) {
             if =(inner, 0_integer_8) {
-                variable is_special = false;
-                variable is_pointer = false;
-                variable retrieve_name_array = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index)));
+                declare is_special = false;
+                declare is_pointer = false;
+                declare retrieve_name_array = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index)));
                 if is_first {
                     is_special = is_special_function(retrieve_name_array);
-                    if string=(*.cast(array8_get(retrieve_name_array, 0)), "&") {
-                        is_pointer = true;
-                    };
                 };
 
                 if is_special {
                     nodes_set_skip(nodes, previous_retrieve_index);
 
-                    if is_pointer {
-                        // Maybe want to make this also not a special case
-                        variable _ = nodes_append(nodes, NODE_POINTER, get_token_location_data(tokens, whole_8.>(index_pointer)));
-                    } else {
-                        variable invoke_data = NodeInvokeInternalData.*cast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
-                        NodeInvokeInternalData.<name(invoke_data, retrieve_name_array);
-                    };
+                    declare invoke_data = NodeInvokeInternalData.*cast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
+                    NodeInvokeInternalData.<name(invoke_data, retrieve_name_array);
                 } else {
-                    variable _ = nodes_append(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8.>(index_pointer)));
+                    declare _ = nodes_append(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8.>(index_pointer)));
                 };
 
                 is_first = false;
@@ -765,7 +763,7 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
 };
 
 define is_special_function = function(names: *): boolean {
-    variable name = *.cast(array8_get(names, -(array8_length(names), 1)));
+    declare name = *.cast(array8_get(names, -(array8_length(names), 1)));
     return if string=(name, "+") {
         true
     } else if string=(name, "-") {
@@ -808,53 +806,53 @@ define is_special_function = function(names: *): boolean {
 };
 
 define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
 
-    variable end_target = get_target_id();
+    declare end_target = get_target_id();
 
-    variable end_if: *NodeEndIfBlockData;
+    declare end_if: *NodeEndIfBlockData;
 
     while =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
-        variable target = get_target_id();
-        variable token_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, index));
-        variable token_index = index;
+        declare target = get_target_id();
+        declare token_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, index));
+        declare token_index = index;
 
-        variable is_bare_else = false;
+        declare is_bare_else = false;
 
         if tokens_is_keyword(tokens, token_index, "if") {
             index = +(index, 1);
 
             parse_expression(tokens, &(index), nodes);
-            variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
+            declare conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
             NodeJumpConditionalData.<target_id(conditional_jump_data, target);
         } else if &&(tokens_is_keyword(tokens, token_index, "else"), tokens_is_keyword(tokens, token_index, "if")) {
             index = +(index, 2);
 
             parse_expression(tokens, &(index), nodes);
-            variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
+            declare conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
             NodeJumpConditionalData.<target_id(conditional_jump_data, target);
         } else {
             is_bare_else = true;
             index = +(index, 1);
         };
 
-        variable _ = nodes_append(nodes, NODE_STARTIFBLOCK, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes, NODE_STARTIFBLOCK, get_token_location_data(tokens, index));
         parse_expression(tokens, &(index), nodes);
 
-        variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, index)));
+        declare jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, index)));
         NodeJumpData.<target_id(jump_data, end_target);
 
         end_if = NodeEndIfBlockData.*cast(nodes_append_data(nodes, NODE_ENDIFBLOCK, get_token_location_data(tokens, -(index, 1))));
         NodeEndIfBlockData.<id(end_if, end_target);
         NodeEndIfBlockData.<is_bare_else(end_if, is_bare_else);
 
-        variable target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, index)));
+        declare target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, index)));
         NodeTargetData.<id(target_node_data, target);
     };
 
     NodeEndIfBlockData.<is_last(end_if, true);
 
-    variable target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, index)));
+    declare target_node_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, index)));
     NodeTargetData.<id(target_node_data, end_target);
 
     whole_8.<(index_pointer, index);
@@ -865,7 +863,7 @@ define target_id = global(whole_8);
 define while_target_id_stack = global(AutoBufferStack8);
 
 define get_target_id = function(): whole_8 {
-    variable return_ = target_id;
+    declare return_ = target_id;
     target_id = +(target_id, 1);
 
     return return_;
@@ -876,10 +874,10 @@ define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, node
         increment_whole_8_pointer(index_pointer, 1);
     };
 
-    variable done_anything = false;
+    declare done_anything = false;
 
-    if tokens_is_keyword(tokens, whole_8.>(index_pointer), "variable") {
-        parse_declare_variable(tokens, index_pointer, nodes);
+    if tokens_is_keyword(tokens, whole_8.>(index_pointer), "declare") {
+        parse_declare(tokens, index_pointer, nodes);
         done_anything = true;
     };
 
@@ -908,16 +906,16 @@ define parse_statement = function(tokens: *Tokens, index_pointer: *whole_8, node
     if !(done_anything) {
         parse_expression(tokens, index_pointer, nodes);
         if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_SEMICOLON) {
-            variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
+            declare _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
             increment_whole_8_pointer(index_pointer, 1);
         };
     } else {
-        variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, -(whole_8.>(index_pointer), 1)));
+        declare _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, -(whole_8.>(index_pointer), 1)));
     };
 };
 
 define parse_break = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare jump_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeJumpData.<target_id(jump_data, whole_8.cast(autobuffer_stack8_peek(&(while_target_id_stack))));
 
     increment_whole_8_pointer(index_pointer, 2);
@@ -928,18 +926,18 @@ define parse_return = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     parse_multiple_expressions(tokens, index_pointer, nodes, TOKEN_SEMICOLON);
 
-    variable node = nodes_append(nodes, NODE_RETURN, get_token_location_data(tokens, whole_8.>(index_pointer)));
+    declare node = nodes_append(nodes, NODE_RETURN, get_token_location_data(tokens, whole_8.>(index_pointer)));
     increment_whole_8_pointer(index_pointer, 1);
 };
 
 define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes): boolean {
-    variable is_assign = true;
-    variable index = whole_8.>(index_pointer);
+    declare is_assign = true;
+    declare index = whole_8.>(index_pointer);
     while true {
         if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
             index = +(index, 1);
         } else if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-            variable name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
+            declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
             if string=(name, "=") {
                 break;
             };
@@ -959,15 +957,15 @@ define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, n
 };
 
 define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable names = autobuffer_new(40);
-    variable name_index = 0;
+    declare names = autobuffer_new(40);
+    declare name_index = 0;
 
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
     while true {
         if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
             index = +(index, 1);
         } else {
-            variable name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
+            declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
             autobuffer_stack8_legacy_push(&(names), &(name_index), name);
             index = +(index, 1);
         };
@@ -985,10 +983,10 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     index = +(index, 1);
 
-    variable temp = autobuffer_array8_length(&(names));
-    variable i = -(autobuffer_array8_length(&(names)), 1);
+    declare temp = autobuffer_array8_length(&(names));
+    declare i = -(autobuffer_array8_length(&(names)), 1);
     while <(i, temp) {
-        variable assign_node_data = NodeAssignData.*cast(nodes_append_data(nodes, NODE_ASSIGN, get_token_location_data(tokens, whole_8.>(index_pointer))));
+        declare assign_node_data = NodeAssignData.*cast(nodes_append_data(nodes, NODE_ASSIGN, get_token_location_data(tokens, whole_8.>(index_pointer))));
         NodeAssignData.<name(assign_node_data, *.cast(autobuffer_array8_get(&(names), i)));
         i = -(i, 1);
     };
@@ -999,46 +997,46 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 define parse_while = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     increment_whole_8_pointer(index_pointer, 1);
 
-    variable target1 = get_target_id();
+    declare target1 = get_target_id();
 
-    variable target2 = get_target_id();
+    declare target2 = get_target_id();
 
-    variable target_node1_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare target_node1_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeTargetData.<id(target_node1_data, target1);
 
     parse_expression(tokens, index_pointer, nodes);
-    variable conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare conditional_jump_data = NodeJumpConditionalData.*cast(nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeJumpConditionalData.<target_id(conditional_jump_data, target2);
     NodeJumpConditionalData.<desired_state(conditional_jump_data, false);
-    variable _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
+    declare _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
     autobuffer_stack8_push(&(while_target_id_stack), target2);
     parse_expression(tokens, index_pointer, nodes);
-    variable _ = autobuffer_stack8_pop(&(while_target_id_stack));
+    declare _ = autobuffer_stack8_pop(&(while_target_id_stack));
 
-    variable jump_node_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare jump_node_data = NodeJumpData.*cast(nodes_append_data(nodes, NODE_JUMP, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeJumpData.<target_id(jump_node_data, target1);
 
-    variable target_node2_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
+    declare target_node2_data = NodeTargetData.*cast(nodes_append_data(nodes, NODE_TARGET, get_token_location_data(tokens, whole_8.>(index_pointer))));
     NodeTargetData.<id(target_node2_data, target2);
 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define parse_declare_variable = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable index = whole_8.>(index_pointer);
+define parse_declare = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    declare index = whole_8.>(index_pointer);
 
-    variable parse_expression, variable_names = parse_declare_variable_declaration(tokens, &(index), nodes);
+    declare parse_expression, variable_names = parse_declare_variable_declaration(tokens, &(index), nodes);
 
     if parse_expression {
         index = +(index, 1);
 
         parse_multiple_expressions(tokens, &(index), nodes, TOKEN_SEMICOLON);
 
-        variable temp = array8_length(variable_names);
-        variable i = -(array8_length(variable_names), 1);
+        declare temp = array8_length(variable_names);
+        declare i = -(array8_length(variable_names), 1);
         while <(i, temp) {
-            variable node_data = NodeAssignData.*cast(nodes_append_data(nodes, NODE_ASSIGN, get_token_location_data(tokens, whole_8.>(index_pointer))));
+            declare node_data = NodeAssignData.*cast(nodes_append_data(nodes, NODE_ASSIGN, get_token_location_data(tokens, whole_8.>(index_pointer))));
             NodeAssignData.<name(node_data, *.cast(array8_get(variable_names, i)));
 
             i = -(i, 1);
@@ -1050,26 +1048,26 @@ define parse_declare_variable = function(tokens: *Tokens, index_pointer: *whole_
 };
 
 define parse_declare_variable_declaration = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes): boolean, * {
-    variable index = whole_8.>(index_pointer);
+    declare index = whole_8.>(index_pointer);
     index = +(index, 1);
 
-    variable names = autobuffer_new(40);
-    variable types = autobuffer_new(40);
+    declare names = autobuffer_new(40);
+    declare types = autobuffer_new(40);
 
-    variable name_index = 0;
-    variable seen_item_name = false;
-    variable parse_expression = false;
+    declare name_index = 0;
+    declare seen_item_name = false;
+    declare parse_expression = false;
     while true {
-        variable id = tokens_get_id(tokens, index);
+        declare id = tokens_get_id(tokens, index);
         if =(id, TOKEN_COMMA) {
             name_index = +(name_index, 1);
             seen_item_name = false;
         };
 
         if =(id, TOKEN_NAME) {
-            variable name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
+            declare name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
             if seen_item_name {
-                variable name = parse_name_array(tokens, &(index));
+                declare name = parse_name_array(tokens, &(index));
                 autobuffer_array8_set(&(types), name_index, name);
             } else {
                 autobuffer_array8_set(&(names), name_index, name_value);
@@ -1083,7 +1081,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
         };
 
         if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-            variable name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
+            declare name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
             if string=(name_value, "=") {
                 parse_expression = true;
                 break;
@@ -1095,9 +1093,9 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
         };
     };
 
-    variable i = 0;
+    declare i = 0;
     while !(=(autobuffer_array8_get(&(names), i), 0)) {
-        variable node_data = NodeDeclareData.*cast(nodes_append_data(nodes, NODE_DECLARE, get_token_location_data(tokens, whole_8.>(index_pointer))));
+        declare node_data = NodeDeclareData.*cast(nodes_append_data(nodes, NODE_DECLARE, get_token_location_data(tokens, whole_8.>(index_pointer))));
         NodeDeclareData.<name(node_data, *.cast(autobuffer_array8_get(&(names), i)));
         NodeDeclareData.<type(node_data, *.cast(autobuffer_array8_get(&(types), i)));
 
@@ -1123,22 +1121,22 @@ define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *wh
 };
 
 define parse_module = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    variable _ = nodes_append(nodes, NODE_MODULE, get_token_location_data(tokens, whole_8.>(index_pointer)));
+    declare _ = nodes_append(nodes, NODE_MODULE, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
     increment_whole_8_pointer(index_pointer, 2);
 
     parse_multiple(tokens, index_pointer, nodes, TOKEN_CLOSED_CURLY_BRACKETS);
 
-    variable _ = nodes_append(nodes, NODE_ENDMODULE, get_token_location_data(tokens, whole_8.>(index_pointer)));
+    declare _ = nodes_append(nodes, NODE_ENDMODULE, get_token_location_data(tokens, whole_8.>(index_pointer)));
 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
 define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes) {
-    variable id = tokens_get_id(tokens, whole_8.>(index));
+    declare id = tokens_get_id(tokens, whole_8.>(index));
     if =(id, TOKEN_KEYWORD) {
-        variable keyword_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index)));
-        variable keyword = TokenKeywordData.>keyword(keyword_data);
+        declare keyword_data = TokenKeywordData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index)));
+        declare keyword = TokenKeywordData.>keyword(keyword_data);
 
         if string=(keyword, "function") {
             parse_function(tokens, index, nodes);
@@ -1165,13 +1163,13 @@ define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nod
 };
 
 define parse_multiple = function(tokens: *Tokens, index: *whole_8, nodes: *Nodes, ending: whole_8) {
-    variable tokens_count = Tokens.>index(tokens);
+    declare tokens_count = Tokens.>index(tokens);
     while &&(!(=(tokens_get_id(tokens, whole_8.>(index)), ending)), <(whole_8.>(index), Tokens.>index(tokens))) {
         parse_individual(tokens, index, nodes);
     };
 };
 
 define parse = function(tokens: *Tokens, nodes: *Nodes) {
-    variable index = 0;
+    declare index = 0;
     parse_multiple(tokens, &(index), nodes, 0);
 };

@@ -12,7 +12,7 @@ define InstructionIndex = structure {
 
 define ELF_X86_64 = module {
     define autobuffer_buffer_push_data_string = function(data: *AutoBufferBuffer, string: *): DataIndex {
-        variable index = AutoBufferBuffer.>index(data);
+        declare index = AutoBufferBuffer.>index(data);
         autobuffer_buffer_push_string(data, string);
         AutoBufferBuffer.<index(data, +(AutoBufferBuffer.>index(data), 1));
         return DataIndex.cast(index);
@@ -39,7 +39,7 @@ define ELF_X86_64 = module {
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register8 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register8) {
-        variable instruction = 72:whole_1;
+        declare instruction = 72:whole_1;
 
         if >(register, 7:whole_1) {
             instruction = +(instruction, 4:whole_1);
@@ -48,7 +48,7 @@ define ELF_X86_64 = module {
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -63,7 +63,7 @@ define ELF_X86_64 = module {
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register4 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register4) {
-        variable instruction = 64:whole_1;
+        declare instruction = 64:whole_1;
 
         if >(register, 7:whole_1) {
             instruction = +(instruction, 4:whole_1);
@@ -74,7 +74,7 @@ define ELF_X86_64 = module {
         };
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -89,7 +89,7 @@ define ELF_X86_64 = module {
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register2 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register2) {
-        variable instruction = 64:whole_1;
+        declare instruction = 64:whole_1;
 
         if >(register, 7:whole_1) {
             instruction = +(instruction, 4:whole_1);
@@ -101,7 +101,7 @@ define ELF_X86_64 = module {
         };
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -116,7 +116,7 @@ define ELF_X86_64 = module {
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register1 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register1) {
-        variable instruction = 64:whole_1;
+        declare instruction = 64:whole_1;
 
         if >(register, 7:whole_1) {
             instruction = +(instruction, 4:whole_1);
@@ -127,7 +127,7 @@ define ELF_X86_64 = module {
         };
         autobuffer_buffer_push_whole_1(buffer, 138:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -142,7 +142,7 @@ define ELF_X86_64 = module {
     };
 
     define autobuffer_buffer_push_mov_register8_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register8, data_index: BssIndex, offset: whole_8) {
-        variable instruction = 72:whole_1;
+        declare instruction = 72:whole_1;
 
         if >(register, 7:whole_1) {
             instruction = +(instruction, 4:whole_1);
@@ -151,7 +151,7 @@ define ELF_X86_64 = module {
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 137:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -168,7 +168,7 @@ define ELF_X86_64 = module {
     define autobuffer_buffer_push_mov_register4_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register4, data_index: BssIndex, offset: whole_8) {
         autobuffer_buffer_push_whole_1(buffer, 137:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -183,7 +183,7 @@ define ELF_X86_64 = module {
     };
 
     define autobuffer_buffer_push_mov_register2_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register2, data_index: BssIndex, offset: whole_8) {
-        variable instruction = 102:whole_1;
+        declare instruction = 102:whole_1;
 
         if >(register, 7:whole_1) {
             instruction = +(instruction, 4:whole_1);
@@ -192,7 +192,7 @@ define ELF_X86_64 = module {
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 137:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -209,7 +209,7 @@ define ELF_X86_64 = module {
     define autobuffer_buffer_push_mov_register1_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register1, data_index: BssIndex, offset: whole_8) {
         autobuffer_buffer_push_whole_1(buffer, 136:whole_1);
 
-        variable value = 0:whole_1;
+        declare value = 0:whole_1;
 
         if >(register, 7:whole_1) {
             value = +(value, *(-(register, 8:whole_1), 8:whole_1));
@@ -234,7 +234,7 @@ define autobuffer_array8_get = function(buffer: *AutoBuffer, index: whole_8): an
 };
 
 define autobuffer_array8_length = function(buffer: *AutoBuffer): whole_8 {
-    variable k = 0;
+    declare k = 0;
     while !(=(autobuffer_array8_get(buffer, k), 0)) {
         k = +(k, 1);
     };
@@ -242,7 +242,7 @@ define autobuffer_array8_length = function(buffer: *AutoBuffer): whole_8 {
 };
 
 define autobuffer_buffer_push_pointer = function(buffer: *AutoBufferBuffer, pointer: *, length: whole_8) {
-    variable buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
 
     autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), pointer, buffer_index, length);
 
@@ -250,9 +250,9 @@ define autobuffer_buffer_push_pointer = function(buffer: *AutoBufferBuffer, poin
 };
 
 define new_elf64_file_header = function(): ELF64FileHeader {
-    variable header = ELF64FileHeader.>0();
+    declare header = ELF64FileHeader.>0();
 
-    variable _ = whole_8_to_whole_4(2);
+    declare _ = whole_8_to_whole_4(2);
     ELF64FileHeader.<magic(&(header), whole_8_to_whole_4(1179403647));
     ELF64FileHeader.<header_size(&(header), whole_8_to_whole_2(64));
     ELF64FileHeader.<program_header_size(&(header), whole_8_to_whole_2(56));
@@ -322,16 +322,16 @@ define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
 //        REFERENCE_BRK = BRK;
 //    };
 //
-//    variable allocated = REFERENCE_BRK;
+//    declare allocated = REFERENCE_BRK;
 //    REFERENCE_BRK = *.cast(+(REFERENCE_BRK, size));
 //    
 //    if >(REFERENCE_BRK, BRK) {
-//        variable increment = 67108864;
+//        declare increment = 67108864;
 //        if >(size, increment) {
 //            increment = size;
 //        };
 //        BRK = *.cast(+(BRK, increment));
-//        variable _ = Linux.sys_brk(BRK);
+//        declare _ = Linux.sys_brk(BRK);
 //    };
 //    return allocated;
 //};
@@ -340,9 +340,9 @@ define CURRENT_MMAP = global(*);
 define MMAP_LEFT = global(whole_8);
 
 define brk_allocate = function(size: whole_8): * {
-    variable result: *;
+    declare result: *;
     if >(size, MMAP_LEFT) {
-        variable increment = 67108864;
+        declare increment = 67108864;
         if >(size, increment) {
             increment = size;
         };

@@ -5,23 +5,23 @@ define AutoBuffer = structure {
 };
 
 define autobuffer_new = function(size: whole_8): AutoBuffer {
-    variable auto_buffer: AutoBuffer;
+    declare auto_buffer: AutoBuffer;
 
     AutoBuffer.<size(&(auto_buffer), size);
     AutoBuffer.<increment(&(auto_buffer), size);
 
-    variable allocated = brk_allocate(size);
+    declare allocated = brk_allocate(size);
     AutoBuffer.<buffer(&(auto_buffer), allocated);
 
     return auto_buffer;
 };
 
 define autobuffer_reset = function(buffer: *AutoBuffer) {
-    variable actual_buffer = AutoBuffer.>buffer(buffer);
-    variable size = AutoBuffer.>size(buffer);
-    variable i = 0;
+    declare actual_buffer = AutoBuffer.>buffer(buffer);
+    declare size = AutoBuffer.>size(buffer);
+    declare i = 0;
     while <(i, size) {
-        variable done_anything = false;
+        declare done_anything = false;
         
         if <(+(i, 8), size) {
             any_8.<(any_8.*cast(+(actual_buffer, i)), 0:whole_8);
@@ -62,10 +62,10 @@ define autobuffer_set_whole_8 = function(buffer: *AutoBuffer, value: whole_8, to
 
 define autobuffer_register = function(buffer: *AutoBuffer, location: whole_8, size: whole_8) {
     while >(+(location, size), AutoBuffer.>size(buffer)) {
-        variable previous_buffer = AutoBuffer.>buffer(buffer);
-        variable previous_size = AutoBuffer.>size(buffer);
-        variable new_buffer_size = +(AutoBuffer.>size(buffer), AutoBuffer.>increment(buffer));
-        variable allocated = brk_allocate(new_buffer_size);
+        declare previous_buffer = AutoBuffer.>buffer(buffer);
+        declare previous_size = AutoBuffer.>size(buffer);
+        declare new_buffer_size = +(AutoBuffer.>size(buffer), AutoBuffer.>increment(buffer));
+        declare allocated = brk_allocate(new_buffer_size);
         AutoBuffer.<buffer(buffer, allocated);
         AutoBuffer.<size(buffer, new_buffer_size);
         copy(previous_buffer, allocated, previous_size);
@@ -74,7 +74,7 @@ define autobuffer_register = function(buffer: *AutoBuffer, location: whole_8, si
 
 define autobuffer_set = function(buffer: *AutoBuffer, from: *, to: whole_8, size: whole_8) {
     autobuffer_register(buffer, to, size);
-    variable to_pointer = *.cast(+(AutoBuffer.>buffer(buffer), to));
+    declare to_pointer = *.cast(+(AutoBuffer.>buffer(buffer), to));
 
     copy(from, to_pointer, size);
 };
