@@ -733,7 +733,7 @@ define function_data_to_string_old = function(pointer: *NodeFunctionData): * {
     return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
 };
 
-define function_data_to_string = function(pointer: *NodeFunctionData): * {
+define function_data_to_string = function(module_stack: *AutoBufferStack8, pointer: *NodeFunctionData): * {
     declare main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
@@ -744,7 +744,7 @@ define function_data_to_string = function(pointer: *NodeFunctionData): * {
     declare j = 0;
     while !(=(array8_get(arguments, j), 0)) {
         declare argument_type_array = *.cast(array8_get(arguments, j));
-        declare argument_type = expand_module_name_array(argument_type_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+        declare argument_type = expand_module_name_array(argument_type_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
         autobuffer_buffer_push_string(&(main_name_buffer), argument_type);
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
         j = +(j, 1);

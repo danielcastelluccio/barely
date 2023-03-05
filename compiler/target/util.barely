@@ -25,6 +25,7 @@ define calculate_global_locations = function(nodes: *Nodes, program_data: *Progr
 
 define calculate_function_local_sizes = function(nodes: *Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
     declare function_local_sizes = autobuffer_new(1024);
+    declare empty_module_stack = autobuffer_stack8_new(8);
 
     declare i = 0;
     while <(i, function_count) {
@@ -38,7 +39,7 @@ define calculate_function_local_sizes = function(nodes: *Nodes, program_data: *P
                 declare declare_data = NodeDeclareData.*cast(pointer_data);
                 declare declare_name = NodeDeclareData.>name(declare_data);
                 declare declare_type_names = NodeDeclareData.>type(declare_data);
-                declare declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+                declare declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(empty_module_stack), create_previous_results_list());
                 total = +(total, function_size(declare_type, nodes, program_data));
             };
 
