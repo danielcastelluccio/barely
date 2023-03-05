@@ -827,7 +827,7 @@ define Target/X86_64 = module {
                 X86_64.autobuffer_buffer_push_cdq(instructions_buffer);
                 X86_64.autobuffer_buffer_push_idiv_register4(instructions_buffer, EBX);
             } else {
-                X86_64.autobuffer_buffer_push_mov_whole_4_register4(instructions_buffer, EDX, 0_whole_4);
+                X86_64.autobuffer_buffer_push_mov_whole_4_register4(instructions_buffer, EDX, 0:whole_4);
                 X86_64.autobuffer_buffer_push_div_register4(instructions_buffer, EBX);
             };
             .output_push4(instructions_buffer, EAX);
@@ -837,7 +837,7 @@ define Target/X86_64 = module {
                 X86_64.autobuffer_buffer_push_cwd(instructions_buffer);
                 X86_64.autobuffer_buffer_push_idiv_register2(instructions_buffer, BX);
             } else {
-                X86_64.autobuffer_buffer_push_mov_whole_2_register2(instructions_buffer, DX, 0_whole_2);
+                X86_64.autobuffer_buffer_push_mov_whole_2_register2(instructions_buffer, DX, 0:whole_2);
                 X86_64.autobuffer_buffer_push_div_register2(instructions_buffer, BX);
             };
             .output_push2(instructions_buffer, AX);
@@ -847,7 +847,7 @@ define Target/X86_64 = module {
                 X86_64.autobuffer_buffer_push_cbw(instructions_buffer);
                 X86_64.autobuffer_buffer_push_idiv_register1(instructions_buffer, BL);
             } else {
-                X86_64.autobuffer_buffer_push_mov_whole_1_register1(instructions_buffer, DL, 0_whole_1);
+                X86_64.autobuffer_buffer_push_mov_whole_1_register1(instructions_buffer, DL, 0:whole_1);
                 X86_64.autobuffer_buffer_push_div_register1(instructions_buffer, BL);
             };
             .output_push1(instructions_buffer, AL);
@@ -874,7 +874,7 @@ define Target/X86_64 = module {
                 X86_64.autobuffer_buffer_push_cdq(instructions_buffer);
                 X86_64.autobuffer_buffer_push_idiv_register4(instructions_buffer, EBX);
             } else {
-                X86_64.autobuffer_buffer_push_mov_whole_4_register4(instructions_buffer, EDX, 0_whole_4);
+                X86_64.autobuffer_buffer_push_mov_whole_4_register4(instructions_buffer, EDX, 0:whole_4);
                 X86_64.autobuffer_buffer_push_div_register4(instructions_buffer, EBX);
             };
             .output_push4(instructions_buffer, EDX);
@@ -884,7 +884,7 @@ define Target/X86_64 = module {
                 X86_64.autobuffer_buffer_push_cwd(instructions_buffer);
                 X86_64.autobuffer_buffer_push_idiv_register2(instructions_buffer, BX);
             } else {
-                X86_64.autobuffer_buffer_push_mov_whole_2_register2(instructions_buffer, DX, 0_whole_2);
+                X86_64.autobuffer_buffer_push_mov_whole_2_register2(instructions_buffer, DX, 0:whole_2);
                 X86_64.autobuffer_buffer_push_div_register2(instructions_buffer, BX);
             };
             .output_push2(instructions_buffer, DX);
@@ -894,7 +894,7 @@ define Target/X86_64 = module {
                 X86_64.autobuffer_buffer_push_cbw(instructions_buffer);
                 X86_64.autobuffer_buffer_push_idiv_register1(instructions_buffer, BL);
             } else {
-                X86_64.autobuffer_buffer_push_mov_whole_1_register1(instructions_buffer, DL, 0_whole_1);
+                X86_64.autobuffer_buffer_push_mov_whole_1_register1(instructions_buffer, DL, 0:whole_1);
                 X86_64.autobuffer_buffer_push_div_register1(instructions_buffer, BL);
             };
             .output_push1(instructions_buffer, DL);
@@ -982,10 +982,20 @@ define Target/X86_64 = module {
     };
 
     define output_number = function(pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        variable whole_8_data = NodeNumberData.*cast(pointer_data);
-        variable value_whole_8 = NodeNumberData.>value(whole_8_data);
+        variable number_data = NodeNumberData.*cast(pointer_data);
+        variable value_whole_8 = NodeNumberData.>value(number_data);
+        variable coersion = NodeNumberData.>coersion(number_data);
+        if =(coersion, 0) {
+            coersion = "whole_8";
+        } else {
+            coersion = expand_module_name_array(coersion, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+        };
 
-        variable size = NodeNumberData.>size(whole_8_data);
+        variable size = if string_length=(coersion, "whole_", 6) {
+            string_to_whole_8(+(coersion, 6))
+        } else {
+            string_to_whole_8(+(coersion, 8))
+        };
 
         X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
         if =(size, 8) {
@@ -1104,17 +1114,17 @@ define Target/X86_64 = module {
 
                     k = +(k, 8);
                 } else if >(-(size, k), 3) {
-                    X86_64.autobuffer_buffer_push_mov_whole_4_register4(&(internal_instructions), EBX, 0_whole_4);
+                    X86_64.autobuffer_buffer_push_mov_whole_4_register4(&(internal_instructions), EBX, 0:whole_4);
                     X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(&(internal_instructions), EBX, RSP, k);
 
                     k = +(k, 4);
                 } else if >(-(size, k), 1) {
-                    X86_64.autobuffer_buffer_push_mov_whole_2_register2(&(internal_instructions), BX, 0_whole_2);
+                    X86_64.autobuffer_buffer_push_mov_whole_2_register2(&(internal_instructions), BX, 0:whole_2);
                     X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(&(internal_instructions), BX, RSP, k);
 
                     k = +(k, 2);
                 } else if >(-(size, k), 0) {
-                    X86_64.autobuffer_buffer_push_mov_whole_1_register1(&(internal_instructions), BL, 0_whole_1);
+                    X86_64.autobuffer_buffer_push_mov_whole_1_register1(&(internal_instructions), BL, 0:whole_1);
                     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(&(internal_instructions), BL, RSP, k);
 
                     k = +(k, 1);
@@ -1138,17 +1148,17 @@ define Target/X86_64 = module {
 
                     k = +(k, 8);
                 } else if >(-(size, k), 3) {
-                    X86_64.autobuffer_buffer_push_mov_whole_4_register4(&(internal_instructions), EBX, 0_whole_4);
+                    X86_64.autobuffer_buffer_push_mov_whole_4_register4(&(internal_instructions), EBX, 0:whole_4);
                     X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(&(internal_instructions), EBX, RSP, k);
 
                     k = +(k, 4);
                 } else if >(-(size, k), 1) {
-                    X86_64.autobuffer_buffer_push_mov_whole_2_register2(&(internal_instructions), BX, 0_whole_2);
+                    X86_64.autobuffer_buffer_push_mov_whole_2_register2(&(internal_instructions), BX, 0:whole_2);
                     X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(&(internal_instructions), BX, RSP, k);
 
                     k = +(k, 2);
                 } else if >(-(size, k), 0) {
-                    X86_64.autobuffer_buffer_push_mov_whole_1_register1(&(internal_instructions), BL, 0_whole_1);
+                    X86_64.autobuffer_buffer_push_mov_whole_1_register1(&(internal_instructions), BL, 0:whole_1);
                     X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(&(internal_instructions), BL, RSP, k);
 
                     k = +(k, 1);

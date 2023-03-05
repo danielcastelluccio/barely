@@ -84,11 +84,11 @@ define string_to_number = function(string: *, size: whole_8, signed: boolean): w
         if =(size, 8) {
             return -(0, whole_8);
         } else if =(size, 4) {
-            return whole_4_to_whole_8(-(0_whole_4, whole_8_to_whole_4(whole_8)));
+            return whole_4_to_whole_8(-(0:whole_4, whole_8_to_whole_4(whole_8)));
         } else if =(size, 2) {
-            return whole_2_to_whole_8(-(0_whole_2, whole_8_to_whole_2(whole_8)));
+            return whole_2_to_whole_8(-(0:whole_2, whole_8_to_whole_2(whole_8)));
         } else if =(size, 1) {
-            return whole_1_to_whole_8(-(0_whole_1, whole_8_to_whole_1(whole_8)));
+            return whole_1_to_whole_8(-(0:whole_1, whole_8_to_whole_1(whole_8)));
         };
     };
     return whole_8;
@@ -503,13 +503,13 @@ define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
         variable done_anything = false;
         
         if <(+(i, 8), size) {
-            any_8.<(any_8.*cast(+(actual_buffer, i)), 0_whole_8);
+            any_8.<(any_8.*cast(+(actual_buffer, i)), 0);
             i = +(i, 1);
             done_anything = true;
         };
 
         if !(done_anything) {
-            any_1.<(any_1.*cast(+(actual_buffer, i)), 0_whole_1);
+            any_1.<(any_1.*cast(+(actual_buffer, i)), 0:whole_1);
             i = +(i, 1);
         };
     };
@@ -598,13 +598,13 @@ define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
         variable done_anything = false;
         
         if <(+(i, 8), size) {
-            any_8.<(any_8.*cast(+(actual_buffer, i)), 0_whole_8);
+            any_8.<(any_8.*cast(+(actual_buffer, i)), 0:whole_8);
             i = +(i, 1);
             done_anything = true;
         };
 
         if !(done_anything) {
-            any_1.<(any_1.*cast(+(actual_buffer, i)), 0_whole_1);
+            any_1.<(any_1.*cast(+(actual_buffer, i)), 0:whole_1);
             i = +(i, 1);
         };
     };
@@ -698,7 +698,7 @@ define string_to_function_data = function(type: *): NodeFunctionData {
     return data;
 };
 
-define function_data_to_string = function(pointer: *NodeFunctionData): * {
+define function_data_to_string_old = function(pointer: *NodeFunctionData): * {
     variable main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
@@ -733,3 +733,66 @@ define function_data_to_string = function(pointer: *NodeFunctionData): * {
     return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
 };
 
+define function_data_to_string = function(pointer: *NodeFunctionData): * {
+    variable main_name_buffer = autobuffer_buffer_new(16);
+
+    autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
+
+    variable arguments = NodeFunctionData.>argument_types_array(pointer);
+    variable returns = NodeFunctionData.>returns(pointer);
+
+    variable j = 0;
+    while !(=(array8_get(arguments, j), 0)) {
+        variable argument_type_array = *.cast(array8_get(arguments, j));
+        variable argument_type = expand_module_name_array(argument_type_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+        autobuffer_buffer_push_string(&(main_name_buffer), argument_type);
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), ":");
+
+    variable j = 0;
+    while !(=(array8_get(returns, j), 0)) {
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), "]");
+
+    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
+};
+
+define structure_data_to_string = function(pointer: *NodeStructureData): * {
+    variable main_name_buffer = autobuffer_buffer_new(16);
+
+    autobuffer_buffer_push_string(&(main_name_buffer), "structure[");
+
+    variable items = NodeStructureData.>item_types(pointer);
+    variable item_names = NodeStructureData.>item_names(pointer);
+
+    variable j = 0;
+    while !(=(array8_get(items, j), 0)) {
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(item_names, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ":");
+        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(items, j)));
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    autobuffer_buffer_push_string(&(main_name_buffer), "]");
+
+    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
+};
+
+define global_data_to_string = function(global_data: *NodeGlobalData): * {
+    return concatenate3_brk_allocate("global[", NodeGlobalData.>type(global_data), "]");
+};

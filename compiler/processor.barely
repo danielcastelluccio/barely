@@ -289,17 +289,25 @@ define is_define = function(type: *): boolean {
 define process_number = function(stack: *AutoBuffer, stack_pointer: *whole_8, pointer_data: *) {
     variable number_data = NodeNumberData.*cast(pointer_data);
 
-    variable number_type = autobuffer_buffer_new(16);
-
-    if =(NodeNumberData.>type(number_data), 0) {
-        autobuffer_buffer_push_string(&(number_type), "whole_");
+    variable coersion = NodeNumberData.>coersion(number_data);
+    if =(coersion, 0) {
+        coersion = "whole_8";
     } else {
-        autobuffer_buffer_push_string(&(number_type), "integer_");
+        coersion = expand_module_name_array(coersion, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
     };
 
-    autobuffer_buffer_string_push_whole_8(&(number_type), NodeNumberData.>size(number_data));
+    //variable number_type = autobuffer_buffer_new(16);
 
-    autobuffer_stack8_legacy_push(stack, stack_pointer, AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(&(number_type)))));
+    //if =(NodeNumberData.>type(number_data), 0) {
+    //    autobuffer_buffer_push_string(&(number_type), "whole_");
+    //} else {
+    //    autobuffer_buffer_push_string(&(number_type), "integer_");
+    //};
+
+    //autobuffer_buffer_string_push_whole_8(&(number_type), NodeNumberData.>size(number_data));
+
+    //autobuffer_stack8_legacy_push(stack, stack_pointer, AutoBuffer.>buffer(&(AutoBufferBuffer.>autobuffer(&(number_type)))));
+    autobuffer_stack8_legacy_push(stack, stack_pointer, coersion);
 };
 
 define process_jump_conditional = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, stack: *AutoBuffer, stack_pointer: *whole_8) {
@@ -525,8 +533,8 @@ define process_invoke_pointer = function(nodes: *Nodes, nodes_index: whole_8,  s
         variable arguments_buffer, returns_buffer = get_arguments_from_function_type(function_type);
 
         variable k = integer_8.cast(array8_length(arguments_buffer));
-        while >(k, 0_integer_8) {
-            k = -(k, 1_integer_8);
+        while >(k, 0:integer_8) {
+            k = -(k, 1:integer_8);
 
             if =(whole_8.>(stack_pointer), 0) {
                 print_node_error_beginning(nodes, nodes_index);
@@ -1098,9 +1106,13 @@ define define_module_map = global(HashMap);
 define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
     variable node_count = Nodes.>index(nodes);
 
+    module_stack = autobuffer_stack8_new(24);
     module_id_map = hashmap_new(64);
     module_references_map = hashmap_new(64);
     define_module_map = hashmap_new(64);
+
+    variable define_types = autobuffer_stack8_new(32);
+
     variable current_module_id = 0;
 
     variable declared_function_id = 0;
@@ -1173,13 +1185,53 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
         };
 
         if =(id, NODE_MODULE) {
+            autobuffer_stack8_push(&(module_stack), declared_module_id);
             declared_module_id = +(declared_module_id, 1);
+        };
+
+        if =(id, NODE_ENDMODULE) {
+            variable _ = autobuffer_stack8_pop(&(module_stack));
         };
 
         if =(id, NODE_DEFINE) {
             variable define_data = NodeDefineData.*cast(pointer_data);
             variable define_name = NodeDefineData.>name(define_data);
             variable define_type = NodeDefineData.>type(define_data);
+
+            // Calculate define_type
+            if =(define_type, 0) {
+                variable next_id = nodes_get_id(nodes, +(i, 1));
+                variable next_data = nodes_get_pointer_data(nodes, +(i, 1));
+
+                define_type = if =(next_id, NODE_NUMBER) {
+                    variable number_data = NodeNumberData.*cast(next_data);
+                    variable coersion = NodeNumberData.>coersion(number_data);
+                    if !(=(coersion, 0)) {
+                        expand_module_name_array(coersion, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list())
+                    } else {
+                        "whole_8"
+                    }
+                } else if =(next_id, NODE_FUNCTION) {
+                    function_data_to_string(NodeFunctionData.*cast(next_data))
+                } else if =(next_id, NODE_STRUCTURE) {
+                    structure_data_to_string(NodeStructureData.*cast(next_data))
+                } else if =(next_id, NODE_GLOBAL) {
+                    global_data_to_string(NodeGlobalData.*cast(next_data))
+                } else if =(next_id, NODE_MODULE) {
+                    "module"
+                } else if =(next_id, NODE_RETRIEVE){
+                    "define"
+                } else {
+                    print_node_error_beginning(nodes, i);
+                    println("Unknown define type");
+                    exit(1);
+                    ""
+                };
+
+                NodeDefineData.<type(define_data, define_type);
+            } else {
+                // TODO: Check to make sure type is valid
+            };
 
             variable name = NodeDefineData.>name(define_data);
             if >(AutoBufferStack8.>index(&(module_stack)), 0) {
@@ -1193,10 +1245,7 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
             hashmap_string_put(&(define_module_map), name, whole_8.cast(autobuffer_stack8_peek(&(module_stack))));
 
             if string=(define_type, "module") {
-                hashmap_string_put(&(module_id_map), name, current_module_id);
-
-                autobuffer_stack8_push(&(module_stack), current_module_id);
-                current_module_id = +(current_module_id, 1);
+                hashmap_string_put(&(module_id_map), name, declared_module_id);
             } else if string=(define_type, "define") {
                 variable full_define = "";
 
@@ -1237,7 +1286,7 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                     array8_set(argument_types, j, new_argument);
                     j = +(j, 1);
                 };
-                define_type = function_data_to_string(&(function_data));
+                define_type = function_data_to_string_old(&(function_data));
                 NodeDefineData.<type(define_data, define_type);
                 define_value = declared_function_id;
             } else if string_length=(define_type, "structure", 9) {
@@ -1246,10 +1295,11 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 define_value = declared_global_id;
             } else if string_length=(define_type, "module", 6) {
                 define_value = declared_module_id;
-                autobuffer_stack8_push(&(module_stack), declared_module_id);
             } else {
                 define_value = NodeNumberData.>value(NodeNumberData.*cast(nodes_get_pointer_data(nodes, +(i, 1))));
             };
+
+            autobuffer_stack8_push(&(define_types), define_type);
 
             variable define_types = &(ProgramData.>define_types(program_data));
             hashmap_string_put(define_types, define_name, define_type);
@@ -1260,18 +1310,12 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
         if =(id, NODE_ENDDEFINE) {
             variable define_data = NodeEndDefineData.*cast(pointer_data);
-            variable define_type = NodeEndDefineData.>type(define_data);
+            variable define_type = *.cast(autobuffer_stack8_pop(&(define_types)));
 
-            if !(=(NodeEndDefineData.>type(define_data), 0)) {
-                if string=(NodeEndDefineData.>type(define_data), "module") {
-                    variable _ = autobuffer_stack8_pop(&(module_stack));
-                };
-            };
-
-            if =(define_type, 0) {
-            } else if string=(define_type, "module") {
-                variable _ = autobuffer_stack8_pop(&(module_stack));
-            };
+            //if =(define_type, 0) {
+            //} else if string=(define_type, "module") {
+            //    variable _ = autobuffer_stack8_pop(&(module_stack));
+            //};
         };
 
         i = +(i, 1);
@@ -1385,7 +1429,6 @@ define is_pointer = function(nodes: *Nodes, index_in: whole_8): boolean {
 define get_define_name_with_module = function(define_name: *): * {
     variable new_define_name = "";
 
-    variable i = -(AutoBufferStack8.>index(&(module_stack)), 1);
     if >(AutoBufferStack8.>index(&(module_stack)), 0) {
         variable module_id = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
         variable module_id_buffer = any_24.>0();

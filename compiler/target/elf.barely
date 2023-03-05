@@ -119,43 +119,43 @@ define Target/Elf = module {
 
     define create_headers = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): ELF64FileHeader, ELF64ProgramHeader, ELF64ProgramHeader, ELF64ProgramHeader {
         variable file_header = new_elf64_file_header();
-        ELF64FileHeader.<format(&(file_header), 2_whole_1);
-        ELF64FileHeader.<endianness(&(file_header), 1_whole_1);
-        ELF64FileHeader.<abi(&(file_header), 3_whole_1);
-        ELF64FileHeader.<object_file_type(&(file_header), 2_whole_2);
-        ELF64FileHeader.<machine(&(file_header), 62_whole_2);
+        ELF64FileHeader.<format(&(file_header), 2:whole_1);
+        ELF64FileHeader.<endianness(&(file_header), 1:whole_1);
+        ELF64FileHeader.<abi(&(file_header), 3:whole_1);
+        ELF64FileHeader.<object_file_type(&(file_header), 2:whole_2);
+        ELF64FileHeader.<machine(&(file_header), 62:whole_2);
         ELF64FileHeader.<entry_point(&(file_header), 4194536);
         ELF64FileHeader.<program_header_table(&(file_header), 64);
-        ELF64FileHeader.<program_header_count(&(file_header), 3_whole_2);
+        ELF64FileHeader.<program_header_count(&(file_header), 3:whole_2);
 
         variable program_header_instructions: ELF64ProgramHeader;
-        ELF64ProgramHeader.<type(&(program_header_instructions), 1_whole_4);
+        ELF64ProgramHeader.<type(&(program_header_instructions), 1:whole_4);
         ELF64ProgramHeader.<location(&(program_header_instructions), 0);
         ELF64ProgramHeader.<virtual_address(&(program_header_instructions), start_address);
         ELF64ProgramHeader.<physical_address(&(program_header_instructions), start_address);
         ELF64ProgramHeader.<size_file(&(program_header_instructions), +(instructions_index, 232));
         ELF64ProgramHeader.<size_memory(&(program_header_instructions), +(instructions_index, 232));
-        ELF64ProgramHeader.<flags(&(program_header_instructions), 5_whole_4);
+        ELF64ProgramHeader.<flags(&(program_header_instructions), 5:whole_4);
         ELF64ProgramHeader.<alignment(&(program_header_instructions), 4096);
 
         variable program_header_data: ELF64ProgramHeader;
-        ELF64ProgramHeader.<type(&(program_header_data), 1_whole_4);
+        ELF64ProgramHeader.<type(&(program_header_data), 1:whole_4);
         ELF64ProgramHeader.<location(&(program_header_data), +(instructions_index, 232));
         ELF64ProgramHeader.<virtual_address(&(program_header_data), +(232, +(instructions_index, +(start_address, 4096))));
         ELF64ProgramHeader.<physical_address(&(program_header_data), +(232, +(instructions_index, +(start_address, 4096))));
         ELF64ProgramHeader.<size_file(&(program_header_data), data_index);
         ELF64ProgramHeader.<size_memory(&(program_header_data), data_index);
-        ELF64ProgramHeader.<flags(&(program_header_data), 4_whole_4);
+        ELF64ProgramHeader.<flags(&(program_header_data), 4:whole_4);
         ELF64ProgramHeader.<alignment(&(program_header_data), 4096);
 
         variable program_header_bss: ELF64ProgramHeader;
-        ELF64ProgramHeader.<type(&(program_header_bss), 1_whole_4);
+        ELF64ProgramHeader.<type(&(program_header_bss), 1:whole_4);
         ELF64ProgramHeader.<location(&(program_header_bss), +(instructions_index, +(data_index, 232)));
         ELF64ProgramHeader.<virtual_address(&(program_header_bss), +(232, +(instructions_index, +(+(start_address, 8192), data_index))));
         ELF64ProgramHeader.<physical_address(&(program_header_bss), +(232, +(instructions_index, +(+(start_address, 8192), data_index))));
         ELF64ProgramHeader.<size_file(&(program_header_bss), 0);
         ELF64ProgramHeader.<size_memory(&(program_header_bss), bss_index);
-        ELF64ProgramHeader.<flags(&(program_header_bss), 6_whole_4);
+        ELF64ProgramHeader.<flags(&(program_header_bss), 6:whole_4);
         ELF64ProgramHeader.<alignment(&(program_header_bss), 4096);
 
         return file_header, program_header_instructions, program_header_data, program_header_bss;

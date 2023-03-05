@@ -131,60 +131,60 @@ define Target/Macho = module {
 
     define create_headers = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): MachoHeader, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoUnixThreadCommandX86_64 {
         variable header = new_macho_header();
-        MachoHeader.<cpu_type(&(header), 16777223_whole_4);
-        MachoHeader.<cpu_subtype(&(header), 2147483651_whole_4);
-        MachoHeader.<file_type(&(header), 2_whole_4);
-        MachoHeader.<commands_count(&(header), 5_whole_4);
-        MachoHeader.<commands_size(&(header), 472_whole_4);
-        MachoHeader.<flags(&(header), 1_whole_4);
+        MachoHeader.<cpu_type(&(header), 16777223:whole_4);
+        MachoHeader.<cpu_subtype(&(header), 2147483651:whole_4);
+        MachoHeader.<file_type(&(header), 2:whole_4);
+        MachoHeader.<commands_count(&(header), 5:whole_4);
+        MachoHeader.<commands_size(&(header), 472:whole_4);
+        MachoHeader.<flags(&(header), 1:whole_4);
 
         variable segment_pagezero = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_pagezero), 25_whole_4);
-        MachoSegmentCommand.<command_size(&(segment_pagezero), 72_whole_4);
+        MachoSegmentCommand.<command(&(segment_pagezero), 25:whole_4);
+        MachoSegmentCommand.<command_size(&(segment_pagezero), 72:whole_4);
         variable page_zero = "__PAGEZERO";
         copy(page_zero, &(MachoSegmentCommand.>name(&(segment_pagezero))), 10);
         MachoSegmentCommand.<virtual_address(&(segment_pagezero), 0);
         MachoSegmentCommand.<virtual_size(&(segment_pagezero), 4096);
         MachoSegmentCommand.<file_address(&(segment_pagezero), 0);
         MachoSegmentCommand.<file_size(&(segment_pagezero), 0);
-        MachoSegmentCommand.<protection_maximum(&(segment_pagezero), 0_whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_pagezero), 0_whole_4);
+        MachoSegmentCommand.<protection_maximum(&(segment_pagezero), 0:whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_pagezero), 0:whole_4);
 
         variable segment_instructions = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_instructions), 25_whole_4);
-        MachoSegmentCommand.<command_size(&(segment_instructions), 72_whole_4);
+        MachoSegmentCommand.<command(&(segment_instructions), 25:whole_4);
+        MachoSegmentCommand.<command_size(&(segment_instructions), 72:whole_4);
         MachoSegmentCommand.<virtual_address(&(segment_instructions), start_address);
         MachoSegmentCommand.<virtual_size(&(segment_instructions), +(504, instructions_index));
         MachoSegmentCommand.<file_address(&(segment_instructions), 0);
         MachoSegmentCommand.<file_size(&(segment_instructions), +(504, instructions_index));
-        MachoSegmentCommand.<protection_maximum(&(segment_instructions), 7_whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_instructions), 5_whole_4);
+        MachoSegmentCommand.<protection_maximum(&(segment_instructions), 7:whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_instructions), 5:whole_4);
 
         variable segment_data = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_data), 25_whole_4);
-        MachoSegmentCommand.<command_size(&(segment_data), 72_whole_4);
+        MachoSegmentCommand.<command(&(segment_data), 25:whole_4);
+        MachoSegmentCommand.<command_size(&(segment_data), 72:whole_4);
         MachoSegmentCommand.<virtual_address(&(segment_data), +(.round_up_to_4096(+(instructions_index, 504)), start_address));
         MachoSegmentCommand.<virtual_size(&(segment_data), data_index);
         MachoSegmentCommand.<file_address(&(segment_data), .round_up_to_4096(+(instructions_index, 504)));
         MachoSegmentCommand.<file_size(&(segment_data), data_index);
-        MachoSegmentCommand.<protection_maximum(&(segment_data), 1_whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_data), 1_whole_4);
+        MachoSegmentCommand.<protection_maximum(&(segment_data), 1:whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_data), 1:whole_4);
 
         variable segment_bss = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_bss), 25_whole_4);
-        MachoSegmentCommand.<command_size(&(segment_bss), 72_whole_4);
+        MachoSegmentCommand.<command(&(segment_bss), 25:whole_4);
+        MachoSegmentCommand.<command_size(&(segment_bss), 72:whole_4);
         MachoSegmentCommand.<virtual_address(&(segment_bss), +(.round_up_to_4096(+(instructions_index, 504)), +(start_address, .round_up_to_4096(data_index))));
         MachoSegmentCommand.<virtual_size(&(segment_bss), bss_index);
         MachoSegmentCommand.<file_address(&(segment_bss), 0);
         MachoSegmentCommand.<file_size(&(segment_bss), 0);
-        MachoSegmentCommand.<protection_maximum(&(segment_bss), 3_whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_bss), 3_whole_4);
+        MachoSegmentCommand.<protection_maximum(&(segment_bss), 3:whole_4);
+        MachoSegmentCommand.<protection_initial(&(segment_bss), 3:whole_4);
 
         variable unix_thread = MachoUnixThreadCommandX86_64.>0();
-        MachoUnixThreadCommandX86_64.<command(&(unix_thread), 5_whole_4);
-        MachoUnixThreadCommandX86_64.<command_size(&(unix_thread), 184_whole_4);
-        MachoUnixThreadCommandX86_64.<flavor(&(unix_thread), 4_whole_4);
-        MachoUnixThreadCommandX86_64.<count(&(unix_thread), 42_whole_4);
+        MachoUnixThreadCommandX86_64.<command(&(unix_thread), 5:whole_4);
+        MachoUnixThreadCommandX86_64.<command_size(&(unix_thread), 184:whole_4);
+        MachoUnixThreadCommandX86_64.<flavor(&(unix_thread), 4:whole_4);
+        MachoUnixThreadCommandX86_64.<count(&(unix_thread), 42:whole_4);
         MachoUnixThreadCommandX86_64.<rip(&(unix_thread), +(start_address, 504));
 
         return header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread;
