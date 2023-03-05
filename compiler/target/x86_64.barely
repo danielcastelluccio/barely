@@ -602,8 +602,8 @@ define Target/X86_64 = module {
     };
 
     define output_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
-        declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(nodes_index, 1)));
-        declare function_name_array = NodeRetrieveData.>name(retrieve_data);
+        declare invoke_internal_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, nodes_index));
+        declare function_name_array = NodeInvokeInternalData.>name(invoke_internal_data);
         declare function_name = *.cast(array8_get(function_name_array, 0));
 
         declare memory_function = *.cast(hashmap_string_get(internal_function_instructions, function_name));

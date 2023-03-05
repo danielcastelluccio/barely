@@ -566,6 +566,24 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
     check_parse_invoke_parenthesis_chain(tokens, &(index), nodes, nodes_in);
 
     whole_8.<(index_pointer, index);
+
+    if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
+        // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
+        if !(=(tokens_get_id(tokens, +(whole_8.>(index_pointer), 1)), TOKEN_OPEN_PARENTHESIS)) {
+            declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
+
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "+", "+");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "-", "-");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "*", "*");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "/", "/");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "%", "%");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "&&", "&&");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "||", "|");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, ">", ">");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "<", "<");
+            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "==", "=");
+        };
+    };
 };
 
 define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, nodes_in: *Nodes) {
@@ -590,8 +608,30 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
     whole_8.<(index_pointer, index);
 };
 
+define check_parse_operator = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, parsed_name: *, wanted_name: *, internal_name: *): boolean {
+    if string=(parsed_name, wanted_name) {
+        increment_whole_8_pointer(index_pointer, 1);
+        parse_expression(tokens, index_pointer, nodes);
+
+        declare operator_data = NodeInvokeInternalData.*cast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, -(whole_8.>(index_pointer), 1))));
+        NodeInvokeInternalData.<name(operator_data, create_size_one_array8_brk_allocate(internal_name));
+        return true;
+    };
+
+    return false;
+};
+
 define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, token_id: whole_8, token_pointer_data: *) {
     declare index = whole_8.>(index_pointer);
+
+    if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
+        // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
+        if !(=(tokens_get_id(tokens, +(whole_8.>(index_pointer), 1)), TOKEN_OPEN_PARENTHESIS)) {
+            declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
+
+            if check_parse_operator(tokens, index_pointer, nodes, name, "!", "!") { return; }; // TODO: I have no idea why the syntax with the bar return is not working
+        };
+    };
 
     if |(=(token_id, TOKEN_NAME), =(token_id, TOKEN_PERIOD)) {
         declare names_buffer = autobuffer_new(24);
