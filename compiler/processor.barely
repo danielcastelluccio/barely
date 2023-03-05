@@ -235,7 +235,6 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
         } else if =(id, NODE_ENDFUNCTION) {
             in_function = false;
         } else if =(id, NODE_STRUCTURE) {
-        } else if =(id, NODE_GLOBAL) {
         } else if =(id, NODE_SKIP) {
         } else if =(id, NODE_ENDSTATEMENT) {
             if !(=(stack_pointer, 0)) {
@@ -1176,16 +1175,6 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
             autobuffer_stack8_push(structure_datas, structure_data);
         };
 
-        if =(id, NODE_GLOBAL) {
-            declare global_data = NodeGlobalData.*cast(pointer_data);
-            declare global_name = NodeGlobalData.>name(global_data);
-            declare global_type = NodeGlobalData.>type(global_data);
-
-            declare global_types = &(ProgramData.>global_types(program_data));
-            autobuffer_array8_set(global_types, declared_global_id, global_type);
-            declared_global_id = +(declared_global_id, 1);
-        };
-
         if =(id, NODE_MODULE) {
             autobuffer_stack8_push(&(module_stack), declared_module_id);
             declared_module_id = +(declared_module_id, 1);
@@ -1217,8 +1206,6 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                     function_data_to_string(&(module_stack), NodeFunctionData.*cast(next_data))
                 } else if =(next_id, NODE_STRUCTURE) {
                     structure_data_to_string(NodeStructureData.*cast(next_data))
-                } else if =(next_id, NODE_GLOBAL) {
-                    global_data_to_string(NodeGlobalData.*cast(next_data))
                 } else if =(next_id, NODE_MODULE) {
                     "module"
                 } else if =(next_id, NODE_RETRIEVE){

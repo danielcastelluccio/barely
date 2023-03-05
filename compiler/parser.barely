@@ -237,17 +237,6 @@ define parse_define = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     increment_whole_8_pointer(index_pointer, 1);
 };
 
-define parse_global = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    declare index = whole_8.>(index_pointer);
-    declare type_token_pointer_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, +(index, 2)));
-    declare type = TokenNameData.>name(type_token_pointer_data);
-
-    declare global_node_data = NodeGlobalData.*cast(nodes_append_data(nodes, NODE_GLOBAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
-    NodeGlobalData.<type(global_node_data, type);
-
-    increment_whole_8_pointer(index_pointer, 4);
-};
-
 define parse_structure = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     declare index = whole_8.>(index_pointer);
 
@@ -1146,10 +1135,6 @@ define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nod
 
         if string=(keyword, "structure") {
             parse_structure(tokens, index, nodes);
-        };
-
-        if string=(keyword, "global") {
-            parse_global(tokens, index, nodes);
         };
 
         if string=(keyword, "module") {
