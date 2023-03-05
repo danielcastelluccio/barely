@@ -65,42 +65,19 @@ define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row:
         j = +(j, 1);
     };
 
-    if =(any_1.>(any_1.*cast(buffer)), ASCII.MINUS) {
-        if =(AutoBufferBuffer.>index(&(type_buffer)), 0) {
-            autobuffer_buffer_push_string(&(type_buffer), "integer");
-        };
-    } else {
-        if =(AutoBufferBuffer.>index(&(type_buffer)), 0) {
-            autobuffer_buffer_push_string(&(type_buffer), "whole");
-        };
-    };
+    //if !(check_number_fits(tokens, size_bytes, =(TokenNumberData.>type(number_data), 1), buffer)) {
+    //    print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
+    //    print("Number literal '");
+    //    print(autobuffer_buffer_get_buffer_pointer(&(number_buffer)));
+    //    print("' cannot fit in type '");
+    //    print(autobuffer_buffer_get_buffer_pointer(&(type_buffer)));
+    //    print("_");
+    //    print(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
+    //    println("'");
+    //    exit(1);
+    //};
 
-    if =(AutoBufferBuffer.>index(&(size_buffer)), 0) {
-        autobuffer_buffer_push_string(&(size_buffer), "8");
-    };
-
-    if string=(autobuffer_buffer_get_buffer_pointer(&(type_buffer)), "whole") {
-        TokenNumberData.<type(number_data, 0);
-    } else {
-        TokenNumberData.<type(number_data, 1);
-    };
-
-    variable size_bytes = string_to_whole_8(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
-
-    if !(check_number_fits(tokens, size_bytes, =(TokenNumberData.>type(number_data), 1), buffer)) {
-        print_token_error_beginning(tokens, -(Tokens.>index(tokens), 1));
-        print("Number literal '");
-        print(autobuffer_buffer_get_buffer_pointer(&(number_buffer)));
-        print("' cannot fit in type '");
-        print(autobuffer_buffer_get_buffer_pointer(&(type_buffer)));
-        print("_");
-        print(autobuffer_buffer_get_buffer_pointer(&(size_buffer)));
-        println("'");
-        exit(1);
-    };
-
-    TokenNumberData.<size(number_data, size_bytes);
-    TokenNumberData.<value(number_data, string_to_number(buffer, size_bytes, false));
+    TokenNumberData.<value(number_data, string_to_whole_8(buffer));
 };
 
 define check_number_fits = function(tokens: *Tokens, size_bytes: whole_8, wants_signed: boolean, input_string: *): boolean {
@@ -719,8 +696,6 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
         variable number_token_data = TokenNumberData.*cast(token_pointer_data);
         variable number_node_data = NodeNumberData.*cast(nodes_append_data(nodes, NODE_NUMBER, get_token_location_data(tokens, index)));
         NodeNumberData.<value(number_node_data, TokenNumberData.>value(number_token_data));
-        NodeNumberData.<type(number_node_data, TokenNumberData.>type(number_token_data));
-        NodeNumberData.<size(number_node_data, TokenNumberData.>size(number_token_data));
 
         index = +(index, 1);
 
