@@ -49,18 +49,22 @@ define Target/X86_64 = module {
 
         declare module_stack = autobuffer_stack8_new(24);
 
+        declare in_function = false;
+
         declare i = 0;
         while <(i, node_count) {
             declare id = nodes_get_id(nodes, i);
             declare pointer_data = nodes_get_pointer_data(nodes, i);
 
-            if =(id, NODE_FUNCTION) .output_function(nodes, i, function_local_sizes, &(current_function_id), &(variable_index), pointer_data, instructions_buffer)
-            else if =(id, NODE_NUMBER) .output_number(&(module_stack), pointer_data, instructions_buffer)
+            if =(id, NODE_FUNCTION) {
+                in_function = true;
+                .output_function(nodes, i, function_local_sizes, &(current_function_id), &(variable_index), pointer_data, instructions_buffer);
+            } else if =(id, NODE_NUMBER) .output_number(&(module_stack), pointer_data, instructions_buffer)
             else if =(id, NODE_BOOLEAN) .output_boolean(pointer_data, instructions_buffer)
             else if =(id, NODE_INVOKE) .output_invoke(nodes, i, program_data, pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), instructions_buffer)
             else if =(id, NODE_INVOKE_INTERNAL) .output_invoke_internal(nodes, i, program_data, pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), instructions_buffer)
             else if =(id, NODE_STRING) .output_string(data_buffer, data_indexes_to_adjust, pointer_data, instructions_buffer)
-            else if =(id, NODE_DECLARE) .output_declare(nodes, program_data, &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), &(module_stack), pointer_data, instructions_buffer)
+            else if =(id, NODE_DECLARE) .output_declare(nodes, program_data, in_function, &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), &(module_stack), pointer_data, instructions_buffer)
             else if =(id, NODE_ASSIGN) .output_assign(nodes, i, program_data, &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust_relative, &(module_stack), pointer_data, instructions_buffer)
             else if =(id, NODE_RETRIEVE) .output_retrieve(nodes, i, program_data, &(module_stack), current_function_id, &(function_argument_names), &(function_argument_types), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, pushed_functions, pushed_function_targets, pointer_data, instructions_buffer)
             else if =(id, NODE_RETURN) .output_return(nodes,  program_data, current_function_id, &(function_argument_types), &(function_return_types), instructions_buffer)
@@ -80,8 +84,9 @@ define Target/X86_64 = module {
                 };
             } else if =(id, NODE_MODULE) {
                 declared_module_id = +(declared_module_id, 1);
-            } else if =(id, NODE_ENDFUNCTION) {}
-            else if =(id, NODE_ENDMODULE) {}
+            } else if =(id, NODE_ENDFUNCTION) {
+                in_function = false;
+            } else if =(id, NODE_ENDMODULE) {}
             else if =(id, NODE_STRUCTURE) {}
             else if =(id, NODE_GLOBAL) {}
             else if =(id, NODE_STARTIFBLOCK) {}
@@ -195,17 +200,19 @@ define Target/X86_64 = module {
         };
     };
 
-    define output_declare = function(nodes: *Nodes, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_declare = function(nodes: *Nodes, program_data: *ProgramData, in_function: boolean, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare declare_data = NodeDeclareData.*cast(pointer_data);
         declare variable_name = NodeDeclareData.>name(declare_data);
         declare variable_type_names = NodeDeclareData.>type(declare_data);
         declare variable_type = expand_module_name_array(variable_type_names, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
 
-        autobuffer_array8_set(variable_names, whole_8.>(variable_index), variable_name);
-        autobuffer_array8_set(variable_sizes, whole_8.>(variable_index), .get_size(variable_type, nodes, program_data));
-        increment_whole_8_pointer(variable_index, 1);
+        if in_function {
+            autobuffer_array8_set(variable_names, whole_8.>(variable_index), variable_name);
+            autobuffer_array8_set(variable_sizes, whole_8.>(variable_index), .get_size(variable_type, nodes, program_data));
+            increment_whole_8_pointer(variable_index, 1);
 
-        hashmap_string_put(HashMap.*cast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type_names);
+            hashmap_string_put(HashMap.*cast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type_names);
+        };
     };
 
     define output_jump_conditional = function(nodes: *Nodes, program_data: *ProgramData, pointer_data: *, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, instructions_buffer: *AutoBufferBuffer) {
@@ -356,6 +363,8 @@ define Target/X86_64 = module {
         declare variable_type = variable_type_in;
         declare define_types = &(ProgramData.>define_types(program_data));
         declare define_values = &(ProgramData.>define_values(program_data));
+        declare define_or_declares = &(ProgramData.>define_or_declares(program_data));
+        declare define_or_declare = *.cast(hashmap_string_get(define_or_declares, variable_name));
         declare define_value = get_value_of_define(define_types, define_values, variable_name);
 
         if string=(variable_type, "define") {
@@ -382,6 +391,20 @@ define Target/X86_64 = module {
         } else if string_length=(variable_type, "global[", 7) {
             declare define_value = hashmap_string_get2(define_values, variable_name);
             declare variable_type = *.cast(autobuffer_array8_get(global_types, whole_8.cast(define_value)));
+
+            declare size = .get_size(variable_type, nodes, program_data);
+
+            declare define_value = whole_8.cast(hashmap_string_get2(define_values, variable_name));
+            declare global_index = BssIndex.cast(array8_get(global_locations, define_value));
+
+            if is_pointer(nodes, +(nodes_index, 1)) {
+                ELF_X86_64.autobuffer_buffer_push_push_bss(instructions_buffer, bss_indexes_to_adjust, global_index);
+            } else {
+                X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
+                .output_copy_global_stack(instructions_buffer, bss_indexes_to_adjust_relative, global_index, size);
+            };
+        } else if string=(define_or_declare, "declare") {
+            declare variable_type = *.cast(hashmap_string_get(define_types, variable_name));
 
             declare size = .get_size(variable_type, nodes, program_data);
 
@@ -485,6 +508,7 @@ define Target/X86_64 = module {
     define output_assign = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare assign_data = NodeAssignData.*cast(pointer_data);
         declare variable_name = NodeAssignData.>name(assign_data);
+        variable_name = expand_module_name_array(variable_name, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
 
         declare variable_type, scope_index = .get_variable_linux-x86_64(variable_types, variable_name);
         if !(=(variable_type, 0)) {

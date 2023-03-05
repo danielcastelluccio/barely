@@ -33,11 +33,13 @@ define NODE_INVOKE = 5;
 define NODE_DECLARE = 6;
 define NodeDeclareData = structure {
     name: *;
+    // array of strings
     type: *;
 };
 
 define NODE_ASSIGN = 7;
 define NodeAssignData = structure {
+    // array of strings
     name: *;
 };
 
@@ -265,9 +267,19 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         println("}");
     } else if =(id, NODE_ASSIGN) {
         declare assign_data = NodeAssignData.*cast(pointer_data);
-        print("Assign{name='");
-        print(NodeAssignData.>name(assign_data));
-        println("'}");
+        print("Assign{names=");
+        declare names = NodeAssignData.>name(assign_data);
+        if !(=(names, 0)) {
+            print("'");
+            declare i = 0;
+            while <(i, array8_length(names)) {
+                print(*.cast(array8_get(names, i)));
+                print(", ");
+                i = +(i, 1);
+            };
+            print("'");
+        };
+        println("}");
     } else if =(id, NODE_DECLARE) {
         declare declare_data = NodeDeclareData.*cast(pointer_data);
         print("Declare{name='");

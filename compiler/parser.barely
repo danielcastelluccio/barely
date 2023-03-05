@@ -858,9 +858,9 @@ define parse_if = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nod
     whole_8.<(index_pointer, index);
 };
 
-define target_id = global(whole_8);
+declare target_id: whole_8;
 
-define while_target_id_stack = global(AutoBufferStack8);
+declare while_target_id_stack: AutoBufferStack8;
 
 define get_target_id = function(): whole_8 {
     declare return_ = target_id;
@@ -942,6 +942,8 @@ define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, n
                 break;
             };
             index = +(index, 1);
+        } else if =(tokens_get_id(tokens, index), TOKEN_PERIOD) {
+            index = +(index, 1);
         } else {
             is_assign = false;
             break;
@@ -962,18 +964,17 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     declare index = whole_8.>(index_pointer);
     while true {
-        if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
-            index = +(index, 1);
-        } else {
-            declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
-            autobuffer_stack8_legacy_push(&(names), &(name_index), name);
-            index = +(index, 1);
-        };
-
         if =(tokens_get_id(tokens, index), TOKEN_NAME) {
             if string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), "=") {
                 break;
             };
+        };
+
+        if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
+            index = +(index, 1);
+        } else {
+            declare name = parse_name_array(tokens, &(index));
+            autobuffer_stack8_legacy_push(&(names), &(name_index), name);
         };
     };
 
@@ -1052,6 +1053,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
     index = +(index, 1);
 
     declare names = autobuffer_new(40);
+    declare name_arrays = autobuffer_new(40);
     declare types = autobuffer_new(40);
 
     declare name_index = 0;
@@ -1070,11 +1072,11 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
                 declare name = parse_name_array(tokens, &(index));
                 autobuffer_array8_set(&(types), name_index, name);
             } else {
+                name_value = parse_name(tokens, &(index));
                 autobuffer_array8_set(&(names), name_index, name_value);
+                autobuffer_array8_set(&(name_arrays), name_index, create_size_one_array8_brk_allocate(name_value));
                 autobuffer_array8_set(&(types), name_index, create_size_zero_array8_brk_allocate());
                 seen_item_name = true;
-
-                index = +(index, 1);
             };
         } else {
             index = +(index, 1);
@@ -1103,7 +1105,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
     };
 
     whole_8.<(index_pointer, index);
-    return parse_expression, AutoBuffer.>buffer(&(names));
+    return parse_expression, AutoBuffer.>buffer(&(name_arrays));
 };
 
 define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, breaker: whole_8) {
@@ -1156,6 +1158,10 @@ define parse_individual = function(tokens: *Tokens, index: *whole_8, nodes: *Nod
 
         if string=(keyword, "define") {
             parse_define(tokens, index, nodes);
+        };
+
+        if string=(keyword, "declare") {
+            parse_declare(tokens, index, nodes);
         };
     } else {
         parse_expression(tokens, index, nodes);

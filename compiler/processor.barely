@@ -84,6 +84,7 @@ define print_node_error_beginning = function(nodes: *Nodes, location: whole_8) {
 define ProgramData = structure {
     define_types: HashMap;
     define_values: HashMap;
+    define_or_declares: HashMap;
     structure_datas: AutoBufferStack8;
     structure_member_types: AutoBuffer;
     structure_member_names: AutoBuffer;
@@ -114,6 +115,7 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
 
     ProgramData.<define_types(&(program_data), hashmap_new(512));
     ProgramData.<define_values(&(program_data), hashmap_new(512));
+    ProgramData.<define_or_declares(&(program_data), hashmap_new(512));
 
     ProgramData.<function_locations(&(program_data), autobuffer_new(1024));
     ProgramData.<function_datas(&(program_data), autobuffer_new(1024));
@@ -186,8 +188,10 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
             declare variable_name = NodeDeclareData.>name(declare_data);
             declare variable_type_names = NodeDeclareData.>type(declare_data);
 
-            hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type_names);
-            hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
+            if in_function {
+                hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_types_map), -(variable_scope_types_pointer, 1))), variable_name, variable_type_names);
+                hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
+            };
         } else if =(id, NODE_ASSIGN) {
             process_assign(nodes, i, &(module_stack), &(stack), &(stack_pointer), &(program_data), variable_scopes_types_map, variable_scope_types_pointer, variable_scopes_declares_map, pointer_data);
         } else if =(id, NODE_RETRIEVE) {
@@ -424,14 +428,15 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
 define process_assign = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, variable_scopes_declares_map: AutoBuffer, pointer_data: *) {
     declare assign_data = NodeAssignData.*cast(pointer_data);
     declare variable_name = NodeAssignData.>name(assign_data);
-
-    declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, variable_name);
+    variable_name = expand_module_name_array(variable_name, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
 
     if =(whole_8.>(stack_pointer), 0) {
         print_node_error_beginning(nodes, nodes_index);
         println("Assign ran out of stack values");
         exit(1);
     };
+
+    declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, variable_name);
 
     declare popped_stack = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
 
@@ -461,12 +466,19 @@ define process_assign = function(nodes: *Nodes, nodes_index: whole_8, module_sta
         return;
     };
 
+    declare define_types = &(ProgramData.>define_types(program_data));
     declare define_values = &(ProgramData.>define_values(program_data));
+    declare define_or_declares = &(ProgramData.>define_or_declares(program_data));
 
     declare global_id = whole_8.cast(hashmap_string_get2(define_values, variable_name));
     if !(=(global_id, 999)) {
         declare global_types = &(ProgramData.>global_types(program_data));
         variable_type = *.cast(autobuffer_array8_get(global_types, global_id));
+    };
+
+    declare define_or_declare = *.cast(hashmap_string_get(define_or_declares, variable_name));
+    if string=(define_or_declare, "declare") {
+        variable_type = *.cast(hashmap_string_get(define_types, variable_name));
     };
 
     if !(=(variable_type, 0)) {
@@ -1082,9 +1094,9 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     return new_name;
 };
 
-define module_id_map = global(HashMap);
-define module_references_map = global(HashMap);
-define define_module_map = global(HashMap);
+declare module_id_map: HashMap;
+declare module_references_map: HashMap;
+declare define_module_map: HashMap;
 
 define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
     declare node_count = Nodes.>index(nodes);
@@ -1102,6 +1114,8 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
     declare declared_structure_id = 0;
     declare declared_global_id = 0;
     declare declared_module_id = 0;
+
+    declare in_function = false;
 
     declare i = 0;
     while <(i, node_count) {
@@ -1135,6 +1149,11 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 autobuffer_array8_set(function_return_types, declared_function_id, NodeFunctionData.>returns(function_data));
                 declared_function_id = +(declared_function_id, 1);
             };
+            in_function = true;
+        };
+
+        if =(id, NODE_ENDFUNCTION) {
+            in_function = false;
         };
 
         if =(id, NODE_STRUCTURE) {
@@ -1289,11 +1308,41 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
             declare define_values = &(ProgramData.>define_values(program_data));
             hashmap_string_put(define_values, define_name, define_value);
+
+            declare define_or_declares = &(ProgramData.>define_or_declares(program_data));
+            hashmap_string_put(define_or_declares, define_name, "define");
         };
 
         if =(id, NODE_ENDDEFINE) {
             declare define_data = NodeEndDefineData.*cast(pointer_data);
             declare define_type = *.cast(autobuffer_stack8_pop(&(define_types)));
+        };
+
+        if =(id, NODE_DECLARE) {
+            if !(in_function) {
+                declare declare_data = NodeDeclareData.*cast(pointer_data);
+                declare declare_name = NodeDeclareData.>name(declare_data);
+                declare declare_type = NodeDeclareData.>type(declare_data);
+                declare_type = expand_module_name_array(declare_type, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
+                declare_name = get_define_name_with_module(&(module_stack), declare_name);
+                NodeDeclareData.<name(declare_data, declare_name);
+
+                declare declare_value = declared_global_id;
+
+                declare define_types = &(ProgramData.>define_types(program_data));
+                hashmap_string_put(define_types, declare_name, declare_type);
+
+                declare define_values = &(ProgramData.>define_values(program_data));
+                hashmap_string_put(define_values, declare_name, declare_value);
+
+                declare define_or_declares = &(ProgramData.>define_or_declares(program_data));
+                hashmap_string_put(define_or_declares, declare_name, "declare");
+
+                declare global_types = &(ProgramData.>global_types(program_data));
+                autobuffer_array8_set(global_types, declared_global_id, declare_type);
+
+                declared_global_id = +(declared_global_id, 1);
+            };
         };
 
         i = +(i, 1);
