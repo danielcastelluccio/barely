@@ -354,23 +354,31 @@ define Target/X86_64 = module {
         };
 
         if string=(variable_name, "@current_module") {
-            autobuffer_stack8_push(define_stack, variable_name);
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", variable_name));
             return;
         };
 
         variable_type = get_define_type(define_types, define_values, variable_name);
 
-        //declare module_expanded_name = expand_module_name_array(variable_names_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
-        declare module_expanded_name = if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
-            expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, *.cast(autobuffer_stack8_pop(define_stack)), create_previous_results_list())
-        } else {
-            variable_name
+        declare expand_name = true;
+        if !(=(variable_type, 0)) {
+            expand_name = false;
+            if string=(variable_type, "define") {
+                expand_name = true;
+            };
         };
+
+        declare top_define = *.>0();
+        if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
+            top_define = +(*.cast(autobuffer_stack8_pop(define_stack)), 7);
+        };
+
+        declare module_expanded_name = expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, top_define, create_previous_results_list());
         variable_type = get_define_type(define_types, define_values, module_expanded_name);
 
         if !(=(variable_type, 0)) {
             if |(string=(variable_type, "module"), string_length=(variable_type, "structure[", 10)) {
-                autobuffer_stack8_push(define_stack, module_expanded_name);
+                autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", module_expanded_name));
                 return;
             };
         };

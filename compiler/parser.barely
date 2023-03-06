@@ -1030,20 +1030,6 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     declare index = whole_8.>(index_pointer);
     declare saved_index = index;
-    //while true {
-    //    if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-    //        if string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), "=") {
-    //            break;
-    //        };
-    //    };
-
-    //    if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
-    //        index = +(index, 1);
-    //    } else {
-    //        declare name = parse_name_array(tokens, &(index));
-    //        autobuffer_stack8_legacy_push(&(names), &(name_index), name);
-    //    };
-    //};
 
     while !(tokens_is_name(tokens, index, "=")) {
         index = +(index, 1);
@@ -1054,16 +1040,47 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
 
     index = +(index, 1);
 
-    // TODO: Doesn't yet work with multi assigns
-    parse_expression(tokens, &(saved_index), nodes);
-    declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(Nodes.>index(nodes), 3)));
-    declare name = NodeRetrieveData.>name_single(retrieve_data);
-    declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
+    declare start_stack = autobuffer_stack8_new(24);
 
-    nodes_set_id(nodes, -(Nodes.>index(nodes), 3), NODE_ASSIGN);
-    declare assign_data = NodeAssignData.*cast(retrieve_data);
-    NodeAssignData.<name_single(assign_data, name);
-    NodeAssignData.<uses_previous(assign_data, uses_previous);
+    autobuffer_stack8_push(&(start_stack), saved_index);
+
+    declare is_first = true;
+    while true {
+        while &&(!(=(tokens_get_id(tokens, saved_index), TOKEN_COMMA)), !(tokens_is_name(tokens, saved_index, "="))) {
+            saved_index = +(saved_index, 1);
+        };
+
+        if tokens_is_name(tokens, saved_index, "=") {
+            break;
+        };
+
+        if =(tokens_get_id(tokens, saved_index), TOKEN_COMMA) {
+            saved_index = +(saved_index, 1);
+        };
+
+        autobuffer_stack8_push(&(start_stack), saved_index);
+    };
+    //while |(is_first, =(tokens_get_id(tokens, saved_index), TOKEN_COMMA)) {
+    //    if =(tokens_get_id(tokens, saved_index), TOKEN_COMMA) {
+    //        saved_index = +(saved_index, 1);
+    //    };
+
+    //    is_first = false;
+    //};
+
+    while >(AutoBufferStack8.>index(&(start_stack)), 0) {
+        declare start = whole_8.cast(autobuffer_stack8_pop(&(start_stack)));
+
+        parse_expression(tokens, &(start), nodes);
+        declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(Nodes.>index(nodes), 3)));
+        declare name = NodeRetrieveData.>name_single(retrieve_data);
+        declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
+
+        nodes_set_id(nodes, -(Nodes.>index(nodes), 3), NODE_ASSIGN);
+        declare assign_data = NodeAssignData.*cast(retrieve_data);
+        NodeAssignData.<name_single(assign_data, name);
+        NodeAssignData.<uses_previous(assign_data, uses_previous);
+    };
 
     whole_8.<(index_pointer, index);
 };

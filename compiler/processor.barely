@@ -834,14 +834,10 @@ define process_retrieve = function(nodes: *Nodes, nodes_index_in: *whole_8, modu
 
     declare top_define = *.>0();
     if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
-        top_define = *.cast(autobuffer_stack8_pop(define_stack));
+        top_define = +(*.cast(autobuffer_stack8_pop(define_stack)), 7);
     };
 
-    declare module_expanded_name = if !(=(top_define, 0)) {
-        expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, +(top_define, 7), create_previous_results_list())
-    } else {
-        variable_name
-    };
+    declare module_expanded_name = expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, top_define, create_previous_results_list());
 
     variable_type = get_define_retrieve_type(define_types, define_values, module_expanded_name);
 
@@ -938,10 +934,14 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
 
     name = +(name, pointer_count);
 
-    declare current_module_id = if string=(top_define, "@current_module") {
-        whole_8.cast(autobuffer_stack8_peek(module_stack))
+    declare current_module_id = if !(=(top_define, 0)) {
+        if string=(top_define, "@current_module") {
+            whole_8.cast(autobuffer_stack8_peek(module_stack))
+        } else {
+            whole_8.cast(hashmap_string_get2(module_id_map, top_define))
+        }
     } else {
-        whole_8.cast(hashmap_string_get2(module_id_map, top_define))
+        999
     };
 
     //declare current_module_id = if string=(top_define, "@current_module") {
@@ -980,19 +980,19 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
         name = concatenate2_brk_allocate(&(current_module_id_string), name);
     };
 
-    //declare possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
-    //if !(=(possible_reference, 999)) {
-    //    declare i = 0;
-    //    while <(i, AutoBufferStack8.>index(previous_results_list)) {
-    //        if string=(*.cast(autobuffer_stack8_get(previous_results_list, i)), name) {
-    //            return name;
-    //        };
-    //        i = +(i, 1);
-    //    };
-    //    autobuffer_stack8_push(previous_results_list, name);
+    declare possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
+    if !(=(possible_reference, 999)) {
+        declare i = 0;
+        while <(i, AutoBufferStack8.>index(previous_results_list)) {
+            if string=(*.cast(autobuffer_stack8_get(previous_results_list, i)), name) {
+                return name;
+            };
+            i = +(i, 1);
+        };
+        autobuffer_stack8_push(previous_results_list, name);
 
-    //    name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
-    //};
+        name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
+    };
 
     declare i = 0;
     while <(i, pointer_count) {
@@ -1408,19 +1408,22 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
             } else if string=(define_type, "define") {
                 declare full_define = "";
 
+                i = +(i, 1);
                 declare j = 0;
-                declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, +(i, 1)));
-                declare retrieve_names = NodeRetrieveData.>name(retrieve_data);
-                while <(j, array8_length(retrieve_names)) {
-                    declare retrieve_name = *.cast(array8_get(retrieve_names, j));
-                    if string=(retrieve_name, "@current_module") {
-                        declare top_module = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
-                        declare top_module_string = any_16.>0();
-                        whole_8_to_string(top_module, &(top_module_string));
+                while |(=(nodes_get_id(nodes, +(i, j)), NODE_RETRIEVE), =(nodes_get_id(nodes, +(i, j)), NODE_SKIP)) {
+                    if =(nodes_get_id(nodes, +(i, j)), NODE_RETRIEVE) {
+                        declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, +(i, j)));
+                        declare retrieve_name = NodeRetrieveData.>name_single(retrieve_data);
 
-                        full_define = concatenate2_brk_allocate(full_define, &(top_module_string));
-                    } else {
-                        full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
+                        if string=(retrieve_name, "@current_module") {
+                            declare top_module = whole_8.cast(autobuffer_stack8_peek(&(module_stack)));
+                            declare top_module_string = any_16.>0();
+                            whole_8_to_string(top_module, &(top_module_string));
+
+                            full_define = concatenate2_brk_allocate(full_define, &(top_module_string));
+                        } else {
+                            full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
+                        };
                     };
 
                     j = +(j, 1);
