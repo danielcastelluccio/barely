@@ -13,7 +13,9 @@ define NODE_RETRIEVE = 2;
 define NodeRetrieveData = structure {
     // array of strings
     name: *;
+    name_single: *;
     coercion: *;
+    uses_previous: boolean;
 };
 
 define NODE_STRING = 3;
@@ -41,6 +43,8 @@ define NODE_ASSIGN = 7;
 define NodeAssignData = structure {
     // array of strings
     name: *;
+    name_single: *;
+    uses_previous: boolean;
 };
 
 define NODE_RETURN = 8;
@@ -85,6 +89,8 @@ define NODE_INVOKE_INTERNAL = 15;
 define NodeInvokeInternalData = structure {
     // array of strings
     name: *;
+    name_single: *;
+    uses_previous: boolean;
 };
 
 define NODE_SCOPE = 16;
@@ -186,8 +192,12 @@ define nodes_append = function(nodes: *Nodes, id: whole_8, file_name: *, row: wh
 };
 
 define nodes_set_skip = function(nodes: *Nodes, index: whole_8) {
+    nodes_set_id(nodes, index, NODE_SKIP);
+};
+
+define nodes_set_id = function(nodes: *Nodes, index: whole_8, id: whole_8) {
     declare node_id = nodes_get_id_pointer(nodes, index);
-    whole_8.<(node_id, NODE_SKIP);
+    whole_8.<(node_id, id);
 };
 
 define nodes_append_structure = function(nodes: *Nodes, name: *, size: whole_8) {
@@ -243,7 +253,11 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
             };
             print("'");
         };
-        println("}");
+        print(",name='");
+        if !(=(NodeRetrieveData.>name_single(retrieve_data), 0)) {
+            print(NodeRetrieveData.>name_single(retrieve_data));
+        };
+        println("'}");
     } else if =(id, NODE_INVOKE_INTERNAL) {
         declare invoke_data = NodeInvokeInternalData.*cast(pointer_data);
         print("InternalInvoke{names=");
@@ -258,7 +272,11 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
             };
             print("'");
         };
-        println("}");
+        print(",name='");
+        if !(=(NodeInvokeInternalData.>name_single(invoke_data), 0)) {
+            print(NodeInvokeInternalData.>name_single(invoke_data));
+        };
+        println("'}");
     } else if =(id, NODE_ASSIGN) {
         declare assign_data = NodeAssignData.*cast(pointer_data);
         print("Assign{names=");
@@ -273,7 +291,11 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
             };
             print("'");
         };
-        println("}");
+        print(",name='");
+        if !(=(NodeAssignData.>name_single(assign_data), 0)) {
+            print(NodeAssignData.>name_single(assign_data));
+        };
+        println("'}");
     } else if =(id, NODE_DECLARE) {
         declare declare_data = NodeDeclareData.*cast(pointer_data);
         print("Declare{name='");
@@ -287,6 +309,8 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         println("Boolean{}")
     } else if =(id, NODE_STRING) {
         println("String{}")
+    } else if =(id, NODE_SKIP) {
+        println("Skip{}")
     } else if =(id, NODE_ENDSTATEMENT) {
         println("EndStatement{}")
     } else {

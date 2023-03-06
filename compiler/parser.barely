@@ -567,6 +567,12 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
 
     whole_8.<(index_pointer, index);
 
+    declare next_id = tokens_get_id(tokens, index);
+    if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_PERIOD) {
+        increment_whole_8_pointer(index_pointer, 1);
+        parse_expression(tokens, index_pointer, nodes_in);
+    };
+
     if =(tokens_get_id(tokens, whole_8.>(index_pointer)), TOKEN_NAME) {
         // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
         if !(=(tokens_get_id(tokens, +(whole_8.>(index_pointer), 1)), TOKEN_OPEN_PARENTHESIS)) {
@@ -601,8 +607,7 @@ define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_po
     Nodes.<index(nodes_in, +(Nodes.>index(nodes_in), nodes_moved_count));
 
     if =(tokens_get_id(tokens, index), TOKEN_OPEN_PARENTHESIS) {
-        nodes_index = -(nodes_index, 1);
-        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, +(nodes_in_index, nodes_index));
+        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, nodes_in_index);
     };
 
     whole_8.<(index_pointer, index);
@@ -633,44 +638,73 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
         };
     };
 
-    if |(=(token_id, TOKEN_NAME), =(token_id, TOKEN_PERIOD)) {
-        declare names_buffer = autobuffer_new(24);
-        declare j = 0;
-        if =(token_id, TOKEN_PERIOD) {
-            autobuffer_array8_set(&(names_buffer), j, "@current_module");
-            j = +(j, 1);
-            index = +(index, 1);
-        };
-
-        index = -(index, 1);
-
+    if =(token_id, TOKEN_PERIOD) {
         declare retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
+        NodeRetrieveData.<name_single(retrieve_node_data, "@current_module");
+        index = +(index, 1);
 
-        declare name_name: * = *.cast(0);
-        declare first = true;
-        while |(=(tokens_get_id(tokens, index), TOKEN_PERIOD), first) {
-            index = +(index, 1);
+        parse_expression(tokens, &(index), nodes);
+    };
 
-            if !(=(name_name, 0)) {
-                autobuffer_array8_set(&(names_buffer), j, name_name);
-                j = +(j, 1);
-            };
+    if =(token_id, TOKEN_NAME) {
+        //declare names_buffer = autobuffer_new(24);
+        //declare j = 0;
 
-            declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, index));
-            name_name = TokenNameData.>name(name_data);
+        //index = -(index, 1);
 
-            index = +(index, 1);
-            first = false;
-        };
+        //declare retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
 
-        autobuffer_array8_set(&(names_buffer), j, name_name);
-        NodeRetrieveData.<name(retrieve_node_data, AutoBuffer.>buffer(&(names_buffer)));
+        //declare name_count = 0;
+        //declare name_name: * = *.cast(0);
+        //declare first = true;
+        //while |(=(tokens_get_id(tokens, index), TOKEN_PERIOD), first) {
+        //    index = +(index, 1);
 
+        //    if !(=(name_name, 0)) {
+        //        autobuffer_array8_set(&(names_buffer), j, name_name);
+        //        j = +(j, 1);
+        //    };
+
+        //    declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, index));
+        //    name_name = TokenNameData.>name(name_data);
+
+        //    index = +(index, 1);
+        //    name_count = +(name_count, 1);
+        //    first = false;
+        //};
+
+        //declare i = 0;
+        //while <(i, *(-(name_count, 1), 2)) {
+        //    declare _ = nodes_append(nodes, NODE_SKIP, get_token_location_data(tokens, index));
+        //    i = +(i, 1);
+        //};
+
+        //autobuffer_array8_set(&(names_buffer), j, name_name);
+        //NodeRetrieveData.<name(retrieve_node_data, AutoBuffer.>buffer(&(names_buffer)));
+
+        //if =(tokens_get_id(tokens, index), TOKEN_COLON) {
+        //    index = +(index, 1);
+        //    declare name = parse_name(tokens, &(index));
+        //    NodeRetrieveData.<coercion(retrieve_node_data, name);
+        //};
+        declare last_id = tokens_get_id(tokens, -(index, 1));
+
+        declare name_data = TokenNameData.*cast(tokens_get_pointer_data(tokens, index));
+        declare retrieve_node_data = NodeRetrieveData.*cast(nodes_append_data(nodes, NODE_RETRIEVE, get_token_location_data(tokens, index)));
+        NodeRetrieveData.<name_single(retrieve_node_data, TokenNameData.>name(name_data));
+        index = +(index, 1);
         if =(tokens_get_id(tokens, index), TOKEN_COLON) {
             index = +(index, 1);
             declare name = parse_name(tokens, &(index));
             NodeRetrieveData.<coercion(retrieve_node_data, name);
         };
+
+        if =(last_id, TOKEN_PERIOD) {
+            NodeRetrieveData.<uses_previous(retrieve_node_data, true);
+        };
+
+        declare _ = nodes_append(nodes, NODE_SKIP, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes, NODE_SKIP, get_token_location_data(tokens, index));
     };
 
     if =(token_id, TOKEN_STRING) {
@@ -765,16 +799,19 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
             if =(inner, 0_integer_8) {
                 declare is_special = false;
                 declare is_pointer = false;
-                declare retrieve_name_array = NodeRetrieveData.>name(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index)));
+                declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, previous_retrieve_index));
+                declare retrieve_name = NodeRetrieveData.>name_single(retrieve_data);
+                declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
                 if is_first {
-                    is_special = is_special_function(retrieve_name_array);
+                    is_special = is_special_function(retrieve_name);
                 };
 
                 if is_special {
                     nodes_set_skip(nodes, previous_retrieve_index);
 
                     declare invoke_data = NodeInvokeInternalData.*cast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
-                    NodeInvokeInternalData.<name(invoke_data, retrieve_name_array);
+                    NodeInvokeInternalData.<name_single(invoke_data, retrieve_name);
+                    NodeInvokeInternalData.<uses_previous(invoke_data, uses_previous);
                 } else {
                     declare _ = nodes_append(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8.>(index_pointer)));
                 };
@@ -791,8 +828,7 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens, index_pointer:
     whole_8.<(index_pointer, index);
 };
 
-define is_special_function = function(names: *): boolean {
-    declare name = *.cast(array8_get(names, -(array8_length(names), 1)));
+define is_special_function = function(name: *): boolean {
     return if string=(name, "+") {
         true
     } else if string=(name, "-") {
@@ -963,20 +999,21 @@ define check_parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, n
     declare is_assign = true;
     declare index = whole_8.>(index_pointer);
     while true {
-        if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
-            index = +(index, 1);
-        } else if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+        if =(tokens_get_id(tokens, index), TOKEN_NAME) {
             declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index)));
-            if string=(name, "=") {
-                break;
+            if !(=(tokens_get_id(tokens, +(index, 1)), TOKEN_OPEN_PARENTHESIS)) {
+                if string=(name, "=") {
+                    break;
+                };
             };
-            index = +(index, 1);
-        } else if =(tokens_get_id(tokens, index), TOKEN_PERIOD) {
-            index = +(index, 1);
-        } else {
+        } else if =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
+            is_assign = false;
+            break;
+        } else if =(tokens_get_id(tokens, index), TOKEN_SEMICOLON) {
             is_assign = false;
             break;
         };
+        index = +(index, 1);
     };
 
     if is_assign {
@@ -992,34 +1029,41 @@ define parse_assign = function(tokens: *Tokens, index_pointer: *whole_8, nodes: 
     declare name_index = 0;
 
     declare index = whole_8.>(index_pointer);
-    while true {
-        if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-            if string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), "=") {
-                break;
-            };
-        };
+    declare saved_index = index;
+    //while true {
+    //    if =(tokens_get_id(tokens, index), TOKEN_NAME) {
+    //        if string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), "=") {
+    //            break;
+    //        };
+    //    };
 
-        if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
-            index = +(index, 1);
-        } else {
-            declare name = parse_name_array(tokens, &(index));
-            autobuffer_stack8_legacy_push(&(names), &(name_index), name);
-        };
+    //    if =(tokens_get_id(tokens, index), TOKEN_COMMA) {
+    //        index = +(index, 1);
+    //    } else {
+    //        declare name = parse_name_array(tokens, &(index));
+    //        autobuffer_stack8_legacy_push(&(names), &(name_index), name);
+    //    };
+    //};
+
+    while !(tokens_is_name(tokens, index, "=")) {
+        index = +(index, 1);
     };
-
     index = +(index, 1);
 
     parse_multiple_expressions(tokens, &(index), nodes, TOKEN_SEMICOLON);
 
     index = +(index, 1);
 
-    declare temp = autobuffer_array8_length(&(names));
-    declare i = -(autobuffer_array8_length(&(names)), 1);
-    while <(i, temp) {
-        declare assign_node_data = NodeAssignData.*cast(nodes_append_data(nodes, NODE_ASSIGN, get_token_location_data(tokens, whole_8.>(index_pointer))));
-        NodeAssignData.<name(assign_node_data, *.cast(autobuffer_array8_get(&(names), i)));
-        i = -(i, 1);
-    };
+    // TODO: Doesn't yet work with multi assigns
+    parse_expression(tokens, &(saved_index), nodes);
+    declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, -(Nodes.>index(nodes), 3)));
+    declare name = NodeRetrieveData.>name_single(retrieve_data);
+    declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
+
+    nodes_set_id(nodes, -(Nodes.>index(nodes), 3), NODE_ASSIGN);
+    declare assign_data = NodeAssignData.*cast(retrieve_data);
+    NodeAssignData.<name_single(assign_data, name);
+    NodeAssignData.<uses_previous(assign_data, uses_previous);
 
     whole_8.<(index_pointer, index);
 };
@@ -1067,7 +1111,7 @@ define parse_declare = function(tokens: *Tokens, index_pointer: *whole_8, nodes:
         declare i = -(array8_length(variable_names), 1);
         while <(i, temp) {
             declare node_data = NodeAssignData.*cast(nodes_append_data(nodes, NODE_ASSIGN, get_token_location_data(tokens, whole_8.>(index_pointer))));
-            NodeAssignData.<name(node_data, *.cast(array8_get(variable_names, i)));
+            NodeAssignData.<name_single(node_data, *.cast(array8_get(variable_names, i)));
 
             i = -(i, 1);
         };
@@ -1082,7 +1126,6 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
     index = +(index, 1);
 
     declare names = autobuffer_new(40);
-    declare name_arrays = autobuffer_new(40);
     declare types = autobuffer_new(40);
 
     declare name_index = 0;
@@ -1103,7 +1146,6 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
             } else {
                 name_value = parse_name(tokens, &(index));
                 autobuffer_array8_set(&(names), name_index, name_value);
-                autobuffer_array8_set(&(name_arrays), name_index, create_size_one_array8_brk_allocate(name_value));
                 autobuffer_array8_set(&(types), name_index, create_size_zero_array8_brk_allocate());
                 seen_item_name = true;
             };
@@ -1134,7 +1176,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens, index_poin
     };
 
     whole_8.<(index_pointer, index);
-    return parse_expression, AutoBuffer.>buffer(&(name_arrays));
+    return parse_expression, AutoBuffer.>buffer(&(names));
 };
 
 define parse_multiple_expressions = function(tokens: *Tokens, index_pointer: *whole_8, nodes: *Nodes, breaker: whole_8) {

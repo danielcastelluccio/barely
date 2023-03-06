@@ -49,6 +49,8 @@ define Target/X86_64 = module {
 
         declare module_stack = autobuffer_stack8_new(24);
 
+        declare define_stack = autobuffer_stack8_new(24);
+
         declare in_function = false;
 
         declare i = 0;
@@ -58,22 +60,22 @@ define Target/X86_64 = module {
 
             if =(id, NODE_FUNCTION) {
                 in_function = true;
-                .output_function(nodes, i, function_local_sizes, &(current_function_id), &(variable_index), pointer_data, instructions_buffer);
-            } else if =(id, NODE_NUMBER) .output_number(&(module_stack), pointer_data, instructions_buffer)
-            else if =(id, NODE_BOOLEAN) .output_boolean(pointer_data, instructions_buffer)
-            else if =(id, NODE_INVOKE) .output_invoke(nodes, i, program_data, pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), instructions_buffer)
-            else if =(id, NODE_INVOKE_INTERNAL) .output_invoke_internal(nodes, i, program_data, pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), instructions_buffer)
-            else if =(id, NODE_STRING) .output_string(data_buffer, data_indexes_to_adjust, pointer_data, instructions_buffer)
-            else if =(id, NODE_DECLARE) .output_declare(nodes, program_data, in_function, &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), &(module_stack), pointer_data, instructions_buffer)
-            else if =(id, NODE_ASSIGN) .output_assign(nodes, i, program_data, &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust_relative, &(module_stack), pointer_data, instructions_buffer)
-            else if =(id, NODE_RETRIEVE) .output_retrieve(nodes, i, program_data, &(module_stack), current_function_id, &(function_argument_names), &(function_argument_types), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, pushed_functions, pushed_function_targets, pointer_data, instructions_buffer)
-            else if =(id, NODE_RETURN) .output_return(nodes,  program_data, current_function_id, &(function_argument_types), &(function_return_types), instructions_buffer)
-            else if =(id, NODE_JUMP_CONDITIONAL) .output_jump_conditional(nodes,  program_data, pointer_data, jes, je_targets, instructions_buffer)
-            else if =(id, NODE_JUMP) .output_jump(nodes, jmps, jmp_targets, pointer_data, instructions_buffer)
-            else if =(id, NODE_TARGET) .output_target(targets, pointer_data, instructions_buffer)
-            else if =(id, NODE_SCOPE) .output_scope(&(variable_types), &(variable_indexes), variable_index, instructions_buffer)
-            else if =(id, NODE_ENDSCOPE) .output_end_scope(&(variable_types), &(variable_indexes))
-            else if =(id, NODE_DEFINE) .output_define(program_data, function_locations, &(module_stack), pointer_data, declared_module_id, instructions_buffer)
+                .output_function(nodes, i, function_local_sizes, &(current_function_id), &(variable_index), pointer_data, instructions_buffer); }
+            else if =(id, NODE_NUMBER) { .output_number(&(module_stack), pointer_data, instructions_buffer) }
+            else if =(id, NODE_BOOLEAN) { .output_boolean(pointer_data, instructions_buffer) }
+            else if =(id, NODE_INVOKE) { .output_invoke(nodes, i, program_data, pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), instructions_buffer) } 
+            else if =(id, NODE_INVOKE_INTERNAL) { .output_invoke_internal(nodes, i, &(define_stack), program_data, pointer_data, &(internal_function_instructions), &(internal_function_instruction_sizes), instructions_buffer) } 
+            else if =(id, NODE_STRING) { .output_string(data_buffer, data_indexes_to_adjust, pointer_data, instructions_buffer) } 
+            else if =(id, NODE_DECLARE) { .output_declare(nodes, program_data, in_function, &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), &(module_stack), pointer_data, instructions_buffer) }
+            else if =(id, NODE_ASSIGN) { .output_assign(nodes, i, program_data, &(define_stack), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust_relative, &(module_stack), pointer_data, instructions_buffer) }
+            else if =(id, NODE_RETRIEVE) { .output_retrieve(nodes, i, program_data, &(module_stack), &(define_stack), current_function_id, &(function_argument_names), &(function_argument_types), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, pushed_functions, pushed_function_targets, pointer_data, instructions_buffer) }
+            else if =(id, NODE_RETURN) { .output_return(nodes,  program_data, current_function_id, &(function_argument_types), &(function_return_types), instructions_buffer) }
+            else if =(id, NODE_JUMP_CONDITIONAL) { .output_jump_conditional(nodes,  program_data, pointer_data, jes, je_targets, instructions_buffer) }
+            else if =(id, NODE_JUMP) { .output_jump(nodes, jmps, jmp_targets, pointer_data, instructions_buffer) }
+            else if =(id, NODE_TARGET) { .output_target(targets, pointer_data, instructions_buffer) }
+            else if =(id, NODE_SCOPE) { .output_scope(&(variable_types), &(variable_indexes), variable_index, instructions_buffer) }
+            else if =(id, NODE_ENDSCOPE) { .output_end_scope(&(variable_types), &(variable_indexes)) }
+            else if =(id, NODE_DEFINE) { .output_define(program_data, function_locations, &(module_stack), pointer_data, declared_module_id, instructions_buffer) }
             else if =(id, NODE_ENDDEFINE) {
                 declare define_data = NodeEndDefineData.*cast(pointer_data);
                 declare define_type = NodeEndDefineData.>type(define_data);
@@ -295,12 +297,11 @@ define Target/X86_64 = module {
         X86_64.autobuffer_buffer_push_ret(instructions_buffer);
     };
 
-    define output_retrieve = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_retrieve = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-        declare variable_names_array = NodeRetrieveData.>name(retrieve_data);
-        declare variable_name_simple = *.cast(array8_get(variable_names_array, 0));
+        declare variable_name = NodeRetrieveData.>name_single(retrieve_data);
 
-        declare variable_type, scope_index = .get_variable_linux-x86_64(variable_types, variable_name_simple);
+        declare variable_type, scope_index = .get_variable_linux-x86_64(variable_types, variable_name);
         if !(=(variable_type, 0)) {
             variable_type = expand_module_name_array(variable_type, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
         };
@@ -310,7 +311,7 @@ define Target/X86_64 = module {
         if !(=(variable_type, 0)) {
             declare size = .get_size(variable_type, nodes, program_data);
 
-            declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, variable_name_simple, scope_variable_index);
+            declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
 
             if is_pointer(nodes, +(nodes_index, 1)) {
                 X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RBP, -(0, +(size, location)), RAX);
@@ -325,14 +326,14 @@ define Target/X86_64 = module {
         declare function_argument_names_individual = *.cast(autobuffer_array8_get(function_argument_names, current_function_id));
         declare function_argument_types_individual = *.cast(autobuffer_array8_get(function_argument_types, current_function_id));
 
-        variable_type = stringarray_get(function_argument_names_individual, function_argument_types_individual, variable_name_simple, array8_length(function_argument_types_individual));
+        variable_type = stringarray_get(function_argument_names_individual, function_argument_types_individual, variable_name, array8_length(function_argument_types_individual));
         if !(=(variable_type, 0)) {
             variable_type = expand_module_name_array(variable_type, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
         };
 
         if !(=(variable_type, 0)) {
             declare size = .get_size(variable_type, nodes, program_data);
-            declare location = .get_size_multiple_reversed_array(function_argument_types_individual, stringarray_get_index(function_argument_names_individual, variable_name_simple, array8_length(function_argument_names_individual)), nodes, program_data);
+            declare location = .get_size_multiple_reversed_array(function_argument_types_individual, stringarray_get_index(function_argument_names_individual, variable_name, array8_length(function_argument_names_individual)), nodes, program_data);
 
             if is_pointer(nodes, +(nodes_index, 1)) {
                 X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RBP, +(16, location), RAX);
@@ -347,12 +348,36 @@ define Target/X86_64 = module {
         declare define_types = &(ProgramData.>define_types(program_data));
         declare define_values = &(ProgramData.>define_values(program_data));
 
-        declare module_expanded_name = expand_module_name_array(variable_names_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        if string_length=(variable_name, "any_", 4) {
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("structure:", variable_name));
+            return;
+        };
+
+        if string=(variable_name, "@current_module") {
+            autobuffer_stack8_push(define_stack, variable_name);
+            return;
+        };
+
+        variable_type = get_define_type(define_types, define_values, variable_name);
+
+        //declare module_expanded_name = expand_module_name_array(variable_names_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        declare module_expanded_name = if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
+            expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, *.cast(autobuffer_stack8_pop(define_stack)), create_previous_results_list())
+        } else {
+            variable_name
+        };
         variable_type = get_define_type(define_types, define_values, module_expanded_name);
 
         if !(=(variable_type, 0)) {
+            if |(string=(variable_type, "module"), string_length=(variable_type, "structure[", 10)) {
+                autobuffer_stack8_push(define_stack, module_expanded_name);
+                return;
+            };
+        };
+
+        if !(=(variable_type, 0)) {
             // TODO: Better way of handling retrieve outside of functions
-            if !(string=(variable_type, "module")) {
+            if &&(!(string=(variable_type, "module")), !(string_length=(variable_type, "structure[", 10))) {
                 .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_expanded_name, variable_type);
             };
         };
@@ -504,10 +529,15 @@ define Target/X86_64 = module {
         };
     };
 
-    define output_assign = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_assign = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare assign_data = NodeAssignData.*cast(pointer_data);
-        declare variable_name = NodeAssignData.>name(assign_data);
-        variable_name = expand_module_name_array(variable_name, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        declare variable_name = NodeAssignData.>name_single(assign_data);
+
+        declare module_expanded_name = if >(AutoBufferStack8.>index(define_stack), 0) {
+            expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, *.cast(autobuffer_stack8_pop(define_stack)), create_previous_results_list())
+        } else {
+            variable_name
+        };
 
         declare variable_type, scope_index = .get_variable_linux-x86_64(variable_types, variable_name);
         if !(=(variable_type, 0)) {
@@ -601,34 +631,34 @@ define Target/X86_64 = module {
         return;
     };
 
-    define output_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
+    define output_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
         declare invoke_internal_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-        declare function_name_array = NodeInvokeInternalData.>name(invoke_internal_data);
-        declare function_name = *.cast(array8_get(function_name_array, 0));
+        declare function_name = NodeInvokeInternalData.>name_single(invoke_internal_data);
 
         declare memory_function = *.cast(hashmap_string_get(internal_function_instructions, function_name));
         if !(=(memory_function, 0)) {
             declare memory_function_size = whole_8.cast(hashmap_string_get(internal_function_instruction_sizes, function_name));
             autobuffer_buffer_push_pointer(instructions_buffer, memory_function, memory_function_size);
         }
-        else if string_length=(function_name, "=_", 2) .output_equals_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, ">_", 2) .output_greater_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, "<_", 2) .output_less_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, "+_", 2) .output_add_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, "-_", 2) .output_subtract_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, "*_", 2) .output_multiply_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, "/_", 2) .output_divide_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string_length=(function_name, "%_", 2) .output_modulo_internal(nodes, program_data, +(function_name, 2), instructions_buffer)
-        else if string=(function_name, "!") .output_not_internal(instructions_buffer)
-        else if string=(function_name, "|") .output_or_internal(instructions_buffer)
-        else if string=(function_name, "&&") .output_and_internal(instructions_buffer)
-        else if string=(function_name, "@syscall0") .output_syscall0_internal(instructions_buffer)
-        else if string=(function_name, "@syscall1") .output_syscall1_internal(instructions_buffer)
-        else if string=(function_name, "@syscall2") .output_syscall2_internal(instructions_buffer)
-        else if string=(function_name, "@syscall3") .output_syscall3_internal(instructions_buffer)
-        else if string=(function_name, "@syscall4") .output_syscall4_internal(instructions_buffer)
-        else if string=(function_name, "@syscall5") .output_syscall5_internal(instructions_buffer)
-        else if string=(function_name, "@syscall6") .output_syscall6_internal(instructions_buffer);
+        else if string_length=(function_name, "=_", 2) { .output_equals_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, ">_", 2) { .output_greater_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, "<_", 2) { .output_less_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, "+_", 2) { .output_add_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, "-_", 2) { .output_subtract_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, "*_", 2) { .output_multiply_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, "/_", 2) { .output_divide_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string_length=(function_name, "%_", 2) { .output_modulo_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
+        else if string=(function_name, "!") { .output_not_internal(instructions_buffer) }
+        else if string=(function_name, "|") { .output_or_internal(instructions_buffer) }
+        else if string=(function_name, "&&") { .output_and_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall0") { .output_syscall0_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall1") { .output_syscall1_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall2") { .output_syscall2_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall3") { .output_syscall3_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall4") { .output_syscall4_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall5") { .output_syscall5_internal(instructions_buffer) }
+        else if string=(function_name, "@syscall6") { .output_syscall6_internal(instructions_buffer) }
+        else if |(string=(function_name, "cast"), string=(function_name, "*cast")) { declare _ = autobuffer_stack8_pop(define_stack); };
     };
 
     define output_syscall0_internal = function(instructions_buffer: *AutoBufferBuffer) {
@@ -1228,9 +1258,7 @@ define Target/X86_64 = module {
                 declare internal_name = concatenate3_brk_allocate(structure_name, "<", member_name);
                 declare internal_instructions = autobuffer_buffer_new(8192);
 
-                X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, size);
-                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&(internal_instructions), RSP, 0, RAX);
-                X86_64.autobuffer_buffer_push_sub_register8_whole_8(&(internal_instructions), RSP, size);
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&(internal_instructions), RSP, size, RAX);
 
                 declare k = 0;
                 while <(k, size) {
@@ -1258,6 +1286,45 @@ define Target/X86_64 = module {
                 };
 
                 X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, +(size, 8));
+
+                hashmap_string_put(internal_function_instructions, internal_name, autobuffer_buffer_get_buffer_pointer(&(internal_instructions)));
+                hashmap_string_put(internal_function_instruction_sizes, internal_name, AutoBufferBuffer.>index(&(internal_instructions)));
+
+                // Setter for individual members (reversed)
+                declare internal_name = concatenate3_brk_allocate(structure_name, "<2", member_name);
+                declare internal_instructions = autobuffer_buffer_new(8192);
+
+                //X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, size);
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&(internal_instructions), RSP, 0, RAX);
+                //X86_64.autobuffer_buffer_push_sub_register8_whole_8(&(internal_instructions), RSP, size);
+                X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, 8);
+
+                declare k = 0;
+                while <(k, size) {
+                    if >(-(size, k), 7) {
+                        X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&(internal_instructions), RSP, k, RBX);
+                        X86_64.autobuffer_buffer_push_mov_register8_register8_pointer_offset(&(internal_instructions), RBX, RAX, +(k, location));
+
+                        k = +(k, 8);
+                    } else if >(-(size, k), 3) {
+                        X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(&(internal_instructions), RSP, k, EBX);
+                        X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(&(internal_instructions), EBX, RAX, +(k, location));
+
+                        k = +(k, 4);
+                    } else if >(-(size, k), 1) {
+                        X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(&(internal_instructions), RSP, k, BX);
+                        X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(&(internal_instructions), BX, RAX, +(k, location));
+
+                        k = +(k, 2);
+                    } else if >(-(size, k), 0) {
+                        X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(&(internal_instructions), RSP, k, BL);
+                        X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(&(internal_instructions), BL, RAX, +(k, location));
+
+                        k = +(k, 1);
+                    };
+                };
+
+                X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, size);
 
                 hashmap_string_put(internal_function_instructions, internal_name, autobuffer_buffer_get_buffer_pointer(&(internal_instructions)));
                 hashmap_string_put(internal_function_instruction_sizes, internal_name, AutoBufferBuffer.>index(&(internal_instructions)));

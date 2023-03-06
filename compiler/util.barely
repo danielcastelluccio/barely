@@ -186,6 +186,11 @@ define autobuffer_stack8_legacy_pop = function(buffer: *AutoBuffer, stack_pointe
     return any_8.>(index_pointer);
 };
 
+define autobuffer_stack8_legacy_peek = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
+    declare index_pointer = any_8.*cast(autobuffer_get(buffer, *(-(whole_8.>(stack_pointer), 1), 8)));
+    return any_8.>(index_pointer);
+};
+
 define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
     declare j = 0;
     while <(j, size) {

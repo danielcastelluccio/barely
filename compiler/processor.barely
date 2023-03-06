@@ -143,6 +143,8 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
     declare stack = autobuffer_new(64);
     declare stack_pointer = 0;
 
+    declare define_stack = autobuffer_stack8_new(32);
+
     declare if_blocks = autobuffer_new(64);
     declare if_block_pointer = 0;
     declare if_block_results = autobuffer_new(64);
@@ -182,7 +184,7 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
         } else if =(id, NODE_INVOKE) {
             process_invoke(nodes, i, &(module_stack), &(stack), &(stack_pointer), &(program_data), pointer_data);
         } else if =(id, NODE_INVOKE_INTERNAL) {
-            process_invoke_internal(nodes, i, &(module_stack), &(stack), &(stack_pointer), &(program_data), pointer_data);
+            process_invoke_internal(nodes, i, &(module_stack), &(stack), &(stack_pointer), &(define_stack), &(program_data), pointer_data);
         } else if =(id, NODE_DECLARE) {
             declare declare_data = NodeDeclareData.*cast(pointer_data);
             declare variable_name = NodeDeclareData.>name(declare_data);
@@ -193,10 +195,10 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
                 hashmap_string_put(HashMap.*cast(autobuffer_array8_get(&(variable_scopes_declares_map), -(variable_scope_declares_pointer, 1))), variable_name, i);
             };
         } else if =(id, NODE_ASSIGN) {
-            process_assign(nodes, i, &(module_stack), &(stack), &(stack_pointer), &(program_data), variable_scopes_types_map, variable_scope_types_pointer, variable_scopes_declares_map, pointer_data);
+            process_assign(nodes, &(i), &(module_stack), &(stack), &(stack_pointer), &(define_stack), &(program_data), variable_scopes_types_map, variable_scope_types_pointer, variable_scopes_declares_map, pointer_data);
         } else if =(id, NODE_RETRIEVE) {
             if in_function {
-                process_retrieve(nodes, i, &(module_stack), &(stack), &(stack_pointer), variable_scopes_types_map, variable_scope_types_pointer, &(program_data), current_function_id);
+                process_retrieve(nodes, &(i), &(module_stack), &(stack), &(stack_pointer), &(define_stack), variable_scopes_types_map, variable_scope_types_pointer, &(program_data), current_function_id);
             };
         } else if =(id, NODE_RETURN) {
             process_return(nodes, i, &(stack), &(stack_pointer), &(program_data), current_function_id);
@@ -424,15 +426,53 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
     };
 };
 
-define process_assign = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, variable_scopes_declares_map: AutoBuffer, pointer_data: *) {
+define process_assign = function(nodes: *Nodes, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, variable_scopes_declares_map: AutoBuffer, pointer_data: *) {
+    declare nodes_index = whole_8.>(nodes_index_in);
     declare assign_data = NodeAssignData.*cast(pointer_data);
-    declare variable_name = NodeAssignData.>name(assign_data);
-    variable_name = expand_module_name_array(variable_name, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+    declare variable_name = NodeAssignData.>name_single(assign_data);
+    declare uses_previous = NodeAssignData.>uses_previous(assign_data);
 
     if =(whole_8.>(stack_pointer), 0) {
         print_node_error_beginning(nodes, nodes_index);
         println("Assign ran out of stack values");
         exit(1);
+    };
+
+    declare variable_type = *.>0();
+
+    if uses_previous {
+        if =(AutoBufferStack8.>index(define_stack), 0) {
+            declare index = 0;
+            declare variable_type_temp = *.cast(autobuffer_stack8_legacy_peek(stack, stack_pointer));
+            if string_length=(variable_type_temp, "*", 1) {
+                variable_type_temp = +(variable_type_temp, 1);
+            } else {
+                whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
+                declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
+                NodeInvokeInternalData.<name_single(invoke_data, "&");
+                index = +(index, 1);
+
+                variable_type = concatenate2_brk_allocate("*", variable_type_temp);
+                declare _ = autobuffer_stack8_legacy_pop(stack, stack_pointer);
+                autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
+            };
+
+            declare name = variable_type_temp;
+            whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_RETRIEVE);
+            declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
+            NodeRetrieveData.<name_single(retrieve_data, name);
+            NodeRetrieveData.<coercion(retrieve_data, *.cast(0));
+            NodeRetrieveData.<uses_previous(retrieve_data, false);
+            index = +(index, 1);
+
+            declare name = concatenate2_brk_allocate("<2", variable_name);
+            whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
+            declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
+            NodeInvokeInternalData.<name_single(invoke_data, name);
+
+            whole_8.<(nodes_index_in, -(whole_8.>(nodes_index_in), 1));
+            return;
+        };
     };
 
     declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, variable_name);
@@ -464,20 +504,32 @@ define process_assign = function(nodes: *Nodes, nodes_index: whole_8, module_sta
         };
         return;
     };
-
     declare define_types = &(ProgramData.>define_types(program_data));
     declare define_values = &(ProgramData.>define_values(program_data));
     declare define_or_declares = &(ProgramData.>define_or_declares(program_data));
 
-    declare global_id = whole_8.cast(hashmap_string_get2(define_values, variable_name));
+    variable_type = get_define_retrieve_type(define_types, define_values, variable_name);
+
+    declare top_define = *.>0();
+    if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
+        top_define = *.cast(autobuffer_stack8_pop(define_stack));
+    };
+
+    declare module_expanded_name = if !(=(top_define, 0)) {
+        expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, +(top_define, 7), create_previous_results_list())
+    } else {
+        variable_name
+    };
+
+    declare global_id = whole_8.cast(hashmap_string_get2(define_values, module_expanded_name));
     if !(=(global_id, 999)) {
         declare global_types = &(ProgramData.>global_types(program_data));
         variable_type = *.cast(autobuffer_array8_get(global_types, global_id));
     };
 
-    declare define_or_declare = *.cast(hashmap_string_get(define_or_declares, variable_name));
+    declare define_or_declare = *.cast(hashmap_string_get(define_or_declares, module_expanded_name));
     if string=(define_or_declare, "declare") {
-        variable_type = *.cast(hashmap_string_get(define_types, variable_name));
+        variable_type = *.cast(hashmap_string_get(define_types, module_expanded_name));
     };
 
     if !(=(variable_type, 0)) {
@@ -650,13 +702,26 @@ define get_arguments_from_function_type = function(function_type: *): *, * {
 define get_define_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
     declare define_type = *.cast(hashmap_string_get(define_types, define_name));
     declare define_value = *.cast(hashmap_string_get(define_values, define_name));
+    //if =(define_type, 0) {
+
+    //} else if string_length=(define_type, "structure[", 10) {
+    //    define_type = define_name;
+    //};
+    return define_type;
+
+};
+
+define get_define_retrieve_type_without_structure = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
+    declare define_type = get_define_type(define_types, define_values, define_name);
     if =(define_type, 0) {
 
+    } else if string_length=(define_type, "global[", 7) {
+        define_type = substring_brk_allocate(define_type, 7, -(length(define_type), 1));
     } else if string_length=(define_type, "structure[", 10) {
         define_type = define_name;
     };
-    return define_type;
 
+    return define_type;
 };
 
 define get_define_retrieve_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
@@ -674,21 +739,58 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
     return *.cast(hashmap_string_get2(define_values, define_name));
 };
 
-define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
+define process_retrieve = function(nodes: *Nodes, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, define_stack: *AutoBufferStack8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
+    declare nodes_index = whole_8.>(nodes_index_in);
     declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-    declare variable_name_array = NodeRetrieveData.>name(retrieve_data);
-    declare simple_variable_name = *.cast(array8_get(variable_name_array, 0));
+    declare variable_name = NodeRetrieveData.>name_single(retrieve_data);
+    declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
     declare coercion = NodeRetrieveData.>coercion(retrieve_data);
 
     declare variable_type = *.cast(0);
 
-    declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, simple_variable_name);
+    if uses_previous {
+        if =(AutoBufferStack8.>index(define_stack), 0) {
+            declare index = 0;
+            declare variable_type_temp = *.cast(autobuffer_stack8_legacy_peek(stack, stack_pointer));
+            if string_length=(variable_type_temp, "*", 1) {
+                variable_type_temp = +(variable_type_temp, 1);
+            } else {
+                whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
+                declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
+                NodeInvokeInternalData.<name_single(invoke_data, "&");
+                index = +(index, 1);
+
+                variable_type = concatenate2_brk_allocate("*", variable_type_temp);
+                declare _ = autobuffer_stack8_legacy_pop(stack, stack_pointer);
+                autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
+            };
+
+            declare name = variable_type_temp;
+            whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_RETRIEVE);
+            declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
+            NodeRetrieveData.<name_single(retrieve_data, name);
+            NodeRetrieveData.<coercion(retrieve_data, *.cast(0));
+            NodeRetrieveData.<uses_previous(retrieve_data, false);
+            index = +(index, 1);
+
+            declare name = concatenate2_brk_allocate(">", variable_name);
+            whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
+            declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
+            NodeInvokeInternalData.<name_single(invoke_data, name);
+
+            whole_8.<(nodes_index_in, -(whole_8.>(nodes_index_in), 1));
+            return;
+        };
+    };
+
+    declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, variable_scope_types_pointer, variable_name);
 
     if !(=(variable_type, 0)) {
         variable_type = expand_module_name_array(variable_type, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
         if is_pointer(nodes, +(nodes_index, 1)) {
             variable_type = concatenate2_brk_allocate("*", variable_type);
         };
+
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
         return;
     };
@@ -699,7 +801,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, module_s
     declare function_argument_names_specific = *.cast(autobuffer_array8_get(function_argument_names, current_function_id));
     declare function_argument_types_specific = *.cast(autobuffer_array8_get(function_argument_types, current_function_id));
 
-    variable_type = stringarray_get(function_argument_names_specific, function_argument_types_specific, simple_variable_name, array8_length(function_argument_types_specific));
+    variable_type = stringarray_get(function_argument_names_specific, function_argument_types_specific, variable_name, array8_length(function_argument_types_specific));
     if !(=(variable_type, 0)) {
         variable_type = expand_module_name_array(variable_type, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
         if is_pointer(nodes, +(nodes_index, 1)) {
@@ -714,8 +816,31 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, module_s
 
     declare define_types = &(ProgramData.>define_types(program_data));
 
-    declare module_expanded_name = expand_module_name_array(variable_name_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+    if string_length=(variable_name, "any_", 4) {
+        autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("structure:", variable_name));
+        return;
+    };
+
+    if string=(variable_name, "@current_module") {
+        autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", variable_name));
+        return;
+    };
+
+    variable_type = get_define_retrieve_type(define_types, define_values, variable_name);
+
+    declare top_define = *.>0();
+    if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
+        top_define = *.cast(autobuffer_stack8_pop(define_stack));
+    };
+
+    declare module_expanded_name = if !(=(top_define, 0)) {
+        expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, +(top_define, 7), create_previous_results_list())
+    } else {
+        variable_name
+    };
+
     variable_type = get_define_retrieve_type(define_types, define_values, module_expanded_name);
+
     if !(=(coercion, 0)) {
         variable_type = coercion;
     };
@@ -738,16 +863,16 @@ define process_retrieve = function(nodes: *Nodes, nodes_index: whole_8, module_s
 
     if !(=(variable_type, 0)) {
         if string=(variable_type, "module") {
-            print_node_error_beginning(nodes, nodes_index);
-            println("Cannot retrieve a module");
-            exit(1);
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", module_expanded_name));
+            return;
+        } else if string_length=(variable_type, "structure[", 10) {
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("structure:", module_expanded_name));
+            return;
         };
     };
 
     if !(=(variable_type, 0)) {
         autobuffer_stack8_legacy_push(stack, stack_pointer, variable_type);
-    } else if string_length=(simple_variable_name, "any_", 4) {
-        autobuffer_stack8_legacy_push(stack, stack_pointer, simple_variable_name);
     } else {
         print_node_error_beginning(nodes, nodes_index);
         print("Retrieve target '");
@@ -761,11 +886,10 @@ define process_invoke = function(nodes: *Nodes, nodes_index: whole_8, module_sta
     process_invoke_pointer(nodes, nodes_index, module_stack, stack, stack_pointer, program_data, pointer_data);
 };
 
-define process_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, pointer_data: *) {
+define process_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *) {
     declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, nodes_index));
-    declare name_array = NodeInvokeInternalData.>name(invoke_data);
-    declare is_single = =(array8_length(name_array), 1);
-    declare function_name = *.cast(array8_get(name_array, -(array8_length(name_array), 1)));
+    declare function_name = NodeInvokeInternalData.>name_single(invoke_data);
+    declare is_single = !(NodeInvokeInternalData.>uses_previous(invoke_data));
 
     if &&(is_single, string=(function_name, "+")) {
         function_name = process_math_invoke(nodes, nodes_index, stack, stack_pointer, program_data, "+");
@@ -784,22 +908,95 @@ define process_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, m
     } else if &&(is_single, string=(function_name, "<")) {
         function_name = process_comparison_invoke(nodes, nodes_index, stack, stack_pointer, program_data, "<");
     } else if |(string=(function_name, "cast"), string=(function_name, "*cast")) {
-        process_cast(nodes, nodes_index, module_stack, stack, stack_pointer, program_data, invoke_data, function_name);
+        process_cast(nodes, nodes_index, module_stack, stack, stack_pointer, define_stack, program_data, invoke_data, function_name);
     } else if &&(is_single, string=(function_name, "&")) {
     } else {
         if is_pointer(nodes, +(nodes_index, 1)) {
             function_name = concatenate2_brk_allocate("*", function_name);
         };
-        function_name = if >(array8_length(NodeInvokeInternalData.>name(invoke_data)), 1) {
-            declare function_name_new = expand_module_name_array(NodeInvokeInternalData.>name(invoke_data), 1, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
-            concatenate2_brk_allocate(function_name_new, function_name)
+        function_name = if &&(>(AutoBufferStack8.>index(define_stack), 0), !(is_single)) {
+            concatenate2_brk_allocate(+(*.cast(autobuffer_stack8_pop(define_stack)), 10), function_name)
         } else {
             function_name
         };
         process_internal_invoke(nodes, nodes_index, stack, stack_pointer, program_data, function_name);
     };
 
-    array8_set(NodeInvokeInternalData.>name(invoke_data), 0, function_name);
+    NodeInvokeInternalData.<name_single(invoke_data, function_name);
+};
+
+define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, top_define: *, previous_results_list: *AutoBufferStack8): * {
+    declare name = name_in;
+    declare pointer_count = 0;
+    while &&(=(any_1.>(any_1.*cast(+(name, pointer_count))), ASCII.ASTERISK), <(pointer_count, length(name))) {
+         pointer_count = +(pointer_count, 1);
+    };
+
+    name = +(name, pointer_count);
+
+    declare current_module_id = if string=(top_define, "@current_module") {
+        whole_8.cast(autobuffer_stack8_peek(module_stack))
+    } else {
+        whole_8.cast(hashmap_string_get2(module_id_map, top_define))
+    };
+
+    //declare current_module_id = if string=(top_define, "@current_module") {
+    //    whole_8.cast(autobuffer_stack8_peek(module_stack))
+    //} else if =(current_module_id, 999) {
+    //    declare temp_id = whole_8.cast(hashmap_string_get2(module_id_map, current_module));
+
+    //    if =(temp_id, 999) {
+    //        declare temp_name = *.cast(hashmap_string_get2(module_references_map, current_module));
+    //        temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
+    //        temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
+    //    };
+    //    temp_id
+    //} else {
+    //    declare current_module_id_string = any_16.>0();
+    //    whole_8_to_string(current_module_id, &(current_module_id_string));
+
+    //    declare current_module_full = concatenate2_brk_allocate(&(current_module_id_string), current_module);
+    //    declare temp_id = whole_8.cast(hashmap_string_get2(module_id_map, current_module_full));
+
+    //    if =(temp_id, 999) {
+    //        declare temp_name = *.cast(hashmap_string_get2(module_references_map, current_module_full));
+    //        if =(temp_name, 999) {
+    //            return name;
+    //        };
+
+    //        temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
+    //        temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
+    //    };
+    //    temp_id
+    //};
+
+    if !(=(current_module_id, 999)) {
+        declare current_module_id_string = any_16.>0();
+        whole_8_to_string(current_module_id, &(current_module_id_string));
+        name = concatenate2_brk_allocate(&(current_module_id_string), name);
+    };
+
+    //declare possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
+    //if !(=(possible_reference, 999)) {
+    //    declare i = 0;
+    //    while <(i, AutoBufferStack8.>index(previous_results_list)) {
+    //        if string=(*.cast(autobuffer_stack8_get(previous_results_list, i)), name) {
+    //            return name;
+    //        };
+    //        i = +(i, 1);
+    //    };
+    //    autobuffer_stack8_push(previous_results_list, name);
+
+    //    name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
+    //};
+
+    declare i = 0;
+    while <(i, pointer_count) {
+        name = concatenate2_brk_allocate("*", name);
+        i = +(i, 1);
+    };
+
+    return name;
 };
 
 define expand_module_name_array = function(name_array: *, resolvable_end: whole_8, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, previous_results_list: *AutoBufferStack8): * {
@@ -900,14 +1097,14 @@ define print_array8_string = function(array: *) {
     println("]");
 };
 
-define process_cast = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, invoke_data: *NodeInvokeInternalData, function_name: *) {
+define process_cast = function(nodes: *Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, invoke_data: *NodeInvokeInternalData, function_name: *) {
     if =(whole_8.>(stack_pointer), 0) {
         print_node_error_beginning(nodes, nodes_index);
         println("Cast ran out of stack values");
         exit(1);
     };
 
-    declare to_push = expand_module_name_array(NodeInvokeInternalData.>name(invoke_data), 1, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+    declare to_push = +(*.cast(autobuffer_stack8_pop(define_stack)), 10);
 
     if string=(function_name, "*cast") {
         to_push = concatenate2_brk_allocate("*", to_push);
@@ -932,38 +1129,7 @@ define process_cast = function(nodes: *Nodes, nodes_index: whole_8, module_stack
 };
 
 define process_internal_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, function_name: *) {
-    //declare function_name = NodeInvokeData.>name(invoke_data);
-    //declare has_specifier = NodeInvokeData.>has_specifier(invoke_data);
     declare found_function = false;
-
-    //if has_specifier {
-    //    declare popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
-
-    //    function_name = concatenate2_brk_allocate(popped, function_name);
-    //    NodeInvokeData.<name(invoke_data, function_name);
-    //    NodeInvokeData.<has_specifier(invoke_data, false);
-
-    //    declare running = true;
-
-    //    declare i = -(nodes_index, 1);
-    //    while running {
-    //        declare id = nodes_get_id(nodes, i);
-    //        declare is_module = NodeRetrieveData.>is_module(NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, i)));
-    //        nodes_set_skip(nodes, i);
-
-    //        if =(id, NODE_SKIP) {
-
-    //        } else if =(id, NODE_RETRIEVE) {
-    //            if !(is_module) {
-    //                running = false;
-    //            };
-    //        } else {
-    //            running = false;
-    //        };
-
-    //        i = -(i, 1);
-    //    };
-    //};
 
     declare internal_function_argument_types = &(ProgramData.>internal_function_argument_types(program_data));
     declare internal_function_return_types = &(ProgramData.>internal_function_return_types(program_data));
@@ -1048,7 +1214,7 @@ define process_math_invoke = function(nodes: *Nodes, nodes_index: whole_8, stack
     declare define_values = &(ProgramData.>define_values(program_data));
 
     if is_define(first) {
-        first = get_define_retrieve_type(define_types, define_values, first);
+        first = get_define_retrieve_type_without_structure(define_types, define_values, first);
     };
     declare new_name = concatenate3_brk_allocate(math_name, "_" first);
 
@@ -1086,7 +1252,7 @@ define process_comparison_invoke = function(nodes: *Nodes, nodes_index: whole_8,
     declare define_values = &(ProgramData.>define_values(program_data));
 
     if is_define(first) {
-        first = get_define_retrieve_type(define_types, define_values, first);
+        first = get_define_retrieve_type_without_structure(define_types, define_values, first);
     };
     declare new_name = concatenate3_brk_allocate(comparison_name, "_" first);
 
@@ -1434,8 +1600,8 @@ define is_pointer = function(nodes: *Nodes, index_in: whole_8): boolean {
         declare id = nodes_get_id(nodes, index);
         if =(id, NODE_INVOKE_INTERNAL) {
             declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, index));
-            declare name_expanded = *.cast(array8_get(NodeInvokeInternalData.>name(invoke_data), 0));
-            return string=(name_expanded, "&");
+            declare name = NodeInvokeInternalData.>name_single(invoke_data);
+            return string=(name, "&");
         } else if =(id, NODE_SKIP) {
             
         } else {

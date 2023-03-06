@@ -188,6 +188,12 @@ define add_structure_functions = function(nodes: *Nodes) {
                 declare function_returns = brk_allocate(8);
                 nodes_append_function(nodes, function_name, function_arguments, function_returns);
 
+                // Setter for an individual member with reversed inputs
+                declare function_name = concatenate3_brk_allocate(name, "<2", item_name);
+                declare function_arguments = create_size_two_array8_brk_allocate(item_type, pointer_name);
+                declare function_returns = brk_allocate(8);
+                nodes_append_function(nodes, function_name, function_arguments, function_returns);
+
                 // Getter for individual members
                 declare function_name = concatenate3_brk_allocate(name, ">", item_name);
                 declare function_arguments = create_size_one_array8_brk_allocate(pointer_name);
@@ -216,23 +222,22 @@ define add_used_any_types = function(nodes: *Nodes) {
     while <(i, nodes_index_saved) {
         declare id = nodes_get_id(nodes, i);
     
-        if =(id, NODE_INVOKE_INTERNAL) {
-            declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, i));
-            declare names = NodeInvokeInternalData.>name(invoke_data);
-            declare name_first = *.cast(array8_get(names, 0));
-            if &&(>(array8_length(names), 1), string_length=(name_first, "any_", 4)) {
+        if =(id, NODE_RETRIEVE) {
+            declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, i));
+            declare name = NodeRetrieveData.>name_single(retrieve_data);
+            if string_length=(name, "any_", 4) {
                 declare added = false;
                 declare j = 0;
                 while <(j, already_added_types_index) {
-                    if string=(*.cast(autobuffer_array8_get(&(already_added_types), j)), name_first) {
+                    if string=(*.cast(autobuffer_array8_get(&(already_added_types), j)), name) {
                         added = true;
                     };
                     j = +(j, 1);
                 };
 
                 if !(added) {
-                    nodes_append_structure_any(nodes, name_first);
-                    autobuffer_stack8_legacy_push(&(already_added_types), &(already_added_types_index), name_first);
+                    nodes_append_structure_any(nodes, name);
+                    autobuffer_stack8_legacy_push(&(already_added_types), &(already_added_types_index), name);
                 };
             };
         };
