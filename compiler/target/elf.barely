@@ -81,7 +81,8 @@ define Target/Elf = module {
         autobuffer_set(&(output), &(program_header_data), 120, 56);
         autobuffer_set(&(output), &(program_header_bss), 176, 56);
 
-        create_and_write_file(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), AutoBuffer.>size(&(output)));
+        declare buffer_size = +(+(232, instructions_index), data_index);
+        create_and_write_file(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), buffer_size);
     };
 
     define adjust_function_calls = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
