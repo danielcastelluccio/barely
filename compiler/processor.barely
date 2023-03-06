@@ -450,6 +450,7 @@ define process_assign = function(nodes: *Nodes, nodes_index_in: *whole_8, module
                 whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
                 declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
                 NodeInvokeInternalData.<name_single(invoke_data, "&");
+                NodeInvokeInternalData.<uses_previous(invoke_data, false);
                 index = +(index, 1);
 
                 variable_type = concatenate2_brk_allocate("*", variable_type_temp);
@@ -469,6 +470,7 @@ define process_assign = function(nodes: *Nodes, nodes_index_in: *whole_8, module
             whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
             declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
             NodeInvokeInternalData.<name_single(invoke_data, name);
+            NodeInvokeInternalData.<uses_previous(invoke_data, true);
 
             whole_8.<(nodes_index_in, -(whole_8.>(nodes_index_in), 1));
             return;
@@ -758,6 +760,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index_in: *whole_8, modu
                 whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
                 declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
                 NodeInvokeInternalData.<name_single(invoke_data, "&");
+                NodeInvokeInternalData.<uses_previous(invoke_data, false);
                 index = +(index, 1);
 
                 variable_type = concatenate2_brk_allocate("*", variable_type_temp);
@@ -777,6 +780,7 @@ define process_retrieve = function(nodes: *Nodes, nodes_index_in: *whole_8, modu
             whole_8.<(nodes_get_id_pointer(nodes, +(nodes_index, index)), NODE_INVOKE_INTERNAL);
             declare invoke_data = NodeInvokeInternalData.*cast(nodes_get_pointer_data(nodes, +(nodes_index, index)));
             NodeInvokeInternalData.<name_single(invoke_data, name);
+            NodeInvokeInternalData.<uses_previous(invoke_data, true);
 
             whole_8.<(nodes_index_in, -(whole_8.>(nodes_index_in), 1));
             return;
