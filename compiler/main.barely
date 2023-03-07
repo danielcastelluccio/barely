@@ -17,6 +17,12 @@ define main = function(arguments: **, argument_count: whole_8) {
     declare instruction_set = "";
     declare target_os = "";
 
+    // In the future, there should be a better way of translating these into strings
+    #compile_if(target, linux, target_os = "linux";);
+    #compile_if(instruction_set, x86_64, instruction_set = "x86_64";);
+    #compile_if(format, elf, format = "elf";);
+    #compile_if(format, macho, format = "macho";);
+
     declare flags = hashmap_new(32);
 
     declare i = 1;
@@ -32,7 +38,6 @@ define main = function(arguments: **, argument_count: whole_8) {
             format = substring_brk_allocate(target, 0, first_index(target, ASCII.COLON));
             instruction_set = substring_brk_allocate(target, +(first_index(target, ASCII.COLON), 1), nth_index(target, ASCII.COLON, 1));
             target_os = +(target, +(nth_index(target, ASCII.COLON, 1), 1));
-            hashmap_string_put(&(flags), "target", target_os);
 
             i = +(i, 2);
         } else if string_length=(pointer, "--", 2) {
@@ -44,6 +49,10 @@ define main = function(arguments: **, argument_count: whole_8) {
             i = +(i, 1);
         };
     };
+
+    hashmap_string_put(&(flags), "format", format);
+    hashmap_string_put(&(flags), "instruction_set", instruction_set);
+    hashmap_string_put(&(flags), "target", target_os);
 
     if =(length(format), 0) {
         println("No output format specified!");
