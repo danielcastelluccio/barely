@@ -304,7 +304,10 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     } else if =(id, NODE_INVOKE) {
         println("Invoke{}");
     } else if =(id, NODE_NUMBER) {
-        println("Number{}")
+        declare number_data = NodeNumberData.*cast(pointer_data);
+        print("Number{value=")
+        print_whole_8(NodeNumberData.>value(number_data));
+        println("}");
     } else if =(id, NODE_BOOLEAN) {
         println("Boolean{}")
     } else if =(id, NODE_STRING) {

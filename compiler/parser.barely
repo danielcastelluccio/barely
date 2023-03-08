@@ -1,6 +1,5 @@
-define tokenize_inner = function(auto_buffer: *AutoBuffer, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
-    declare buffer = AutoBuffer.>buffer(auto_buffer);
-    declare buffer_length = length(AutoBuffer.>buffer(auto_buffer));
+define tokenize_inner = function(buffer: *, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
+    declare buffer_length = length(buffer);
 
     if =(buffer_length, 0) {
         return;
@@ -87,24 +86,46 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
         declare character_pointer_next = any_1.*cast(+(contents, +(index, 1)));
         declare handled = false;
 
+        if =(any_1.>(character_pointer), ASCII.SLASH) {
+            if =(any_1.>(character_pointer_next), ASCII.SLASH) {
+                in_comment = true;
+                handled = true;
+            };
+            column = +(column, 1);
+        };
+
         if !(in_quotes) {
             if !(in_comment) {
                 // a macro would probably be better suited for this
-                declare current_character = any_1.>(character_pointer);
-                handle_special_character(current_character, ASCII.OPEN_PARENTHESIS, TOKEN_OPEN_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.CLOSED_PARENTHESIS, TOKEN_CLOSED_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.OPEN_CURLY_BRACKETS, TOKEN_OPEN_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.CLOSED_CURLY_BRACKETS, TOKEN_CLOSED_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.OPEN_BRACKET, TOKEN_OPEN_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.CLOSED_BRACKET, TOKEN_CLOSED_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.COMMA, TOKEN_COMMA, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.SEMICOLON, TOKEN_SEMICOLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.PERIOD, TOKEN_PERIOD, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_special_character(current_character, ASCII.COLON, TOKEN_COLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                declare character = any_1.>(character_pointer);
+                handle_special_character(character, ASCII.OPEN_PARENTHESIS, TOKEN_OPEN_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.CLOSED_PARENTHESIS, TOKEN_CLOSED_PARENTHESIS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.OPEN_CURLY_BRACKETS, TOKEN_OPEN_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.CLOSED_CURLY_BRACKETS, TOKEN_CLOSED_CURLY_BRACKETS, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.OPEN_BRACKET, TOKEN_OPEN_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.CLOSED_BRACKET, TOKEN_CLOSED_BRACKET, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.COMMA, TOKEN_COMMA, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.SEMICOLON, TOKEN_SEMICOLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.PERIOD, TOKEN_PERIOD, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_special_character(character, ASCII.COLON, TOKEN_COLON, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
 
-                handle_break(any_1.>(character_pointer), ASCII.SPACE, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_break(any_1.>(character_pointer), ASCII.LINE_FEED, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
-                handle_break(any_1.>(character_pointer), ASCII.TAB, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(character, ASCII.SPACE, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(character, ASCII.LINE_FEED, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                handle_break(character, ASCII.TAB, &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+
+                declare buffer_pointer = AutoBuffer.>buffer(&(buffer));
+                declare next_character = any_1.>(character_pointer_next);
+
+                check_handle_single_operator(character, ASCII.PLUS, "+", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                check_handle_single_operator(character, ASCII.MINUS, "-", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                check_handle_single_operator(character, ASCII.ASTERISK, "*", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                check_handle_single_operator(character, ASCII.SLASH, "/", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                check_handle_single_operator(character, ASCII.PERCENT, "%", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+
+                check_handle_double_operator(character, next_character, ASCII.EQUAL, ASCII.EQUAL, "==", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled), &(index));
+
+                check_handle_single_prefix(character, ASCII.EXCLAMATION_POINT, "!", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
+                check_handle_single_prefix(character, ASCII.AMPERSAND, "&", &(buffer), &(buffer_index), tokens, file_name, &(row), &(column), &(handled));
             };
         };
 
@@ -125,13 +146,6 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
                 in_quotes = !(in_quotes);
                 handled = true;
             };
-        };
-        if =(any_1.>(character_pointer), ASCII.SLASH) {
-            if =(any_1.>(character_pointer_next), ASCII.SLASH) {
-                in_comment = true;
-                handled = true;
-            };
-            column = +(column, 1);
         };
 
         if !(handled) {
@@ -156,9 +170,47 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens) {
     };
 };
 
+define check_handle_single_operator = function(character: any_1, wanted_character: any_1, internal_name: *, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean) {
+    if =(character, wanted_character) {
+        tokenize_inner(AutoBuffer.>buffer(buffer), tokens, file_name, row, column);
+
+        tokenize_inner(internal_name, tokens, file_name, row, column);
+
+        autobuffer_reset(buffer);
+        whole_8.<(buffer_index, 0);
+        increment_whole_8_pointer(column, 1);
+        boolean.<(handled, true);
+    };
+};
+
+define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+    if &&(=(character, wanted_character), =(character_next, wanted_character_next)) {
+        tokenize_inner(AutoBuffer.>buffer(buffer), tokens, file_name, row, column);
+
+        tokenize_inner(internal_name, tokens, file_name, row, column);
+
+        autobuffer_reset(buffer);
+        whole_8.<(buffer_index, 0);
+        increment_whole_8_pointer(column, 2);
+        increment_whole_8_pointer(index, 1);
+        boolean.<(handled, true);
+    };
+};
+
+define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean) {
+    if =(character, wanted_character) {
+        tokenize_inner(internal_name, tokens, file_name, row, column);
+
+        autobuffer_reset(buffer);
+        whole_8.<(buffer_index, 0);
+        increment_whole_8_pointer(column, 1);
+        boolean.<(handled, true);
+    };
+};
+
 define handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean) {
     if =(current_character, desired_character) {
-        tokenize_inner(buffer, tokens, file_name, row, column);
+        tokenize_inner(AutoBuffer.>buffer(buffer), tokens, file_name, row, column);
         boolean.<(handled, true);
         autobuffer_reset(buffer);
         whole_8.<(buffer_index, 0);
@@ -170,7 +222,7 @@ define handle_special_character = function(current_character: any_1, desired_cha
 
 define handle_break = function(current_character: any_1, desired_character: whole_1, buffer: *AutoBuffer, buffer_index: *whole_8, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean) {
     if =(current_character, desired_character) {
-        tokenize_inner(buffer, tokens, file_name, row, column);
+        tokenize_inner(AutoBuffer.>buffer(buffer), tokens, file_name, row, column);
         boolean.<(handled, true);
         autobuffer_reset(buffer);
         whole_8.<(buffer_index, 0);
@@ -619,7 +671,7 @@ define check_parse_operator = function(tokens: *Tokens, index_pointer: *whole_8,
         parse_expression(tokens, index_pointer, nodes);
 
         declare operator_data = NodeInvokeInternalData.*cast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, -(whole_8.>(index_pointer), 1))));
-        NodeInvokeInternalData.<name(operator_data, create_size_one_array8_brk_allocate(internal_name));
+        NodeInvokeInternalData.<name_single(operator_data, internal_name);
         return true;
     };
 
@@ -635,6 +687,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens, index_pointer:
             declare name = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
 
             if check_parse_operator(tokens, index_pointer, nodes, name, "!", "!") { return; }; // TODO: I have no idea why the syntax with the bar return is not working
+            if check_parse_operator(tokens, index_pointer, nodes, name, "&", "&") { return; };
         };
     };
 
