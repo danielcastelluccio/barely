@@ -608,6 +608,12 @@ define parse_expression = function(tokens: *Tokens, index_pointer: *whole_8, nod
         declare _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
     };
 
+    if =(id, TOKEN_OPEN_PARENTHESIS) {
+        index = +(index, 1);
+        parse_expression(tokens, &(index), nodes);
+        index = +(index, 1);
+    };
+
     if =(id, TOKEN_KEYWORD) {
         declare name_value = TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, whole_8.>(index_pointer))));
         if string=(name_value, "if") {
