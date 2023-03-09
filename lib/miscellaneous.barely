@@ -13,8 +13,8 @@ define string= = function(string1: *, string2: *): boolean {
 define string_length= = function(string1: *, string2: *, length: whole_8): boolean {
     declare i = 0;
     while <(i, length) {
-        declare string1_character = any_1.>(any_1.*cast(+(string1, i)));
-        declare string2_character = any_1.>(any_1.*cast(+(string2, i)));
+        declare string1_character = any_1.>(any_1.pcast(+(string1, i)));
+        declare string2_character = any_1.>(any_1.pcast(+(string2, i)));
 
         if !(=(string1_character, string2_character)) {
             return false;
@@ -33,35 +33,35 @@ define copy = function(from: *, to: *, size: whole_8) {
         declare done_anything = false;
 
         if &&(<(+(i, 4096), size), !(done_anything)) {
-            any_4096.<(any_4096.*cast(+(to, i)), any_4096.>(any_4096.*cast(+(from, i))));
+            any_4096.<(any_4096.pcast(+(to, i)), any_4096.>(any_4096.pcast(+(from, i))));
             i = +(i, 4096);
 
             done_anything = true;
         };
 
         if &&(<(+(i, 512), size), !(done_anything)) {
-            any_512.<(any_512.*cast(+(to, i)), any_512.>(any_512.*cast(+(from, i))));
+            any_512.<(any_512.pcast(+(to, i)), any_512.>(any_512.pcast(+(from, i))));
             i = +(i, 512);
 
             done_anything = true;
         };
 
         if &&(<(+(i, 64), size), !(done_anything)) {
-            any_64.<(any_64.*cast(+(to, i)), any_64.>(any_64.*cast(+(from, i))));
+            any_64.<(any_64.pcast(+(to, i)), any_64.>(any_64.pcast(+(from, i))));
             i = +(i, 64);
 
             done_anything = true;
         };
 
         if &&(<(+(i, 8), size), !(done_anything)) {
-            any_8.<(any_8.*cast(+(to, i)), any_8.>(any_8.*cast(+(from, i))));
+            any_8.<(any_8.pcast(+(to, i)), any_8.>(any_8.pcast(+(from, i))));
             i = +(i, 8);
 
             done_anything = true;
         };
 
         if !(done_anything) {
-            any_1.<(any_1.*cast(+(to, i)), any_1.>(any_1.*cast(+(from, i))));
+            any_1.<(any_1.pcast(+(to, i)), any_1.>(any_1.pcast(+(from, i))));
             i = +(i, 1);
         };
     };
@@ -94,7 +94,7 @@ define whole_8_to_whole_1 = function(whole_8: whole_8): whole_1 {
 define whole_4_to_whole_8 = function(data: whole_4): whole_8 {
     declare _whole_8 = whole_8.>0();
 
-    whole_4.<(whole_4.*cast(&(_whole_8)), data);
+    whole_4.<(whole_4.pcast(&(_whole_8)), data);
 
     return _whole_8;
 };
@@ -102,7 +102,7 @@ define whole_4_to_whole_8 = function(data: whole_4): whole_8 {
 define whole_2_to_whole_8 = function(data: whole_2): whole_8 {
     declare _whole_8 = whole_8.>0();
 
-    whole_2.<(whole_2.*cast(&(_whole_8)), data);
+    whole_2.<(whole_2.pcast(&(_whole_8)), data);
 
     return _whole_8;
 };
@@ -110,7 +110,7 @@ define whole_2_to_whole_8 = function(data: whole_2): whole_8 {
 define whole_1_to_whole_8 = function(data: whole_1): whole_8 {
     declare _whole_8 = whole_8.>0();
 
-    whole_1.<(whole_1.*cast(&(_whole_8)), data);
+    whole_1.<(whole_1.pcast(&(_whole_8)), data);
 
     return _whole_8;
 };
@@ -118,7 +118,7 @@ define whole_1_to_whole_8 = function(data: whole_1): whole_8 {
 define length = function(string: *): whole_8 {
     declare length = 0;
 
-    while !(=(0:whole_1, any_1.>(+(any_1.*cast(string), length)))) {
+    while !(=(0:whole_1, any_1.>(+(any_1.pcast(string), length)))) {
         length = +(length, 1);
     };
 

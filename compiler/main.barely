@@ -60,22 +60,22 @@ define main = function(arguments: **, argument_count: whole_8) {
     };
 
     declare output_instruction_set = if string=(instruction_set, "x86_64") {
-        Target/X86_64.get_functions()
+        Target_X86_64.get_functions()
     } else {
-        Target/X86_64.get_functions()
+        Target_X86_64.get_functions()
     };
 
     declare output_format = if string=(format, "elf") {
-        Target/Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
+        Target_Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
     } else if string=(format, "macho") {
-        Target/Macho.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
+        Target_Macho.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
     } else {
         print("Invalid output format '");
         print(format);
         println("'");
         exit(1);
         // temporary
-        Target/Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
+        Target_Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
     };
 
     declare tokens_expanded = tokens_new();
@@ -142,12 +142,12 @@ define add_structure_functions = function(nodes: *Nodes) {
         } else if =(id, NODE_ENDMODULE) {
             declare _ = autobuffer_stack8_pop(&(module_stack));
         } else if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
-            declare pointer = NodeStructureData.*cast(nodes_get_pointer_data(nodes, i));
+            declare pointer = NodeStructureData.pcast(nodes_get_pointer_data(nodes, i));
             declare name = NodeStructureData.>name(pointer);
             declare is_internal = NodeStructureData.>is_internal(pointer);
 
             if =(name, 0) {
-                declare define_data = NodeDefineData.*cast(nodes_get_pointer_data(nodes, -(i, 1)));
+                declare define_data = NodeDefineData.pcast(nodes_get_pointer_data(nodes, -(i, 1)));
                 name = NodeDefineData.>name(define_data);
             };
 
@@ -232,7 +232,7 @@ define add_used_any_types = function(nodes: *Nodes) {
         declare id = nodes_get_id(nodes, i);
     
         if =(id, NODE_RETRIEVE) {
-            declare retrieve_data = NodeRetrieveData.*cast(nodes_get_pointer_data(nodes, i));
+            declare retrieve_data = NodeRetrieveData.pcast(nodes_get_pointer_data(nodes, i));
             declare name = NodeRetrieveData.>name_single(retrieve_data);
             if string_length=(name, "any_", 4) {
                 declare added = false;

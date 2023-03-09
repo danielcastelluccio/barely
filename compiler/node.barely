@@ -150,11 +150,11 @@ define nodes_get_pointer_data = function(nodes: *Nodes, index: whole_8): * {
 };
 
 define nodes_get_id_pointer = function(nodes: *Nodes, index: whole_8): *whole_8 {
-    return whole_8.*cast(nodes_get_pointer(nodes, index));
+    return whole_8.pcast(nodes_get_pointer(nodes, index));
 };
 
 define nodes_get_location_data = function(nodes: *Nodes, index: whole_8): *NodeLocationData {
-    return NodeLocationData.*cast(autobuffer_get(&(Nodes.>buffer(nodes)), +(*(index, NODE_SIZE), 8)));
+    return NodeLocationData.pcast(autobuffer_get(&(Nodes.>buffer(nodes)), +(*(index, NODE_SIZE), 8)));
 };
 
 define nodes_get_pointer = function(nodes: *Nodes, index: whole_8): * {
@@ -204,7 +204,7 @@ define nodes_append_structure = function(nodes: *Nodes, name: *, size: whole_8) 
     declare size_string = any_24.>0();
     whole_8_to_string(size, &(size_string));
 
-    declare define_data = NodeDefineData.*cast(nodes_append_data_anonymous(nodes, NODE_DEFINE));
+    declare define_data = NodeDefineData.pcast(nodes_append_data_anonymous(nodes, NODE_DEFINE));
     NodeDefineData.<name(define_data, name);
 
     // TODO: Make this type be based on the structure data
@@ -214,7 +214,7 @@ define nodes_append_structure = function(nodes: *Nodes, name: *, size: whole_8) 
     declare item_names = create_size_one_array8_brk_allocate("_");
     declare item_types = create_size_one_array8_brk_allocate(concatenate2_brk_allocate("any_", &(size_string)));
 
-    declare structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    declare structure_data = NodeStructureData.pcast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<item_names(structure_data, item_names);
     NodeStructureData.<item_types(structure_data, item_types);
 
@@ -222,7 +222,7 @@ define nodes_append_structure = function(nodes: *Nodes, name: *, size: whole_8) 
 };
 
 define nodes_append_structure_any = function(nodes: *Nodes, name: *) {
-    declare structure_data = NodeStructureData.*cast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
+    declare structure_data = NodeStructureData.pcast(nodes_append_data_anonymous(nodes, NODE_STRUCTURE));
     NodeStructureData.<name(structure_data, name);
     NodeStructureData.<item_names(structure_data, &(empty));
     NodeStructureData.<item_types(structure_data, &(empty));
@@ -230,7 +230,7 @@ define nodes_append_structure_any = function(nodes: *Nodes, name: *) {
 };
 
 define nodes_append_function = function(nodes: *Nodes, name: *, arguments: *, returns: *) {
-    declare function_data = NodeFunctionData.*cast(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
+    declare function_data = NodeFunctionData.pcast(nodes_append_data_anonymous(nodes, NODE_FUNCTION));
     NodeFunctionData.<name(function_data, name);
     NodeFunctionData.<argument_types(function_data, arguments);
     NodeFunctionData.<returns(function_data, returns);
@@ -241,7 +241,7 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
     declare id = nodes_get_id(nodes, index);
     declare pointer_data = nodes_get_pointer_data(nodes, index);
     if =(id, NODE_RETRIEVE) {
-        declare retrieve_data = NodeRetrieveData.*cast(pointer_data);
+        declare retrieve_data = NodeRetrieveData.pcast(pointer_data);
         print("Retrieve{names=");
         if !(=(NodeRetrieveData.>name(retrieve_data), 0)) {
             print("'");
@@ -259,7 +259,7 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         };
         println("'}");
     } else if =(id, NODE_INVOKE_INTERNAL) {
-        declare invoke_data = NodeInvokeInternalData.*cast(pointer_data);
+        declare invoke_data = NodeInvokeInternalData.pcast(pointer_data);
         print("InternalInvoke{names=");
         declare names = NodeInvokeInternalData.>name(invoke_data);
         if !(=(names, 0)) {
@@ -278,7 +278,7 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         };
         println("'}");
     } else if =(id, NODE_ASSIGN) {
-        declare assign_data = NodeAssignData.*cast(pointer_data);
+        declare assign_data = NodeAssignData.pcast(pointer_data);
         print("Assign{names=");
         declare names = NodeAssignData.>name(assign_data);
         if !(=(names, 0)) {
@@ -297,14 +297,14 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         };
         println("'}");
     } else if =(id, NODE_DECLARE) {
-        declare declare_data = NodeDeclareData.*cast(pointer_data);
+        declare declare_data = NodeDeclareData.pcast(pointer_data);
         print("Declare{name='");
         print(NodeDeclareData.>name(declare_data));
         println("'}");
     } else if =(id, NODE_INVOKE) {
         println("Invoke{}");
     } else if =(id, NODE_NUMBER) {
-        declare number_data = NodeNumberData.*cast(pointer_data);
+        declare number_data = NodeNumberData.pcast(pointer_data);
         print("Number{value=")
         print_whole_8(NodeNumberData.>value(number_data));
         println("}");

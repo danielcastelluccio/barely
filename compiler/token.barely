@@ -77,7 +77,7 @@ define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
 };
 
 define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
-    return TokenLocationData.*cast(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
+    return TokenLocationData.pcast(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
 };
 
 define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
@@ -91,7 +91,7 @@ define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row:
     declare to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE));
 
     autobuffer_set_whole_8(tokens_buffer, id, *(whole_8.>(tokens_index), TOKEN_SIZE));
-    autobuffer_set_*(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 8));
+    autobuffer_set_pointer(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 8));
     autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 16));
     autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 24));
 
@@ -102,7 +102,7 @@ define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row:
 
 define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *): boolean {
     return if =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
-        string=(TokenKeywordData.>keyword(TokenKeywordData.*cast(tokens_get_pointer_data(tokens, index))), keyword)
+        string=(TokenKeywordData.>keyword(TokenKeywordData.pcast(tokens_get_pointer_data(tokens, index))), keyword)
     } else {
         false
     };
@@ -110,7 +110,7 @@ define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *)
 
 define tokens_is_name = function(tokens: *Tokens, index: whole_8, name: *): boolean {
     return if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-        string=(TokenNameData.>name(TokenNameData.*cast(tokens_get_pointer_data(tokens, index))), name)
+        string=(TokenNameData.>name(TokenNameData.pcast(tokens_get_pointer_data(tokens, index))), name)
     } else {
         false
     };
