@@ -1128,6 +1128,43 @@ define Target_X86_64 = module {
             hashmap_string_put(internal_function_instructions, internal_name, autobuffer_buffer_get_buffer_pointer(&(internal_instructions)));
             hashmap_string_put(internal_function_instruction_sizes, internal_name, AutoBufferBuffer.>index(&(internal_instructions)));
 
+            // Setter for whole value with reversed inputs
+            declare internal_name = concatenate2_brk_allocate(structure_name, "<2");
+            declare internal_instructions = autobuffer_buffer_new(8192);
+
+            X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&(internal_instructions), RSP, 0, RAX);
+            X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, 8);
+
+            declare j = 0;
+            while <(j, size) {
+                if >(-(size, j), 7) {
+                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&(internal_instructions), RSP, j, RBX);
+                    X86_64.autobuffer_buffer_push_mov_register8_register8_pointer_offset(&(internal_instructions), RBX, RAX, j);
+
+                    j = +(j, 8);
+                } else if >(-(size, j), 3) {
+                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(&(internal_instructions), RSP, j, EBX);
+                    X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(&(internal_instructions), EBX, RAX, j);
+
+                    j = +(j, 4);
+                } else if >(-(size, j), 1) {
+                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(&(internal_instructions), RSP, j, BX);
+                    X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(&(internal_instructions), BX, RAX, j);
+
+                    j = +(j, 2);
+                } else if >(-(size, j), 0) {
+                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(&(internal_instructions), RSP, j, BL);
+                    X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(&(internal_instructions), BL, RAX, j);
+
+                    j = +(j, 1);
+                };
+            };
+
+            X86_64.autobuffer_buffer_push_add_register8_whole_8(&(internal_instructions), RSP, size);
+
+            hashmap_string_put(internal_function_instructions, internal_name, autobuffer_buffer_get_buffer_pointer(&(internal_instructions)));
+            hashmap_string_put(internal_function_instruction_sizes, internal_name, AutoBufferBuffer.>index(&(internal_instructions)));
+
             // Getter for whole value
             declare internal_name = concatenate2_brk_allocate(structure_name, ">");
             declare internal_instructions = autobuffer_buffer_new(8192);

@@ -165,6 +165,12 @@ define add_structure_functions = function(nodes: *Nodes) {
             declare function_returns = create_size_zero_array8_brk_allocate();
             nodes_append_function(nodes, function_name, function_arguments, function_returns);
 
+            // Setter for whole value with reversed inputs
+            declare function_name = concatenate2_brk_allocate(name, "<2");
+            declare function_arguments = create_size_two_array8_brk_allocate(name, pointer_name);
+            declare function_returns = create_size_zero_array8_brk_allocate();
+            nodes_append_function(nodes, function_name, function_arguments, function_returns);
+
             // Getter for whole value
             declare function_name = concatenate2_brk_allocate(name, ">");
             declare function_arguments = create_size_one_array8_brk_allocate(pointer_name);
