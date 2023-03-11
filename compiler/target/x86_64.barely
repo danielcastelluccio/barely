@@ -17,6 +17,7 @@ define Target_X86_64 = module {
         declare function_argument_names = ProgramData.>function_argument_names(program_data);
         declare function_argument_types = ProgramData.>function_argument_types(program_data);
         declare function_return_types = ProgramData.>function_return_types(program_data);
+        declare function_return_types2 = ProgramData.>function_return_types2(program_data);
 
         declare internal_function_argument_names = ProgramData.>internal_function_argument_names(program_data);
         declare internal_function_argument_types = ProgramData.>internal_function_argument_types(program_data);
@@ -69,7 +70,7 @@ define Target_X86_64 = module {
             else if =(id, NODE_DECLARE) { .output_declare(nodes, program_data, in_function, &(variable_names), &(variable_sizes), &(variable_types), &(variable_index), &(module_stack), pointer_data, instructions_buffer) }
             else if =(id, NODE_ASSIGN) { .output_assign(nodes, i, program_data, &(define_stack), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust_relative, &(module_stack), pointer_data, instructions_buffer) }
             else if =(id, NODE_RETRIEVE) { .output_retrieve(nodes, i, program_data, &(module_stack), &(define_stack), current_function_id, &(function_argument_names), &(function_argument_types), &(variable_names), &(variable_sizes), &(variable_types), &(variable_indexes), variable_index, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, pushed_functions, pushed_function_targets, pointer_data, instructions_buffer) }
-            else if =(id, NODE_RETURN) { .output_return(nodes,  program_data, current_function_id, &(function_argument_types), &(function_return_types), instructions_buffer) }
+            else if =(id, NODE_RETURN) { .output_return(nodes,  program_data, current_function_id, &(function_argument_types), &(function_return_types), &(function_return_types2), instructions_buffer) }
             else if =(id, NODE_JUMP_CONDITIONAL) { .output_jump_conditional(nodes,  program_data, pointer_data, jes, je_targets, instructions_buffer) }
             else if =(id, NODE_JUMP) { .output_jump(nodes, jmps, jmp_targets, pointer_data, instructions_buffer) }
             else if =(id, NODE_TARGET) { .output_target(targets, pointer_data, instructions_buffer) }
@@ -238,9 +239,9 @@ define Target_X86_64 = module {
         autobuffer_stack8_push(je_targets, target);
     };
 
-    define output_return = function(nodes: *Nodes, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
+    define output_return = function(nodes: *Nodes, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, function_return_types2: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
         declare arguments_size = .get_size_multiple_array(*.cast(autobuffer_array8_get(function_argument_types, current_function_id)), 999, nodes, program_data);
-        declare returns_size = .get_size_multiple(*.cast(autobuffer_array8_get(function_return_types, current_function_id)), 999, nodes, program_data);
+        declare returns_size = .get_size_multiple_array(*.cast(autobuffer_array8_get(function_return_types2, current_function_id)), 999, nodes, program_data);
         declare returns_size_rounded = returns_size;
         if !(=(%(returns_size_rounded, 8), 0)) {
             returns_size_rounded = +(returns_size_rounded, -(8, %(returns_size, 8)));
