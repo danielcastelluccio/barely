@@ -301,6 +301,16 @@ define Target_X86_64 = module {
     define output_retrieve = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare retrieve_data = NodeRetrieveData.pcast(nodes_get_pointer_data(nodes, nodes_index));
         declare variable_name = NodeRetrieveData.>name_single(retrieve_data);
+        declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
+
+        if uses_previous {
+            declare top_define = *.>0();
+            if >(AutoBufferStack8.>index(define_stack), 0) {
+                top_define = +(*.cast(autobuffer_stack8_pop(define_stack)), 7);
+            };
+
+            variable_name = expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, top_define, create_previous_results_list());
+        };
 
         declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, variable_name);
         if !(=(variable_type, 0)) {
@@ -361,25 +371,11 @@ define Target_X86_64 = module {
 
         variable_type = get_define_type(define_types, define_values, variable_name);
 
-        declare expand_name = true;
-        if !(=(variable_type, 0)) {
-            expand_name = false;
-            if string=(variable_type, "define") {
-                expand_name = true;
-            };
-        };
-
-        declare top_define = *.>0();
-        if &&(>(AutoBufferStack8.>index(define_stack), 0), =(variable_type, 0)) {
-            top_define = +(*.cast(autobuffer_stack8_pop(define_stack)), 7);
-        };
-
-        declare module_expanded_name = expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, top_define, create_previous_results_list());
-        variable_type = get_define_type(define_types, define_values, module_expanded_name);
+        variable_type = get_define_type(define_types, define_values, variable_name);
 
         if !(=(variable_type, 0)) {
             if |(string=(variable_type, "module"), string_length=(variable_type, "structure[", 10)) {
-                autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", module_expanded_name));
+                autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", variable_name));
                 return;
             };
         };
@@ -387,7 +383,7 @@ define Target_X86_64 = module {
         if !(=(variable_type, 0)) {
             // TODO: Better way of handling retrieve outside of functions
             if &&(!(string=(variable_type, "module")), !(string_length=(variable_type, "structure[", 10))) {
-                .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_expanded_name, variable_type);
+                .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, variable_name, variable_type);
             };
         };
     };
