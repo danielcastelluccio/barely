@@ -1,7 +1,7 @@
-define tokenize_inner = function(buffer: *, tokens: *Tokens, file_name: *, row: *whole_8, column: *whole_8) {
+define tokenize_inner = function(buffer: *, tokens: *Tokens, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
     declare buffer_length = length(buffer);
 
-    if =(buffer_length, 0) {
+    if buffer_length == 0 {
         return;
     };
 
@@ -19,24 +19,23 @@ define tokenize_inner = function(buffer: *, tokens: *Tokens, file_name: *, row: 
     else if string=(buffer, "break") true
     else false;
 
+    declare column = column_ptr.*;
+    declare row = row_ptr.*;
+
     if is_keyword {
-        declare copied_buffer = copy_string_brk_allocate(buffer);
-
-        declare keyword_data = TokenKeywordData.pcast(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, whole_8.>(row), whole_8.>(column)));
-        TokenKeywordData.<keyword(keyword_data, copied_buffer);
+        declare keyword_data = TokenKeywordData.pcast(tokens_append_data(tokens, TOKEN_KEYWORD, file_name, row, column));
+        keyword_data.keyword = copy_string_brk_allocate(buffer);
     } else if is_number(buffer) {
-        tokenize_number(tokens, buffer, file_name, whole_8.>(row), whole_8.>(column));
-    } else if |(string=(buffer, "true"), string=(buffer, "false")) {
-        declare boolean_data = TokenBooleanData.pcast(tokens_append_data(tokens, TOKEN_BOOLEAN, file_name, whole_8.>(row), whole_8.>(column)));
-        TokenBooleanData.<value(boolean_data, string=(buffer, "true"));
+        tokenize_number(tokens, buffer, file_name, row, column);
+    } else if string=(buffer, "true") || string=(buffer, "false") {
+        declare boolean_data = #tokens_append_data(tokens, TOKEN_BOOLEAN, TokenBooleanData, file_name, row, column);
+        boolean_data.value = string=(buffer, "true");
     } else {
-        declare copied_buffer = copy_string_brk_allocate(buffer);
-
-        declare name_data = TokenNameData.pcast(tokens_append_data(tokens, TOKEN_NAME, file_name, whole_8.>(row), whole_8.>(column)));
-        TokenNameData.<name(name_data, copied_buffer);
+        declare name_data = #tokens_append_data(tokens, TOKEN_NAME, TokenNameData, file_name, row, column);
+        name_data.name = copy_string_brk_allocate(buffer);
     };
     
-    increment_whole_8_pointer(column, buffer_length);
+    increment_whole_8_pointer(column_ptr, buffer_length);
 };
 
 define tokenize_number = function(tokens: *Tokens, buffer: *, file_name: *, row: whole_8, column: whole_8) {

@@ -100,6 +100,10 @@ define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row:
     return to_return;
 };
 
+macro #tokens_append_data(tokens, id, type, file_name, row, column) {
+    type.pcast(tokens_append_data(tokens, id, file_name, row, column))
+};
+
 define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *): boolean {
     return if =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
         string=(TokenKeywordData.>keyword(TokenKeywordData.pcast(tokens_get_pointer_data(tokens, index))), keyword)
