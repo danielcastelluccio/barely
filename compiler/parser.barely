@@ -566,19 +566,19 @@ define parse_invoke_parenthesis = function(tokens: *Tokens.Tokens, index_pointer
 define parse_invoke_parenthesis_ending = function(tokens: *Tokens.Tokens, index_in: whole_8, nodes: *Nodes) {
     declare index = index_in;
 
-    declare inner = 0_integer_8;
-    while |(>(inner, 0_integer_8), =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS)) {
+    declare inner = 0:integer_8;
+    while |(>(inner, 0:integer_8), =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS)) {
         declare id = Tokens.get_id(tokens, index);
         if =(id, Token.OPEN_PARENTHESIS) {
-            if =(inner, 0_integer_8) {
+            if =(inner, 0:integer_8) {
                 declare inside_index = +(index, 1);
-                declare inside_inner = 1_integer_8;
-                while >(inside_inner, 0_integer_8) {
+                declare inside_inner = 1:integer_8;
+                while >(inside_inner, 0:integer_8) {
                     declare id3 = Tokens.get_id(tokens, inside_index);
                     if =(id3, Token.OPEN_PARENTHESIS) {
-                        inside_inner = +(inside_inner, 1_integer_8);
+                        inside_inner = +(inside_inner, 1:integer_8);
                     } else if =(id3, Token.CLOSED_PARENTHESIS) {
-                        inside_inner = -(inside_inner, 1_integer_8);
+                        inside_inner = -(inside_inner, 1:integer_8);
                     } else if =(id3, Token.SEMICOLON) {
                         print_token_error_beginning(tokens, index);
                         println("Unclosed parenthesis");
@@ -591,11 +591,11 @@ define parse_invoke_parenthesis_ending = function(tokens: *Tokens.Tokens, index_
                 parse_invoke_parenthesis(tokens, &(index), nodes);
                 return;
             } else {
-                inner = +(inner, 1_integer_8);
+                inner = +(inner, 1:integer_8);
                 index = +(index, 1);
             };
         } else if =(id, Token.CLOSED_PARENTHESIS) {
-            inner = -(inner, 1_integer_8);
+            inner = -(inner, 1:integer_8);
             index = +(index, 1);
         };
     };
@@ -865,14 +865,14 @@ define check_number_fits = function(size_bytes: whole_8, wants_signed: boolean, 
 
 define parse_invoke_parenthesis_chain = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8) {
     declare index = whole_8.>(index_pointer);
-    declare inner = 0_integer_8;
+    declare inner = 0:integer_8;
 
     declare is_first = true;
 
-    while |(>(inner, 0_integer_8), =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS)) {
+    while |(>(inner, 0:integer_8), =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS)) {
         declare id2 = Tokens.get_id(tokens, index);
         if =(id2, Token.OPEN_PARENTHESIS) {
-            if =(inner, 0_integer_8) {
+            if =(inner, 0:integer_8) {
                 declare is_special = false;
                 declare is_pointer = false;
                 declare retrieve_data = NodeRetrieveData.pcast(nodes_get_pointer_data(nodes, previous_retrieve_index));
@@ -894,9 +894,9 @@ define parse_invoke_parenthesis_chain = function(tokens: *Tokens.Tokens, index_p
 
                 is_first = false;
             };
-            inner = +(inner, 1_integer_8);
+            inner = +(inner, 1:integer_8);
         } else if =(id2, Token.CLOSED_PARENTHESIS) {
-            inner = -(inner, 1_integer_8);
+            inner = -(inner, 1:integer_8);
         };
         index = +(index, 1);
     };

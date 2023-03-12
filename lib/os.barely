@@ -40,8 +40,8 @@ define exit = function(code: whole_8) {
 };
 
 define map_memory = function(size: whole_8): * {
-    #compile_if(target, linux, return Linux.sys_mmap(*.cast(0), size, 3, +(Linux.MAP_ANONYMOUS, Linux.MAP_PRIVATE), whole_8.cast(-1_integer_8), 0);)
-    #compile_if(target, macos, return MacOS.sys_mmap(*.cast(0), size, 3, +(MacOS.MAP_ANONYMOUS, MacOS.MAP_PRIVATE), whole_8.cast(-1_integer_8), 0);)
+    #compile_if(target, linux, return Linux.sys_mmap(*.cast(0), size, 3, +(Linux.MAP_ANONYMOUS, Linux.MAP_PRIVATE), whole_8.cast(-1:integer_8), 0);)
+    #compile_if(target, macos, return MacOS.sys_mmap(*.cast(0), size, 3, +(MacOS.MAP_ANONYMOUS, MacOS.MAP_PRIVATE), whole_8.cast(-1:integer_8), 0);)
 };
 
 define create_and_write_file = function(file: *, buffer: *, size: whole_8) {
