@@ -306,10 +306,15 @@ define Target_X86_64 = module {
         if uses_previous {
             declare top_define = *.>0();
             if >(AutoBufferStack8.>index(define_stack), 0) {
-                top_define = +(*.cast(autobuffer_stack8_pop(define_stack)), 7);
+                top_define = +(*.cast(autobuffer_stack8_peek(define_stack)), 7);
             };
 
-            variable_name = expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, top_define, create_previous_results_list());
+            declare variable_name_new = expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, top_define, create_previous_results_list());
+
+            if !(string=(variable_name, variable_name_new)) {
+                variable_name = variable_name_new;
+                declare _ = autobuffer_stack8_pop(define_stack);
+            };
         };
 
         declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, variable_name);
@@ -368,8 +373,6 @@ define Target_X86_64 = module {
             autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", variable_name));
             return;
         };
-
-        variable_type = get_define_type(define_types, define_values, variable_name);
 
         variable_type = get_define_type(define_types, define_values, variable_name);
 
@@ -640,6 +643,10 @@ define Target_X86_64 = module {
         declare invoke_internal_data = NodeInvokeInternalData.pcast(nodes_get_pointer_data(nodes, nodes_index));
         declare function_name = NodeInvokeInternalData.>name_single(invoke_internal_data);
         declare uses_previous = NodeInvokeInternalData.>uses_previous(invoke_internal_data);
+
+        if is_pointer(nodes, +(nodes_index, 1)) {
+            function_name = concatenate2_brk_allocate("*", function_name);
+        };
 
         declare memory_function = *.cast(hashmap_string_get(internal_function_instructions, function_name));
         if !(=(memory_function, 0)) {
@@ -1291,7 +1298,7 @@ define Target_X86_64 = module {
                 declare size = .get_size(member_type, nodes, program_data);
 
                 // Get pointer for individual members
-                declare internal_name = concatenate3_brk_allocate(structure_name, "*>", member_name);
+                declare internal_name = concatenate4_brk_allocate("*", structure_name, ">", member_name);
                 declare internal_instructions = autobuffer_buffer_new(8192);
 
                 X86_64.autobuffer_buffer_push_pop_register8(&(internal_instructions), RAX);
