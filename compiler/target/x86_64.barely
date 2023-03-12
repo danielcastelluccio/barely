@@ -639,11 +639,16 @@ define Target_X86_64 = module {
     define output_invoke_internal = function(nodes: *Nodes, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
         declare invoke_internal_data = NodeInvokeInternalData.pcast(nodes_get_pointer_data(nodes, nodes_index));
         declare function_name = NodeInvokeInternalData.>name_single(invoke_internal_data);
+        declare uses_previous = NodeInvokeInternalData.>uses_previous(invoke_internal_data);
 
         declare memory_function = *.cast(hashmap_string_get(internal_function_instructions, function_name));
         if !(=(memory_function, 0)) {
             declare memory_function_size = whole_8.cast(hashmap_string_get(internal_function_instruction_sizes, function_name));
             autobuffer_buffer_push_pointer(instructions_buffer, memory_function, memory_function_size);
+
+            if uses_previous {
+                declare _ = autobuffer_stack8_pop(define_stack);
+            };
         }
         else if string_length=(function_name, "=_", 2) { .output_equals_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }
         else if string_length=(function_name, ">_", 2) { .output_greater_internal(nodes, program_data, +(function_name, 2), instructions_buffer) }

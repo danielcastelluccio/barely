@@ -1,121 +1,122 @@
-define TOKEN_OPEN_PARENTHESIS = 0;
-define TOKEN_CLOSED_PARENTHESIS = 1;
-define TOKEN_OPEN_CURLY_BRACKETS = 2;
-define TOKEN_CLOSED_CURLY_BRACKETS = 3;
-define TOKEN_COMMA = 4;
-define TOKEN_SEMICOLON = 5;
-define TOKEN_KEYWORD = 6;
+define Token = module {
+    define OPEN_PARENTHESIS = 0;
+    define CLOSED_PARENTHESIS = 1;
+    define OPEN_CURLY_BRACKETS = 2;
+    define CLOSED_CURLY_BRACKETS = 3;
+    define COMMA = 4;
+    define SEMICOLON = 5;
 
-define TokenKeywordData = structure {
-    keyword: *;
+    define KEYWORD = 6;
+    define KeywordData = structure {
+        keyword: *;
+    };
+
+    define NAME = 7;
+    define NameData = structure {
+        name: *;
+    };
+
+    define STRING = 8;
+    define StringData = structure {
+        value: *;
+    };
+
+    define NUMBER = 9;
+    define NumberData = structure {
+        value: whole_8;
+    };
+
+    define COLON = 10;
+
+    define BOOLEAN = 11;
+    define BooleanData = structure {
+        value: boolean;
+    };
+
+    define OPEN_BRACKET = 12;
+    define CLOSED_BRACKET = 13;
+    define PERIOD = 14;
+
+    define SIZE = 56;
+
+    define LocationData = structure {
+        file: *;
+        row: whole_8;
+        column: whole_8;
+    };
+
+    define DATA_OFFSET = 32;
 };
 
-define TOKEN_NAME = 7;
+define Tokens = module {
+    define Tokens = structure {
+        buffer: AutoBuffer;
+        index: whole_8;
+    };
 
-define TokenNameData = structure {
-    name: *;
-};
+    define new = function(): .Tokens {
+        declare tokens = .Tokens.>0();
 
-define TOKEN_STRING = 8;
+        .Tokens.<buffer(&(tokens), autobuffer_new(131072));
+        .Tokens.<index(&(tokens), 0);
 
-define TokenStringData = structure {
-    value: *;
-};
+        return tokens;
+    };
 
-define TOKEN_NUMBER = 9;
+    define get_id = function(tokens: *.Tokens, index: whole_8): whole_8 {
+        return autobuffer_get_whole_8(&(.Tokens.>buffer(tokens)), *(index, Token.SIZE));
+    };
 
-define TokenNumberData = structure {
-    value: whole_8;
-};
+    define get_pointer = function(tokens: *.Tokens, index: whole_8): * {
+        return autobuffer_get(&(.Tokens.>buffer(tokens)), *(index, Token.SIZE));
+    };
 
-define TOKEN_COLON = 10;
+    define get_pointer_data = function(tokens: *.Tokens, index: whole_8): * {
+        return autobuffer_get(&(.Tokens.>buffer(tokens)), +(*(index, Token.SIZE), Token.DATA_OFFSET));
+    };
 
-define TOKEN_BOOLEAN = 11;
+    define get_location_data = function(tokens: *.Tokens, index: whole_8): *Token.LocationData {
+        return Token.LocationData.pcast(autobuffer_get(&(.Tokens.>buffer(tokens)), +(*(index, Token.SIZE), 8)));
+    };
 
-define TokenBooleanData = structure {
-    value: boolean;
-};
+    define append_data = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+        return *.cast(+(Tokens.append(tokens, id, file_name, row, column), Token.DATA_OFFSET));
+    };
 
-define TOKEN_OPEN_BRACKET = 12;
-define TOKEN_CLOSED_BRACKET = 13;
-define TOKEN_PERIOD = 14;
+    define append = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+        declare tokens_buffer = &(.Tokens.>buffer(tokens));
+        declare tokens_index = &(.Tokens.>index(tokens));
+        autobuffer_register(tokens_buffer, *(whole_8.>(tokens_index), Token.SIZE), Token.SIZE);
+        declare to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), Token.SIZE));
 
-define TOKEN_SIZE = 56;
+        autobuffer_set_whole_8(tokens_buffer, id, *(whole_8.>(tokens_index), Token.SIZE));
+        autobuffer_set_pointer(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), Token.SIZE), 8));
+        autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8.>(tokens_index), Token.SIZE), 16));
+        autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8.>(tokens_index), Token.SIZE), 24));
 
-define TokenLocationData = structure {
-    file: *;
-    row: whole_8;
-    column: whole_8;
-};
+        increment_whole_8_pointer(tokens_index, 1);
 
-define TOKEN_DATA_OFFSET = 32;
+        return to_return;
+    };
 
-define Tokens = structure {
-    buffer: AutoBuffer;
-    index: whole_8;
-};
+    define is_keyword = function(tokens: *.Tokens, index: whole_8, keyword: *): boolean {
+        return if =(.get_id(tokens, index), Token.KEYWORD) {
+            string=(Token.KeywordData.>keyword(Token.KeywordData.pcast(.get_pointer_data(tokens, index))), keyword)
+        } else {
+            false
+        };
+    };
 
-define tokens_new = function(): Tokens {
-    declare tokens: Tokens;
-
-    Tokens.<buffer(&(tokens), autobuffer_new(131072));
-    Tokens.<index(&(tokens), 0);
-
-    return tokens;
-};
-
-define tokens_get_id = function(tokens: *Tokens, index: whole_8): whole_8 {
-    return autobuffer_get_whole_8(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
-};
-
-define tokens_get_pointer = function(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens.>buffer(tokens)), *(index, TOKEN_SIZE));
-};
-
-define tokens_get_pointer_data = function(tokens: *Tokens, index: whole_8): * {
-    return autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), TOKEN_DATA_OFFSET));
-};
-
-define tokens_get_location_data = function(tokens: *Tokens, index: whole_8): *TokenLocationData {
-    return TokenLocationData.pcast(autobuffer_get(&(Tokens.>buffer(tokens)), +(*(index, TOKEN_SIZE), 8)));
-};
-
-define tokens_append_data = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    return *.cast(+(tokens_append(tokens, id, file_name, row, column), TOKEN_DATA_OFFSET));
-};
-
-define tokens_append = function(tokens: *Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-    declare tokens_buffer = &(Tokens.>buffer(tokens));
-    declare tokens_index = &(Tokens.>index(tokens));
-    autobuffer_register(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE), TOKEN_SIZE);
-    declare to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), TOKEN_SIZE));
-
-    autobuffer_set_whole_8(tokens_buffer, id, *(whole_8.>(tokens_index), TOKEN_SIZE));
-    autobuffer_set_pointer(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 8));
-    autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 16));
-    autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8.>(tokens_index), TOKEN_SIZE), 24));
-
-    increment_whole_8_pointer(tokens_index, 1);
-
-    return to_return;
+    define is_name = function(tokens: *.Tokens, index: whole_8, name: *): boolean {
+        return if =(.get_id(tokens, index), Token.NAME) {
+            string=(Token.NameData.>name(Token.NameData.pcast(.get_pointer_data(tokens, index))), name)
+        } else {
+            false
+        };
+    };
 };
 
 macro #tokens_append_data(tokens, id, type, file_name, row, column) {
-    type.pcast(tokens_append_data(tokens, id, file_name, row, column))
+    type.pcast(Tokens.append_data(tokens, id, file_name, row, column))
 };
 
-define tokens_is_keyword = function(tokens: *Tokens, index: whole_8, keyword: *): boolean {
-    return if =(tokens_get_id(tokens, index), TOKEN_KEYWORD) {
-        string=(TokenKeywordData.>keyword(TokenKeywordData.pcast(tokens_get_pointer_data(tokens, index))), keyword)
-    } else {
-        false
-    };
-};
-
-define tokens_is_name = function(tokens: *Tokens, index: whole_8, name: *): boolean {
-    return if =(tokens_get_id(tokens, index), TOKEN_NAME) {
-        string=(TokenNameData.>name(TokenNameData.pcast(tokens_get_pointer_data(tokens, index))), name)
-    } else {
-        false
-    };
-};

@@ -10,7 +10,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     cached_signedness_map = hashmap_new(131072);
     while_target_id_stack = autobuffer_stack8_new(64);
 
-    declare tokens = tokens_new();
+    declare tokens = Tokens.new();
 
     declare output_file = "output";
     declare format = "";
@@ -78,7 +78,7 @@ define main = function(arguments: **, argument_count: whole_8) {
         Target_Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
     };
 
-    declare tokens_expanded = tokens_new();
+    declare tokens_expanded = Tokens.new();
     expand_macros(&(tokens), &(tokens_expanded), &(flags));
 
     declare nodes = nodes_new();
@@ -286,7 +286,7 @@ define add_basic_internals = function(nodes: *Nodes) {
     nodes_append_function(nodes, "|", function_arguments, function_returns);
 };
 
-define include_file = function(file_name: *, tokens: *Tokens) {
+define include_file = function(file_name: *, tokens: *Tokens.Tokens) {
     declare contents = get_contents(file_name);
 
     tokenize(file_name, contents, tokens);

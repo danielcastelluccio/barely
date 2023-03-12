@@ -766,9 +766,13 @@ define function_data_to_string = function(module_stack: *AutoBufferStack8, point
     };
     autobuffer_buffer_push_string(&(main_name_buffer), ":");
 
+    declare returns2 = NodeFunctionData.>returns2(pointer);
+
     declare j = 0;
-    while !(=(array8_get(returns, j), 0)) {
-        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
+    while !(=(array8_get(returns2, j), 0)) {
+        declare return_type_array = *.cast(array8_get(returns2, j));
+        declare return_type = expand_module_name_array(return_type_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        autobuffer_buffer_push_string(&(main_name_buffer), return_type);
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
         j = +(j, 1);
     };
