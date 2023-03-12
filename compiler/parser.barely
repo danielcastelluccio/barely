@@ -1193,13 +1193,24 @@ define parse_while = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, n
 define parse_declare = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     declare index = whole_8.>(index_pointer);
 
-    declare parse_expression, variable_names = parse_declare_variable_declaration(tokens, &(index), nodes);
+    declare parse_expression, variable_names, variable_types = parse_declare_variable_declaration(tokens, &(index), nodes);
 
     if parse_expression {
         index = +(index, 1);
 
         parse_multiple_expressions(tokens, &(index), nodes, Token.SEMICOLON);
+    };
 
+    declare i = 0;
+    while !(=(array8_get(variable_names, i), 0)) {
+        declare node_data = NodeDeclareData.pcast(nodes_append_data(nodes, NODE_DECLARE, get_token_location_data(tokens, index)));
+        NodeDeclareData.<name(node_data, *.cast(array8_get(variable_names, i)));
+        NodeDeclareData.<type(node_data, *.cast(array8_get(variable_types, i)));
+
+        i = +(i, 1);
+    };
+
+    if parse_expression {
         declare temp = array8_length(variable_names);
         declare i = -(array8_length(variable_names), 1);
         while <(i, temp) {
@@ -1214,7 +1225,7 @@ define parse_declare = function(tokens: *Tokens.Tokens, index_pointer: *whole_8,
     whole_8.<(index_pointer, index);
 };
 
-define parse_declare_variable_declaration = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes): boolean, * {
+define parse_declare_variable_declaration = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes): boolean, *, * {
     declare index = whole_8.>(index_pointer);
     index = +(index, 1);
 
@@ -1259,17 +1270,8 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Tokens, ind
         };
     };
 
-    declare i = 0;
-    while !(=(autobuffer_array8_get(&(names), i), 0)) {
-        declare node_data = NodeDeclareData.pcast(nodes_append_data(nodes, NODE_DECLARE, get_token_location_data(tokens, whole_8.>(index_pointer))));
-        NodeDeclareData.<name(node_data, *.cast(autobuffer_array8_get(&(names), i)));
-        NodeDeclareData.<type(node_data, *.cast(autobuffer_array8_get(&(types), i)));
-
-        i = +(i, 1);
-    };
-
     whole_8.<(index_pointer, index);
-    return parse_expression, AutoBuffer.>buffer(&(names));
+    return parse_expression, AutoBuffer.>buffer(&(names)), AutoBuffer.>buffer(&(types));
 };
 
 define parse_multiple_expressions = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, breaker: whole_8) {
