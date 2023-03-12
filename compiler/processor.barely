@@ -1291,7 +1291,7 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
     module_references_map = hashmap_new(64);
     define_module_map = hashmap_new(64);
 
-    declare define_types = autobuffer_stack8_new(32);
+    declare define_types_stack = autobuffer_stack8_new(32);
 
     declare current_module_id = 0;
 
@@ -1463,6 +1463,17 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 name = concatenate2_brk_allocate(&(top_module_string), name);
             };
 
+            declare define_types = &(ProgramData.>define_types(program_data));
+
+            declare previous_type = hashmap_string_get2(define_types, name);
+            if !(=(previous_type, 999)) {
+                print_node_error_beginning(nodes, i);
+                print("Duplicate definition '");
+                print(name);
+                println("'");
+                exit(1);
+            };
+
             hashmap_string_put(&(define_module_map), name, whole_8.cast(autobuffer_stack8_peek(&(module_stack))));
 
             if string=(define_type, "module") {
@@ -1536,9 +1547,8 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 define_value = NodeNumberData.>value(NodeNumberData.pcast(nodes_get_pointer_data(nodes, +(i, 1))));
             };
 
-            autobuffer_stack8_push(&(define_types), define_type);
+            autobuffer_stack8_push(&(define_types_stack), define_type);
 
-            declare define_types = &(ProgramData.>define_types(program_data));
             hashmap_string_put(define_types, define_name, define_type);
 
             declare define_values = &(ProgramData.>define_values(program_data));
@@ -1550,7 +1560,7 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
         if =(id, NODE_ENDDEFINE) {
             declare define_data = NodeEndDefineData.pcast(pointer_data);
-            declare define_type = *.cast(autobuffer_stack8_pop(&(define_types)));
+            declare define_type = *.cast(autobuffer_stack8_pop(&(define_types_stack)));
         };
 
         if =(id, NODE_DECLARE) {
