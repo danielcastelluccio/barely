@@ -1349,7 +1349,6 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
                 autobuffer_array8_set(function_datas, declared_function_id, function_data);
                 autobuffer_array8_set(function_argument_types, declared_function_id, NodeFunctionData.>argument_types_array(function_data));
                 autobuffer_array8_set(function_argument_names, declared_function_id, NodeFunctionData.>argument_names(function_data));
-                autobuffer_array8_set(function_return_types, declared_function_id, NodeFunctionData.>returns(function_data));
                 autobuffer_array8_set(function_return_types2, declared_function_id, NodeFunctionData.>returns2(function_data));
                 declared_function_id = +(declared_function_id, 1);
             };
@@ -1484,31 +1483,6 @@ define setup_process = function(nodes: *Nodes, program_data: *ProgramData) {
 
             declare define_value: any_8;
             if string_length=(define_type, "*function", 9) {
-                //println(define_type);
-                //declare function_data = string_to_function_data(define_type);
-                //declare j = 0;
-                //declare argument_types = NodeFunctionData.>argument_types(&(function_data));
-                //while <(j, array8_length(argument_types)) {
-                //    declare argument = *.cast(array8_get(argument_types, j));
-                //    println(argument);
-                //    declare argument_array = to_type_array(argument);
-                //    print_array8_string(argument_array);
-                //    declare new_argument = expand_module_name_array(argument_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
-                //    array8_set(argument_types, j, new_argument);
-                //    j = +(j, 1);
-                //};
-
-                //declare return_types = NodeFunctionData.>returns(&(function_data));
-                //j = 0;
-                //while <(j, array8_length(return_types)) {
-                //    declare return_ = *.cast(array8_get(return_types, j));
-                //    declare return_array = to_type_array(return_);
-                //    declare new_return = expand_module_name_array(return_array, 0, &(module_id_map), &(module_references_map), &(module_stack), create_previous_results_list());
-                //    array8_set(return_types, j, new_return);
-                //    j = +(j, 1);
-                //};
-                //define_type = function_data_to_string_old(&(function_data));
-                //NodeDefineData.<type(define_data, define_type);
                 define_value = declared_function_id;
             } else if string_length=(define_type, "structure", 9) {
                 define_value = declared_structure_id;

@@ -689,48 +689,12 @@ define string_to_function_data = function(type: *): NodeFunctionData {
     return data;
 };
 
-define function_data_to_string_old = function(pointer: *NodeFunctionData): * {
-    declare main_name_buffer = autobuffer_buffer_new(16);
-
-    autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
-
-    declare arguments = NodeFunctionData.>argument_types(pointer);
-    declare returns = NodeFunctionData.>returns(pointer);
-
-    declare j = 0;
-    while !(=(array8_get(arguments, j), 0)) {
-        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(arguments, j)));
-        autobuffer_buffer_push_string(&(main_name_buffer), ",");
-        j = +(j, 1);
-    };
-
-    if >(j, 0) {
-        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
-    };
-    autobuffer_buffer_push_string(&(main_name_buffer), ":");
-
-    declare j = 0;
-    while !(=(array8_get(returns, j), 0)) {
-        autobuffer_buffer_push_string(&(main_name_buffer), *.cast(array8_get(returns, j)));
-        autobuffer_buffer_push_string(&(main_name_buffer), ",");
-        j = +(j, 1);
-    };
-
-    if >(j, 0) {
-        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
-    };
-    autobuffer_buffer_push_string(&(main_name_buffer), "]");
-
-    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
-};
-
 define function_data_to_string = function(module_stack: *AutoBufferStack8, pointer: *NodeFunctionData): * {
     declare main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
 
     declare arguments = NodeFunctionData.>argument_types_array(pointer);
-    declare returns = NodeFunctionData.>returns(pointer);
 
     declare j = 0;
     while !(=(array8_get(arguments, j), 0)) {
