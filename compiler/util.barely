@@ -30,34 +30,6 @@ define ASCII = module {
     define CLOSED_CURLY_BRACKETS: whole_1 = 125;
 };
 
-define is_number = function(string: *): boolean {
-    declare length2 = length(string);
-
-    declare has_number = false;
-    declare i = 0;
-    while <(i, length2) {
-        declare character = whole_1.>(whole_1.pcast(+(string, i)));
-
-        if &&(=(character, ASCII.UNDERSCORE), >(i, 0)) {
-            break;
-            character = ASCII.ZERO;
-        };
-
-        if =(character, ASCII.MINUS) {
-        } else if <(character, ASCII.ZERO) {
-            return false;
-        } else if >(character, ASCII.NINE) {
-            return false;
-        } else {
-            has_number = true;
-        };
-
-        i = +(i, 1);
-    };
-
-    return has_number;
-};
-
 define string_to_whole_8 = function(string: *): whole_8 {
     return string_to_number(string, 8, false);
 };
@@ -558,6 +530,14 @@ define autobuffer_buffer_push_whole_8 = function(buffer: *AutoBufferBuffer, whol
     autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(whole_8), buffer_index, 8);
 
     AutoBufferBuffer.<index(buffer, +(buffer_index, 8));
+};
+
+define autobuffer_buffer_push_any_1 = function(buffer: *AutoBufferBuffer, value: any_1) {
+    declare buffer_index = AutoBufferBuffer.>index(buffer);
+
+    autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(value), buffer_index, 1);
+
+    AutoBufferBuffer.<index(buffer, +(buffer_index, 1));
 };
 
 define AutoBufferStack8 = structure {
