@@ -948,64 +948,36 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
 
     name = +(name, pointer_count);
 
-    declare current_module_id = if !(=(top_define, 0)) {
-        if string=(top_define, "@current_module") {
-            whole_8.cast(autobuffer_stack8_peek(module_stack))
+    if >(length(name), 0) {
+        declare current_module_id = if !(=(top_define, 0)) {
+            if string=(top_define, "@current_module") {
+                whole_8.cast(autobuffer_stack8_peek(module_stack))
+            } else {
+                whole_8.cast(hashmap_string_get2(module_id_map, top_define))
+            }
         } else {
-            whole_8.cast(hashmap_string_get2(module_id_map, top_define))
-        }
-    } else {
-        999
-    };
-
-    //declare current_module_id = if string=(top_define, "@current_module") {
-    //    whole_8.cast(autobuffer_stack8_peek(module_stack))
-    //} else if =(current_module_id, 999) {
-    //    declare temp_id = whole_8.cast(hashmap_string_get2(module_id_map, current_module));
-
-    //    if =(temp_id, 999) {
-    //        declare temp_name = *.cast(hashmap_string_get2(module_references_map, current_module));
-    //        temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
-    //        temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
-    //    };
-    //    temp_id
-    //} else {
-    //    declare current_module_id_string = any_16.>0();
-    //    whole_8_to_string(current_module_id, &(current_module_id_string));
-
-    //    declare current_module_full = concatenate2_brk_allocate(&(current_module_id_string), current_module);
-    //    declare temp_id = whole_8.cast(hashmap_string_get2(module_id_map, current_module_full));
-
-    //    if =(temp_id, 999) {
-    //        declare temp_name = *.cast(hashmap_string_get2(module_references_map, current_module_full));
-    //        if =(temp_name, 999) {
-    //            return name;
-    //        };
-
-    //        temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
-    //        temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
-    //    };
-    //    temp_id
-    //};
-
-    if !(=(current_module_id, 999)) {
-        declare current_module_id_string = any_16.>0();
-        whole_8_to_string(current_module_id, &(current_module_id_string));
-        name = concatenate2_brk_allocate(&(current_module_id_string), name);
-    };
-
-    declare possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
-    if !(=(possible_reference, 999)) {
-        declare i = 0;
-        while <(i, AutoBufferStack8.>index(previous_results_list)) {
-            if string=(*.cast(autobuffer_stack8_get(previous_results_list, i)), name) {
-                return name;
-            };
-            i = +(i, 1);
+            999
         };
-        autobuffer_stack8_push(previous_results_list, name);
 
-        name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
+        if !(=(current_module_id, 999)) {
+            declare current_module_id_string = any_16.>0();
+            whole_8_to_string(current_module_id, &(current_module_id_string));
+            name = concatenate2_brk_allocate(&(current_module_id_string), name);
+        };
+
+        declare possible_reference = *.cast(hashmap_string_get2(module_references_map, name));
+        if !(=(possible_reference, 999)) {
+            declare i = 0;
+            while <(i, AutoBufferStack8.>index(previous_results_list)) {
+                if string=(*.cast(autobuffer_stack8_get(previous_results_list, i)), name) {
+                    return name;
+                };
+                i = +(i, 1);
+            };
+            autobuffer_stack8_push(previous_results_list, name);
+
+            name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
+        };
     };
 
     declare i = 0;
