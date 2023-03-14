@@ -238,6 +238,11 @@ define nodes_append_function = function(nodes: *Nodes, name: *, arguments: *, re
     declare _ = nodes_append_anonymous(nodes, NODE_ENDFUNCTION);
 };
 
+define nodes_copy = function(nodes_from: *Nodes, nodes_to: *Nodes, count: whole_8) {
+    autobuffer_set(&nodes_to.buffer, nodes_from.buffer.buffer, nodes_to.index * NODE_SIZE, count * NODE_SIZE);
+    nodes_to.index = nodes_to.index + count;
+};
+
 define print_node_info = function(nodes: *Nodes, index: whole_8) {
     declare id = nodes_get_id(nodes, index);
     declare pointer_data = nodes_get_pointer_data(nodes, index);
@@ -325,4 +330,8 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
 
 macro #nodes_append_data(nodes, id, type, location) {
     type.pcast(nodes_append_data(nodes, id, location))
+};
+
+macro #nodes_get_pointer_data(nodes, type, index) {
+    type.pcast(nodes_get_pointer_data(nodes, index))
 };

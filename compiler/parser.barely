@@ -262,7 +262,7 @@ define parse_function_definition = function(tokens: *Tokens.Tokens, index_pointe
     return function_argument_names.buffer, function_arguments_array.buffer, function_returns2.buffer;
 };
 
-define parse_invoke_parenthesis = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+define parse_inside_parenthesis = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
     index_pointer.* = index_pointer.* + 1;
 
     parse_multiple_expressions(tokens, index_pointer, nodes, Token.CLOSED_PARENTHESIS);
@@ -270,129 +270,154 @@ define parse_invoke_parenthesis = function(tokens: *Tokens.Tokens, index_pointer
     index_pointer.* = index_pointer.* + 1;
 };
 
-define parse_invoke_parenthesis_ending = function(tokens: *Tokens.Tokens, index_in: whole_8, nodes: *Nodes) {
+define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens.Tokens, index_in: whole_8, nodes: *Nodes) {
     declare index = index_in;
 
     declare inner = 0:integer_8;
-    while |(>(inner, 0:integer_8), =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS)) {
+    while |(inner > 0:integer_8, Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
         declare id = Tokens.get_id(tokens, index);
-        if =(id, Token.OPEN_PARENTHESIS) {
-            if =(inner, 0:integer_8) {
-                declare inside_index = +(index, 1);
+        if id == Token.OPEN_PARENTHESIS {
+            if inner == 0:integer_8 {
+                declare inside_index = index + 1;
                 declare inside_inner = 1:integer_8;
-                while >(inside_inner, 0:integer_8) {
+                while inside_inner > 0:integer_8 {
                     declare id3 = Tokens.get_id(tokens, inside_index);
-                    if =(id3, Token.OPEN_PARENTHESIS) {
-                        inside_inner = +(inside_inner, 1:integer_8);
-                    } else if =(id3, Token.CLOSED_PARENTHESIS) {
-                        inside_inner = -(inside_inner, 1:integer_8);
-                    } else if =(id3, Token.SEMICOLON) {
+                    if id3 == Token.OPEN_PARENTHESIS {
+                        inside_inner = inside_inner + 1:integer_8;
+                    } else if id3 == Token.CLOSED_PARENTHESIS {
+                        inside_inner = inside_inner - 1:integer_8;
+                    } else if id3 == Token.SEMICOLON {
                         print_token_error_beginning(tokens, index);
                         println("Unclosed parenthesis");
                         exit(1);
                     };
 
-                    inside_index = +(inside_index, 1);
+                    inside_index = inside_index + 1;
                 };
-                parse_invoke_parenthesis_ending(tokens, inside_index, nodes);
-                parse_invoke_parenthesis(tokens, &(index), nodes);
+                check_parse_invoke_parenthesis_chain(tokens, inside_index, nodes);
+                parse_inside_parenthesis(tokens, &index, nodes);
                 return;
             } else {
-                inner = +(inner, 1:integer_8);
-                index = +(index, 1);
+                inner = inner + 1:integer_8;
+                index = index + 1;
             };
-        } else if =(id, Token.CLOSED_PARENTHESIS) {
-            inner = -(inner, 1:integer_8);
-            index = +(index, 1);
+        } else if id == Token.CLOSED_PARENTHESIS {
+            inner = inner - 1:integer_8;
+            index = index + 1;
         };
     };
 };
 
-define parse_expression = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes_in: *Nodes) {
-    declare index = whole_8.>(index_pointer);
+define handle_invoke_instructions = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8) {
+    declare index = index_pointer.*;
+    declare inner = 0:integer_8;
+
+    declare is_first_invoke = true;
+
+    while |(inner > 0:integer_8, Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
+        declare id = Tokens.get_id(tokens, index);
+        if id == Token.OPEN_PARENTHESIS {
+            if inner == 0:integer_8 {
+                declare retrieve_data = #nodes_get_pointer_data(nodes, NodeRetrieveData, previous_retrieve_index);
+                declare retrieve_name = retrieve_data.name_single;
+                declare uses_previous = retrieve_data.uses_previous;
+                declare is_special = if is_first_invoke {
+                    is_special_function(retrieve_name)
+                } else {
+                    false
+                };
+
+                if is_special {
+                    nodes_set_skip(nodes, previous_retrieve_index);
+
+                    declare invoke_data = #nodes_append_data(nodes, NODE_INVOKE_INTERNAL, NodeInvokeInternalData, get_token_location_data(tokens, index));
+                    invoke_data.name_single = retrieve_name;
+                    invoke_data.uses_previous = uses_previous;
+                } else {
+                    declare _ = nodes_append(nodes, NODE_INVOKE, get_token_location_data(tokens, index));
+                };
+
+                is_first_invoke = false;
+            };
+            inner = inner + 1:integer_8;
+        } else if id == Token.CLOSED_PARENTHESIS {
+            inner = inner - 1:integer_8;
+        };
+        index = index + 1;
+    };
+
+    index_pointer.* = index;
+};
+
+
+define parse_expression = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    declare index = index_pointer.*;
 
     declare id = Tokens.get_id(tokens, index);
     declare pointer_data = Tokens.get_pointer_data(tokens, index);
 
     declare nodes_temp = nodes_new();
-    declare nodes = &(nodes_temp);
 
-    declare nodes_index = Nodes.>index(nodes);
-    declare nodes_initial_index = Nodes.>index(nodes_in);
+    check_parse_simple_expressions(tokens, &index, &nodes_temp, id, pointer_data);
 
-    check_parse_simple_expressions(tokens, &(index), nodes, id, pointer_data);
-
-    if =(id, Token.OPEN_CURLY_BRACKETS) {
-        declare _ = nodes_append(nodes, NODE_SCOPE, get_token_location_data(tokens, index));
-        index = +(index, 1);
-        while !(=(Tokens.get_id(tokens, index), Token.CLOSED_CURLY_BRACKETS)) {
-            parse_statement(tokens, &(index), nodes);
+    if id == Token.OPEN_CURLY_BRACKETS {
+        declare _ = nodes_append(&nodes_temp, NODE_SCOPE, get_token_location_data(tokens, index));
+        index = index + 1;
+        while !(Tokens.get_id(tokens, index) == Token.CLOSED_CURLY_BRACKETS) {
+            parse_statement(tokens, &index, &nodes_temp);
         };
-        index = +(index, 1);
-        declare _ = nodes_append(nodes, NODE_ENDSCOPE, get_token_location_data(tokens, index));
+        index = index + 1;
+        declare _ = nodes_append(&nodes_temp, NODE_ENDSCOPE, get_token_location_data(tokens, index));
     };
 
-    if =(id, Token.OPEN_PARENTHESIS) {
-        index = +(index, 1);
-        parse_expression(tokens, &(index), nodes);
-        index = +(index, 1);
+    if id == Token.OPEN_PARENTHESIS {
+        index = index + 1;
+        parse_expression(tokens, &index, &nodes_temp);
+        index = index + 1;
     };
 
-    if =(id, Token.KEYWORD) {
-        declare name_value = Token.NameData.>name(Token.NameData.pcast(Tokens.get_pointer_data(tokens, whole_8.>(index_pointer))));
+    if id == Token.KEYWORD {
+        declare name_value = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
         if string=(name_value, "if") {
-            parse_if(tokens, &(index), nodes);
+            parse_if(tokens, &index, &nodes_temp);
         };
     };
 
-    check_parse_invoke_parenthesis_chain(tokens, &(index), nodes, nodes_in);
+    check_parse_invoke_parenthesis_chain(tokens, index, nodes);
 
-    whole_8.<(index_pointer, index);
+    declare index_before_copy_parenthesis = nodes.index;
+
+    nodes_copy(&nodes_temp, nodes, nodes_temp.index);
+
+    if Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS {
+        handle_invoke_instructions(tokens, &index, nodes, index_before_copy_parenthesis);
+    };
 
     declare next_id = Tokens.get_id(tokens, index);
-    if =(Tokens.get_id(tokens, whole_8.>(index_pointer)), Token.PERIOD) {
-        increment_whole_8_pointer(index_pointer, 1);
-        parse_expression(tokens, index_pointer, nodes_in);
+    if Tokens.get_id(tokens, index) == Token.PERIOD {
+        index = index + 1;
+        parse_expression(tokens, &index, nodes);
     };
 
-    if =(Tokens.get_id(tokens, whole_8.>(index_pointer)), Token.NAME) {
-        // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
-        if !(=(Tokens.get_id(tokens, +(whole_8.>(index_pointer), 1)), Token.OPEN_PARENTHESIS)) {
-            declare name = Token.NameData.>name(Token.NameData.pcast(Tokens.get_pointer_data(tokens, whole_8.>(index_pointer))));
+    if Tokens.get_id(tokens, index) == Token.NAME {
+        // TODO: This check should be removed once everything is converted and we don't need to old way of calling
+        if !(Tokens.get_id(tokens, index + 1) == Token.OPEN_PARENTHESIS) {
+            declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
 
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "+", "+");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "-", "-");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "*", "*");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "/", "/");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "%", "%");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "&&", "&&");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "||", "|");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, ">", ">");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "<", "<");
-            declare _ = check_parse_operator(tokens, index_pointer, nodes_in, name, "==", "=");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "+", "+");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "-", "-");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "*", "*");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "/", "/");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "%", "%");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "&&", "&&");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "||", "|");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, ">", ">");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "<", "<");
+            declare _ = check_parse_operator(tokens, &index, nodes, name, "==", "=");
         };
     };
-};
 
-define check_parse_invoke_parenthesis_chain = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, nodes_in: *Nodes) {
-    declare index = whole_8.>(index_pointer);
-
-    declare nodes_moved_count = Nodes.>index(nodes);
-
-    declare nodes_index = Nodes.>index(nodes);
-
-    parse_invoke_parenthesis_ending(tokens, index, nodes_in);
-
-    declare nodes_in_index = Nodes.>index(nodes_in);
-
-    autobuffer_set(&(Nodes.>buffer(nodes_in)), AutoBuffer.>buffer(&(Nodes.>buffer(nodes))), *(Nodes.>index(nodes_in), NODE_SIZE), *(nodes_moved_count, NODE_SIZE));
-    Nodes.<index(nodes_in, +(Nodes.>index(nodes_in), nodes_moved_count));
-
-    if =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS) {
-        parse_invoke_parenthesis_chain(tokens, &(index), nodes_in, nodes_in_index);
-    };
-
-    whole_8.<(index_pointer, index);
+    index_pointer.* = index;
 };
 
 define check_parse_operator = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, parsed_name: *, wanted_name: *, internal_name: *): boolean {
@@ -568,47 +593,6 @@ define check_number_fits = function(size_bytes: whole_8, wants_signed: boolean, 
     };
 
     return !(>(number, size_bits));
-};
-
-define parse_invoke_parenthesis_chain = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, previous_retrieve_index: whole_8) {
-    declare index = whole_8.>(index_pointer);
-    declare inner = 0:integer_8;
-
-    declare is_first = true;
-
-    while |(>(inner, 0:integer_8), =(Tokens.get_id(tokens, index), Token.OPEN_PARENTHESIS)) {
-        declare id2 = Tokens.get_id(tokens, index);
-        if =(id2, Token.OPEN_PARENTHESIS) {
-            if =(inner, 0:integer_8) {
-                declare is_special = false;
-                declare is_pointer = false;
-                declare retrieve_data = NodeRetrieveData.pcast(nodes_get_pointer_data(nodes, previous_retrieve_index));
-                declare retrieve_name = NodeRetrieveData.>name_single(retrieve_data);
-                declare uses_previous = NodeRetrieveData.>uses_previous(retrieve_data);
-                if is_first {
-                    is_special = is_special_function(retrieve_name);
-                };
-
-                if is_special {
-                    nodes_set_skip(nodes, previous_retrieve_index);
-
-                    declare invoke_data = NodeInvokeInternalData.pcast(nodes_append_data(nodes, NODE_INVOKE_INTERNAL, get_token_location_data(tokens, whole_8.>(index_pointer))));
-                    NodeInvokeInternalData.<name_single(invoke_data, retrieve_name);
-                    NodeInvokeInternalData.<uses_previous(invoke_data, uses_previous);
-                } else {
-                    declare _ = nodes_append(nodes, NODE_INVOKE, get_token_location_data(tokens, whole_8.>(index_pointer)));
-                };
-
-                is_first = false;
-            };
-            inner = +(inner, 1:integer_8);
-        } else if =(id2, Token.CLOSED_PARENTHESIS) {
-            inner = -(inner, 1:integer_8);
-        };
-        index = +(index, 1);
-    };
-
-    whole_8.<(index_pointer, index);
 };
 
 define is_special_function = function(name: *): boolean {
