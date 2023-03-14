@@ -29,40 +29,22 @@ define string_length= = function(string1: *, string2: *, length: whole_8): boole
 define copy = function(from: *, to: *, size: whole_8) {
     declare i = 0;
 
-    while <(i, size) {
-        declare done_anything = false;
-
-        if &&(<(+(i, 4096), size), !(done_anything)) {
+    while i < size {
+        if (i + 4096) < size {
             any_4096.<(any_4096.pcast(+(to, i)), any_4096.>(any_4096.pcast(+(from, i))));
-            i = +(i, 4096);
-
-            done_anything = true;
-        };
-
-        if &&(<(+(i, 512), size), !(done_anything)) {
+            i = i + 4096;
+        } else if (i + 512) < size {
             any_512.<(any_512.pcast(+(to, i)), any_512.>(any_512.pcast(+(from, i))));
-            i = +(i, 512);
-
-            done_anything = true;
-        };
-
-        if &&(<(+(i, 64), size), !(done_anything)) {
+            i = i + 512;
+        } else if (i + 64) < size {
             any_64.<(any_64.pcast(+(to, i)), any_64.>(any_64.pcast(+(from, i))));
-            i = +(i, 64);
-
-            done_anything = true;
-        };
-
-        if &&(<(+(i, 8), size), !(done_anything)) {
+            i = i + 64;
+        } else if (i + 8) < size {
             any_8.<(any_8.pcast(+(to, i)), any_8.>(any_8.pcast(+(from, i))));
-            i = +(i, 8);
-
-            done_anything = true;
-        };
-
-        if !(done_anything) {
+            i = i + 8;
+        } else {
             any_1.<(any_1.pcast(+(to, i)), any_1.>(any_1.pcast(+(from, i))));
-            i = +(i, 1);
+            i = i + 1;
         };
     };
 };

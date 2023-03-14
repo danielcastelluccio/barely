@@ -4,7 +4,7 @@ declare cached_sizes_map: HashMap;
 declare cached_signedness_map: HashMap;
 
 define main = function(arguments: **, argument_count: whole_8) {
-    println("Parsing...");
+    println("Tokenizing...");
 
     cached_sizes_map = hashmap_new(131072);
     cached_signedness_map = hashmap_new(131072);
@@ -78,9 +78,11 @@ define main = function(arguments: **, argument_count: whole_8) {
         Target_Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
     };
 
+    println("Expanding Macros...");
     declare tokens_expanded = Tokens.new();
     expand_macros(&(tokens), &(tokens_expanded), &(flags));
 
+    println("Parsing...");
     declare nodes = nodes_new();
     parse(&(tokens_expanded), &(nodes));
 

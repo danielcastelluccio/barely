@@ -483,15 +483,10 @@ define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
     declare size = AutoBuffer.>size(&(AutoBufferBuffer.>autobuffer(buffer)));
     declare i = 0;
     while <(i, size) {
-        declare done_anything = false;
-        
         if <(+(i, 8), size) {
             any_8.<(any_8.pcast(+(actual_buffer, i)), 0);
-            i = +(i, 1);
-            done_anything = true;
-        };
-
-        if !(done_anything) {
+            i = +(i, 8);
+        } else {
             any_1.<(any_1.pcast(+(actual_buffer, i)), 0:whole_1);
             i = +(i, 1);
         };
