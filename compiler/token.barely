@@ -99,6 +99,17 @@ define Tokens = module {
         return to_return;
     };
 
+    define append_count = function(tokens: *.Tokens, count: whole_8): * {
+        declare tokens_buffer = &(.Tokens.>buffer(tokens));
+        declare tokens_index = &(.Tokens.>index(tokens));
+        autobuffer_register(tokens_buffer, *(tokens_index.* + count, Token.SIZE), Token.SIZE);
+        declare to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), Token.SIZE));
+
+        increment_whole_8_pointer(tokens_index, count);
+
+        return to_return;
+    };
+
     define is_keyword = function(tokens: *.Tokens, index: whole_8, keyword: *): boolean {
         return if =(.get_id(tokens, index), Token.KEYWORD) {
             string=(Token.KeywordData.>keyword(Token.KeywordData.pcast(.get_pointer_data(tokens, index))), keyword)
