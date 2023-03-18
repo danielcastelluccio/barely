@@ -26,6 +26,8 @@ define Linux = module {
 
     define SYS_MKDIR: whole_8 = 83;
 
+    define SYS_GETTIMEOFDAY: whole_8 = 96;
+
     define SYS_MMAP: whole_8 = 9;
     define MAP_PRIVATE: whole_8 = 2;
     define MAP_ANONYMOUS: whole_8 = 32;
@@ -78,6 +80,15 @@ define Linux = module {
 
     define sys_mkdir = function(path: *, mode: whole_8) {
         declare _ = @syscall2(.SYS_MKDIR, path, mode);
+    };
+
+    define TimeVal = structure {
+        seconds: whole_8;
+        microseconds: whole_8;
+    };
+
+    define sys_get_time_of_day = function(time_val: *.TimeVal) {
+        declare _ = @syscall2(.SYS_GETTIMEOFDAY, time_val, 0);
     };
 
     define sys_mmap = function(address: *, size: whole_8, protection: whole_8, flags: whole_8, fd: whole_8, offset: whole_8): * {

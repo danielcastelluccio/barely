@@ -57,6 +57,19 @@ define create_and_write_file = function(file: *, buffer: *, size: whole_8) {
     };)
 };
 
+define get_time_milliseconds = function(): whole_8 {
+    #compile_if(target, linux, return {
+        declare time_val: Linux.TimeVal;
+        Linux.sys_get_time_of_day(&time_val);
+        (time_val.seconds * 1000) + (time_val.microseconds / 1000)
+    };)
+    #compile_if(target, macos, return {
+        println("Unimplemented: Getting Millisecond Time");
+        exit(1);
+    };)
+};
+
+
 macro #compile_if(id, value, instruction) {
     #if_set_equal id value instruction
 };
