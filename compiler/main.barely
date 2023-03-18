@@ -6,11 +6,12 @@ declare cached_signedness_map: HashMap;
 define main = function(arguments: **, argument_count: whole_8) {
     declare tokenize_start_time = get_time_milliseconds();
 
-    cached_sizes_map = hashmap_new(131072);
-    cached_signedness_map = hashmap_new(131072);
+    cached_sizes_map = hashmap_new(16384);
+    cached_signedness_map = hashmap_new(16384);
     while_target_id_stack = autobuffer_stack8_new(64);
 
-    declare tokens = Tokens.new();
+    // TODO: estimate token size based on input file sizes
+    declare tokens = Tokens.new(131072);
 
     declare output_file = "output";
     declare format = "";
@@ -83,7 +84,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     print_whole_8(expand_start_time - tokenize_start_time);
     println(" milliseconds");
 
-    declare tokens_expanded = Tokens.new();
+    declare tokens_expanded = Tokens.new(131072);
     expand_macros(&(tokens), &(tokens_expanded), &(flags));
 
     declare parse_start_time = get_time_milliseconds();

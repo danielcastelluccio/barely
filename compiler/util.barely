@@ -154,7 +154,7 @@ define array8_length = function(array: *): whole_8 {
 };
 
 define autobuffer_stack8_legacy_push = function(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(whole_8.>(stack_pointer), 8));
+    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(whole_8.>(stack_pointer), 8), true);
     increment_whole_8_pointer(stack_pointer, 1);
 };
 
@@ -528,11 +528,11 @@ define autobuffer_buffer_push_whole_8 = function(buffer: *AutoBufferBuffer, whol
 };
 
 define autobuffer_buffer_push_any_1 = function(buffer: *AutoBufferBuffer, value: any_1) {
-    declare buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = &buffer.index;
 
-    autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), &(value), buffer_index, 1);
+    autobuffer_set(&buffer.autobuffer, &value, buffer_index.*, 1);
 
-    AutoBufferBuffer.<index(buffer, +(buffer_index, 1));
+    buffer_index.* = buffer_index.* + 1;
 };
 
 define AutoBufferStack8 = structure {
@@ -542,14 +542,14 @@ define AutoBufferStack8 = structure {
 
 define autobuffer_stack8_new = function(size: whole_8): AutoBufferStack8 {
     declare autobuffer_buffer = AutoBufferStack8.>0();
-    AutoBufferStack8.<autobuffer(&(autobuffer_buffer), autobuffer_new(size));
+    autobuffer_buffer.autobuffer = autobuffer_new(size);
     return autobuffer_buffer;
 };
 
 define autobuffer_stack8_push = function(buffer: *AutoBufferStack8, value: any_8) {
     declare index = AutoBufferStack8.>index(buffer);
     autobuffer_register(&(AutoBufferStack8.>autobuffer(buffer)), +(*(index, 8), 8), 8);
-    autobuffer_set_whole_8(&(AutoBufferStack8.>autobuffer(buffer)), whole_8.cast(value), *(index, 8));
+    autobuffer_set_whole_8(&(AutoBufferStack8.>autobuffer(buffer)), whole_8.cast(value), *(index, 8), false);
     AutoBufferStack8.<index(buffer, +(index, 1));
 };
 

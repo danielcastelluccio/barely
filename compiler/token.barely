@@ -54,10 +54,10 @@ define Tokens = module {
         index: whole_8;
     };
 
-    define new = function(): .Tokens {
+    define new = function(size: whole_8): .Tokens {
         declare tokens = .Tokens.>0();
 
-        .Tokens.<buffer(&(tokens), autobuffer_new(131072));
+        .Tokens.<buffer(&(tokens), autobuffer_new(size * Token.SIZE));
         .Tokens.<index(&(tokens), 0);
 
         return tokens;
@@ -84,29 +84,25 @@ define Tokens = module {
     };
 
     define append = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-        declare tokens_buffer = &(.Tokens.>buffer(tokens));
-        declare tokens_index = &(.Tokens.>index(tokens));
-        autobuffer_register(tokens_buffer, *(whole_8.>(tokens_index), Token.SIZE), Token.SIZE);
-        declare to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), Token.SIZE));
+        declare tokens_buffer = &tokens.buffer;
+        declare tokens_index = tokens.index;
+        declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token.SIZE, Token.SIZE);
 
-        autobuffer_set_whole_8(tokens_buffer, id, *(whole_8.>(tokens_index), Token.SIZE));
-        autobuffer_set_pointer(tokens_buffer, file_name, +(*(whole_8.>(tokens_index), Token.SIZE), 8));
-        autobuffer_set_whole_8(tokens_buffer, row, +(*(whole_8.>(tokens_index), Token.SIZE), 16));
-        autobuffer_set_whole_8(tokens_buffer, column, +(*(whole_8.>(tokens_index), Token.SIZE), 24));
+        whole_8.pcast(to_return).* = id;
+        *.pcast(to_return + 8).* = file_name;
+        whole_8.pcast(to_return + 16).* = row;
+        whole_8.pcast(to_return + 24).* = column;
 
-        increment_whole_8_pointer(tokens_index, 1);
-
+        tokens.index = tokens.index + 1;
         return to_return;
     };
 
     define append_count = function(tokens: *.Tokens, count: whole_8): * {
-        declare tokens_buffer = &(.Tokens.>buffer(tokens));
-        declare tokens_index = &(.Tokens.>index(tokens));
-        autobuffer_register(tokens_buffer, *(tokens_index.* + count, Token.SIZE), Token.SIZE);
-        declare to_return = autobuffer_get(tokens_buffer, *(whole_8.>(tokens_index), Token.SIZE));
+        declare tokens_buffer = &tokens.buffer;
+        declare tokens_index = tokens.index;
+        declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token.SIZE, count * Token.SIZE);
 
-        increment_whole_8_pointer(tokens_index, count);
-
+        tokens.index = tokens.index + count;
         return to_return;
     };
 

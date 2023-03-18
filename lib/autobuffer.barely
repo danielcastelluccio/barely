@@ -56,27 +56,33 @@ define autobuffer_set_pointer = function(buffer: *AutoBuffer, value: *, to: whol
     autobuffer_set(buffer, &(value), to, 8);
 };
 
-define autobuffer_set_whole_8 = function(buffer: *AutoBuffer, value: whole_8, to: whole_8) {
-    autobuffer_set(buffer, &(value), to, 8);
+define autobuffer_set_whole_8 = function(buffer: *AutoBuffer, value: whole_8, to: whole_8, checked: boolean) {
+    autobuffer_set_checked(buffer, &(value), to, 8, checked);
 };
 
 define autobuffer_register = function(buffer: *AutoBuffer, location: whole_8, size: whole_8) {
-    while >(+(location, size), AutoBuffer.>size(buffer)) {
-        declare previous_buffer = AutoBuffer.>buffer(buffer);
-        declare previous_size = AutoBuffer.>size(buffer);
-        declare new_buffer_size = +(AutoBuffer.>size(buffer), AutoBuffer.>increment(buffer));
+    while (location + size) > buffer.size {
+        declare previous_buffer = buffer.buffer;
+        declare previous_size = buffer.size;
+        declare new_buffer_size = +(previous_size, buffer.increment);
         declare allocated = brk_allocate(new_buffer_size);
-        AutoBuffer.<buffer(buffer, allocated);
-        AutoBuffer.<size(buffer, new_buffer_size);
+        buffer.buffer = allocated;
+        buffer.size = new_buffer_size;
         copy(previous_buffer, allocated, previous_size);
     };
 };
 
-define autobuffer_set = function(buffer: *AutoBuffer, from: *, to: whole_8, size: whole_8) {
-    autobuffer_register(buffer, to, size);
-    declare to_pointer = *.cast(+(AutoBuffer.>buffer(buffer), to));
+define autobuffer_set_checked = function(buffer: *AutoBuffer, from: *, to: whole_8, size: whole_8, checked: boolean) {
+    if checked {
+        autobuffer_register(buffer, to, size);
+    };
 
+    declare to_pointer = *.cast(+(AutoBuffer.>buffer(buffer), to));
     copy(from, to_pointer, size);
+};
+
+define autobuffer_set = function(buffer: *AutoBuffer, from: *, to: whole_8, size: whole_8) {
+    autobuffer_set_checked(buffer, from, to, size, true);
 };
 
 define autobuffer_get = function(buffer: *AutoBuffer, location: whole_8): * {

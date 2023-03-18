@@ -1,6 +1,4 @@
-define tokenize_inner = function(buffer: *, tokens: *Tokens.Tokens, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
-    declare buffer_length = length(buffer);
-
+define tokenize_inner = function(buffer: *, buffer_length: whole_8, tokens: *Tokens.Tokens, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
     if buffer_length == 0 {
         return;
     };
@@ -11,9 +9,9 @@ define tokenize_inner = function(buffer: *, tokens: *Tokens.Tokens, file_name: *
     if is_keyword(buffer) {
         declare keyword_data = #tokens_append_data(tokens, Token.KEYWORD, Token.KeywordData, file_name, row, column);
         keyword_data.keyword = copy_string_brk_allocate(buffer);
-    } else if is_number(buffer) {
+    } else if is_number(buffer, buffer_length) {
         declare number_data = #tokens_append_data(tokens, Token.NUMBER, Token.NumberData, file_name, row, column);
-        Token.NumberData.<value(number_data, string_to_whole_8(buffer));
+        number_data.value = string_to_whole_8(buffer);
     } else if string=(buffer, "true") || string=(buffer, "false") {
         declare boolean_data = #tokens_append_data(tokens, Token.BOOLEAN, Token.BooleanData, file_name, row, column);
         boolean_data.value = string=(buffer, "true");
@@ -22,31 +20,20 @@ define tokenize_inner = function(buffer: *, tokens: *Tokens.Tokens, file_name: *
         name_data.name = copy_string_brk_allocate(buffer);
     };
     
-    increment_whole_8_pointer(column_ptr, buffer_length);
+    column_ptr.* = column + buffer_length;
 };
+
+declare keyword_map: HashMap;
 
 define is_keyword = function(buffer: *): boolean {
-    return if string=(buffer, "function") true
-    else if string=(buffer, "declare") true
-    else if string=(buffer, "structure") true
-    else if string=(buffer, "module") true
-    else if string=(buffer, "macro") true
-    else if string=(buffer, "return") true
-    else if string=(buffer, "if") true
-    else if string=(buffer, "else") true
-    else if string=(buffer, "while") true
-    else if string=(buffer, "global") true
-    else if string=(buffer, "define") true
-    else if string=(buffer, "break") true
-    else false;
+    return hashmap_string_get(&keyword_map, buffer) == 1;
 };
 
-define is_number = function(string: *): boolean {
+define is_number = function(string: *, length: whole_8): boolean {
     declare has_number = false;
     declare i = 0;
-    declare string_length = length(string);
-    while i < string_length {
-        declare character = whole_1.>(whole_1.pcast(+(string, i)));
+    while i < length {
+        declare character = whole_1.pcast(+(string, i)).*;
 
         if character == ASCII.MINUS {
         } else if character < ASCII.ZERO {
@@ -68,6 +55,20 @@ macro #handle_special_tokenize_arguments() {
 };
 
 define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
+    keyword_map = hashmap_new(64);
+    hashmap_string_put(&keyword_map, "function", 1);
+    hashmap_string_put(&keyword_map, "declare", 1);
+    hashmap_string_put(&keyword_map, "structure", 1);
+    hashmap_string_put(&keyword_map, "module", 1);
+    hashmap_string_put(&keyword_map, "macro", 1);
+    hashmap_string_put(&keyword_map, "return", 1);
+    hashmap_string_put(&keyword_map, "if", 1);
+    hashmap_string_put(&keyword_map, "else", 1);
+    hashmap_string_put(&keyword_map, "while", 1);
+    hashmap_string_put(&keyword_map, "global", 1);
+    hashmap_string_put(&keyword_map, "define", 1);
+    hashmap_string_put(&keyword_map, "break", 1);
+
     declare row = 1;
     declare column = 1;
 
@@ -132,7 +133,7 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
         if !in_comment {
             if character == ASCII.QUOTATION {
                 if in_quotes {
-                    declare buffer_length = length(buffer.autobuffer.buffer);
+                    declare buffer_length = buffer.index;
                     declare buffer_copy = copy_string_brk_allocate(buffer.autobuffer.buffer);
 
                     declare string_pointer_data = #tokens_append_data(tokens, Token.STRING, Token.StringData, file_name, row, column);
@@ -174,9 +175,9 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
 
 define check_handle_single_operator = function(character: any_1, wanted_character: any_1, internal_name: *, buffer: *AutoBufferBuffer, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
-        tokenize_inner(buffer.autobuffer.buffer, tokens, file_name, row, column);
+        tokenize_inner(buffer.autobuffer.buffer, buffer.index, tokens, file_name, row, column);
 
-        tokenize_inner(internal_name, tokens, file_name, row, column);
+        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, column);
 
         autobuffer_buffer_reset(buffer);
         column.* = column.* + 1;
@@ -187,9 +188,9 @@ define check_handle_single_operator = function(character: any_1, wanted_characte
 
 define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, buffer: *AutoBufferBuffer, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if &&(character == wanted_character, character_next == wanted_character_next) {
-        tokenize_inner(buffer.autobuffer.buffer, tokens, file_name, row, column);
+        tokenize_inner(buffer.autobuffer.buffer, buffer.index, tokens, file_name, row, column);
 
-        tokenize_inner(internal_name, tokens, file_name, row, column);
+        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, column);
 
         autobuffer_buffer_reset(buffer);
         column.* = column.* + 2;
@@ -200,7 +201,7 @@ define check_handle_double_operator = function(character: any_1, character_next:
 
 define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, buffer: *AutoBufferBuffer, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
-        tokenize_inner(internal_name, tokens, file_name, row, column);
+        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, column);
 
         autobuffer_buffer_reset(buffer);
         column.* = column.* + 1;
@@ -211,7 +212,7 @@ define check_handle_single_prefix = function(character: any_1, wanted_character:
 
 define check_handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, buffer: *AutoBufferBuffer, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
-        tokenize_inner(buffer.autobuffer.buffer, tokens, file_name, row, column);
+        tokenize_inner(buffer.autobuffer.buffer, buffer.index, tokens, file_name, row, column);
         declare _ = Tokens.append(tokens, token, file_name, whole_8.>(row), whole_8.>(column));
 
         autobuffer_buffer_reset(buffer);
@@ -223,7 +224,7 @@ define check_handle_special_character = function(current_character: any_1, desir
 
 define check_handle_break = function(current_character: any_1, desired_character: whole_1, buffer: *AutoBufferBuffer, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
-        tokenize_inner(buffer.autobuffer.buffer, tokens, file_name, row, column);
+        tokenize_inner(buffer.autobuffer.buffer, buffer.index, tokens, file_name, row, column);
 
         autobuffer_buffer_reset(buffer);
         column.* = column.* + 1;
