@@ -391,8 +391,8 @@ define parse_expression_inner = function(tokens: *Tokens.Tokens, index_pointer: 
     declare next_id = Tokens.get_id(tokens, index);
     if Tokens.get_id(tokens, index) == Token.PERIOD {
         index = index + 1;
-        declare new_nodes_temp = nodes_new();
-        declare new_invoke_nodes = nodes_new();
+        declare new_nodes_temp = nodes_new(32);
+        declare new_invoke_nodes = nodes_new(32);
         parse_expression_inner(tokens, &index, &new_nodes_temp, &new_invoke_nodes);
 
         nodes_copy(&new_invoke_nodes, invoke_nodes, new_invoke_nodes.index);
@@ -421,8 +421,8 @@ define parse_expression_inner = function(tokens: *Tokens.Tokens, index_pointer: 
 };
 
 define parse_expression = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
-    declare nodes_temp = nodes_new();
-    declare invoke_nodes = nodes_new();
+    declare nodes_temp = nodes_new(32);
+    declare invoke_nodes = nodes_new(32);
     parse_expression_inner(tokens, index_pointer, &nodes_temp, &invoke_nodes);
     nodes_copy(&invoke_nodes, nodes, invoke_nodes.index);
     nodes_copy(&nodes_temp, nodes, nodes_temp.index);
