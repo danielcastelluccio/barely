@@ -5,7 +5,6 @@ declare cached_signedness_map: HashMap;
 
 define main = function(arguments: **, argument_count: whole_8) {
     declare tokenize_start_time = get_time_milliseconds();
-    print("Tokenizing...");
 
     cached_sizes_map = hashmap_new(131072);
     cached_signedness_map = hashmap_new(131072);
@@ -80,20 +79,18 @@ define main = function(arguments: **, argument_count: whole_8) {
     };
 
     declare expand_start_time = get_time_milliseconds();
-    print(" took ");
+    print("Tokenizing | ");
     print_whole_8(expand_start_time - tokenize_start_time);
     println(" milliseconds");
 
-    print("Expanding Macros...");
     declare tokens_expanded = Tokens.new();
     expand_macros(&(tokens), &(tokens_expanded), &(flags));
 
     declare parse_start_time = get_time_milliseconds();
-    print(" took ");
+    print("Expanding Macros | ");
     print_whole_8(parse_start_time - expand_start_time);
     println(" milliseconds");
 
-    print("Parsing...");
     declare nodes = nodes_new(16384);
     parse(&(tokens_expanded), &(nodes));
 
@@ -103,22 +100,20 @@ define main = function(arguments: **, argument_count: whole_8) {
     add_internal_functions(&(nodes));
 
     declare process_start_time = get_time_milliseconds();
-    print(" took ");
+    print("Parsing | ");
     print_whole_8(process_start_time - parse_start_time);
     println(" milliseconds");
 
-    print("Processing...");
     declare program_data = process(&(nodes), InstructionSetFunctions.>get_size(&(output_instruction_set)));
 
     declare output_start_time = get_time_milliseconds();
-    print(" took ");
+    print("Processing | ");
     print_whole_8(output_start_time - process_start_time);
     println(" milliseconds");
 
-    print("Outputting...");
     output_format(&(nodes), program_data, target_os, output_file, output_instruction_set);
 
-    print(" took ");
+    print("Outputting | ");
     print_whole_8(get_time_milliseconds() - output_start_time);
     println(" milliseconds");
 };
