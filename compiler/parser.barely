@@ -349,54 +349,54 @@ define handle_invoke_instructions = function(tokens: *Tokens.Tokens, index_point
     index_pointer.* = index;
 };
 
-
-define parse_expression = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+define parse_expression_inner = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes_temp: *Nodes, invoke_nodes: *Nodes) {
     declare index = index_pointer.*;
 
     declare id = Tokens.get_id(tokens, index);
     declare pointer_data = Tokens.get_pointer_data(tokens, index);
 
-    declare nodes_temp = nodes_new();
-
-    check_parse_simple_expressions(tokens, &index, &nodes_temp);
+    check_parse_simple_expressions(tokens, &index, nodes_temp);
 
     if id == Token.OPEN_CURLY_BRACKETS {
-        declare _ = nodes_append(&nodes_temp, NODE_SCOPE, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes_temp, NODE_SCOPE, get_token_location_data(tokens, index));
         index = index + 1;
         while !(Tokens.get_id(tokens, index) == Token.CLOSED_CURLY_BRACKETS) {
-            parse_statement(tokens, &index, &nodes_temp);
+            parse_statement(tokens, &index, nodes_temp);
         };
         index = index + 1;
-        declare _ = nodes_append(&nodes_temp, NODE_ENDSCOPE, get_token_location_data(tokens, index));
+        declare _ = nodes_append(nodes_temp, NODE_ENDSCOPE, get_token_location_data(tokens, index));
     };
 
     if id == Token.OPEN_PARENTHESIS {
         index = index + 1;
-        parse_expression(tokens, &index, &nodes_temp);
+        parse_expression(tokens, &index, nodes_temp);
         index = index + 1;
     };
 
     if id == Token.KEYWORD {
         declare name_value = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
         if string=(name_value, "if") {
-            parse_if(tokens, &index, &nodes_temp);
+            parse_if(tokens, &index, nodes_temp);
         };
     };
 
-    check_parse_invoke_chain(tokens, index, nodes);
+    declare index_before_copy_parenthesis = invoke_nodes.index;
 
-    declare index_before_copy_parenthesis = nodes.index;
-
-    nodes_copy(&nodes_temp, nodes, nodes_temp.index);
+    check_parse_invoke_chain(tokens, index, invoke_nodes);
 
     if Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS {
-        handle_invoke_instructions(tokens, &index, nodes, index_before_copy_parenthesis);
+        handle_invoke_instructions(tokens, &index, nodes_temp, nodes_temp.index - (RETRIEVE_SKIP_NODE_COUNT + 1));
     };
 
     declare next_id = Tokens.get_id(tokens, index);
     if Tokens.get_id(tokens, index) == Token.PERIOD {
         index = index + 1;
-        parse_expression(tokens, &index, nodes);
+        declare new_nodes_temp = nodes_new();
+        declare new_invoke_nodes = nodes_new();
+        parse_expression_inner(tokens, &index, &new_nodes_temp, &new_invoke_nodes);
+
+        nodes_copy(&new_invoke_nodes, invoke_nodes, new_invoke_nodes.index);
+        nodes_copy(&new_nodes_temp, nodes_temp, new_nodes_temp.index);
     };
 
     if Tokens.get_id(tokens, index) == Token.NAME {
@@ -404,20 +404,28 @@ define parse_expression = function(tokens: *Tokens.Tokens, index_pointer: *whole
         if !(Tokens.get_id(tokens, index + 1) == Token.OPEN_PARENTHESIS) {
             declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
 
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "+", "+");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "-", "-");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "*", "*");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "/", "/");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "%", "%");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "&&", "&&");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "||", "|");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, ">", ">");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "<", "<");
-            declare _ = check_parse_operator(tokens, &index, nodes, name, "==", "=");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "+", "+");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "-", "-");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "*", "*");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "/", "/");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "%", "%");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "&&", "&&");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "||", "|");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, ">", ">");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "<", "<");
+            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "==", "=");
         };
     };
 
     index_pointer.* = index;
+};
+
+define parse_expression = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes) {
+    declare nodes_temp = nodes_new();
+    declare invoke_nodes = nodes_new();
+    parse_expression_inner(tokens, index_pointer, &nodes_temp, &invoke_nodes);
+    nodes_copy(&invoke_nodes, nodes, invoke_nodes.index);
+    nodes_copy(&nodes_temp, nodes, nodes_temp.index);
 };
 
 define check_parse_operator = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, parsed_name: *, wanted_name: *, internal_name: *): boolean {
@@ -472,9 +480,6 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Tokens, index_p
     } else if token_id == Token.PERIOD {
         declare retrieve_data = #nodes_append_data(nodes, NODE_RETRIEVE, NodeRetrieveData, get_token_location_data(tokens, index));
         retrieve_data.name_single = "@current_module";
-        index = index + 1;
-
-        parse_expression(tokens, &index, nodes);
     } else if token_id == Token.STRING {
         declare string_data = Token.StringData.pcast(token_pointer_data);
         declare string_value = string_data.value;
