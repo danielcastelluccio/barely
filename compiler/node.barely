@@ -320,6 +320,21 @@ define print_node_info = function(nodes: *Nodes, index: whole_8) {
         println("String{}")
     } else if =(id, NODE_SKIP) {
         println("Skip{}")
+    } else if =(id, NODE_ENDIFBLOCK) {
+        declare data = NodeEndIfBlockData.pcast(pointer_data);
+        print("EndIfBlock{is_last=")
+        if data.is_last {
+            print("true");
+        } else {
+            print("false");
+        };
+        print(",is_bare_else=");
+        if data.is_bare_else {
+            print("true");
+        } else {
+            print("false");
+        };
+        println("}");
     } else if =(id, NODE_ENDSTATEMENT) {
         println("EndStatement{}")
     } else {
