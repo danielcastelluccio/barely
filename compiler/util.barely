@@ -437,7 +437,10 @@ define create_size_seven_array8_brk_allocate = function(item1: any_8, item2: any
 };
 
 define copy_string_brk_allocate = function(string: *): * {
-    declare string_length = length(string);
+    return copy_string_length_brk_allocate(string, length(string));
+};
+
+define copy_string_length_brk_allocate = function(string: *, string_length: whole_8): * {
     declare new_string = brk_allocate(+(string_length, 1));
     copy(string, new_string, string_length);
     return new_string;
