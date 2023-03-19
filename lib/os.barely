@@ -64,8 +64,9 @@ define get_time_milliseconds = function(): whole_8 {
         (time_val.seconds * 1000) + (time_val.microseconds / 1000)
     };)
     #compile_if(target, macos, return {
-        println("Unimplemented: Getting Millisecond Time");
-        exit(1);
+        declare time_val: MacOS.TimeVal;
+        MacOS.sys_get_time_of_day(&time_val);
+        (time_val.seconds * 1000) + (time_val.microseconds / 1000)
     };)
 };
 
