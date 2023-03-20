@@ -1434,34 +1434,34 @@ define Target_X86_64 = module {
             return 1;
         };
 
-        declare cached_size = whole_8.cast(hashmap_string_get(&(cached_sizes_map), type));
-        if !(=(cached_size, 0)) {
+        declare cached_size = whole_8.cast(hashmap_string_get(&cached_sizes_map, type));
+        if !(cached_size == 0) {
             return cached_size;
         };
 
         if string_length=(type, "any_", 4) {
-            declare number = string_to_whole_8(*.cast(+(type, 4)));
-            hashmap_string_put(&(cached_sizes_map), type, number);
+            declare number = string_to_whole_8(type + 4);
+            hashmap_string_put(&cached_sizes_map, type, number);
 
             return number;
         };
 
         if string_length=(type, "whole_", 6) {
-            declare number = string_to_whole_8(*.cast(+(type, 6)));
-            hashmap_string_put(&(cached_sizes_map), type, number);
+            declare number = string_to_whole_8(type + 6);
+            hashmap_string_put(&cached_sizes_map, type, number);
 
             return number;
         };
 
         if string_length=(type, "integer_", 8) {
-            declare number = string_to_whole_8(*.cast(+(type, 8)));
-            hashmap_string_put(&(cached_sizes_map), type, number);
+            declare number = string_to_whole_8(type + 8);
+            hashmap_string_put(&cached_sizes_map, type, number);
 
             return number;
         };
 
-        declare define_types = &(ProgramData.>define_types(program_data));
-        declare define_values = &(ProgramData.>define_values(program_data));
+        declare define_types = &program_data.define_types;
+        declare define_values = &program_data.define_values;
 
         if is_define(type) {
             declare defined_value = whole_8.cast(get_value_of_define(define_types, define_values, type));

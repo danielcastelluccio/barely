@@ -10,63 +10,65 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes, program_data: *Pro
 
     if string_length=(wanted, "*", 1) {
         if string_length=(given, "*", 1) {
-            return is_type(+(wanted, 1), +(given, 1), nodes, program_data);
+            return is_type(wanted + 1, given + 1, nodes, program_data);
         };
     };
 
     if string_length=(wanted, "any_", 4) {
-        declare size = string_to_whole_8(*.cast(+(wanted, 4)));
-        declare size_function = ProgramData.>get_size(program_data);
-        return =(size, size_function(given, nodes, program_data));
+        declare size = string_to_whole_8(wanted + 4);
+        declare size_function = program_data.get_size;
+        return size == size_function(given, nodes, program_data);
     };
 
     return false;
 };
 
 define is_signed = function(type: *, nodes: *Nodes): whole_8 {
-    declare cached_signedness = whole_8.cast(hashmap_string_get2(&(cached_signedness_map), type));
-    if !(=(cached_signedness, 999)) {
+    declare cached_signedness = whole_8.cast(hashmap_string_get2(&cached_signedness_map, type));
+    if !(cached_signedness == 999) {
         return cached_signedness;
     };
 
     if string_length=(type, "*", 1) {
-        hashmap_string_put(&(cached_signedness_map), type, 0);
+        hashmap_string_put(&cached_signedness_map, type, 0);
         return 0;
     };
 
     if string_length=(type, "whole_", 6) {
-        hashmap_string_put(&(cached_signedness_map), type, 0);
+        hashmap_string_put(&cached_signedness_map, type, 0);
         return 0;
     };
     if string_length=(type, "any_", 4) {
-        hashmap_string_put(&(cached_signedness_map), type, 0);
+        hashmap_string_put(&cached_signedness_map, type, 0);
         return 0;
     };
     if string_length=(type, "integer_", 8) {
-        hashmap_string_put(&(cached_signedness_map), type, 1);
+        hashmap_string_put(&cached_signedness_map, type, 1);
         return 1;
     };
 
-    declare node_count = Nodes.>index(nodes);
-    declare i = 0;
-    while <(i, node_count) {
-        if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
-            declare pointer = NodeStructureData.pcast(nodes_get_pointer_data(nodes, i));
-            declare name = NodeStructureData.>name(pointer);
+    // Assuming all structures are unsigned?
 
-            if !(=(name, 0)) {
-                declare member_types = NodeStructureData.>item_types(pointer);
-                if string=(type, name) {
-                    declare is_signed2 = is_signed(*.cast(array8_get(member_types, 0)), nodes);
-                    hashmap_string_put(&(cached_signedness_map), type, is_signed2);
-                    return is_signed2;
-                };
-            };
-        };
-        i = +(i, 1);
-    };
+    //declare node_count = nodes.index;
+    //declare i = 0;
+    //while i < node_count {
+    //    if =(nodes_get_id(nodes, i), NODE_STRUCTURE) {
+    //        declare pointer = NodeStructureData.pcast(nodes_get_pointer_data(nodes, i));
+    //        declare name = NodeStructureData.>name(pointer);
 
-    hashmap_string_put(&(cached_signedness_map), type, 0);
+    //        if !(=(name, 0)) {
+    //            declare member_types = NodeStructureData.>item_types(pointer);
+    //            if string=(type, name) {
+    //                declare is_signed2 = is_signed(*.cast(array8_get(member_types, 0)), nodes);
+    //                hashmap_string_put(&cached_signedness_map, type, is_signed2);
+    //                return is_signed2;
+    //            };
+    //        };
+    //    };
+    //    i = i + 1;
+    //};
+
+    hashmap_string_put(&cached_signedness_map, type, 0);
     return 0;
 };
 
@@ -223,13 +225,13 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
             process_end_if(nodes, i, &stack, &stack_pointer, &if_blocks, &if_block_results, &if_block_pointer, pointer_data, &program_data);
         } else if id == NODE_DEFINE {
             declare define_node_data = NodeDefineData.pcast(pointer_data);
-            if string=(NodeDefineData.>name(define_node_data), "main") {
+            if string=(define_node_data.name, "main") {
                 has_main = true;
             };
         } else if id == NODE_ENDDEFINE {
         } else if id == NODE_MODULE {
             autobuffer_stack8_push(&module_stack, declared_module_id);
-            declared_module_id = +(declared_module_id, 1);
+            declared_module_id = declared_module_id + 1;
         } else if id == NODE_ENDMODULE {
             declare _ = autobuffer_stack8_pop(&module_stack);
         } else if id == NODE_JUMP {
@@ -239,12 +241,9 @@ define process = function(nodes: *Nodes, size_function: *function[*,*Nodes,*Prog
         } else if id == NODE_STRUCTURE {
         } else if id == NODE_SKIP {
         } else if id == NODE_ENDSTATEMENT {
-            if !(=(stack_pointer, 0)) {
+            if !(stack_pointer == 0) {
                 print_node_error_beginning(nodes, i);
                 println("Statement end has extra stack values");
-                while !(=(stack_pointer, 0)) {
-                    println(*.cast(autobuffer_stack8_legacy_pop(&stack, &stack_pointer)));
-                };
                 exit(1);
 
             };
@@ -290,25 +289,25 @@ define is_define = function(type: *): boolean {
 define process_number = function(module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, pointer_data: *) {
     declare number_data = NodeNumberData.pcast(pointer_data);
 
-    declare coersion = NodeNumberData.>coersion(number_data);
-    if =(coersion, 0) {
+    declare coersion = number_data.coersion;
+    if coersion == 0 {
         coersion = "whole_8";
     } else {
-        coersion = expand_module_name_array(coersion, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        coersion = expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
     };
 
     autobuffer_stack8_legacy_push(stack, stack_pointer, coersion);
 };
 
 define process_jump_conditional = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, stack: *AutoBuffer, stack_pointer: *whole_8) {
-    if =(whole_8.>(stack_pointer), 0) {
+    if stack_pointer.* == 0 {
         print_node_error_beginning(nodes, nodes_index);
         println("Conditional jump ran out of stack values");
         exit(1);
     };
 
     declare popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
-    if !(is_type(popped, "boolean", nodes, program_data)) {
+    if !is_type(popped, "boolean", nodes, program_data) {
         print_node_error_beginning(nodes, nodes_index);
         print("Conditional Jump (if/while) wants 'boolean', given '");
         print(popped);
@@ -318,19 +317,19 @@ define process_jump_conditional = function(nodes: *Nodes, nodes_index: whole_8, 
 };
 
 define process_return = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, current_function_id: whole_8) {
-    declare function_return_types = &(ProgramData.>function_return_types(program_data));
+    declare function_return_types = &program_data.function_return_types;
     declare function_return_types_specific = *.cast(autobuffer_array8_get(function_return_types, current_function_id));
 
-    declare function_return_types2 = &(ProgramData.>function_return_types2(program_data));
+    declare function_return_types2 = &program_data.function_return_types2;
     declare function_return_types2_specific = *.cast(autobuffer_array8_get(function_return_types2, current_function_id));
 
     declare temp = array8_length(function_return_types2_specific);
-    declare j = -(temp, 1);
-    while <(j, temp) {
+    declare j = temp - 1;
+    while j < temp {
         declare function_return = *.cast(array8_get(function_return_types2_specific, j));
-        function_return = expand_module_name_array(function_return, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        function_return = expand_module_name_array(function_return, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
 
-        if =(whole_8.>(stack_pointer), 0) {
+        if stack_pointer == 0 {
             print_node_error_beginning(nodes, nodes_index);
             println("Return ran out of stack values");
             exit(1);
@@ -338,7 +337,7 @@ define process_return = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
 
         declare stack_popped = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
         
-        if !(is_type(function_return, stack_popped, nodes, program_data)) {
+        if !is_type(function_return, stack_popped, nodes, program_data) {
             print_node_error_beginning(nodes, nodes_index);
             print("Return wants '");
             print(function_return);
@@ -351,7 +350,7 @@ define process_return = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
         j = -(j, 1);
     };
 
-    if !(=(whole_8.>(stack_pointer), 0)) {
+    if stack_pointer.* > 0 {
         print_node_error_beginning(nodes, nodes_index);
         println("Return has extra stack values");
         exit(1);
@@ -360,40 +359,40 @@ define process_return = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
 
 define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, if_blocks: *AutoBuffer, if_block_results: *AutoBuffer, if_block_pointer: *whole_8, pointer_data: *, program_data: *ProgramData) {
     declare end_if_data = NodeEndIfBlockData.pcast(pointer_data);
-    declare end_if_id = NodeEndIfBlockData.>id(end_if_data);
-    declare is_last = NodeEndIfBlockData.>is_last(end_if_data);
-    declare is_bare_else = NodeEndIfBlockData.>is_bare_else(end_if_data);
+    declare end_if_id = end_if_data.id;
+    declare is_last = end_if_data.is_last;
+    declare is_bare_else = end_if_data.is_bare_else;
 
     declare start_stack = whole_8.cast(autobuffer_stack8_legacy_pop(if_blocks, if_block_pointer));
     declare previous_results = *.cast(autobuffer_array8_get(if_block_results, end_if_id));
 
-    declare size = *(8, -(whole_8.>(stack_pointer), start_stack));
-    if =(previous_results, 0) {
+    declare size = 8 * (stack_pointer.* - start_stack);
+    if previous_results == 0 {
         previous_results = brk_allocate(+(8, size));
-        declare array = autobuffer_get_size(stack, *(8, start_stack), size);
+        declare array = autobuffer_get_size(stack, 8 * start_stack, size);
         copy(array, previous_results, size);
 
         autobuffer_array8_set(if_block_results, end_if_id, previous_results);
 
-        if !(is_last) {
+        if !is_last {
             declare j = 0;
-            while <(j, /(size, 8)) {
+            while <(j, size / 8) {
                 declare _ = autobuffer_stack8_legacy_pop(stack, stack_pointer);
 
-                j = +(j, 1);
+                j = j + 1;
             };
-        } else if &&(!(is_bare_else), >(size, 0)) {
+        } else if &&(!is_bare_else, size > 0) {
             print_node_error_beginning(nodes, nodes_index);
             println("If expression resulting in a value requires an 'else' condition");
             exit(1);
         };
     } else {
-        declare array = autobuffer_get_size(stack, *(8, start_stack), size);
+        declare array = autobuffer_get_size(stack, 8 * start_stack, size);
         declare previous_array = previous_results;
 
         declare max_size = size;
         if (array8_length(previous_array) * 8) > size {
-            size = *(array8_length(previous_array), 8);
+            size = array8_length(previous_array) * 8;
         };
 
         declare j = 0;
@@ -428,7 +427,7 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
                 exit(1);
             };
 
-            j = +(j, 1);
+            j = j + 1;
         };
     };
 };
@@ -448,7 +447,7 @@ define process_assign = function(nodes: *Nodes, nodes_index_in: *whole_8, module
     declare variable_type = *.>0();
 
     if uses_previous {
-        if !(string_length=(*.cast(autobuffer_stack8_legacy_peek(stack, stack_pointer)), "module:", 7)) {
+        if !string_length=(*.cast(autobuffer_stack8_legacy_peek(stack, stack_pointer)), "module:", 7) {
             declare index = 0;
             declare variable_type_temp = *.cast(autobuffer_stack8_legacy_peek(stack, stack_pointer));
             if string_length=(variable_type_temp, "*", 1) {
