@@ -397,22 +397,25 @@ define process_end_if = function(nodes: *Nodes, nodes_index: whole_8, stack: *Au
         };
 
         declare j = 0;
-        while <(j, /(size, 8)) {
+        while <(j, size / 8) {
             declare previous_value = *.cast(array8_get(previous_array, j));
             declare value = *.cast(array8_get(array, j));
 
             declare error = false;
 
-            if =(value, 0) {
+            if value == 0 {
                 error = true;
-            } else if =(previous_value, 0) {
+            } else if previous_value == 0 {
                 error = true;
-            } else if !(is_type(value, previous_value, nodes, program_data)) {
-                error = true;
-            } else {
-                if !(is_last) {
-                    declare _ = autobuffer_stack8_legacy_pop(stack, stack_pointer);
+            } else if !is_type(value, previous_value, nodes, program_data) {
+                if is_type(previous_value, value, nodes, program_data) {
+                    array8_set(previous_array, j, previous_value);
+                    array8_set(array, j, previous_value);
+                } else {
+                    error = true;
                 };
+            } else if !is_last {
+                declare _ = autobuffer_stack8_legacy_pop(stack, stack_pointer);
             };
 
             if error {
