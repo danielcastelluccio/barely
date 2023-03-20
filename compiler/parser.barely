@@ -115,10 +115,10 @@ define parse_name_array = function(tokens: *Tokens.Tokens, index_pointer: *whole
     };
 
     declare inner = 0;
-    while |(inner > 0, 
-        |(Tokens.get_id(tokens, index) == Token.OPEN_BRACKET, 
-            &&(Tokens.is_name(tokens, index - 1, "*"), 
-            |(Tokens.get_id(tokens, index) == Token.NAME, Tokens.get_id(tokens, index) == Token.KEYWORD)))) {
+    while (inner > 0) ||
+        ((Tokens.get_id(tokens, index) == Token.OPEN_BRACKET) ||
+            (Tokens.is_name(tokens, index - 1, "*") &&
+            ((Tokens.get_id(tokens, index) == Token.NAME) || (Tokens.get_id(tokens, index) == Token.KEYWORD)))) {
         declare id = Tokens.get_id(tokens, index);
         declare pointer_data = Tokens.get_pointer_data(tokens, index);
         if id == Token.OPEN_BRACKET {
@@ -237,7 +237,7 @@ define parse_function_definition = function(tokens: *Tokens.Tokens, index_pointe
             };
 
             is_name = !is_name;
-        } else if |(id == Token.COMMA, id == Token.COLON) {
+        } else if (id == Token.COMMA) || (id == Token.COLON) {
             index = index + 1;
         };
     };
@@ -245,14 +245,14 @@ define parse_function_definition = function(tokens: *Tokens.Tokens, index_pointe
     index = index + 1;
 
     declare returns_index = 0;
-    while &&(!(Tokens.get_id(tokens, index) == Token.OPEN_CURLY_BRACKETS), !(Tokens.get_id(tokens, index) == Token.SEMICOLON)) {
+    while (!(Tokens.get_id(tokens, index) == Token.OPEN_CURLY_BRACKETS)) && (!(Tokens.get_id(tokens, index) == Token.SEMICOLON)) {
         declare id = Tokens.get_id(tokens, index);
 
-        if |(id == Token.NAME, id == Token.PERIOD) {
+        if (id == Token.NAME) || (id == Token.PERIOD) {
             declare token_name = parse_name_array(tokens, &index);
             autobuffer_array8_set(&function_returns2, returns_index, token_name);
             returns_index = returns_index + 1;
-        } else if |(id == Token.COMMA, id == Token.COLON) {
+        } else if (id == Token.COMMA) || (id == Token.COLON) {
             index = index + 1;
         };
     };
@@ -274,7 +274,7 @@ define check_parse_invoke_chain = function(tokens: *Tokens.Tokens, index_in: who
     declare index = index_in;
 
     declare inner = 0:integer_8;
-    while |(inner > 0:integer_8, Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
+    while (inner > 0:integer_8) || (Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
         declare id = Tokens.get_id(tokens, index);
         if id == Token.OPEN_PARENTHESIS {
             if inner == 0:integer_8 {
@@ -314,7 +314,7 @@ define handle_invoke_instructions = function(tokens: *Tokens.Tokens, index_point
 
     declare is_first_invoke = true;
 
-    while |(inner > 0:integer_8, Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
+    while (inner > 0:integer_8) || (Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
         declare id = Tokens.get_id(tokens, index);
         if id == Token.OPEN_PARENTHESIS {
             if inner == 0:integer_8 {
@@ -401,20 +401,18 @@ define parse_expression_inner = function(tokens: *Tokens.Tokens, index_pointer: 
 
     if Tokens.get_id(tokens, index) == Token.NAME {
         // TODO: This check should be removed once everything is converted and we don't need to old way of calling
-        if !(Tokens.get_id(tokens, index + 1) == Token.OPEN_PARENTHESIS) {
-            declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
+        declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
 
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "+", "+");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "-", "-");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "*", "*");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "/", "/");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "%", "%");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "&&", "&&");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "||", "|");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, ">", ">");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "<", "<");
-            declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "==", "=");
-        };
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "+", "+");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "-", "-");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "*", "*");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "/", "/");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "%", "%");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "&&", "&&");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "||", "|");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, ">", ">");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "<", "<");
+        declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "==", "=");
     };
 
     index_pointer.* = index;
@@ -451,12 +449,10 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Tokens, index_p
     if token_id == Token.NAME {
         declare name_data = Token.NameData.pcast(token_pointer_data);
         // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
-        if !(Tokens.get_id(tokens, index + 1) == Token.OPEN_PARENTHESIS) {
-            declare name = name_data.name;
+        declare name = name_data.name;
 
-            if check_parse_operator(tokens, index_pointer, nodes, name, "!", "!") { return; }; // TODO: I have no idea why the syntax with the bar return is not working
-            if check_parse_operator(tokens, index_pointer, nodes, name, "&", "&") { return; };
-        };
+        if check_parse_operator(tokens, index_pointer, nodes, name, "!", "!") { return; }; // TODO: I have no idea why the syntax with the bar return is not working
+        if check_parse_operator(tokens, index_pointer, nodes, name, "&", "&") { return; };
 
         declare last_id = Tokens.get_id(tokens, index - 1);
 
@@ -530,7 +526,7 @@ define is_special_function = function(name: *): boolean {
     else if string_length=(name, ">", 1) true
     else if string_length=(name, "cast", 4) true
     else if string_length=(name, "pcast", 5) true
-    else if &&(string_length=(name, "size", 4), length(name) == 4) true
+    else if string_length=(name, "size", 4) && (length(name) == 4) true
     else if string_length=(name, "@syscall", 8) true
     else false;
 };
@@ -552,7 +548,7 @@ define parse_if = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, node
             parse_expression(tokens, &index, nodes);
             declare conditional_jump_data = #nodes_append_data(nodes, NODE_JUMP_CONDITIONAL, NodeJumpConditionalData, get_token_location_data(tokens, index));
             conditional_jump_data.target_id = target;
-        } else if &&(Tokens.is_keyword(tokens, index, "else"), Tokens.is_keyword(tokens, index, "if")) {
+        } else if Tokens.is_keyword(tokens, index, "else") && Tokens.is_keyword(tokens, index, "if") {
             index = index + 2;
 
             parse_expression(tokens, &index, nodes);
@@ -612,9 +608,14 @@ define parse_statement = function(tokens: *Tokens.Tokens, index_pointer: *whole_
         parse_break(tokens, &index, nodes);
     } else {
         parse_expression(tokens, &index, nodes);
-        if Tokens.get_id(tokens, index) == Token.SEMICOLON {
+        declare id = Tokens.get_id(tokens, index);
+        if id == Token.SEMICOLON {
             declare _ = nodes_append(nodes, NODE_ENDSTATEMENT, get_token_location_data(tokens, index_pointer.*));
             index = index + 1;
+        } else if id == Token.COLON {
+            print_token_error_beginning(tokens, index);
+            println("Unexpected token");
+            exit(1);
         };
     };
 
@@ -814,7 +815,7 @@ define parse_multiple_expressions = function(tokens: *Tokens.Tokens, index_point
         declare id = Tokens.get_id(tokens, index);
         if id == Token.COMMA {
             index = index + 1;
-        } else if |(|(id == Token.SEMICOLON, id == Token.CLOSED_PARENTHESIS), id == Token.CLOSED_CURLY_BRACKETS) {
+        } else if (id == Token.SEMICOLON) || (id == Token.CLOSED_PARENTHESIS) || (id == Token.CLOSED_CURLY_BRACKETS) {
             print_token_error_beginning(tokens, index);
             println("Unexpected token");
             exit(1);
@@ -872,7 +873,7 @@ define parse_individual = function(tokens: *Tokens.Tokens, index_pointer: *whole
 
 define parse_multiple = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, nodes: *Nodes, ending: whole_8) {
     declare tokens_index = tokens.index;
-    while &&(!(Tokens.get_id(tokens, index_pointer.*) == ending), index_pointer.* < tokens_index) {
+    while (!(Tokens.get_id(tokens, index_pointer.*) == ending)) && (index_pointer.* < tokens_index) {
         parse_individual(tokens, index_pointer, nodes);
     };
 };

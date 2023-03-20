@@ -386,12 +386,12 @@ define Target_X86_64 = module {
         if !(=(variable_type, 0)) {
             // TODO: Better way of handling retrieve outside of functions
             if &&(!(string=(variable_type, "module")), !(string_length=(variable_type, "structure[", 10))) {
-                .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, variable_name, variable_type);
+                .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_stack, variable_name, variable_type);
             };
         };
     };
 
-    define output_retrieve_define = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, variable_name: *, variable_type_in: *) {
+    define output_retrieve_define = function(nodes: *Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, variable_name: *, variable_type_in: *) {
         declare variable_type = variable_type_in;
         declare define_types = &(ProgramData.>define_types(program_data));
         declare define_values = &(ProgramData.>define_values(program_data));
@@ -400,15 +400,11 @@ define Target_X86_64 = module {
         declare define_value = get_value_of_define(define_types, define_values, variable_name);
 
         if string=(variable_type, "define") {
-            declare value = *.cast(get_value_of_define(define_types, define_values, variable_name));
-            declare i = 0;
-            while <(i, array8_length(value)) {
-                i = +(i, 1);
-            };
+            declare reference = *.cast(hashmap_string_get(&module_references_map, variable_name));
+            declare expanded = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
 
-            declare value2 = *.cast(array8_get(value, 0));
-            variable_type = *.cast(get_define_retrieve_type(define_types, define_values, value2));
-            define_value = *.cast(get_value_of_define(define_types, define_values, value2));
+            variable_type = *.cast(get_define_retrieve_type(define_types, define_values, expanded));
+            define_value = *.cast(get_value_of_define(define_types, define_values, expanded));
 
             if |(string=(variable_type, "module"), string=(variable_type, "define")) {
                 return;
