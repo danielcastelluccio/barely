@@ -208,74 +208,104 @@ define hashmap_new = function(size: whole_8): HashMap {
 };
 
 define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
-    declare buffer = &(HashMap.>buffer(hashmap));
+    declare buffer = &hashmap.buffer;
 
-    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
-    if =(bucket_pointer, 0) {
-        declare allocated_autobuffer = AutoBuffer.pcast(brk_allocate(24));
+    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, %(hash, (buffer.size / 8)) * 8));
+    if bucket_pointer == 0 {
+        declare allocated_autobuffer = AutoBuffer.pcast(brk_allocate(BucketData.size()));
         declare autobuffer = autobuffer_new(48);
-        AutoBuffer.<(allocated_autobuffer, autobuffer);
+        allocated_autobuffer.* = autobuffer;
 
         bucket_pointer = allocated_autobuffer;
-        autobuffer_set_any_8(buffer, bucket_pointer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8));
+        autobuffer_set_any_8(buffer, bucket_pointer, %(hash, buffer.size / 8) * 8);
     };
 
     declare searching = true;
     declare i = 0;
     while searching {
-        if =(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0) {
+        if autobuffer_get_any_8(bucket_pointer, i * BucketData.size()) == 0 {
             searching = false;
-        } else if =(autobuffer_get_any_8(bucket_pointer, +(*(i, 24), 8)), hash) {
+        } else if autobuffer_get_any_8(bucket_pointer, (i * BucketData.size()) + 8) == hash {
             searching = false;
         } else {
-            i = +(i, 1);
+            i = i + 1;
         };
     };
 
-    declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
-    BucketData.<data(bucket_data, 1);
-    BucketData.<hash(bucket_data, hash);
-    BucketData.<value(bucket_data, value);
+    declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
+    bucket_data.data = 1;
+    bucket_data.hash = hash;
+    bucket_data.value = value;
+};
+
+define hashmap_get_general = function(hashmap: *HashMap, hash: whole_8): any_8, boolean {
+    declare buffer = &hashmap.buffer;
+
+    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, %(hash, buffer.size / 8) * 8));
+    if !(bucket_pointer == 0) {
+        declare i = 0;
+        while !(autobuffer_get_any_8(bucket_pointer, i * BucketData.size()) == 0) {
+            declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
+
+            if bucket_data.hash == hash {
+                return bucket_data.value, true;
+            };
+
+            i = i + 1;
+        };
+    };
+
+    return 0, false;
 };
 
 define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    declare buffer = &(HashMap.>buffer(hashmap));
-
-    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
-    if !(=(bucket_pointer, 0)) {
-        declare i = 0;
-        while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
-
-            if =(BucketData.>hash(bucket_data), hash) {
-                return BucketData.>value(bucket_data);
-            };
-
-            i = +(i, 1);
-        };
+    declare value, found = hashmap_get_general(hashmap, hash);
+    return if found {
+        value
+    } else {
+        0:any_8
     };
-
-    return 0;
 };
 
+//define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
+//    declare value, found = hashmap_get_general(hashmap, hash);
+//    return if found {
+//        value
+//    } else {
+//        999:any_8
+//    };
+//};
+
 define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    declare buffer = &(HashMap.>buffer(hashmap));
+    declare buffer = &hashmap.buffer;
+    declare result: any_8 = 999;
 
-    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, *(%(hash, /(AutoBuffer.>size(buffer), 8)), 8)));
-    if !(=(bucket_pointer, 0)) {
+    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, %(hash, buffer.size / 8) * 8));
+    if !(bucket_pointer == 0) {
         declare i = 0;
-        while !(=(autobuffer_get_any_8(bucket_pointer, *(i, 24)), 0)) {
-            declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, *(i, 24), 24));
+        while !(autobuffer_get_any_8(bucket_pointer, i * BucketData.size()) == 0) {
+            declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
 
-            if =(BucketData.>hash(bucket_data), hash) {
-                return BucketData.>value(bucket_data);
+            if bucket_data.hash == hash {
+                result = bucket_data.value;
+                break;
             };
 
-            i = +(i, 1);
+            i = i + 1;
         };
     };
 
-    return 999;
+    declare result, found = hashmap_get_general(hashmap, hash);
+    if !found {
+        result = 999;
+    };
+    //return if found {
+    //    result
+    //} else {
+    //    999:any_8
+    //};
+
+    return result;
 };
 
 define hashmap_string_put = function(hashmap: *HashMap, string: *, value: any_8) {
@@ -293,11 +323,10 @@ define hashmap_string_get2 = function(hashmap: *HashMap, string: *): any_8 {
 define string_hash = function(string: *): whole_8 {
     declare hash = 5381;
     declare i = 0;
-    while <(i, length(string)) {
+    while i < length(string) {
         declare character = whole_1_to_whole_8(whole_1.cast(any_1.>(+(any_1.pcast(string), i))));
-        //hash = +(+(hash, *(hash, character)), *(character, i));
-        hash = +(*(hash, 33), character);
-        i = +(i, 1);
+        hash = +((hash * 33), character);
+        i = i + 1;
     };
 
     return hash;
@@ -688,7 +717,7 @@ define string_to_function_data = function(type: *): NodeFunctionData {
 };
 
 define function_data_to_string = function(module_stack: *AutoBufferStack8, pointer: *NodeFunctionData): * {
-    declare main_name_buffer = autobuffer_buffer_new(16);
+    declare main_name_buffer = autobuffer_buffer_new(32);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
 
