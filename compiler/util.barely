@@ -667,7 +667,7 @@ define to_type_array = function(type: *): * {
     return AutoBuffer.>buffer(&(new_array));
 };
 
-define string_to_function_data = function(type: *): NodeFunctionData {
+define string_to_function_data = function(type: *): Node.FunctionData {
     declare argument_types = autobuffer_stack8_new(24);
     declare return_types = autobuffer_stack8_new(24);
 
@@ -711,19 +711,19 @@ define string_to_function_data = function(type: *): NodeFunctionData {
         i = +(i, 1);
     };
 
-    declare data = NodeFunctionData.>0();
-    NodeFunctionData.<argument_types(&(data), autobuffer_stack8_get_buffer_pointer(&(argument_types)));
-    NodeFunctionData.<returns(&(data), autobuffer_stack8_get_buffer_pointer(&(return_types)));
+    declare data = Node.FunctionData.>0();
+    Node.FunctionData.<argument_types(&(data), autobuffer_stack8_get_buffer_pointer(&(argument_types)));
+    Node.FunctionData.<returns(&(data), autobuffer_stack8_get_buffer_pointer(&(return_types)));
 
     return data;
 };
 
-define function_data_to_string = function(module_stack: *AutoBufferStack8, pointer: *NodeFunctionData): * {
+define function_data_to_string = function(module_stack: *AutoBufferStack8, pointer: *Node.FunctionData): * {
     declare main_name_buffer = autobuffer_buffer_new(32);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
 
-    declare arguments = NodeFunctionData.>argument_types_array(pointer);
+    declare arguments = Node.FunctionData.>argument_types_array(pointer);
 
     declare j = 0;
     while !(=(array8_get(arguments, j), 0)) {
@@ -739,7 +739,7 @@ define function_data_to_string = function(module_stack: *AutoBufferStack8, point
     };
     autobuffer_buffer_push_string(&(main_name_buffer), ":");
 
-    declare returns2 = NodeFunctionData.>returns2(pointer);
+    declare returns2 = Node.FunctionData.>returns2(pointer);
 
     declare j = 0;
     while !(=(array8_get(returns2, j), 0)) {
@@ -758,13 +758,53 @@ define function_data_to_string = function(module_stack: *AutoBufferStack8, point
     return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
 };
 
-define structure_data_to_string = function(pointer: *NodeStructureData): * {
+define function_data_to_string_old = function(module_stack: *AutoBufferStack8, pointer: *Node.FunctionData): * {
+    declare main_name_buffer = autobuffer_buffer_new(32);
+
+    autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
+
+    declare arguments = Node.FunctionData.>argument_types(pointer);
+
+    declare j = 0;
+    while !(=(array8_get(arguments, j), 0)) {
+        declare argument_type_array = *.cast(array8_get(arguments, j));
+        declare argument_type = expand_module_name(argument_type_array, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        autobuffer_buffer_push_string(&(main_name_buffer), argument_type);
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), ":");
+
+    declare returns2 = Node.FunctionData.>returns(pointer);
+
+    declare j = 0;
+    while !(=(array8_get(returns2, j), 0)) {
+        declare return_type_array = *.cast(array8_get(returns2, j));
+        declare return_type = expand_module_name(return_type_array, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
+        autobuffer_buffer_push_string(&(main_name_buffer), return_type);
+        autobuffer_buffer_push_string(&(main_name_buffer), ",");
+        j = +(j, 1);
+    };
+
+    if >(j, 0) {
+        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
+    };
+    autobuffer_buffer_push_string(&(main_name_buffer), "]");
+
+    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
+};
+
+define structure_data_to_string = function(pointer: *Node.StructureData): * {
     declare main_name_buffer = autobuffer_buffer_new(16);
 
     autobuffer_buffer_push_string(&(main_name_buffer), "structure[");
 
-    declare items = NodeStructureData.>item_types(pointer);
-    declare item_names = NodeStructureData.>item_names(pointer);
+    declare items = Node.StructureData.>item_types(pointer);
+    declare item_names = Node.StructureData.>item_names(pointer);
 
     declare j = 0;
     while !(=(array8_get(items, j), 0)) {

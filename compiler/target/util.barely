@@ -1,11 +1,11 @@
 define InstructionSetFunctions = structure {
-    main: *function[*Nodes,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex];
-    get_size: *function[*,*Nodes,*ProgramData:whole_8];
-    get_size_multiple: *function[*,whole_8,*Nodes,*ProgramData:whole_8];
-    get_size_multiple_reversed: *function[*,whole_8,*Nodes,*ProgramData:whole_8];
+    main: *function[*Nodes.Nodes,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex];
+    get_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8];
+    get_size_multiple: *function[*,whole_8,*Nodes.Nodes,*ProgramData:whole_8];
+    get_size_multiple_reversed: *function[*,whole_8,*Nodes.Nodes,*ProgramData:whole_8];
 };
 
-define calculate_global_locations = function(nodes: *Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes,*ProgramData:whole_8], global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
+define calculate_global_locations = function(nodes: *Nodes.Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8], global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
     declare global_locations = autobuffer_new(512);
     declare bss_index = 0;
 
@@ -23,7 +23,7 @@ define calculate_global_locations = function(nodes: *Nodes, program_data: *Progr
     return AutoBuffer.>buffer(&(global_locations)), bss_index;
 };
 
-define calculate_function_local_sizes = function(nodes: *Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
+define calculate_function_local_sizes = function(nodes: *Nodes.Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
     declare function_local_sizes = autobuffer_new(1024);
     declare empty_module_stack = autobuffer_stack8_new(8);
 
@@ -31,14 +31,14 @@ define calculate_function_local_sizes = function(nodes: *Nodes, program_data: *P
     while <(i, function_count) {
         declare total = 0;
         declare j = whole_8.cast(autobuffer_array8_get(function_node_locations, i));
-        while !(=(nodes_get_id(nodes, j), NODE_ENDFUNCTION)) {
-            declare id = nodes_get_id(nodes, j);
-            declare pointer_data = nodes_get_pointer_data(nodes, j);
+        while !(=(Nodes.get_id(nodes, j), Node.ENDFUNCTION)) {
+            declare id = Nodes.get_id(nodes, j);
+            declare pointer_data = Nodes.get_pointer_data(nodes, j);
             
-            if =(id, NODE_DECLARE) {
-                declare declare_data = NodeDeclareData.pcast(pointer_data);
-                declare declare_name = NodeDeclareData.>name(declare_data);
-                declare declare_type_names = NodeDeclareData.>type(declare_data);
+            if =(id, Node.DECLARE) {
+                declare declare_data = Node.DeclareData.pcast(pointer_data);
+                declare declare_name = Node.DeclareData.>name(declare_data);
+                declare declare_type_names = Node.DeclareData.>type(declare_data);
                 declare declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(empty_module_stack), create_previous_results_list());
                 total = +(total, function_size(declare_type, nodes, program_data));
             };

@@ -85,16 +85,16 @@ define main = function(arguments: **, argument_count: whole_8) {
     };
 
     declare output_format = if string=(format, "elf") {
-        Target_Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
+        Target_Elf.output:*function[*Nodes.Nodes,ProgramData,*,*,InstructionSetFunctions:]
     } else if string=(format, "macho") {
-        Target_Macho.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
+        Target_Macho.output:*function[*Nodes.Nodes,ProgramData,*,*,InstructionSetFunctions:]
     } else {
         print("Invalid output format '");
         print(format);
         println("'");
         exit(1);
         // temporary
-        Target_Elf.output:*function[*Nodes,ProgramData,*,*,InstructionSetFunctions:]
+        Target_Elf.output:*function[*Nodes.Nodes,ProgramData,*,*,InstructionSetFunctions:]
     };
 
     declare expand_start_time = get_time_milliseconds();
@@ -116,7 +116,7 @@ define main = function(arguments: **, argument_count: whole_8) {
     };
     if debug println("Parsing...");
 
-    declare nodes = nodes_new(16384);
+    declare nodes = Nodes.new(16384);
     parse(&tokens_expanded, &nodes);
 
     add_basic_internals(&nodes);
@@ -151,37 +151,37 @@ define main = function(arguments: **, argument_count: whole_8) {
     };
 };
 
-define add_internal_functions = function(nodes: *Nodes) {
+define add_internal_functions = function(nodes: *Nodes.Nodes) {
     declare function_arguments = create_size_one_array8_brk_allocate("whole_8");
     declare function_returns = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall0", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall0", function_arguments, function_returns);
 
     declare function_arguments = create_size_two_array8_brk_allocate("whole_8", "any_8");
     declare function_returns = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall1", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall1", function_arguments, function_returns);
 
     declare function_arguments = create_size_three_array8_brk_allocate("whole_8", "any_8", "any_8");
     declare function_returns = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall2", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall2", function_arguments, function_returns);
 
     declare function_arguments = create_size_four_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8");
     declare function_returns2 = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall3", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall3", function_arguments, function_returns);
 
     declare function_arguments = create_size_five_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8", "any_8");
     declare function_returns = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall4", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall4", function_arguments, function_returns);
 
     declare function_arguments = create_size_six_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8", "any_8", "any_8");
     declare function_returns = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall5", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall5", function_arguments, function_returns);
 
     declare function_arguments = create_size_seven_array8_brk_allocate("whole_8", "any_8", "any_8", "any_8", "any_8", "any_8", "any_8");
     declare function_returns = create_size_one_array8_brk_allocate("any_8");
-    nodes_append_function(nodes, "@syscall6", function_arguments, function_returns);
+    Nodes.append_function(nodes, "@syscall6", function_arguments, function_returns);
 };
 
-define add_structure_functions = function(nodes: *Nodes) {
+define add_structure_functions = function(nodes: *Nodes.Nodes) {
     declare nodes_index_saved = nodes.index;
     declare i = 0;
 
@@ -189,19 +189,19 @@ define add_structure_functions = function(nodes: *Nodes) {
     declare module_stack = autobuffer_stack8_new(32);
 
     while i < nodes_index_saved {
-        declare id = nodes_get_id(nodes, i);
-        if id == NODE_MODULE {
+        declare id = Nodes.get_id(nodes, i);
+        if id == Node.MODULE {
             autobuffer_stack8_push(&module_stack, module_id);
             module_id = module_id + 1;
-        } else if id == NODE_ENDMODULE {
+        } else if id == Node.ENDMODULE {
             declare _ = autobuffer_stack8_pop(&module_stack);
-        } else if id == NODE_STRUCTURE {
-            declare structure_data = #nodes_get_pointer_data(nodes, NodeStructureData, i);
+        } else if id == Node.STRUCTURE {
+            declare structure_data = #nodes_get_pointer_data(nodes, Node.StructureData, i);
             declare name = structure_data.name;
             declare is_internal = structure_data.is_internal;
 
             if name == 0 {
-                declare define_data = #nodes_get_pointer_data(nodes, NodeDefineData, i - 1);
+                declare define_data = #nodes_get_pointer_data(nodes, Node.DefineData, i - 1);
                 name = define_data.name;
             };
 
@@ -217,31 +217,31 @@ define add_structure_functions = function(nodes: *Nodes) {
             declare function_name = concatenate2_brk_allocate(name, "<");
             declare function_arguments = create_size_two_array8_brk_allocate(pointer_name, name);
             declare function_returns = create_size_zero_array8_brk_allocate();
-            nodes_append_function(nodes, function_name, function_arguments, function_returns);
+            Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
             // Setter for whole value with reversed inputs
             declare function_name = concatenate2_brk_allocate(name, "<2");
             declare function_arguments = create_size_two_array8_brk_allocate(name, pointer_name);
             declare function_returns = create_size_zero_array8_brk_allocate();
-            nodes_append_function(nodes, function_name, function_arguments, function_returns);
+            Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
             // Getter for whole value
             declare function_name = concatenate2_brk_allocate(name, ">");
             declare function_arguments = create_size_one_array8_brk_allocate(pointer_name);
             declare function_returns = create_size_one_array8_brk_allocate(name);
-            nodes_append_function(nodes, function_name, function_arguments, function_returns);
+            Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
             // Zero initializer for whole value
             declare function_name = concatenate2_brk_allocate(name, ">0");
             declare function_arguments = create_size_zero_array8_brk_allocate();
             declare function_returns = create_size_one_array8_brk_allocate(name);
-            nodes_append_function(nodes, function_name, function_arguments, function_returns);
+            Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
             // Size getter for the whole value
             declare function_name = concatenate2_brk_allocate(name, "size");
             declare function_arguments = create_size_zero_array8_brk_allocate();
             declare function_returns = create_size_one_array8_brk_allocate("whole_8");
-            nodes_append_function(nodes, function_name, function_arguments, function_returns);
+            Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
             declare item_names = structure_data.item_names;
             declare item_types = structure_data.item_types;
@@ -255,25 +255,25 @@ define add_structure_functions = function(nodes: *Nodes) {
                 declare function_name = concatenate3_brk_allocate(name, "<", item_name);
                 declare function_arguments = create_size_two_array8_brk_allocate(pointer_name, item_type);
                 declare function_returns = brk_allocate(8);
-                nodes_append_function(nodes, function_name, function_arguments, function_returns);
+                Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
                 // Setter for an individual member with reversed inputs
                 declare function_name = concatenate3_brk_allocate(name, "<2", item_name);
                 declare function_arguments = create_size_two_array8_brk_allocate(item_type, pointer_name);
                 declare function_returns = brk_allocate(8);
-                nodes_append_function(nodes, function_name, function_arguments, function_returns);
+                Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
                 // Getter for individual members
                 declare function_name = concatenate3_brk_allocate(name, ">", item_name);
                 declare function_arguments = create_size_one_array8_brk_allocate(pointer_name);
                 declare function_returns = create_size_one_array8_brk_allocate(item_type);
-                nodes_append_function(nodes, function_name, function_arguments, function_returns);
+                Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
                 // Pointer Getter for individual members
                 declare function_name = concatenate3_brk_allocate(name, "*>", item_name);
                 declare function_arguments = create_size_one_array8_brk_allocate(pointer_name);
                 declare function_returns = create_size_one_array8_brk_allocate(concatenate2_brk_allocate("*", item_type));
-                nodes_append_function(nodes, function_name, function_arguments, function_returns);
+                Nodes.append_function(nodes, function_name, function_arguments, function_returns);
 
                 j = j + 1;
             };
@@ -282,16 +282,16 @@ define add_structure_functions = function(nodes: *Nodes) {
     };
 };
 
-define add_used_any_types = function(nodes: *Nodes) {
+define add_used_any_types = function(nodes: *Nodes.Nodes) {
     declare already_added_types = autobuffer_stack8_new(64);
 
     declare nodes_index_saved = nodes.index;
     declare i = 0;
     while i < nodes_index_saved {
-        declare id = nodes_get_id(nodes, i);
+        declare id = Nodes.get_id(nodes, i);
     
-        if id == NODE_RETRIEVE {
-            declare retrieve_data = #nodes_get_pointer_data(nodes, NodeRetrieveData, i);
+        if id == Node.RETRIEVE {
+            declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, i);
             declare name = retrieve_data.name_single;
             if string_length=(name, "any_", 4) {
                 declare added = false;
@@ -304,7 +304,7 @@ define add_used_any_types = function(nodes: *Nodes) {
                 };
 
                 if !added {
-                    nodes_append_structure_any(nodes, name);
+                    Nodes.append_structure_any(nodes, name);
                     autobuffer_stack8_push(&already_added_types, name);
                 };
             };
@@ -315,28 +315,28 @@ define add_used_any_types = function(nodes: *Nodes) {
 
 };
 
-define add_basic_internals = function(nodes: *Nodes) {
-    nodes_append_structure(nodes, "boolean", 1);
-    nodes_append_structure(nodes, "whole_8", 8);
-    nodes_append_structure(nodes, "whole_4", 4);
-    nodes_append_structure(nodes, "whole_2", 2);
-    nodes_append_structure(nodes, "whole_1", 1);
-    nodes_append_structure(nodes, "integer_8", 8);
-    nodes_append_structure(nodes, "integer_4", 4);
-    nodes_append_structure(nodes, "integer_2", 2);
-    nodes_append_structure(nodes, "integer_1", 1);
-    nodes_append_structure(nodes, "*", 8);
-    nodes_append_structure(nodes, "**", 8);
+define add_basic_internals = function(nodes: *Nodes.Nodes) {
+    Nodes.append_structure(nodes, "boolean", 1);
+    Nodes.append_structure(nodes, "whole_8", 8);
+    Nodes.append_structure(nodes, "whole_4", 4);
+    Nodes.append_structure(nodes, "whole_2", 2);
+    Nodes.append_structure(nodes, "whole_1", 1);
+    Nodes.append_structure(nodes, "integer_8", 8);
+    Nodes.append_structure(nodes, "integer_4", 4);
+    Nodes.append_structure(nodes, "integer_2", 2);
+    Nodes.append_structure(nodes, "integer_1", 1);
+    Nodes.append_structure(nodes, "*", 8);
+    Nodes.append_structure(nodes, "**", 8);
 
     // The internal functions that have simple argument types. ('+', which supports different sizes, is not simple)
     declare function_arguments = create_size_one_array8_brk_allocate("boolean");
     declare function_returns = create_size_one_array8_brk_allocate("boolean");
-    nodes_append_function(nodes, "!", function_arguments, function_returns);
+    Nodes.append_function(nodes, "!", function_arguments, function_returns);
 
     declare function_arguments = create_size_two_array8_brk_allocate("boolean", "boolean");
     declare function_returns = create_size_one_array8_brk_allocate("boolean");
-    nodes_append_function(nodes, "&&", function_arguments, function_returns);
-    nodes_append_function(nodes, "|", function_arguments, function_returns);
+    Nodes.append_function(nodes, "&&", function_arguments, function_returns);
+    Nodes.append_function(nodes, "|", function_arguments, function_returns);
 };
 
 define include_file = function(file_name: *, tokens: *Tokens.Tokens) {
