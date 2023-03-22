@@ -300,7 +300,7 @@ define Target_X86_64 = module {
 
     define output_retrieve = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare retrieve_data = Node.RetrieveData.pcast(Nodes.get_pointer_data(nodes, nodes_index));
-        declare variable_name = Node.RetrieveData.>name_single(retrieve_data);
+        declare variable_name = Node.RetrieveData.>name(retrieve_data);
         declare uses_previous = Node.RetrieveData.>uses_previous(retrieve_data);
 
         if uses_previous {
@@ -535,7 +535,7 @@ define Target_X86_64 = module {
 
     define output_assign = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare assign_data = Node.AssignData.pcast(pointer_data);
-        declare variable_name = Node.AssignData.>name_single(assign_data);
+        declare variable_name = Node.AssignData.>name(assign_data);
 
         declare module_expanded_name = if >(AutoBufferStack8.>index(define_stack), 0) {
             expand_module_name_stack(variable_name, &(module_id_map), &(module_references_map), module_stack, *.cast(autobuffer_stack8_pop(define_stack)), create_previous_results_list())
@@ -637,7 +637,7 @@ define Target_X86_64 = module {
 
     define output_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
         declare invoke_internal_data = Node.InvokeInternalData.pcast(Nodes.get_pointer_data(nodes, nodes_index));
-        declare function_name = Node.InvokeInternalData.>name_single(invoke_internal_data);
+        declare function_name = Node.InvokeInternalData.>name(invoke_internal_data);
         declare uses_previous = Node.InvokeInternalData.>uses_previous(invoke_internal_data);
 
         if is_pointer(nodes, +(nodes_index, 1)) {

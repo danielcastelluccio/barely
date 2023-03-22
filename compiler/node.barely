@@ -1,21 +1,19 @@
 define Node = module {
     define FUNCTION = 0;
     define FunctionData = structure {
+        // I find it weird how internal functions still need this but non-internal ones do not
+        // Maybe this is just the best way, however, name could potentially be stored elsewhere for internals
         name: *;
         argument_names: *;
         argument_types: *;
-        argument_types_array: *;
-        returns: *;
-        returns2: *;
+        return_types: *;
     };
 
     define ENDFUNCTION = 1;
 
     define RETRIEVE = 2;
     define RetrieveData = structure {
-        // array of strings
         name: *;
-        name_single: *;
         coercion: *;
         uses_previous: boolean;
     };
@@ -43,9 +41,7 @@ define Node = module {
 
     define ASSIGN = 7;
     define AssignData = structure {
-        // array of strings
         name: *;
-        name_single: *;
         uses_previous: boolean;
     };
 
@@ -89,9 +85,7 @@ define Node = module {
 
     define INVOKE_INTERNAL = 15;
     define InvokeInternalData = structure {
-        // array of strings
         name: *;
-        name_single: *;
         uses_previous: boolean;
     };
 
@@ -231,11 +225,11 @@ define Nodes = module {
         Node.StructureData.<is_internal(structure_data, true);
     };
 
-    define append_function = function(nodes: *.Nodes, name: *, arguments: *, returns: *) {
+    define append_function_new = function(nodes: *.Nodes, name: *, arguments: *, returns: *) {
         declare function_data = Node.FunctionData.pcast(.append_data_anonymous(nodes, Node.FUNCTION));
-        Node.FunctionData.<name(function_data, name);
-        Node.FunctionData.<argument_types(function_data, arguments);
-        Node.FunctionData.<returns(function_data, returns);
+        function_data.name = name;
+        function_data.argument_types = arguments;
+        function_data.return_types = returns;
         declare _ = .append_anonymous(nodes, Node.ENDFUNCTION);
     };
 
@@ -262,8 +256,8 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
         //    print("'");
         //};
         print(",name='");
-        if !(=(Node.RetrieveData.>name_single(retrieve_data), 0)) {
-            print(Node.RetrieveData.>name_single(retrieve_data));
+        if !(=(Node.RetrieveData.>name(retrieve_data), 0)) {
+            print(Node.RetrieveData.>name(retrieve_data));
         };
         println("'}");
     } else if =(id, Node.INVOKE_INTERNAL) {
@@ -281,8 +275,8 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
         //    print("'");
         //};
         print(",name='");
-        if !(=(Node.InvokeInternalData.>name_single(invoke_data), 0)) {
-            print(Node.InvokeInternalData.>name_single(invoke_data));
+        if !(=(Node.InvokeInternalData.>name(invoke_data), 0)) {
+            print(Node.InvokeInternalData.>name(invoke_data));
         };
         println("'}");
     } else if =(id, Node.ASSIGN) {
@@ -300,8 +294,8 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
         //    print("'");
         //};
         print(",name='");
-        if !(=(Node.AssignData.>name_single(assign_data), 0)) {
-            print(Node.AssignData.>name_single(assign_data));
+        if !(=(Node.AssignData.>name(assign_data), 0)) {
+            print(Node.AssignData.>name(assign_data));
         };
         println("'}");
     } else if =(id, Node.DECLARE) {

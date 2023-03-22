@@ -435,7 +435,7 @@ define process_end_if = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stac
 define process_assign = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, variable_scopes_declares_map: AutoBuffer, pointer_data: *) {
     declare nodes_index = nodes_index_in.*;
     declare assign_data = Node.AssignData.pcast(pointer_data);
-    declare variable_name = assign_data.name_single;
+    declare variable_name = assign_data.name;
     declare uses_previous = assign_data.uses_previous;
 
     if stack_pointer.* == 0 {
@@ -467,7 +467,7 @@ define process_assign = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, 
             } else {
                 Nodes.set_id(nodes, nodes_index + index, Node.INVOKE_INTERNAL);
                 declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index + index);
-                invoke_data.name_single = "&";
+                invoke_data.name = "&";
                 invoke_data.uses_previous = false;
                 index = index + 1;
 
@@ -479,7 +479,7 @@ define process_assign = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, 
             declare name = variable_type_temp;
             Nodes.set_id(nodes, nodes_index + index, Node.RETRIEVE);
             declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index + index);
-            retrieve_data.name_single = name;
+            retrieve_data.name = name;
             retrieve_data.coercion = *.>0();
             retrieve_data.uses_previous = false;
             index = index + 1;
@@ -491,7 +491,7 @@ define process_assign = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, 
             };
             Nodes.set_id(nodes, nodes_index + index, Node.INVOKE_INTERNAL);
             declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index + index);
-            invoke_data.name_single = name;
+            invoke_data.name = name;
             invoke_data.uses_previous = true;
 
             nodes_index_in.* = nodes_index_in.* - 1;
@@ -626,7 +626,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
 define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, variable_scopes_types_map: AutoBuffer, variable_scope_types_pointer: whole_8, program_data: *ProgramData, current_function_id: whole_8) {
     declare nodes_index = nodes_index_in.*;
     declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index);
-    declare variable_name = retrieve_data.name_single;
+    declare variable_name = retrieve_data.name;
     declare uses_previous = retrieve_data.uses_previous;
     declare coercion = retrieve_data.coercion;
 
@@ -653,7 +653,7 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
             } else {
                 Nodes.set_id(nodes, nodes_index + index, Node.INVOKE_INTERNAL);
                 declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index + index);
-                invoke_data.name_single = "&";
+                invoke_data.name = "&";
                 invoke_data.uses_previous = false;
                 index = index + 1;
 
@@ -665,7 +665,7 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
             declare name = variable_type_temp;
             Nodes.set_id(nodes, nodes_index + index, Node.RETRIEVE);
             declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index + index);
-            retrieve_data.name_single = name;
+            retrieve_data.name = name;
             retrieve_data.coercion = *.>0();
             retrieve_data.uses_previous = false;
             index = index + 1;
@@ -677,7 +677,7 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
             };
             Nodes.set_id(nodes, nodes_index + index, Node.INVOKE_INTERNAL);
             declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index + index);
-            invoke_data.name_single = name;
+            invoke_data.name = name;
             invoke_data.uses_previous = true;
 
             nodes_index_in.* = nodes_index_in.* - 1;
@@ -777,9 +777,9 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
     };
 
     if string_length=(function_type, "*function[", 10) {
-        declare type = string_to_function_data_new(function_type);
-        declare arguments_buffer = type.argument_types_array;
-        declare returns_buffer = type.returns2;
+        declare type = string_to_function_data(function_type);
+        declare arguments_buffer = type.argument_types;
+        declare returns_buffer = type.return_types;
 
         declare k = integer_8.cast(array8_length(arguments_buffer));
         while k > 0:integer_8 {
@@ -790,7 +790,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
                 print("Invoke of '");
                 if Nodes.get_id(nodes, nodes_index - 1) == Node.RETRIEVE {
                     declare previous_node_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index - 1);
-                    print(previous_node_data.name_single);
+                    print(previous_node_data.name);
                 } else {
                     print("unknown");
                 };
@@ -808,7 +808,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
 
                 if =(Nodes.get_id(nodes, nodes_index - 1), Node.RETRIEVE) {
                     declare previous_node_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index - 1);
-                    print(previous_node_data.name_single);
+                    print(previous_node_data.name);
                 } else {
                     print("unknown");
                 };
@@ -842,7 +842,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
 
 define process_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, pointer_data: *) {
     declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index);
-    declare function_name = invoke_data.name_single;
+    declare function_name = invoke_data.name;
     declare is_single = !invoke_data.uses_previous;
 
     if is_single && string=(function_name, "+") {
@@ -870,10 +870,10 @@ define process_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whol
         } else {
             function_name
         };
-        process_internal_invoke(nodes, nodes_index, stack, stack_pointer, program_data, function_name);
+        process_internal_invoke(nodes, nodes_index, stack, stack_pointer, program_data, module_stack, function_name);
     };
 
-    invoke_data.name_single = function_name;
+    invoke_data.name = function_name;
 };
 
 define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, top_define: *, previous_results_list: *AutoBufferStack8): * {
@@ -1059,7 +1059,7 @@ define process_cast = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module
     Nodes.set_skip(nodes, nodes_index - 1);
 };
 
-define process_internal_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, function_name: *) {
+define process_internal_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBuffer, stack_pointer: *whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, function_name: *) {
     declare found_function = false;
 
     declare internal_function_argument_types = &program_data.internal_function_argument_types;
@@ -1089,6 +1089,7 @@ define process_internal_invoke = function(nodes: *Nodes.Nodes, nodes_index: whol
 
         declare given = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
         declare wanted = *.cast(array8_get(arguments, (arguments_length - k) - 1));
+        wanted = expand_type_array(wanted, module_stack);
         if !is_type(wanted, given, nodes, program_data) {
             print_node_error_beginning(nodes, nodes_index);
             print("Invoke of '");
@@ -1107,6 +1108,7 @@ define process_internal_invoke = function(nodes: *Nodes.Nodes, nodes_index: whol
     declare k = 0;
     while !(array8_get(returns, k) == NULL) {
         declare return_value = *.cast(array8_get(returns, k));
+        return_value = expand_type_array(return_value, module_stack);
         if is_pointer(nodes, nodes_index + 1) {
             return_value = concatenate2_brk_allocate("*", return_value);
         };
@@ -1274,15 +1276,15 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
 
                 hashmap_string_put(internal_function_argument_types, function_name, function_data.argument_types);
                 hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
-                hashmap_string_put(internal_function_return_types, function_name, function_data.returns);
+                hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
             } else {
-                expand_function_data_new(function_data, &module_stack);
+                expand_function_data(function_data, &module_stack);
 
                 autobuffer_array8_set(function_locations, declared_function_id, i);
                 autobuffer_array8_set(function_datas, declared_function_id, function_data);
-                autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types_array);
+                autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types);
                 autobuffer_array8_set(function_argument_names, declared_function_id, function_data.argument_names);
-                autobuffer_array8_set(function_return_types2, declared_function_id, function_data.returns2);
+                autobuffer_array8_set(function_return_types2, declared_function_id, function_data.return_types);
                 declared_function_id = declared_function_id + 1;
             };
             in_function = true;
@@ -1327,7 +1329,7 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
                         "whole_8"
                     }
                 } else if next_id == Node.FUNCTION {
-                    expand_function_data_new(Node.FunctionData.pcast(next_data), &module_stack);
+                    expand_function_data(Node.FunctionData.pcast(next_data), &module_stack);
                     function_data_to_string(&module_stack, Node.FunctionData.pcast(next_data))
                 } else if next_id == Node.STRUCTURE {
                     structure_data_to_string(Node.StructureData.pcast(next_data))
@@ -1377,7 +1379,7 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
                 while |(Nodes.get_id(nodes, i + j) == Node.RETRIEVE, Nodes.get_id(nodes, i + j) == Node.SKIP) {
                     if Nodes.get_id(nodes, i + j) == Node.RETRIEVE {
                         declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, i + j);
-                        declare retrieve_name = retrieve_data.name_single;
+                        declare retrieve_name = retrieve_data.name;
 
                         if string=(retrieve_name, "@current_module") {
                             declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
@@ -1444,59 +1446,22 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
 define expand_type_array = function(type: *, module_stack: *AutoBufferStack8): * {
     declare type_first = *.cast(array8_get(type, 0));
     return if string_length=(type_first, "*function[", 10) {
-        declare function_data = string_to_function_data_new(type_first);
-        expand_function_data_new(&function_data, module_stack);
+        declare function_data = string_to_function_data(type_first);
+        expand_function_data(&function_data, module_stack);
         function_data_to_string(module_stack, &function_data)
     } else if string_length=(type_first, "**function[", 11) {
-        declare function_data = string_to_function_data_new(type_first + 1);
-        expand_function_data_new(&function_data, module_stack);
+        declare function_data = string_to_function_data(type_first + 1);
+        expand_function_data(&function_data, module_stack);
         function_data_to_string(module_stack, &function_data)
     } else {
         expand_module_name_array(type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
     };
 };
 
-// TODO: remove when everything uses array types
-define expand_type_string = function(type: *, module_stack: *AutoBufferStack8): * {
-    return if string_length=(type, "*function[", 10) {
-        declare function_data = string_to_function_data_new(type);
-        expand_function_data_new(&function_data, module_stack);
-        function_data_to_string(module_stack, &function_data)
-    } else if string_length=(type, "**function[", 11) {
-        declare function_data = string_to_function_data_new(type + 1);
-        expand_function_data_new(&function_data, module_stack);
-        function_data_to_string(module_stack, &function_data)
-    } else {
-        expand_module_name(type, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
-    };
-};
-
 define expand_function_data = function(function_data: *Node.FunctionData, module_stack: *AutoBufferStack8) {
     declare j = 0;
     declare argument_types = function_data.argument_types;
-    declare return_types = function_data.returns;
-    declare length = array8_length(argument_types);
-    while j < length {
-        declare argument = *.cast(array8_get(argument_types, j));
-        argument = expand_type_string(argument, module_stack);
-        array8_set(argument_types, j, argument);
-        j = j + 1;
-    };
-
-    declare j = 0;
-    declare length = array8_length(return_types);
-    while j < length {
-        declare return_ = *.cast(array8_get(return_types, j));
-        return_ = expand_type_string(return_, module_stack);
-        array8_set(return_types, j, return_);
-        j = j + 1;
-    };
-};
-
-define expand_function_data_new = function(function_data: *Node.FunctionData, module_stack: *AutoBufferStack8) {
-    declare j = 0;
-    declare argument_types = function_data.argument_types_array;
-    declare return_types = function_data.returns2;
+    declare return_types = function_data.return_types;
     declare length = array8_length(argument_types);
     while j < length {
         declare argument = *.cast(array8_get(argument_types, j));
@@ -1557,7 +1522,7 @@ define is_pointer = function(nodes: *Nodes.Nodes, index_in: whole_8): boolean {
         declare id = Nodes.get_id(nodes, index);
         if id == Node.INVOKE_INTERNAL {
             declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, index);
-            declare name = invoke_data.name_single;
+            declare name = invoke_data.name;
             return string=(name, "&");
         } else if =(id, Node.SKIP) {
             
