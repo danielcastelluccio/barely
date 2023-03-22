@@ -477,6 +477,16 @@ define copy_string_length_brk_allocate = function(string: *, string_length: whol
     return new_string;
 };
 
+define copy_array8_brk_allocate = function(array: *): * {
+    return copy_array8_length_brk_allocate(array, array8_length(array));
+};
+
+define copy_array8_length_brk_allocate = function(array: *, length: whole_8): * {
+    declare new_array = brk_allocate((length * 8) + 8);
+    copy(array, new_array, length * 8);
+    return new_array;
+};
+
 define AutoBufferBuffer = structure {
     autobuffer: AutoBuffer;
     index: whole_8;
@@ -667,7 +677,7 @@ define to_type_array = function(type: *): * {
     return AutoBuffer.>buffer(&(new_array));
 };
 
-define string_to_function_data = function(type: *): Node.FunctionData {
+define string_to_function_data_new = function(type: *): Node.FunctionData {
     declare argument_types = autobuffer_stack8_new(24);
     declare return_types = autobuffer_stack8_new(24);
 
@@ -676,28 +686,43 @@ define string_to_function_data = function(type: *): Node.FunctionData {
 
     declare inside = 0;
     declare is_return = false;
+    declare stack_buffer = autobuffer_stack8_new(24);
     declare buffer = autobuffer_buffer_new(24);
     declare i = 10;
-    while <(i, length(type)) {
+    declare length = length(type);
+    while i < length {
         declare character_pointer = +(type, i);
         
         if &&(=(inside, 0), |(string_length=(character_pointer, ":", 1), &&(string_length=(character_pointer, ",", 1), !(is_return)))) {
-            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
-                autobuffer_stack8_push(&(argument_types), copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
-                autobuffer_buffer_reset(&(buffer));
+            if buffer.index > 0 {
+                autobuffer_stack8_push(&stack_buffer, copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&buffer)));
+                autobuffer_buffer_reset(&buffer);
+            };
+
+            if stack_buffer.index > 0 {
+                autobuffer_stack8_push(&argument_types, copy_array8_brk_allocate(stack_buffer.autobuffer.buffer));
+                autobuffer_stack8_reset(&stack_buffer);
             };
 
             if string_length=(character_pointer, ":", 1) {
                 is_return = true;
             };
         } else if &&(=(inside, 0), |(string_length=(character_pointer, "]", 1), string_length=(character_pointer, ",", 1))) {
-            if >(AutoBufferBuffer.>index(&(buffer)), 0) {
-                autobuffer_stack8_push(&(return_types), copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&(buffer))));
-                autobuffer_buffer_reset(&(buffer));
+            if buffer.index > 0 {
+                autobuffer_stack8_push(&stack_buffer, copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&buffer)));
+                autobuffer_buffer_reset(&buffer);
+            };
+
+            if stack_buffer.index > 0 {
+                autobuffer_stack8_push(&(return_types), copy_array8_brk_allocate(stack_buffer.autobuffer.buffer));
+                autobuffer_stack8_reset(&stack_buffer);
             };
             if string_length=(character_pointer, "]", 1) {
                 break;
             };
+        } else if (inside == 0) && string_length=(character_pointer, ".", 1) {
+            autobuffer_stack8_push(&stack_buffer, copy_string_brk_allocate(autobuffer_buffer_get_buffer_pointer(&buffer)));
+            autobuffer_buffer_reset(&buffer);
         } else if string_length=(character_pointer, "[", 1) {
             inside = +(inside, 1);
             autobuffer_buffer_push_string_length(&(buffer), character_pointer, 1);
@@ -712,8 +737,8 @@ define string_to_function_data = function(type: *): Node.FunctionData {
     };
 
     declare data = Node.FunctionData.>0();
-    Node.FunctionData.<argument_types(&(data), autobuffer_stack8_get_buffer_pointer(&(argument_types)));
-    Node.FunctionData.<returns(&(data), autobuffer_stack8_get_buffer_pointer(&(return_types)));
+    data.argument_types_array = autobuffer_stack8_get_buffer_pointer(&argument_types);
+    data.returns2 = autobuffer_stack8_get_buffer_pointer(&return_types);
 
     return data;
 };
@@ -745,46 +770,6 @@ define function_data_to_string = function(module_stack: *AutoBufferStack8, point
     while !(=(array8_get(returns2, j), 0)) {
         declare return_type_array = *.cast(array8_get(returns2, j));
         declare return_type = expand_module_name_array(return_type_array, 0, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
-        autobuffer_buffer_push_string(&(main_name_buffer), return_type);
-        autobuffer_buffer_push_string(&(main_name_buffer), ",");
-        j = +(j, 1);
-    };
-
-    if >(j, 0) {
-        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
-    };
-    autobuffer_buffer_push_string(&(main_name_buffer), "]");
-
-    return autobuffer_buffer_get_buffer_pointer(&(main_name_buffer));
-};
-
-define function_data_to_string_old = function(module_stack: *AutoBufferStack8, pointer: *Node.FunctionData): * {
-    declare main_name_buffer = autobuffer_buffer_new(32);
-
-    autobuffer_buffer_push_string(&(main_name_buffer), "*function[");
-
-    declare arguments = Node.FunctionData.>argument_types(pointer);
-
-    declare j = 0;
-    while !(=(array8_get(arguments, j), 0)) {
-        declare argument_type_array = *.cast(array8_get(arguments, j));
-        declare argument_type = expand_module_name(argument_type_array, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
-        autobuffer_buffer_push_string(&(main_name_buffer), argument_type);
-        autobuffer_buffer_push_string(&(main_name_buffer), ",");
-        j = +(j, 1);
-    };
-
-    if >(j, 0) {
-        AutoBufferBuffer.<index(&(main_name_buffer), -(AutoBufferBuffer.>index(&(main_name_buffer)), 1));
-    };
-    autobuffer_buffer_push_string(&(main_name_buffer), ":");
-
-    declare returns2 = Node.FunctionData.>returns(pointer);
-
-    declare j = 0;
-    while !(=(array8_get(returns2, j), 0)) {
-        declare return_type_array = *.cast(array8_get(returns2, j));
-        declare return_type = expand_module_name(return_type_array, &(module_id_map), &(module_references_map), module_stack, create_previous_results_list());
         autobuffer_buffer_push_string(&(main_name_buffer), return_type);
         autobuffer_buffer_push_string(&(main_name_buffer), ",");
         j = +(j, 1);

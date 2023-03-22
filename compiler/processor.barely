@@ -777,9 +777,9 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
     };
 
     if string_length=(function_type, "*function[", 10) {
-        declare type = string_to_function_data(function_type);
-        declare arguments_buffer = type.argument_types;
-        declare returns_buffer = type.returns;
+        declare type = string_to_function_data_new(function_type);
+        declare arguments_buffer = type.argument_types_array;
+        declare returns_buffer = type.returns2;
 
         declare k = integer_8.cast(array8_length(arguments_buffer));
         while k > 0:integer_8 {
@@ -800,9 +800,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
 
             declare given = *.cast(autobuffer_stack8_legacy_pop(stack, stack_pointer));
             declare wanted = *.cast(array8_get(arguments_buffer, whole_8.cast(k)));
-            if is_define(wanted) {
-                wanted = expand_module_name(wanted, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-            };
+            wanted = expand_type_array(wanted, module_stack);
 
             if !is_type(wanted, given, nodes, program_data) {
                 print_node_error_beginning(nodes, nodes_index);
@@ -828,6 +826,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
         declare length = array8_length(returns_buffer);
         while k < length {
             declare return_ = *.cast(array8_get(returns_buffer, k));
+            return_ = expand_type_array(return_, module_stack);
 
             autobuffer_stack8_legacy_push(stack, stack_pointer, return_);
             k = k + 1;
@@ -1278,29 +1277,6 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
                 hashmap_string_put(internal_function_return_types, function_name, function_data.returns);
             } else {
                 expand_function_data_new(function_data, &module_stack);
-                //declare j = 0;
-                //declare argument_types = NodeFunctionData.>argument_types_array(function_data);
-                //declare length = array8_length(argument_types);
-                //while j < length {
-                //    declare argument_array = *.cast(array8_get(argument_types, j));
-                //    declare new_argument = if string_length=("*function[", array8_get(argument_array, i), 10) {
-                //        
-                //    } else {
-                //        expand_module_name_array(argument_array, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list())
-                //    };
-                //    array8_set(argument_types, j, create_size_one_array8_brk_allocate(new_argument));
-                //    j = j + 1;
-                //};
-
-                //declare return_types = NodeFunctionData.>returns2(function_data);
-                //declare j = 0;
-                //declare length = array8_length(return_types);
-                //while j < length {
-                //    declare return_array = *.cast(array8_get(return_types, j));
-                //    declare new_return = expand_module_name_array(return_array, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list());
-                //    array8_set(return_types, j, create_size_one_array8_brk_allocate(new_return));
-                //    j = j + 1;
-                //};
 
                 autobuffer_array8_set(function_locations, declared_function_id, i);
                 autobuffer_array8_set(function_datas, declared_function_id, function_data);
@@ -1465,88 +1441,76 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
     };
 };
 
+define expand_type_array = function(type: *, module_stack: *AutoBufferStack8): * {
+    declare type_first = *.cast(array8_get(type, 0));
+    return if string_length=(type_first, "*function[", 10) {
+        declare function_data = string_to_function_data_new(type_first);
+        expand_function_data_new(&function_data, module_stack);
+        function_data_to_string(module_stack, &function_data)
+    } else if string_length=(type_first, "**function[", 11) {
+        declare function_data = string_to_function_data_new(type_first + 1);
+        expand_function_data_new(&function_data, module_stack);
+        function_data_to_string(module_stack, &function_data)
+    } else {
+        expand_module_name_array(type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
+    };
+};
+
+// TODO: remove when everything uses array types
+define expand_type_string = function(type: *, module_stack: *AutoBufferStack8): * {
+    return if string_length=(type, "*function[", 10) {
+        declare function_data = string_to_function_data_new(type);
+        expand_function_data_new(&function_data, module_stack);
+        function_data_to_string(module_stack, &function_data)
+    } else if string_length=(type, "**function[", 11) {
+        declare function_data = string_to_function_data_new(type + 1);
+        expand_function_data_new(&function_data, module_stack);
+        function_data_to_string(module_stack, &function_data)
+    } else {
+        expand_module_name(type, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
+    };
+};
+
 define expand_function_data = function(function_data: *Node.FunctionData, module_stack: *AutoBufferStack8) {
     declare j = 0;
-    declare argument_types = Node.FunctionData.>argument_types(function_data);
-    declare return_types = Node.FunctionData.>returns(function_data);
+    declare argument_types = function_data.argument_types;
+    declare return_types = function_data.returns;
     declare length = array8_length(argument_types);
     while j < length {
-        declare argument_array = *.cast(array8_get(argument_types, j));
-        declare new_argument = if string_length=(argument_array, "*function[", 10) {
-            declare function_data2 = string_to_function_data(argument_array);
-            expand_function_data(&function_data2, module_stack);
-            function_data_to_string_old(module_stack, &function_data2)
-        } else if string_length=(argument_array, "**function[", 11) {
-            declare function_data2 = string_to_function_data(argument_array + 1);
-            expand_function_data(&function_data2, module_stack);
-            function_data_to_string_old(module_stack, &function_data2)
-        } else {
-            expand_module_name(argument_array, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
-        };
-        array8_set(argument_types, j, new_argument);
+        declare argument = *.cast(array8_get(argument_types, j));
+        argument = expand_type_string(argument, module_stack);
+        array8_set(argument_types, j, argument);
         j = j + 1;
     };
 
     declare j = 0;
     declare length = array8_length(return_types);
     while j < length {
-        declare return_array = *.cast(array8_get(return_types, j));
-        declare new_return = if string_length=(return_array, "*function[", 10) {
-            declare function_data2 = string_to_function_data(return_array);
-            expand_function_data(&function_data2, module_stack);
-            function_data_to_string_old(module_stack, &function_data2)
-        } else if string_length=(return_array, "**function[", 11) {
-            declare function_data2 = string_to_function_data(return_array + 1);
-            expand_function_data(&function_data2, module_stack);
-            concatenate2_brk_allocate("*", function_data_to_string_old(module_stack, &function_data2))
-        } else {
-            expand_module_name(return_array, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
-        };
-        array8_set(return_types, j, new_return);
+        declare return_ = *.cast(array8_get(return_types, j));
+        return_ = expand_type_string(return_, module_stack);
+        array8_set(return_types, j, return_);
         j = j + 1;
     };
 };
 
 define expand_function_data_new = function(function_data: *Node.FunctionData, module_stack: *AutoBufferStack8) {
     declare j = 0;
-    declare argument_types = Node.FunctionData.>argument_types_array(function_data);
-    declare return_types = Node.FunctionData.>returns2(function_data);
+    declare argument_types = function_data.argument_types_array;
+    declare return_types = function_data.returns2;
     declare length = array8_length(argument_types);
     while j < length {
-        declare argument_array = *.cast(array8_get(argument_types, j));
-        declare argument_array_first = *.cast(array8_get(argument_array, 0));
-        declare new_argument = if string_length=(argument_array_first, "*function[", 10) {
-            declare function_data2 = string_to_function_data(argument_array_first);
-            expand_function_data(&function_data2, module_stack);
-            function_data_to_string_old(module_stack, &function_data2)
-        } else if string_length=(argument_array_first, "**function[", 11) {
-            declare function_data2 = string_to_function_data(argument_array_first + 1);
-            expand_function_data(&function_data2, module_stack);
-            function_data_to_string_old(module_stack, &function_data2)
-        } else {
-            expand_module_name_array(argument_array, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
-        };
-        array8_set(argument_types, j, create_size_one_array8_brk_allocate(new_argument));
+        declare argument = *.cast(array8_get(argument_types, j));
+        declare expanded_argument = expand_type_array(argument, module_stack);
+        array8_set(argument_types, j, create_size_one_array8_brk_allocate(expanded_argument));
         j = j + 1;
     };
 
     declare j = 0;
     declare length = array8_length(return_types);
     while j < length {
-        declare return_array = *.cast(array8_get(return_types, j));
-        declare return_array_first = *.cast(array8_get(return_array, 0));
-        declare new_return = if string_length=(return_array_first, "*function[", 10) {
-            declare function_data2 = string_to_function_data(return_array_first);
-            expand_function_data(&function_data2, module_stack);
-            function_data_to_string_old(module_stack, &function_data2)
-        } else if string_length=(return_array_first, "**function[", 11) {
-            declare function_data2 = string_to_function_data(return_array_first + 1);
-            expand_function_data(&function_data2, module_stack);
-            concatenate2_brk_allocate("*", function_data_to_string_old(module_stack, &function_data2))
-        } else {
-            expand_module_name_array(return_array, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
-        };
-        array8_set(return_types, j, create_size_one_array8_brk_allocate(new_return));
+        declare return_ = *.cast(array8_get(return_types, j));
+        declare expanded_return = expand_type_array(return_, module_stack);
+        array8_set(return_types, j, create_size_one_array8_brk_allocate(expanded_return));
         j = j + 1;
     };
 };
