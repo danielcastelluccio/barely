@@ -10,17 +10,17 @@ define calculate_global_locations = function(nodes: *Nodes.Nodes, program_data: 
     declare bss_index = 0;
 
     declare i = 0;
-    while <(i, global_count) {
+    while i < global_count {
         declare global_type = *.cast(autobuffer_array8_get(global_types, i));
 
-        autobuffer_array8_set(&(global_locations), i, bss_index);
+        autobuffer_array8_set(&global_locations, i, bss_index);
 
         declare size = function_size(global_type, nodes, program_data);
-        bss_index = +(bss_index, size);
-        i = +(i, 1);
+        bss_index = bss_index + size;
+        i = i + 1;
     };
 
-    return AutoBuffer.>buffer(&(global_locations)), bss_index;
+    return global_locations.buffer, bss_index;
 };
 
 define calculate_function_local_sizes = function(nodes: *Nodes.Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
@@ -28,42 +28,42 @@ define calculate_function_local_sizes = function(nodes: *Nodes.Nodes, program_da
     declare empty_module_stack = autobuffer_stack8_new(8);
 
     declare i = 0;
-    while <(i, function_count) {
+    while i < function_count {
         declare total = 0;
         declare j = whole_8.cast(autobuffer_array8_get(function_node_locations, i));
-        while !(=(Nodes.get_id(nodes, j), Node.ENDFUNCTION)) {
+        while !(Nodes.get_id(nodes, j) == Node.ENDFUNCTION) {
             declare id = Nodes.get_id(nodes, j);
             declare pointer_data = Nodes.get_pointer_data(nodes, j);
             
-            if =(id, Node.DECLARE) {
+            if id == Node.DECLARE {
                 declare declare_data = Node.DeclareData.pcast(pointer_data);
-                declare declare_name = Node.DeclareData.>name(declare_data);
-                declare declare_type_names = Node.DeclareData.>type(declare_data);
+                declare declare_name = declare_data.name;
+                declare declare_type_names = declare_data.type;
                 declare declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(empty_module_stack), create_previous_results_list());
-                total = +(total, function_size(declare_type, nodes, program_data));
+                total = total + function_size(declare_type, nodes, program_data);
             };
 
-            j = +(j, 1);
+            j = j + 1;
         };
 
-        autobuffer_array8_set(&(function_local_sizes), i, total);
-        i = +(i, 1);
+        autobuffer_array8_set(&function_local_sizes, i, total);
+        i = i + 1;
     };
 
-    return AutoBuffer.>buffer(&(function_local_sizes));
+    return function_local_sizes.buffer;
 };
 
 define calculate_variable_location = function(variable_count: whole_8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_name: *, scope_variable_index: whole_8): whole_8 {
     declare location = 0;
     declare j = 0;
     while true {
-        if !(<(j, variable_count)) {
+        if !(j < variable_count) {
             break;
-        } else if !(|(!(string=(variable_name, *.cast(autobuffer_array8_get(variable_names, j)))), <(j, scope_variable_index))) {
+        } else if !((!string=(variable_name, *.cast(autobuffer_array8_get(variable_names, j)))) || (j < scope_variable_index)) {
             break;
         } else {
-            location = +(location, autobuffer_array8_get(variable_sizes, j));
-            j = +(j, 1);
+            location = location + autobuffer_array8_get(variable_sizes, j);
+            j = j + 1;
         };
     };
 
@@ -71,13 +71,13 @@ define calculate_variable_location = function(variable_count: whole_8, variable_
 };
 
 define adjust_indexes = function(instructions_autobuffer: *AutoBuffer, indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
-    declare index_count = AutoBufferStack8.>index(indexes_to_adjust);
+    declare index_count = indexes_to_adjust.index;
     declare i = 0;
-    while <(i, index_count) {
+    while i < index_count {
         declare index = whole_8.cast(autobuffer_stack8_get(indexes_to_adjust, i));
         declare previous_value = whole_4_to_whole_8(autobuffer_get_whole_4(instructions_autobuffer, index));
-        declare new_value = +(previous_value, offset);
+        declare new_value = previous_value + offset;
         autobuffer_set_any_8(instructions_autobuffer, new_value, index);
-        i = +(i, 1);
+        i = i + 1;
     };
 };
