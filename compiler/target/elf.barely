@@ -1,19 +1,19 @@
 define Target_Elf = module {
+    define START_ADDRESS = 4194304;
+    define HEADER_SIZE = 232;
+    define ALIGNMENT = 4096;
+
     define output = function(nodes: *Nodes.Nodes, program_data: ProgramData, target_os: *, output_file: *, output_instruction_set: InstructionSetFunctions) {
-        declare output = autobuffer_new(1048576);
-
+        declare output_buffer = autobuffer_new(1048576);
         declare instructions_buffer = autobuffer_buffer_new(524288);
-
         declare data_buffer = autobuffer_buffer_new(32768);
 
         declare function_locations = autobuffer_new(1024);
-
         declare pushed_functions = autobuffer_stack8_new(512);
         declare pushed_function_targets = autobuffer_stack8_new(512);
 
         declare jmps = autobuffer_stack8_new(512);
         declare jmp_targets = autobuffer_stack8_new(512);
-
         declare jes = autobuffer_stack8_new(512);
         declare je_targets = autobuffer_stack8_new(512);
 
@@ -23,138 +23,103 @@ define Target_Elf = module {
         declare bss_indexes_to_adjust = autobuffer_stack8_new(512);
         declare bss_indexes_to_adjust_relative = autobuffer_stack8_new(512);
 
-        declare instruction_set_get_size_fn = output_instruction_set.get_size;
+        declare get_size_fn = output_instruction_set.get_size;
 
         declare global_types = program_data.global_types;
         declare global_count = autobuffer_array8_length(&global_types);
-        declare global_locations, bss_index = calculate_global_locations(nodes, &program_data, instruction_set_get_size_fn, &global_types, global_count);
+        declare global_locations, bss_index = calculate_global_locations(nodes, &program_data, get_size_fn, &global_types, global_count);
 
-        declare function_argument_names = program_data.function_argument_names;
         declare function_node_locations = program_data.function_locations;
-        declare function_count = autobuffer_array8_length(&function_argument_names);
-        declare function_local_sizes = calculate_function_local_sizes(nodes, &program_data, instruction_set_get_size_fn, &function_node_locations, function_count);
+        declare function_count = autobuffer_array8_length(&function_node_locations);
+        declare function_local_sizes = calculate_function_local_sizes(nodes, &program_data, get_size_fn, &function_node_locations, function_count);
+
 
         declare main_function = output_instruction_set.main;
-        declare main_call = main_function(nodes, &program_data, target_os, &instructions_buffer, &data_buffer, &function_locations, &pushed_functions, &pushed_function_targets, &jmps, &jmp_targets, &jes, &je_targets, &targets, &global_types, global_locations, function_local_sizes, &data_indexes_to_adjust, &bss_indexes_to_adjust, &bss_indexes_to_adjust_relative);
+        declare main_call, set_near_call_value, set_far_call_value, set_jmp_value, set_je_value, set_data_absolute_value, set_bss_absolute_value, set_bss_relative_value = main_function(nodes, &program_data, target_os, &instructions_buffer, &data_buffer, &function_locations, &pushed_functions, &pushed_function_targets, &jmps, &jmp_targets, &jes, &je_targets, &targets, &global_types, global_locations, function_local_sizes, &data_indexes_to_adjust, &bss_indexes_to_adjust, &bss_indexes_to_adjust_relative);
+
 
         declare instructions_index = instructions_buffer.index;
         declare data_index = data_buffer.index;
 
-        declare define_values = &program_data.define_values;
-        declare main_function_index = whole_8.cast(hashmap_string_get(define_values, "main"));
-        declare main_index = autobuffer_array8_get(&function_locations, main_function_index);
-        X86_64.set_call_value(&instructions_buffer, main_call, InstructionIndex.cast(main_index));
+        { // update_location_references
+            declare define_values = &program_data.define_values;
+            declare main_function_index = whole_8.cast(hashmap_string_get(define_values, "main"));
+            declare main_index = autobuffer_array8_get(&function_locations, main_function_index);
+            set_near_call_value(&instructions_buffer, main_call, InstructionIndex.cast(main_index));
 
-        declare start_address = 4194304;
+            adjust_function_calls(set_far_call_value, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer, .START_ADDRESS + .HEADER_SIZE);
 
-        .adjust_function_calls(start_address, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer);
+            adjust_jumps(&jmps, &jmp_targets, &targets, set_jmp_value, &instructions_buffer);
+            adjust_jumps(&jes, &je_targets, &targets, set_je_value, &instructions_buffer);
 
-        .adjust_jumps(&jmps, &jmp_targets, &targets, X86_64.set_jmp_value, &instructions_buffer);
-        .adjust_jumps(&jes, &je_targets, &targets, X86_64.set_je_value, &instructions_buffer);
+            declare instructions_autobuffer = &instructions_buffer.autobuffer;
 
-        declare output_location = autobuffer_buffer_new(32);
-        autobuffer_buffer_push_string(&output_location, output_file);
+            declare data_location = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
+            adjust_indexes(instructions_autobuffer, set_data_absolute_value, &data_indexes_to_adjust, data_location);
+            declare bss_location = .ALIGNMENT + data_location + data_index;
+            adjust_indexes(instructions_autobuffer, set_bss_absolute_value, &bss_indexes_to_adjust, bss_location);
 
-        declare instructions_autobuffer = &instructions_buffer.autobuffer;
-
-        declare data_location = start_address + 4096 + instructions_index + 232;
-        adjust_indexes(instructions_autobuffer, &data_indexes_to_adjust, data_location);
-        declare bss_location = 4096 + data_location + data_index;
-        adjust_indexes(instructions_autobuffer, &bss_indexes_to_adjust, bss_location);
-
-        declare i = 0;
-        while i < bss_indexes_to_adjust_relative.index {
-            declare index = whole_8.cast(autobuffer_stack8_get(&bss_indexes_to_adjust_relative, i));
-            declare value_new = whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&instructions_buffer.autobuffer, index))) + instructions_index + data_index;
-            autobuffer_set_any_4(instructions_autobuffer, whole_8_to_whole_4((value_new - (index + 4)) + 8192), index);
-            i = i + 1;
+            declare i = 0;
+            while i < bss_indexes_to_adjust_relative.index {
+                declare index = InstructionIndex.cast(autobuffer_stack8_get(&bss_indexes_to_adjust_relative, i));
+                set_bss_relative_value(&instructions_buffer, index, instructions_index + data_index + (2 * .ALIGNMENT));
+                i = i + 1;
+            };
         };
 
-        autobuffer_set(&output, instructions_buffer.autobuffer.buffer, 232, instructions_index);
-        autobuffer_set(&output, data_buffer.autobuffer.buffer, 232 + instructions_index, data_index);
+        autobuffer_set(&output_buffer, instructions_buffer.autobuffer.buffer, .HEADER_SIZE, instructions_index);
+        autobuffer_set(&output_buffer, data_buffer.autobuffer.buffer, .HEADER_SIZE + instructions_index, data_index);
 
-        declare file_header, program_header_instructions, program_header_data, program_header_bss = .create_headers(start_address, instructions_index, data_index, bss_index);
+        declare file_header, program_header_instructions, program_header_data, program_header_bss = .create_headers(instructions_index, data_index, bss_index);
+        autobuffer_set(&output_buffer, &file_header, 0, 64);
+        autobuffer_set(&output_buffer, &program_header_instructions, 64, 56);
+        autobuffer_set(&output_buffer, &program_header_data, 120, 56);
+        autobuffer_set(&output_buffer, &program_header_bss, 176, 56);
 
-        autobuffer_set(&output, &file_header, 0, 64);
-        autobuffer_set(&output, &program_header_instructions, 64, 56);
-        autobuffer_set(&output, &program_header_data, 120, 56);
-        autobuffer_set(&output, &program_header_bss, 176, 56);
-
-        declare buffer_size = 232 + instructions_index + data_index;
-        create_and_write_file(output_location.autobuffer.buffer, output.buffer, buffer_size);
+        declare buffer_size = .HEADER_SIZE + instructions_index + data_index;
+        create_and_write_file(output_file, output_buffer.buffer, buffer_size);
     };
 
-    define adjust_function_calls = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
-        declare pushed_function_count = pushed_functions.index;
-        declare i = 0;
-        while i < pushed_function_count {
-            declare pushed_function_instruction_specific = InstructionIndex.cast(autobuffer_stack8_get(pushed_functions, i));
-            declare pushed_function_target = whole_8.cast(autobuffer_stack8_get(pushed_function_targets, i));
-
-            declare function_index = InstructionIndex.cast(autobuffer_array8_get(function_locations, pushed_function_target));
-
-            X86_64.set_control_flow_value_absolute(instructions_buffer, pushed_function_instruction_specific + 2, start_address + function_index + 232);
-            i = i + 1;
-        };
-    };
-
-    define adjust_jumps = function(jumps: *AutoBufferStack8, jump_targets: *AutoBufferStack8, targets: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], instructions_buffer: *AutoBufferBuffer) {
-        declare jump_count = jumps.index;
-
-        declare i = 0;
-        while i < jump_count {
-            declare jmp_instruction2 = InstructionIndex.cast(autobuffer_stack8_get(jumps, i));
-            declare jmp_target = whole_8.cast(autobuffer_stack8_get(jump_targets, i));
-            declare target_location = autobuffer_array8_get(targets, jmp_target);
-            setter(instructions_buffer, jmp_instruction2, InstructionIndex.cast(target_location));
-            i = i + 1;
-        };
-    };
-
-    define output_executable = function(location: *, buffer: *, size: whole_8) {
-        create_and_write_file(location, buffer, size);
-    };
-
-    define create_headers = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): ELF64FileHeader, ELF64ProgramHeader, ELF64ProgramHeader, ELF64ProgramHeader {
+    define create_headers = function(instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): ELF64FileHeader, ELF64ProgramHeader, ELF64ProgramHeader, ELF64ProgramHeader {
         declare file_header = new_elf64_file_header();
         file_header.format = 2:whole_1;
         file_header.endianness = 1:whole_1;
         file_header.abi = 3:whole_1;
         file_header.object_file_type = 2:whole_2;
         file_header.machine = 62:whole_2;
-        file_header.entry_point = 4194536;
+        file_header.entry_point = .START_ADDRESS + .HEADER_SIZE;
         file_header.program_header_table = 64;
         file_header.program_header_count = 3:whole_2;
 
         declare program_header_instructions: ELF64ProgramHeader;
         program_header_instructions.type = 1:whole_4;
         program_header_instructions.location = 0;
-        program_header_instructions.virtual_address = start_address;
-        program_header_instructions.physical_address = start_address;
-        program_header_instructions.size_file = instructions_index + 232;
-        program_header_instructions.size_memory = instructions_index + 232;
+        program_header_instructions.virtual_address = .START_ADDRESS;
+        program_header_instructions.physical_address = .START_ADDRESS;
+        program_header_instructions.size_file = .HEADER_SIZE + instructions_index;
+        program_header_instructions.size_memory = .HEADER_SIZE + instructions_index;
         program_header_instructions.flags = 5:whole_4;
-        program_header_instructions.alignment = 4096;
+        program_header_instructions.alignment = .ALIGNMENT;
 
         declare program_header_data: ELF64ProgramHeader;
         program_header_data.type = 1:whole_4;
-        program_header_data.location = instructions_index + 232;
-        program_header_data.virtual_address = 232 + instructions_index + start_address + 4096;
-        program_header_data.physical_address = 232 + instructions_index + start_address + 4096;
+        program_header_data.location = instructions_index + .HEADER_SIZE;
+        program_header_data.virtual_address = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
+        program_header_data.physical_address = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
         program_header_data.size_file = data_index;
         program_header_data.size_memory = data_index;
         program_header_data.flags = 4:whole_4;
-        program_header_data.alignment = 4096;
+        program_header_data.alignment = .ALIGNMENT;
 
         declare program_header_bss: ELF64ProgramHeader;
         program_header_bss.type = 1:whole_4;
-        program_header_bss.location = instructions_index + data_index + 232;
-        program_header_bss.virtual_address = 232 + instructions_index + data_index + start_address + 8192;
-        program_header_bss.physical_address = 232 + instructions_index + data_index + start_address + 8192;
+        program_header_bss.location = instructions_index + data_index + .HEADER_SIZE;
+        program_header_bss.virtual_address = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT + data_index + .ALIGNMENT;
+        program_header_bss.physical_address =  .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT + data_index + .ALIGNMENT;
         program_header_bss.size_file = 0;
         program_header_bss.size_memory = bss_index;
         program_header_bss.flags = 6:whole_4;
-        program_header_bss.alignment = 4096;
+        program_header_bss.alignment = .ALIGNMENT;
 
         return file_header, program_header_instructions, program_header_data, program_header_bss;
     };

@@ -35,7 +35,7 @@ define Target_Macho = module {
         declare function_local_sizes = calculate_function_local_sizes(nodes, &(program_data), instruction_set_get_size_fn, &(function_node_locations), function_count);
 
         declare main_function = InstructionSetFunctions.>main(&(output_instruction_set));
-        declare main_call = main_function(nodes, &(program_data), target_os, &(instructions_buffer), &(data_buffer), &(function_locations), &(pushed_functions), &(pushed_function_targets), &(jmps), &(jmp_targets), &(jes), &(je_targets), &(targets), &(global_types), global_locations, function_local_sizes, &(data_indexes_to_adjust), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative));
+        declare main_call, set_near_call_value, set_far_call_value, set_jmp_value, set_je_value, set_data_absolute_value, set_bss_absolute_value, set_bss_relative_value = main_function(nodes, &(program_data), target_os, &(instructions_buffer), &(data_buffer), &(function_locations), &(pushed_functions), &(pushed_function_targets), &(jmps), &(jmp_targets), &(jes), &(je_targets), &(targets), &(global_types), global_locations, function_local_sizes, &(data_indexes_to_adjust), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative));
 
         declare instructions_index = AutoBufferBuffer.>index(&(instructions_buffer));
         declare data_index = AutoBufferBuffer.>index(&(data_buffer));
@@ -58,9 +58,9 @@ define Target_Macho = module {
         declare instructions_autobuffer = &(AutoBufferBuffer.>autobuffer(&(instructions_buffer)));
 
         declare data_location = +(start_address, .round_up_to_4096(+(instructions_index, 504)));
-        adjust_indexes(instructions_autobuffer, &(data_indexes_to_adjust), data_location);
+        adjust_indexes(instructions_autobuffer, X86_64.set_value8_offset, &(data_indexes_to_adjust), data_location);
         declare bss_location = +(start_address, +(.round_up_to_4096(+(instructions_index, 504)), .round_up_to_4096(data_index)));
-        adjust_indexes(instructions_autobuffer, &(bss_indexes_to_adjust), bss_location);
+        adjust_indexes(instructions_autobuffer, X86_64.set_value8_offset, &(bss_indexes_to_adjust), bss_location);
 
         declare i = 0;
         while <(i, AutoBufferStack8.>index(&(bss_indexes_to_adjust_relative))) {
@@ -98,7 +98,7 @@ define Target_Macho = module {
 
             declare value_new = +(function_index, 504);
 
-            X86_64.set_control_flow_value_absolute(instructions_buffer, +(pushed_function_instruction_specific, 2), +(start_address, value_new));
+            X86_64.set_value8_offset(instructions_buffer, +(pushed_function_instruction_specific, 2), +(start_address, value_new));
             i = +(i, 1);
         };
     };

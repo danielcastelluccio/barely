@@ -8,7 +8,7 @@ define Target_X86_64 = module {
         return functions;
     };
 
-    define output = function(nodes: *Nodes.Nodes, program_data: *ProgramData, target_os: *, instructions_buffer: *AutoBufferBuffer, data_buffer: *AutoBufferBuffer, function_locations: *AutoBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, targets: *AutoBuffer, global_types: *AutoBuffer, global_locations: *, function_local_sizes: *, data_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8): InstructionIndex {
+    define output = function(nodes: *Nodes.Nodes, program_data: *ProgramData, target_os: *, instructions_buffer: *AutoBufferBuffer, data_buffer: *AutoBufferBuffer, function_locations: *AutoBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, targets: *AutoBuffer, global_types: *AutoBuffer, global_locations: *, function_local_sizes: *, data_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8): InstructionIndex, *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:] {
         declare structure_member_types = ProgramData.>structure_member_types(program_data);
         declare structure_member_names = ProgramData.>structure_member_names(program_data);
 
@@ -105,7 +105,7 @@ define Target_X86_64 = module {
             i = +(i, 1);
         };
 
-        return main_call;
+        return main_call, X86_64.set_call_value, X86_64.set_value8_offset, X86_64.set_jmp_value, X86_64.set_je_value, X86_64.set_value8_offset, X86_64.set_value8_offset, X86_64.set_bss_relative_value;
     };
 
     define append_start_instructions = function(instructions_buffer: *AutoBufferBuffer, target_os: *): InstructionIndex {
@@ -413,7 +413,7 @@ define Target_X86_64 = module {
 
         if string_length=(variable_type, "*function", 9) {
             declare push_function_instruction = X86_64.autobuffer_buffer_push_push_instruction_pointer(instructions_buffer);
-            autobuffer_stack8_push(pushed_functions, any_8.cast(push_function_instruction));
+            autobuffer_stack8_push(pushed_functions, any_8.cast(push_function_instruction + 2));
             autobuffer_stack8_push(pushed_function_targets, define_value);
         } else if string_length=(variable_type, "structure", 9) {
         } else if string_length=(variable_type, "global[", 7) {

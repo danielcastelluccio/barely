@@ -1,5 +1,5 @@
 define InstructionSetFunctions = structure {
-    main: *function[*Nodes.Nodes,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex];
+    main: *function[*Nodes.Nodes,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex,*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:]];
     get_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8];
     get_size_multiple: *function[*,whole_8,*Nodes.Nodes,*ProgramData:whole_8];
     get_size_multiple_reversed: *function[*,whole_8,*Nodes.Nodes,*ProgramData:whole_8];
@@ -70,14 +70,42 @@ define calculate_variable_location = function(variable_count: whole_8, variable_
     return location;
 };
 
-define adjust_indexes = function(instructions_autobuffer: *AutoBuffer, indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
+define adjust_indexes = function(instructions_autobuffer: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,whole_8:], indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
     declare index_count = indexes_to_adjust.index;
     declare i = 0;
     while i < index_count {
         declare index = whole_8.cast(autobuffer_stack8_get(indexes_to_adjust, i));
+
         declare previous_value = whole_4_to_whole_8(autobuffer_get_whole_4(instructions_autobuffer, index));
         declare new_value = previous_value + offset;
         autobuffer_set_any_8(instructions_autobuffer, new_value, index);
+        i = i + 1;
+    };
+};
+
+define adjust_jumps = function(jumps: *AutoBufferStack8, jump_targets: *AutoBufferStack8, targets: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], instructions_buffer: *AutoBufferBuffer) {
+    declare jump_count = jumps.index;
+
+    declare i = 0;
+    while i < jump_count {
+        declare jmp_instruction = InstructionIndex.cast(autobuffer_stack8_get(jumps, i));
+        declare jmp_target = whole_8.cast(autobuffer_stack8_get(jump_targets, i));
+        declare target_location = autobuffer_array8_get(targets, jmp_target);
+        setter(instructions_buffer, jmp_instruction, InstructionIndex.cast(target_location));
+        i = i + 1;
+    };
+};
+
+define adjust_function_calls = function(set_function_value: *function[*AutoBufferBuffer,InstructionIndex,whole_8:], pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer, offset: whole_8) {
+    declare pushed_function_count = pushed_functions.index;
+    declare i = 0;
+    while i < pushed_function_count {
+        declare pushed_function_instruction_specific = InstructionIndex.cast(autobuffer_stack8_get(pushed_functions, i));
+        declare pushed_function_target = whole_8.cast(autobuffer_stack8_get(pushed_function_targets, i));
+
+        declare function_index = InstructionIndex.cast(autobuffer_array8_get(function_locations, pushed_function_target));
+
+        set_function_value(instructions_buffer, pushed_function_instruction_specific, whole_8.cast(function_index + offset));
         i = i + 1;
     };
 };
