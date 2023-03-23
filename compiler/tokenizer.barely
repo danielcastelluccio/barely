@@ -141,11 +141,13 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
                     declare string_pointer_data = #tokens_append_data(tokens, Token.STRING, Token.StringData, file_name, row, column);
                     string_pointer_data.value = buffer_copy;
 
+                    column = column + length(buffer_copy);
                 };
 
                 in_quotes = !in_quotes;
                 handled = true;
                 index = index + 1;
+                column = column + 1;
                 buffer_index = index;
             };
         };
@@ -179,7 +181,8 @@ define check_handle_single_operator = function(character: any_1, wanted_characte
     if character == wanted_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
-        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, column);
+        declare column_copy = column.*;
+        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, &column_copy);
 
         column.* = column.* + 1;
         index.* = index.* + 1;
@@ -192,7 +195,8 @@ define check_handle_double_operator = function(character: any_1, character_next:
     if &&(character == wanted_character, character_next == wanted_character_next) {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
-        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, column);
+        declare column_copy = column.*;
+        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, &column_copy);
 
         column.* = column.* + 2;
         index.* = index.* + 2;
@@ -203,7 +207,8 @@ define check_handle_double_operator = function(character: any_1, character_next:
 
 define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
-        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, column);
+        declare column_copy = column.*;
+        tokenize_inner(internal_name, length(internal_name), tokens, file_name, row, &column_copy);
 
         column.* = column.* + 1;
         index.* = index.* + 1;
@@ -215,7 +220,7 @@ define check_handle_single_prefix = function(character: any_1, wanted_character:
 define check_handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
-        declare _ = Tokens.append(tokens, token, file_name, whole_8.>(row), whole_8.>(column));
+        declare _ = Tokens.append(tokens, token, file_name, whole_8.>(row), column.*);
 
         column.* = column.* + 1;
         index.* = index.* + 1;
