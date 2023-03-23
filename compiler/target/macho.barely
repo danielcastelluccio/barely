@@ -58,9 +58,9 @@ define Target_Macho = module {
         declare instructions_autobuffer = &(AutoBufferBuffer.>autobuffer(&(instructions_buffer)));
 
         declare data_location = +(start_address, .round_up_to_4096(+(instructions_index, 504)));
-        adjust_indexes(instructions_autobuffer, X86_64.set_value8_offset, &(data_indexes_to_adjust), data_location);
+        adjust_indexes(&instructions_buffer, X86_64.set_value8_offset, &(data_indexes_to_adjust), data_location);
         declare bss_location = +(start_address, +(.round_up_to_4096(+(instructions_index, 504)), .round_up_to_4096(data_index)));
-        adjust_indexes(instructions_autobuffer, X86_64.set_value8_offset, &(bss_indexes_to_adjust), bss_location);
+        adjust_indexes(&instructions_buffer, X86_64.set_value8_offset, &(bss_indexes_to_adjust), bss_location);
 
         declare i = 0;
         while <(i, AutoBufferStack8.>index(&(bss_indexes_to_adjust_relative))) {

@@ -742,8 +742,10 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
         };
     };
 
-    if is_pointer(nodes, nodes_index + 1) {
-        variable_type = concatenate2_brk_allocate("*", variable_type);
+    if !(variable_type == NULL) {
+        if is_pointer(nodes, nodes_index + 1) {
+            variable_type = concatenate2_brk_allocate("*", variable_type);
+        };
     };
 
     if !(variable_type == NULL) {

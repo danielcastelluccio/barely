@@ -70,15 +70,13 @@ define calculate_variable_location = function(variable_count: whole_8, variable_
     return location;
 };
 
-define adjust_indexes = function(instructions_autobuffer: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,whole_8:], indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
+define adjust_indexes = function(instructions_autobuffer: *AutoBufferBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,whole_8:], indexes_to_adjust: *AutoBufferStack8, offset: whole_8) {
     declare index_count = indexes_to_adjust.index;
     declare i = 0;
     while i < index_count {
-        declare index = whole_8.cast(autobuffer_stack8_get(indexes_to_adjust, i));
+        declare index = InstructionIndex.cast(autobuffer_stack8_get(indexes_to_adjust, i));
 
-        declare previous_value = whole_4_to_whole_8(autobuffer_get_whole_4(instructions_autobuffer, index));
-        declare new_value = previous_value + offset;
-        autobuffer_set_any_8(instructions_autobuffer, new_value, index);
+        setter(instructions_autobuffer, index, offset);
         i = i + 1;
     };
 };

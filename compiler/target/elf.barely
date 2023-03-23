@@ -55,16 +55,10 @@ define Target_Elf = module {
             declare instructions_autobuffer = &instructions_buffer.autobuffer;
 
             declare data_location = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
-            adjust_indexes(instructions_autobuffer, set_data_absolute_value, &data_indexes_to_adjust, data_location);
-            declare bss_location = .ALIGNMENT + data_location + data_index;
-            adjust_indexes(instructions_autobuffer, set_bss_absolute_value, &bss_indexes_to_adjust, bss_location);
-
-            declare i = 0;
-            while i < bss_indexes_to_adjust_relative.index {
-                declare index = InstructionIndex.cast(autobuffer_stack8_get(&bss_indexes_to_adjust_relative, i));
-                set_bss_relative_value(&instructions_buffer, index, instructions_index + data_index + (2 * .ALIGNMENT));
-                i = i + 1;
-            };
+            adjust_indexes(&instructions_buffer, set_data_absolute_value, &data_indexes_to_adjust, data_location);
+            declare bss_location = data_location + data_index + .ALIGNMENT;
+            adjust_indexes(&instructions_buffer, set_bss_absolute_value, &bss_indexes_to_adjust, bss_location);
+            adjust_indexes(&instructions_buffer, set_bss_relative_value, &bss_indexes_to_adjust_relative, (bss_location - .START_ADDRESS) - .HEADER_SIZE);
         };
 
         autobuffer_set(&output_buffer, instructions_buffer.autobuffer.buffer, .HEADER_SIZE, instructions_index);
