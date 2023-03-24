@@ -155,22 +155,6 @@ define array8_length = function(array: *): whole_8 {
     return k;
 };
 
-define autobuffer_stack8_legacy_push = function(buffer: *AutoBuffer, stack_pointer: *whole_8, value: any_8) {
-    autobuffer_set_whole_8(buffer, whole_8.cast(value), stack_pointer.* * 8, true);
-    stack_pointer.* = stack_pointer.* + 1;
-};
-
-define autobuffer_stack8_legacy_pop = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
-    stack_pointer.* = stack_pointer.* - 1;
-    declare index_pointer = any_8.pcast(autobuffer_get(buffer, stack_pointer.* * 8));
-    return index_pointer.*;
-};
-
-define autobuffer_stack8_legacy_peek = function(buffer: *AutoBuffer, stack_pointer: *whole_8): any_8 {
-    declare index_pointer = any_8.pcast(autobuffer_get(buffer, (stack_pointer.* - 1) * 8));
-    return index_pointer.*;
-};
-
 define autobuffer_stringarray_get_index = function(keys: *AutoBuffer, wanted: *, size: whole_8): whole_8 {
     declare j = 0;
     while j < size {
