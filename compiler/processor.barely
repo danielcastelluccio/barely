@@ -1258,6 +1258,7 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
             declare structure_data = Node.StructureData.pcast(pointer_data);
 
             if structure_data.name == NULL {
+                expand_structure_data(structure_data, &module_stack);
                 autobuffer_array8_set(structure_member_types, declared_structure_id, structure_data.item_types);
                 autobuffer_array8_set(structure_members_names, declared_structure_id, structure_data.item_names);
 
@@ -1448,6 +1449,18 @@ define expand_function_data = function(function_data: *Node.FunctionData, module
         declare return_ = *.cast(array8_get(return_types, j));
         declare expanded_return = expand_type_array(return_, module_stack);
         array8_set(return_types, j, create_size_one_array8_brk_allocate(expanded_return));
+        j = j + 1;
+    };
+};
+
+define expand_structure_data = function(structure_data: *Node.StructureData, module_stack: *AutoBufferStack8) {
+    declare j = 0;
+    declare item_types = structure_data.item_types;
+    declare length = array8_length(item_types);
+    while j < length {
+        declare item = *.cast(array8_get(item_types, j));
+        declare expanded_item = expand_type_array(item, module_stack);
+        array8_set(item_types, j, create_size_one_array8_brk_allocate(expanded_item));
         j = j + 1;
     };
 };

@@ -258,26 +258,30 @@ define add_structure_functions = function(nodes: *Nodes.Nodes) {
 
                 // Setter for an individual member
                 declare function_name = concatenate3_brk_allocate(name, "<", item_name);
-                declare function_arguments = create_size_two_array8_brk_allocate(#array(pointer_name), #array(item_type));
+                declare function_arguments = create_size_two_array8_brk_allocate(#array(pointer_name), item_type);
                 declare function_returns = brk_allocate(8);
                 Nodes.append_function_new(nodes, function_name, function_arguments, function_returns);
 
                 // Setter for an individual member with reversed inputs
                 declare function_name = concatenate3_brk_allocate(name, "<2", item_name);
-                declare function_arguments = create_size_two_array8_brk_allocate(#array(item_type), #array(pointer_name));
+                declare function_arguments = create_size_two_array8_brk_allocate(item_type, #array(pointer_name));
                 declare function_returns = brk_allocate(8);
                 Nodes.append_function_new(nodes, function_name, function_arguments, function_returns);
 
                 // Getter for individual members
                 declare function_name = concatenate3_brk_allocate(name, ">", item_name);
                 declare function_arguments = create_size_one_array8_brk_allocate(#array(pointer_name));
-                declare function_returns = create_size_one_array8_brk_allocate(#array(item_type));
+                declare function_returns = create_size_one_array8_brk_allocate(item_type);
                 Nodes.append_function_new(nodes, function_name, function_arguments, function_returns);
 
                 // Pointer Getter for individual members
+                declare item_type_copy = copy_array8_brk_allocate(item_type);
+                if array8_length(item_type_copy) > 0 {
+                    array8_set(item_type_copy, 0, concatenate2_brk_allocate("*", *.cast(array8_get(item_type_copy, 0))));
+                };
                 declare function_name = concatenate3_brk_allocate(name, "*>", item_name);
                 declare function_arguments = create_size_one_array8_brk_allocate(#array(pointer_name));
-                declare function_returns = create_size_one_array8_brk_allocate(#array(concatenate2_brk_allocate("*", item_type)));
+                declare function_returns = create_size_one_array8_brk_allocate(item_type_copy);
                 Nodes.append_function_new(nodes, function_name, function_arguments, function_returns);
 
                 j = j + 1;

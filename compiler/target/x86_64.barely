@@ -1291,8 +1291,9 @@ define Target_X86_64 = module {
             while !(=(array8_get(member_names, j), 0)) {
                 declare member_name = *.cast(array8_get(member_names, j));
                 declare member_type = *.cast(array8_get(member_types, j));
+                member_type = *.cast(array8_get(member_type, 0));
 
-                declare location = .get_size_multiple(member_types, j, nodes, program_data);
+                declare location = .get_size_multiple_array(member_types, j, nodes, program_data);
                 declare size = .get_size(member_type, nodes, program_data);
 
                 // Get pointer for individual members
@@ -1467,7 +1468,7 @@ define Target_X86_64 = module {
                 declare structure_member_types = &(ProgramData.>structure_member_types(program_data));
                 declare member_types = *.cast(autobuffer_array8_get(structure_member_types, defined_value));
 
-                declare size = .get_size_multiple(member_types, 999, nodes, program_data);
+                declare size = .get_size_multiple_array(member_types, 999, nodes, program_data);
                 hashmap_string_put(&(cached_sizes_map), type, size);
                 return size;
             };
