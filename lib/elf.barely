@@ -313,29 +313,6 @@ define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
     return any_8.>(any_8.pcast(+(pointer, offset)));
 };
 
-//define BRK = global(*);
-//define REFERENCE_BRK = global(*);
-//
-//define brk_allocate = function(size: whole_8): * {
-//    if =(BRK, 0) {
-//        BRK = Linux.sys_brk(*.cast(0));
-//        REFERENCE_BRK = BRK;
-//    };
-//
-//    declare allocated = REFERENCE_BRK;
-//    REFERENCE_BRK = *.cast(+(REFERENCE_BRK, size));
-//    
-//    if >(REFERENCE_BRK, BRK) {
-//        declare increment = 67108864;
-//        if >(size, increment) {
-//            increment = size;
-//        };
-//        BRK = *.cast(+(BRK, increment));
-//        declare _ = Linux.sys_brk(BRK);
-//    };
-//    return allocated;
-//};
-
 declare CURRENT_MMAP: *;
 declare MMAP_LEFT: whole_8;
 

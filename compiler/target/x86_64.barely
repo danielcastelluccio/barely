@@ -64,7 +64,7 @@ define Target_X86_64 = module {
                 .output_function(nodes, i, function_local_sizes, &current_function_id, &variable_index, pointer_data, instructions_buffer); }
             else if id == Node.NUMBER { .output_number(&module_stack, pointer_data, instructions_buffer) }
             else if id == Node.BOOLEAN { .output_boolean(pointer_data, instructions_buffer) }
-            else if id == Node.INVOKE { .output_invoke(nodes, i, program_data, pointer_data, &internal_function_instructions, &internal_function_instruction_sizes, instructions_buffer) } 
+            else if id == Node.INVOKE { .output_invoke(instructions_buffer) }
             else if id == Node.INVOKE_INTERNAL { .output_invoke_internal(nodes, i, &define_stack, program_data, pointer_data, &internal_function_instructions, &internal_function_instruction_sizes, instructions_buffer) } 
             else if id == Node.STRING { .output_string(data_buffer, data_indexes_to_adjust, pointer_data, instructions_buffer) } 
             else if id == Node.DECLARE { .output_declare(nodes, program_data, in_function, &variable_names, &variable_sizes, &variable_types, &variable_index, &module_stack, pointer_data, instructions_buffer) }
@@ -176,44 +176,35 @@ define Target_X86_64 = module {
         ELF_X86_64.autobuffer_buffer_push_push_data(instructions_buffer, data_indexes_to_adjust, string_data_index);
     };
 
-    define output_invoke_pointer = function(instructions_buffer: *AutoBufferBuffer) {
-        X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RAX);
-        X86_64.autobuffer_buffer_push_call_far_register8(instructions_buffer, RAX);
-    };
-
     define output_function = function(nodes: *Nodes.Nodes, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare function_data = Node.FunctionData.pcast(pointer_data);
+        declare function_name = function_data.name;
         declare next_id = Nodes.get_id(nodes, nodes_index + 1);
 
-        if !(next_id == Node.ENDFUNCTION) {
-            declare function_name = function_data.name;
+        if function_name == 0 {
+            current_function_id.* = current_function_id.* + 1;
 
             X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RBP);
             X86_64.autobuffer_buffer_push_mov_register8_register8(instructions_buffer, RSP, RBP);
 
-            if function_name == 0 {
-                increment_whole_8_pointer(current_function_id, 1);
-                declare locals_size = whole_8.cast(array8_get(function_local_sizes, current_function_id.*));
-
-                X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, locals_size);
-            };
+            declare locals_size = whole_8.cast(array8_get(function_local_sizes, current_function_id.*));
+            X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, locals_size);
 
             variable_index.* = 0;
         };
     };
 
     define output_declare = function(nodes: *Nodes.Nodes, program_data: *ProgramData, in_function: boolean, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare declare_data = Node.DeclareData.pcast(pointer_data);
-        declare variable_name = declare_data.name;
-        declare variable_type_names = declare_data.type;
-        declare variable_type = expand_module_name_array(variable_type_names, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-
         if in_function {
-            autobuffer_array8_set(variable_names, variable_index.*, variable_name);
-            autobuffer_array8_set(variable_sizes, variable_index.*, .get_size(variable_type, nodes, program_data));
-            increment_whole_8_pointer(variable_index, 1);
+            declare declare_data = Node.DeclareData.pcast(pointer_data);
+            declare variable_name = declare_data.name;
+            declare variable_type = declare_data.type;
 
-            hashmap_string_put(HashMap.pcast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type_names);
+            autobuffer_array8_set(variable_names, variable_index.*, variable_name);
+            autobuffer_array8_set(variable_sizes, variable_index.*, .get_size_array(variable_type, nodes, program_data));
+            variable_index.* = variable_index.* + 1;
+
+            hashmap_string_put(HashMap.pcast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type);
         };
     };
 
@@ -242,42 +233,41 @@ define Target_X86_64 = module {
     define output_return = function(nodes: *Nodes.Nodes, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, function_return_types2: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
         declare arguments_size = .get_size_multiple_array(*.cast(autobuffer_array8_get(function_argument_types, current_function_id)), 999, nodes, program_data);
         declare returns_size = .get_size_multiple_array(*.cast(autobuffer_array8_get(function_return_types2, current_function_id)), 999, nodes, program_data);
+        declare returns_size_with_extra = returns_size + 8;
 
         declare j = 8;
-        declare k = returns_size + 8;
+        declare k = returns_size_with_extra;
 
         X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(instructions_buffer, RBP, 8, RCX);
         X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(instructions_buffer, RBP, 0, RDX);
 
-        returns_size = returns_size + 8;
-
-        while j < returns_size {
-            if (returns_size - j) > 7 {
+        while j < returns_size_with_extra {
+            if (returns_size_with_extra - j) > 7 {
                 k = k - 8;
 
-                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(instructions_buffer, RSP, (returns_size - j) - 8, RAX);
-                X86_64.autobuffer_buffer_push_mov_register8_register8_pointer_offset(instructions_buffer, RAX, RBP, 16 + (arguments_size - returns_size) + k);
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(instructions_buffer, RSP, (returns_size_with_extra - j) - 8, RAX);
+                X86_64.autobuffer_buffer_push_mov_register8_register8_pointer_offset(instructions_buffer, RAX, RBP, 16 + (arguments_size - returns_size_with_extra) + k);
 
                 j = j + 8;
-            } else if (returns_size - j) > 3 {
+            } else if (returns_size_with_extra - j) > 3 {
                 k = k - 4;
 
-                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(instructions_buffer, RSP, (returns_size - j) - 4, EAX);
-                X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(instructions_buffer, EAX, RBP, 16 + (arguments_size - returns_size) + k);
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(instructions_buffer, RSP, (returns_size_with_extra - j) - 4, EAX);
+                X86_64.autobuffer_buffer_push_mov_register4_register8_pointer_offset(instructions_buffer, EAX, RBP, 16 + (arguments_size - returns_size_with_extra) + k);
 
                 j = j + 4;
-            } else if (returns_size - j) > 1 {
+            } else if (returns_size_with_extra - j) > 1 {
                 k = k - 2;
 
-                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(instructions_buffer, RSP, (returns_size - j) - 2, AX);
-                X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(instructions_buffer, AX, RBP, 16 + (arguments_size - returns_size) + k);
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(instructions_buffer, RSP, (returns_size_with_extra - j) - 2, AX);
+                X86_64.autobuffer_buffer_push_mov_register2_register8_pointer_offset(instructions_buffer, AX, RBP, 16 + (arguments_size - returns_size_with_extra) + k);
 
                 j = j + 2;
             } else {
                 k = k - 1;
 
-                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, (returns_size - j) - 1, AL);
-                X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RBP, 16 + (arguments_size - returns_size) + k);
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, (returns_size_with_extra - j) - 1, AL);
+                X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RBP, 16 + (arguments_size - returns_size_with_extra) + k);
 
                 j = j + 1;
             };
@@ -285,9 +275,7 @@ define Target_X86_64 = module {
 
         X86_64.autobuffer_buffer_push_mov_register8_register8(instructions_buffer, RBP, RSP);
 
-        X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 16 + (arguments_size - returns_size) + k);
-
-        returns_size = returns_size - 8;
+        X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, 16 + (arguments_size - returns_size_with_extra) + k);
 
         X86_64.autobuffer_buffer_push_mov_register8_register8(instructions_buffer, RDX, RBP);
         X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RCX);
@@ -296,7 +284,7 @@ define Target_X86_64 = module {
 
     define output_retrieve = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare retrieve_data = Node.RetrieveData.pcast(Nodes.get_pointer_data(nodes, nodes_index));
-        declare variable_name = retrieve_data.name;
+        declare name = retrieve_data.name;
         declare uses_previous = retrieve_data.uses_previous;
 
         if uses_previous {
@@ -305,27 +293,21 @@ define Target_X86_64 = module {
                 top_define = *.cast(autobuffer_stack8_peek(define_stack)) + 7;
             };
 
-            declare variable_name_new = expand_module_name_stack(variable_name, &module_id_map, &module_references_map, module_stack, top_define, create_previous_results_list());
+            declare name_new = expand_module_name_stack(name, &module_id_map, &module_references_map, module_stack, top_define, create_previous_results_list());
 
-            if !string=(variable_name, variable_name_new) {
-                println(variable_name);
-                variable_name = variable_name_new;
-                println(variable_name);
+            if !string=(name, name_new) {
                 declare _ = autobuffer_stack8_pop(define_stack);
+                name = name_new;
             };
         };
 
-        declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, variable_name);
-        if !(variable_type == 0) {
-            variable_type = expand_module_name_array(variable_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-        };
+        declare type, scope_index = .get_variable_linux_x86_64(variable_types, name);
+        if !(type == 0) {
+            declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
+            type = expand_module_name_array(type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            declare size = .get_size(type, nodes, program_data);
 
-        declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
-
-        if !(variable_type == 0) {
-            declare size = .get_size(variable_type, nodes, program_data);
-
-            declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
+            declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, name, scope_variable_index);
 
             if is_pointer(nodes, nodes_index + 1) {
                 X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RBP, 0 - (size + location), RAX);
@@ -339,15 +321,14 @@ define Target_X86_64 = module {
 
         declare function_argument_names_individual = *.cast(autobuffer_array8_get(function_argument_names, current_function_id));
         declare function_argument_types_individual = *.cast(autobuffer_array8_get(function_argument_types, current_function_id));
-
-        variable_type = stringarray_get(function_argument_names_individual, function_argument_types_individual, variable_name, array8_length(function_argument_types_individual));
-        if !(variable_type == 0) {
-            variable_type = expand_module_name_array(variable_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+        type = stringarray_get(function_argument_names_individual, function_argument_types_individual, name, array8_length(function_argument_types_individual));
+        if !(type == 0) {
+            type = expand_module_name_array(type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
         };
 
-        if !(variable_type == 0) {
-            declare size = .get_size(variable_type, nodes, program_data);
-            declare location = .get_size_multiple_reversed_array(function_argument_types_individual, stringarray_get_index(function_argument_names_individual, variable_name, array8_length(function_argument_names_individual)), nodes, program_data);
+        if !(type == 0) {
+            declare size = .get_size(type, nodes, program_data);
+            declare location = .get_size_multiple_reversed_array(function_argument_types_individual, stringarray_get_index(function_argument_names_individual, name, array8_length(function_argument_names_individual)), nodes, program_data);
 
             if is_pointer(nodes, nodes_index + 1) {
                 X86_64.autobuffer_buffer_push_lea_register8_offset_register8(instructions_buffer, RBP, 16 + location, RAX);
@@ -359,34 +340,28 @@ define Target_X86_64 = module {
             return;
         };
 
+        if string_length=(name, "any_", 4) {
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("structure:", name));
+            return;
+        };
+
+        if string=(name, "@current_module") {
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", name));
+            return;
+        };
+
         declare define_types = &program_data.define_types;
         declare define_values = &program_data.define_values;
-
-        if string_length=(variable_name, "any_", 4) {
-            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("structure:", variable_name));
+        type = get_define_type(define_types, define_values, name);
+        if string=(type, "module") {
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", name));
+            return;
+        } else if string_length=(type, "structure[", 10) {
+            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("structure:", name));
             return;
         };
 
-        if string=(variable_name, "@current_module") {
-            autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", variable_name));
-            return;
-        };
-
-        variable_type = get_define_type(define_types, define_values, variable_name);
-
-        if !(variable_type == 0) {
-            if string=(variable_type, "module") || string_length=(variable_type, "structure[", 10) {
-                autobuffer_stack8_push(define_stack, concatenate2_brk_allocate("module:", variable_name));
-                return;
-            };
-        };
-
-        if !(variable_type == 0) {
-            // TODO: Better way of handling retrieve outside of functions
-            if (!string=(variable_type, "module")) && (!string_length=(variable_type, "structure[", 10)) {
-                .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_stack, variable_name, variable_type);
-            };
-        };
+        .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_stack, name, type);
     };
 
     define output_retrieve_define = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, variable_name_in: *, variable_type_in: *) {
@@ -400,15 +375,10 @@ define Target_X86_64 = module {
 
         while string=(variable_type, "define") {
             declare reference = *.cast(hashmap_string_get(&module_references_map, variable_name));
-            declare expanded = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-            variable_name = expanded;
+            variable_name = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
 
             variable_type = *.cast(get_define_retrieve_type(define_types, define_values, variable_name));
             define_value = *.cast(get_value_of_define(define_types, define_values, variable_name));
-
-            if string=(variable_type, "module") {
-                return;
-            };
         };
 
         if string_length=(variable_type, "*function", 9) {
@@ -416,32 +386,16 @@ define Target_X86_64 = module {
             autobuffer_stack8_push(pushed_functions, any_8.cast(push_function_instruction + 2));
             autobuffer_stack8_push(pushed_function_targets, define_value);
         } else if string_length=(variable_type, "structure", 9) {
-        } else if string_length=(variable_type, "global[", 7) {
-            declare define_value = hashmap_string_get2(define_values, variable_name);
-            declare variable_type = *.cast(autobuffer_array8_get(global_types, whole_8.cast(define_value)));
-
-            declare size = .get_size(variable_type, nodes, program_data);
-
-            declare define_value = whole_8.cast(hashmap_string_get2(define_values, variable_name));
-            declare global_index = BssIndex.cast(array8_get(global_locations, define_value));
-
-            if is_pointer(nodes, nodes_index + 1) {
-                ELF_X86_64.autobuffer_buffer_push_push_bss(instructions_buffer, bss_indexes_to_adjust, global_index);
-            } else {
-                X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
-                .output_copy_global_stack(instructions_buffer, bss_indexes_to_adjust_relative, global_index, size);
-            };
         } else if string=(define_or_declare, "declare") {
+            declare define_value = whole_8.cast(define_value);
             declare variable_type = *.cast(hashmap_string_get(define_types, variable_name));
-
-            declare size = .get_size(variable_type, nodes, program_data);
-
-            declare define_value = whole_8.cast(hashmap_string_get2(define_values, variable_name));
             declare global_index = BssIndex.cast(array8_get(global_locations, define_value));
 
             if is_pointer(nodes, nodes_index + 1) {
                 ELF_X86_64.autobuffer_buffer_push_push_bss(instructions_buffer, bss_indexes_to_adjust, global_index);
             } else {
+                declare size = .get_size(variable_type, nodes, program_data);
+
                 X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, size);
                 .output_copy_global_stack(instructions_buffer, bss_indexes_to_adjust_relative, global_index, size);
             };
@@ -456,7 +410,9 @@ define Target_X86_64 = module {
                 X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 1);
                 X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RSP, 0);
             } else {
-                print("no size for ");
+                print("Unimplemented output retrieve size ");
+                print_whole_8(size);
+                print(" for type ");
                 println(variable_type);
             };
         };
@@ -536,8 +492,8 @@ define Target_X86_64 = module {
         declare assign_data = Node.AssignData.pcast(pointer_data);
         declare variable_name = assign_data.name;
 
-        declare module_expanded_name = if define_stack.index > 0 {
-            expand_module_name_stack(variable_name, &module_id_map, &module_references_map, module_stack, *.cast(autobuffer_stack8_pop(define_stack)), create_previous_results_list())
+        declare variable_name = if define_stack.index > 0 {
+            expand_module_name_stack(variable_name, &module_id_map, &module_references_map, module_stack, *.cast(autobuffer_stack8_pop(define_stack) + 7), create_previous_results_list())
         } else {
             variable_name
         };
@@ -545,11 +501,8 @@ define Target_X86_64 = module {
         declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, variable_name);
         if !(variable_type == 0) {
             variable_type = expand_module_name_array(variable_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-        };
         
-        declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
-
-        if !(variable_type == 0) {
+            declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
             declare size = .get_size(variable_type, nodes, program_data);
             declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
 
@@ -575,42 +528,43 @@ define Target_X86_64 = module {
             };
             
             X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, size);
-        } else {
-            declare define_values = &program_data.define_values;
-
-            declare global_index = whole_8.cast(hashmap_string_get(define_values, variable_name));
-            variable_type = *.cast(autobuffer_array8_get(global_types, global_index));
-            declare global_location = BssIndex.cast(array8_get(global_locations, global_index));
-
-            declare size = .get_size(variable_type, nodes, program_data);
-
-            declare j = 0;
-            while j < size {
-                if (size - j) > 7 {
-                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(instructions_buffer, RSP, j, RAX);
-                    ELF_X86_64.autobuffer_buffer_push_mov_register8_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, RAX, global_location, j);
-
-                    j = j + 8;
-                } else if (size - j) > 3 {
-                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(instructions_buffer, RSP, j, EAX);
-                    ELF_X86_64.autobuffer_buffer_push_mov_register4_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, EAX, global_location, j);
-
-                    j = j + 4;
-                } else if (size - j) > 1 {
-                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(instructions_buffer, RSP, j, AX);
-                    ELF_X86_64.autobuffer_buffer_push_mov_register2_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, AX, global_location, j);
-
-                    j = j + 2;
-                } else {
-                    X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, j, AL);
-                    ELF_X86_64.autobuffer_buffer_push_mov_register1_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, AL, global_location, j);
-
-                    j = j + 1;
-                };
-            };
-
-            X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, size);
+            return;
         };
+
+        declare define_values = &program_data.define_values;
+
+        declare global_index = whole_8.cast(hashmap_string_get(define_values, variable_name));
+        declare variable_type = *.cast(autobuffer_array8_get(global_types, global_index));
+        declare global_location = BssIndex.cast(array8_get(global_locations, global_index));
+
+        declare size = .get_size(variable_type, nodes, program_data);
+
+        declare j = 0;
+        while j < size {
+            if (size - j) > 7 {
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(instructions_buffer, RSP, j, RAX);
+                ELF_X86_64.autobuffer_buffer_push_mov_register8_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, RAX, global_location, j);
+
+                j = j + 8;
+            } else if (size - j) > 3 {
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register4(instructions_buffer, RSP, j, EAX);
+                ELF_X86_64.autobuffer_buffer_push_mov_register4_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, EAX, global_location, j);
+
+                j = j + 4;
+            } else if (size - j) > 1 {
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register2(instructions_buffer, RSP, j, AX);
+                ELF_X86_64.autobuffer_buffer_push_mov_register2_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, AX, global_location, j);
+
+                j = j + 2;
+            } else {
+                X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register1(instructions_buffer, RSP, j, AL);
+                ELF_X86_64.autobuffer_buffer_push_mov_register1_bss_pointer_offset(instructions_buffer, bss_indexes_to_adjust_relative, AL, global_location, j);
+
+                j = j + 1;
+            };
+        };
+
+        X86_64.autobuffer_buffer_push_add_register8_whole_8(instructions_buffer, RSP, size);
     };
 
     define get_variable_linux_x86_64 = function(variable_types: *AutoBufferStack8, variable_name: *): *, whole_8 {
@@ -618,22 +572,22 @@ define Target_X86_64 = module {
         declare scope_index = scope_count - 1;
         declare variable_type = *.cast(0);
         while (variable_type == 0) && (scope_index < scope_count) {
-            variable_type = *.cast(hashmap_string_get(HashMap.pcast(autobuffer_stack8_get(variable_types, scope_index)), variable_name));
+            declare scope = HashMap.pcast(autobuffer_stack8_get(variable_types, scope_index));
+            variable_type = *.cast(hashmap_string_get(scope, variable_name));
             scope_index = scope_index - 1;
         };
 
         return variable_type, scope_index + 1;
     };
 
-    define output_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
-        .output_invoke_pointer(instructions_buffer);
-        return;
+    define output_invoke = function(instructions_buffer: *AutoBufferBuffer) {
+        X86_64.autobuffer_buffer_push_pop_register8(instructions_buffer, RAX);
+        X86_64.autobuffer_buffer_push_call_far_register8(instructions_buffer, RAX);
     };
 
     define output_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
         declare invoke_internal_data = Node.InvokeInternalData.pcast(Nodes.get_pointer_data(nodes, nodes_index));
         declare function_name = invoke_internal_data.name;
-        declare uses_previous = invoke_internal_data.uses_previous;
 
         if is_pointer(nodes, nodes_index + 1) {
             function_name = concatenate2_brk_allocate("*", function_name);
@@ -644,7 +598,7 @@ define Target_X86_64 = module {
             declare memory_function_size = whole_8.cast(hashmap_string_get(internal_function_instruction_sizes, function_name));
             autobuffer_buffer_push_pointer(instructions_buffer, memory_function, memory_function_size);
 
-            if uses_previous {
+            if invoke_internal_data.uses_previous {
                 declare _ = autobuffer_stack8_pop(define_stack);
             };
         }
@@ -1092,7 +1046,7 @@ define Target_X86_64 = module {
 
             // Setter for whole value
             declare internal_name = concatenate2_brk_allocate(structure_name, "<");
-            declare internal_instructions = autobuffer_buffer_new(8192);
+            declare internal_instructions = autobuffer_buffer_new(64);
 
             X86_64.autobuffer_buffer_push_add_register8_whole_8(&internal_instructions, RSP, size);
             X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&internal_instructions, RSP, 0, RAX);
@@ -1130,7 +1084,7 @@ define Target_X86_64 = module {
 
             // Setter for whole value with reversed inputs
             declare internal_name = concatenate2_brk_allocate(structure_name, "<2");
-            declare internal_instructions = autobuffer_buffer_new(8192);
+            declare internal_instructions = autobuffer_buffer_new(64);
 
             X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&internal_instructions, RSP, 0, RAX);
             X86_64.autobuffer_buffer_push_add_register8_whole_8(&internal_instructions, RSP, 8);
@@ -1167,7 +1121,7 @@ define Target_X86_64 = module {
 
             // Getter for whole value
             declare internal_name = concatenate2_brk_allocate(structure_name, ">");
-            declare internal_instructions = autobuffer_buffer_new(8192);
+            declare internal_instructions = autobuffer_buffer_new(64);
 
             X86_64.autobuffer_buffer_push_pop_register8(&internal_instructions, RAX);
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(&internal_instructions, RSP, size);
@@ -1201,7 +1155,7 @@ define Target_X86_64 = module {
             hashmap_string_put(internal_function_instruction_sizes, internal_name, internal_instructions.index);
 
             declare internal_name = structure_name;
-            declare internal_instructions = autobuffer_buffer_new(8192);
+            declare internal_instructions = autobuffer_buffer_new(64);
 
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(&internal_instructions, RSP, size);
 
@@ -1235,7 +1189,7 @@ define Target_X86_64 = module {
 
             // Zero initializer for the whole value
             declare internal_name = concatenate2_brk_allocate(structure_name, ">0");
-            declare internal_instructions = autobuffer_buffer_new(8192);
+            declare internal_instructions = autobuffer_buffer_new(64);
 
             X86_64.autobuffer_buffer_push_sub_register8_whole_8(&internal_instructions, RSP, size);
 
@@ -1269,7 +1223,7 @@ define Target_X86_64 = module {
 
             // Size getter for the whole value
             declare internal_name = concatenate2_brk_allocate(structure_name, "size");
-            declare internal_instructions = autobuffer_buffer_new(8192);
+            declare internal_instructions = autobuffer_buffer_new(16);
 
             X86_64.autobuffer_buffer_push_mov_whole_8_register8(&internal_instructions, RAX, size);
             X86_64.autobuffer_buffer_push_push_register8(&internal_instructions, RAX);
@@ -1291,7 +1245,7 @@ define Target_X86_64 = module {
 
                 // Get pointer for individual members
                 declare internal_name = concatenate4_brk_allocate("*", structure_name, ">", member_name);
-                declare internal_instructions = autobuffer_buffer_new(8192);
+                declare internal_instructions = autobuffer_buffer_new(64);
 
                 X86_64.autobuffer_buffer_push_pop_register8(&internal_instructions, RAX);
                 X86_64.autobuffer_buffer_push_add_register8_whole_8(&internal_instructions, RAX, location);
@@ -1302,7 +1256,7 @@ define Target_X86_64 = module {
 
                 // Setter for individual members
                 declare internal_name = concatenate3_brk_allocate(structure_name, "<", member_name);
-                declare internal_instructions = autobuffer_buffer_new(8192);
+                declare internal_instructions = autobuffer_buffer_new(64);
 
                 X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&internal_instructions, RSP, size, RAX);
 
@@ -1338,7 +1292,7 @@ define Target_X86_64 = module {
 
                 // Setter for individual members (reversed)
                 declare internal_name = concatenate3_brk_allocate(structure_name, "<2", member_name);
-                declare internal_instructions = autobuffer_buffer_new(8192);
+                declare internal_instructions = autobuffer_buffer_new(64);
 
                 X86_64.autobuffer_buffer_push_mov_register8_pointer_offset_register8(&internal_instructions, RSP, 0, RAX);
                 X86_64.autobuffer_buffer_push_add_register8_whole_8(&internal_instructions, RSP, 8);
@@ -1375,7 +1329,7 @@ define Target_X86_64 = module {
 
                 // Getter for indivudal members
                 declare internal_name = concatenate3_brk_allocate(structure_name, ">", member_name);
-                declare internal_instructions = autobuffer_buffer_new(8192);
+                declare internal_instructions = autobuffer_buffer_new(64);
 
                 X86_64.autobuffer_buffer_push_pop_register8(&internal_instructions, RAX);
                 X86_64.autobuffer_buffer_push_sub_register8_whole_8(&internal_instructions, RSP, size);
@@ -1412,7 +1366,6 @@ define Target_X86_64 = module {
             };
             i = i + 1;
         };
-
     };
 
     define get_size = function(type: *, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
@@ -1470,6 +1423,12 @@ define Target_X86_64 = module {
         exit(1);
 
         return 0;
+    };
+
+    define get_size_array = function(type: *, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+        declare empty_module_stack = autobuffer_stack8_new(8);
+        declare expanded_type = expand_module_name_array(type, 0, &module_id_map, &module_references_map, &empty_module_stack, create_previous_results_list());
+        return .get_size(expanded_type, nodes, program_data);
     };
 
     define get_size_multiple = function(array: *, count: whole_8, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
