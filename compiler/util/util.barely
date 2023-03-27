@@ -37,7 +37,7 @@ define string_to_whole_8 = function(string: *): whole_8 {
 };
 
 define string_to_number = function(string: *, size: whole_8, signed: boolean): whole_8 {
-    declare length = length(string);
+    declare length = string_length(string);
 
     declare whole_8 = 0;
 
@@ -127,7 +127,7 @@ define stringarray_get_index = function(keys: *, wanted: *, size: whole_8): whol
 };
 
 define print = function(string: *) {
-    print_stdout(string, length(string));
+    print_stdout(string, string_length(string));
 };
 
 define println = function(string: *) {
@@ -273,7 +273,7 @@ define hashmap_string_get2 = function(hashmap: *HashMap, string: *): any_8 {
 define string_hash = function(string: *): whole_8 {
     declare hash = 5381;
     declare i = 0;
-    declare length = length(string);
+    declare length = string_length(string);
     while i < length {
         declare character = whole_1_to_whole_8(whole_1.cast((any_1.pcast(string) + i).*));
         // TODO: using the new syntax here causes compiler error. why?
@@ -285,8 +285,8 @@ define string_hash = function(string: *): whole_8 {
 };
 
 define concatenate2_brk_allocate = function(string1: *, string2: *): * {
-    declare string1_length = length(string1);
-    declare string2_length = length(string2);
+    declare string1_length = string_length(string1);
+    declare string2_length = string_length(string2);
     declare new_string = brk_allocate(string1_length + string2_length + 1);
 
     copy(string1, new_string, string1_length);
@@ -296,9 +296,9 @@ define concatenate2_brk_allocate = function(string1: *, string2: *): * {
 };
 
 define concatenate3_brk_allocate = function(string1: *, string2: *, string3: *): * {
-    declare string1_length = length(string1);
-    declare string2_length = length(string2);
-    declare string3_length = length(string3);
+    declare string1_length = string_length(string1);
+    declare string2_length = string_length(string2);
+    declare string3_length = string_length(string3);
     declare new_string = brk_allocate(string1_length + string2_length + string3_length + 1);
 
     copy(string1, new_string, string1_length);
@@ -309,10 +309,10 @@ define concatenate3_brk_allocate = function(string1: *, string2: *, string3: *):
 };
 
 define concatenate4_brk_allocate = function(string1: *, string2: *, string3: *, string4: *): * {
-    declare string1_length = length(string1);
-    declare string2_length = length(string2);
-    declare string3_length = length(string3);
-    declare string4_length = length(string4);
+    declare string1_length = string_length(string1);
+    declare string2_length = string_length(string2);
+    declare string3_length = string_length(string3);
+    declare string4_length = string_length(string4);
     declare new_string = brk_allocate(string1_length + string2_length + string3_length + string4_length + 1);
 
     copy(string1, new_string, string1_length);
@@ -333,7 +333,7 @@ define substring_brk_allocate = function(string: *, start: whole_8, end: whole_8
 define nth_index = function(string: *, character: any_1, n: whole_8): whole_8 {
     declare i = 0;
     declare count = 0;
-    while i < length(string) {
+    while i < string_length(string) {
         if any_1.pcast(string + i).* == character {
             if count == n {
                 return i;
@@ -418,7 +418,7 @@ define create_size_seven_array8_brk_allocate = function(item1: any_8, item2: any
 };
 
 define copy_string_brk_allocate = function(string: *): * {
-    return copy_string_length_brk_allocate(string, length(string));
+    return copy_string_length_brk_allocate(string, string_length(string));
 };
 
 define copy_string_length_brk_allocate = function(string: *, string_length: whole_8): * {
@@ -449,7 +449,7 @@ define autobuffer_buffer_new = function(size: whole_8): AutoBufferBuffer {
 };
 
 define autobuffer_buffer_push_string = function(buffer: *AutoBufferBuffer, string: *) {
-    autobuffer_buffer_push_string_length(buffer, string, length(string));
+    autobuffer_buffer_push_string_length(buffer, string, string_length(string));
 };
 
 define autobuffer_buffer_push_string_length = function(buffer: *AutoBufferBuffer, string: *, length: whole_8) {
@@ -586,7 +586,7 @@ define to_type_array = function(type: *): * {
     declare buffer = autobuffer_buffer_new(24);
 
     declare i = 0;
-    while i < length(type) {
+    while i < string_length(type) {
         declare character_pointer = type + i;
         
         if string_length=(character_pointer, ".", 1) {
@@ -622,7 +622,7 @@ define string_to_function_data = function(type: *): Node.FunctionData {
     declare stack_buffer = autobuffer_stack8_new(24);
     declare buffer = autobuffer_buffer_new(24);
     declare i = 10;
-    declare length = length(type);
+    declare length = string_length(type);
     while i < length {
         declare character_pointer = type + i;
         

@@ -167,7 +167,7 @@ define parse_name_array = function(tokens: *Tokens.Tokens, index_pointer: *whole
 
 define is_only_asterisks = function(string: *): boolean {
     declare i = 0;
-    declare string_length = length(string);
+    declare string_length = string_length(string);
     while i < string_length {
         declare character = any_1.pcast(string + i).*;
         if !(character == ASCII.ASTERISK) {
@@ -529,7 +529,7 @@ define is_special_function = function(name: *): boolean {
     else if string_length=(name, ">", 1) true
     else if string_length=(name, "cast", 4) true
     else if string_length=(name, "pcast", 5) true
-    else if string_length=(name, "size", 4) && (length(name) == 4) true
+    else if string_length=(name, "size", 4) && (string_length(name) == 4) true
     else if string_length=(name, "@syscall", 8) true
     else false;
 };
