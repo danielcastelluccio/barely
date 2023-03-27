@@ -364,21 +364,21 @@ define Target_X86_64 = module {
         .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_stack, name, type);
     };
 
-    define output_retrieve_define = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, variable_name_in: *, variable_type_in: *) {
-        declare variable_name = variable_name_in;
+    define output_retrieve_define = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, name_in: *, variable_type_in: *) {
+        declare name = name_in;
         declare variable_type = variable_type_in;
         declare define_types = &program_data.define_types;
         declare define_values = &program_data.define_values;
         declare define_or_declares = &program_data.define_or_declares;
-        declare define_or_declare = *.cast(hashmap_string_get(define_or_declares, variable_name));
-        declare define_value = get_value_of_define(define_types, define_values, variable_name);
+        declare define_or_declare = *.cast(hashmap_string_get(define_or_declares, name));
+        declare define_value = get_value_of_define(define_types, define_values, name);
 
         while string=(variable_type, "define") {
-            declare reference = *.cast(hashmap_string_get(&module_references_map, variable_name));
-            variable_name = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            declare reference = *.cast(hashmap_string_get(&module_references_map, name));
+            name = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
 
-            variable_type = *.cast(get_define_retrieve_type(define_types, define_values, variable_name));
-            define_value = *.cast(get_value_of_define(define_types, define_values, variable_name));
+            variable_type = *.cast(get_define_retrieve_type(define_types, define_values, name));
+            define_value = *.cast(get_value_of_define(define_types, define_values, name));
         };
 
         if string_length=(variable_type, "*function", 9) {
@@ -388,7 +388,7 @@ define Target_X86_64 = module {
         } else if string_length=(variable_type, "structure", 9) {
         } else if string=(define_or_declare, "declare") {
             declare define_value = whole_8.cast(define_value);
-            declare variable_type = *.cast(hashmap_string_get(define_types, variable_name));
+            declare variable_type = *.cast(hashmap_string_get(define_types, name));
             declare global_index = BssIndex.cast(array8_get(global_locations, define_value));
 
             if is_pointer(nodes, nodes_index + 1) {
@@ -490,21 +490,21 @@ define Target_X86_64 = module {
 
     define output_assign = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare assign_data = Node.AssignData.pcast(pointer_data);
-        declare variable_name = assign_data.name;
+        declare name = assign_data.name;
 
-        declare variable_name = if define_stack.index > 0 {
-            expand_module_name_stack(variable_name, &module_id_map, &module_references_map, module_stack, *.cast(autobuffer_stack8_pop(define_stack) + 7), create_previous_results_list())
+        declare name = if define_stack.index > 0 {
+            expand_module_name_stack(name, &module_id_map, &module_references_map, module_stack, *.cast(autobuffer_stack8_pop(define_stack) + 7), create_previous_results_list())
         } else {
-            variable_name
+            name
         };
 
-        declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, variable_name);
+        declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, name);
         if !(variable_type == 0) {
             variable_type = expand_module_name_array(variable_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
         
             declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
             declare size = .get_size(variable_type, nodes, program_data);
-            declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, variable_name, scope_variable_index);
+            declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, name, scope_variable_index);
 
             declare j = 0;
             while j < size {
@@ -533,7 +533,7 @@ define Target_X86_64 = module {
 
         declare define_values = &program_data.define_values;
 
-        declare global_index = whole_8.cast(hashmap_string_get(define_values, variable_name));
+        declare global_index = whole_8.cast(hashmap_string_get(define_values, name));
         declare variable_type = *.cast(autobuffer_array8_get(global_types, global_index));
         declare global_location = BssIndex.cast(array8_get(global_locations, global_index));
 

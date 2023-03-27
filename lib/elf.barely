@@ -12,37 +12,29 @@ define InstructionIndex = structure {
 
 define ELF_X86_64 = module {
     define autobuffer_buffer_push_data_string = function(data: *AutoBufferBuffer, string: *): DataIndex {
-        declare index = AutoBufferBuffer.>index(data);
+        declare index = data.index;
         autobuffer_buffer_push_string(data, string);
-        AutoBufferBuffer.<index(data, +(AutoBufferBuffer.>index(data), 1));
+        data.index = data.index + 1;
         return DataIndex.cast(index);
     };
 
     define autobuffer_buffer_push_push_data = function(buffer: *AutoBufferBuffer, indexes_to_adjust: *AutoBufferStack8, data_index: DataIndex) {
-        autobuffer_stack8_push(indexes_to_adjust, +(AutoBufferBuffer.>index(buffer), 2));
+        autobuffer_stack8_push(indexes_to_adjust, buffer.index + 2);
         X86_64.autobuffer_buffer_push_mov_whole_8_register8(buffer, RAX, whole_8.cast(data_index));
         X86_64.autobuffer_buffer_push_push_register8(buffer, RAX);
-
-        //autobuffer_buffer_push_whole_1(buffer, 104:whole_1);
-        //autobuffer_stack8_push(indexes_to_adjust, AutoBufferBuffer.>index(buffer));
-        //autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
     };
 
     define autobuffer_buffer_push_push_bss = function(buffer: *AutoBufferBuffer, indexes_to_adjust: *AutoBufferStack8, bss_index: BssIndex) {
-        autobuffer_stack8_push(indexes_to_adjust, +(AutoBufferBuffer.>index(buffer), 2));
+        autobuffer_stack8_push(indexes_to_adjust, buffer.index + 2);
         X86_64.autobuffer_buffer_push_mov_whole_8_register8(buffer, RAX, whole_8.cast(bss_index));
         X86_64.autobuffer_buffer_push_push_register8(buffer, RAX);
-
-        //autobuffer_buffer_push_whole_1(buffer, 104:whole_1);
-        //autobuffer_stack8_push(indexes_to_adjust, AutoBufferBuffer.>index(buffer));
-        //autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(bss_index)));
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register8 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register8) {
         declare instruction = 72:whole_1;
 
-        if >(register, 7:whole_1) {
-            instruction = +(instruction, 4:whole_1);
+        if register > 7:whole_1 {
+            instruction = instruction + 4:whole_1;
         };
 
         autobuffer_buffer_push_whole_1(buffer, instruction);
@@ -50,102 +42,102 @@ define ELF_X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
         autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register4 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register4) {
         declare instruction = 64:whole_1;
 
-        if >(register, 7:whole_1) {
-            instruction = +(instruction, 4:whole_1);
+        if register > 7:whole_1 {
+            instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
         autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register2 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register2) {
         declare instruction = 64:whole_1;
 
-        if >(register, 7:whole_1) {
-            instruction = +(instruction, 4:whole_1);
+        if register > 7:whole_1 {
+            instruction = instruction + 4:whole_1;
         };
 
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
         autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
     };
 
     define autobuffer_buffer_push_mov_bss_offset_pointer_register1 = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, data_index: BssIndex, offset: whole_8, register: Register1) {
         declare instruction = 64:whole_1;
 
-        if >(register, 7:whole_1) {
-            instruction = +(instruction, 4:whole_1);
+        if register > 7:whole_1 {
+            instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 138:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
         autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index)));
     };
 
     define autobuffer_buffer_push_mov_register8_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register8, data_index: BssIndex, offset: whole_8) {
         declare instruction = 72:whole_1;
 
-        if >(register, 7:whole_1) {
-            instruction = +(instruction, 4:whole_1);
+        if register > 7:whole_1 {
+            instruction = instruction + 4:whole_1;
         };
 
         autobuffer_buffer_push_whole_1(buffer, instruction);
@@ -153,16 +145,16 @@ define ELF_X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
-        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index + offset)));
     };
 
     define autobuffer_buffer_push_mov_register4_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register4, data_index: BssIndex, offset: whole_8) {
@@ -170,23 +162,23 @@ define ELF_X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
-        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index + offset)));
     };
 
     define autobuffer_buffer_push_mov_register2_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register2, data_index: BssIndex, offset: whole_8) {
         declare instruction = 102:whole_1;
 
-        if >(register, 7:whole_1) {
-            instruction = +(instruction, 4:whole_1);
+        if register > 7:whole_1 {
+            instruction = instruction + 4:whole_1;
         };
 
         autobuffer_buffer_push_whole_1(buffer, instruction);
@@ -194,16 +186,16 @@ define ELF_X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
-        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index + offset)));
     };
 
     define autobuffer_buffer_push_mov_register1_bss_pointer_offset = function(buffer: *AutoBufferBuffer, indexes_to_adjust_relative: *AutoBufferStack8, register: Register1, data_index: BssIndex, offset: whole_8) {
@@ -211,54 +203,53 @@ define ELF_X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register, 7:whole_1) {
-            value = +(value, *(-(register, 8:whole_1), 8:whole_1));
+        if register > 7:whole_1 {
+            value = value + ((register - 8:whole_1) * 8:whole_1);
         } else {
-            value = +(value, *(register, 8:whole_1));
+            value = value + (register * 8:whole_1);
         };
 
-        autobuffer_buffer_push_whole_1(buffer, +(value, 5:whole_1));
+        autobuffer_buffer_push_whole_1(buffer, value + 5:whole_1);
 
-        autobuffer_stack8_push(indexes_to_adjust_relative, AutoBufferBuffer.>index(buffer));
-        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(+(data_index, offset))));
+        autobuffer_stack8_push(indexes_to_adjust_relative, buffer.index);
+        autobuffer_buffer_push_whole_4(buffer, whole_8_to_whole_4(whole_8.cast(data_index + offset)));
     };
 };
 
 define autobuffer_array8_set = function(buffer: *AutoBuffer, index: whole_8, value: any_8) {
-    autobuffer_register(buffer, +(*(index, 8), 8), 8);
-    autobuffer_set_whole_8(buffer, whole_8.cast(value), *(index, 8), false);
+    autobuffer_register(buffer, (index * 8) + 8, 8);
+    autobuffer_set_whole_8(buffer, whole_8.cast(value), index * 8, false);
 };
 
 define autobuffer_array8_get = function(buffer: *AutoBuffer, index: whole_8): any_8 {
-    return autobuffer_get_whole_8(buffer, *(index, 8));
+    return autobuffer_get_whole_8(buffer, index * 8);
 };
 
 define autobuffer_array8_length = function(buffer: *AutoBuffer): whole_8 {
     declare k = 0;
-    while !(=(autobuffer_array8_get(buffer, k), 0)) {
-        k = +(k, 1);
+    while !(autobuffer_array8_get(buffer, k) == 0) {
+        k = k + 1;
     };
     return k;
 };
 
 define autobuffer_buffer_push_pointer = function(buffer: *AutoBufferBuffer, pointer: *, length: whole_8) {
-    declare buffer_index = AutoBufferBuffer.>index(buffer);
+    declare buffer_index = buffer.index;
 
-    autobuffer_set(&(AutoBufferBuffer.>autobuffer(buffer)), pointer, buffer_index, length);
+    autobuffer_set(&buffer.autobuffer, pointer, buffer_index, length);
 
-    AutoBufferBuffer.<index(buffer, +(length, buffer_index));
+    buffer.index = length + buffer_index;
 };
 
 define new_elf64_file_header = function(): ELF64FileHeader {
     declare header = ELF64FileHeader.>0();
 
-    declare _ = whole_8_to_whole_4(2);
-    ELF64FileHeader.<magic(&(header), whole_8_to_whole_4(1179403647));
-    ELF64FileHeader.<header_size(&(header), whole_8_to_whole_2(64));
-    ELF64FileHeader.<program_header_size(&(header), whole_8_to_whole_2(56));
-    ELF64FileHeader.<section_header_size(&(header), whole_8_to_whole_2(64));
-    ELF64FileHeader.<version(&(header), 1:whole_1);
-    ELF64FileHeader.<version2(&(header), whole_8_to_whole_4(1));
+    header.magic = 1179403647:whole_4;
+    header.header_size = 64:whole_2;
+    header.program_header_size = 56:whole_2;
+    header.section_header_size = 64:whole_2;
+    header.version = 1:whole_1;
+    header.version2 = 1:whole_4;
 
     return header;
 };
@@ -298,19 +289,19 @@ define ELF64ProgramHeader = structure {
 };
 
 define get_whole_1 = function(pointer: *, offset: whole_8): whole_1 {
-    return whole_1.>(whole_1.pcast(+(pointer, offset)));
+    return whole_1.pcast(pointer + offset).*;
 };
 
 define get_whole_2 = function(pointer: *, offset: whole_8): whole_2 {
-    return whole_2.>(whole_2.pcast(+(pointer, offset)));
+    return whole_2.pcast(pointer + offset).*;
 };
 
 define get_whole_4 = function(pointer: *, offset: whole_8): whole_4 {
-    return whole_4.>(whole_4.pcast(+(pointer, offset)));
+    return whole_4.pcast(pointer + offset).*;
 };
 
 define get_whole_8 = function(pointer: *, offset: whole_8): any_8 {
-    return any_8.>(any_8.pcast(+(pointer, offset)));
+    return whole_8.pcast(pointer + offset).*;
 };
 
 declare CURRENT_MMAP: *;
@@ -318,20 +309,20 @@ declare MMAP_LEFT: whole_8;
 
 define brk_allocate = function(size: whole_8): * {
     declare result: *;
-    if >(size, MMAP_LEFT) {
+    if size > MMAP_LEFT {
         declare increment = 67108864;
-        if >(size, increment) {
+        if size > increment {
             increment = size;
         };
         CURRENT_MMAP = map_memory(increment);
         result = CURRENT_MMAP;
-	    CURRENT_MMAP = +(result, size);
+	    CURRENT_MMAP = result + size;
 	    MMAP_LEFT = increment;
     } else {
 	    result = CURRENT_MMAP;
-        CURRENT_MMAP = +(result, size);
+        CURRENT_MMAP = result + size;
     };
-    MMAP_LEFT = -(MMAP_LEFT, size);
+    MMAP_LEFT = MMAP_LEFT - size;
 
     return result;
 };
