@@ -6,65 +6,59 @@ define AutoBuffer = structure {
 
 define autobuffer_new = function(size: whole_8): AutoBuffer {
     declare auto_buffer: AutoBuffer;
-
-    AutoBuffer.<size(&(auto_buffer), size);
-    AutoBuffer.<increment(&(auto_buffer), size);
+    auto_buffer.size = size;
+    auto_buffer.increment = size;
 
     declare allocated = brk_allocate(size);
-    AutoBuffer.<buffer(&(auto_buffer), allocated);
+    auto_buffer.buffer = allocated;
 
     return auto_buffer;
 };
 
 define autobuffer_reset = function(buffer: *AutoBuffer) {
-    declare actual_buffer = AutoBuffer.>buffer(buffer);
-    declare size = AutoBuffer.>size(buffer);
+    declare actual_buffer = buffer.buffer;
+    declare size = buffer.size;
     declare i = 0;
-    while <(i, size) {
-        declare done_anything = false;
-        
-        if <(+(i, 8), size) {
-            any_8.<(any_8.pcast(+(actual_buffer, i)), 0:whole_8);
-            i = +(i, 1);
-            done_anything = true;
-        };
-
-        if !(done_anything) {
-            any_1.<(any_1.pcast(+(actual_buffer, i)), 0:whole_1);
-            i = +(i, 1);
+    while i < size {
+        if (i + 8) < size {
+            any_8.pcast(actual_buffer + i).* = 0:whole_8;
+            i = i + 8;
+        } else  {
+            any_1.pcast(actual_buffer + i).* = 0:whole_1;
+            i = i + 1;
         };
     };
 };
 
 define autobuffer_set_boolean = function(buffer: *AutoBuffer, value: boolean, to: whole_8) {
-    autobuffer_set(buffer, &(value), to, 1);
+    autobuffer_set(buffer, &value, to, 1);
 };
 
 define autobuffer_set_any_1 = function(buffer: *AutoBuffer, value: any_1, to: whole_8) {
-    autobuffer_set(buffer, &(value), to, 1);
+    autobuffer_set(buffer, &value, to, 1);
 };
 
 define autobuffer_set_any_4 = function(buffer: *AutoBuffer, value: any_4, to: whole_8) {
-    autobuffer_set(buffer, &(value), to, 4);
+    autobuffer_set(buffer, &value, to, 4);
 };
 
 define autobuffer_set_any_8 = function(buffer: *AutoBuffer, value: any_8, to: whole_8) {
-    autobuffer_set(buffer, &(value), to, 8);
+    autobuffer_set(buffer, &value, to, 8);
 };
 
 define autobuffer_set_pointer = function(buffer: *AutoBuffer, value: *, to: whole_8) {
-    autobuffer_set(buffer, &(value), to, 8);
+    autobuffer_set(buffer, &value, to, 8);
 };
 
 define autobuffer_set_whole_8 = function(buffer: *AutoBuffer, value: whole_8, to: whole_8, checked: boolean) {
-    autobuffer_set_checked(buffer, &(value), to, 8, checked);
+    autobuffer_set_checked(buffer, &value, to, 8, checked);
 };
 
 define autobuffer_register = function(buffer: *AutoBuffer, location: whole_8, size: whole_8) {
     while (location + size) > buffer.size {
         declare previous_buffer = buffer.buffer;
         declare previous_size = buffer.size;
-        declare new_buffer_size = +(previous_size, buffer.increment);
+        declare new_buffer_size = previous_size + buffer.increment;
         declare allocated = brk_allocate(new_buffer_size);
         buffer.buffer = allocated;
         buffer.size = new_buffer_size;
@@ -77,7 +71,7 @@ define autobuffer_set_checked = function(buffer: *AutoBuffer, from: *, to: whole
         autobuffer_register(buffer, to, size);
     };
 
-    declare to_pointer = *.cast(+(AutoBuffer.>buffer(buffer), to));
+    declare to_pointer = *.cast(buffer.buffer + to);
     copy(from, to_pointer, size);
 };
 
@@ -86,7 +80,7 @@ define autobuffer_set = function(buffer: *AutoBuffer, from: *, to: whole_8, size
 };
 
 define autobuffer_get = function(buffer: *AutoBuffer, location: whole_8): * {
-    return *.cast(+(AutoBuffer.>buffer(buffer), location));
+    return *.cast(buffer.buffer + location);
 };
 
 define autobuffer_get_size = function(buffer: *AutoBuffer, location: whole_8, size: whole_8): * {
@@ -95,25 +89,25 @@ define autobuffer_get_size = function(buffer: *AutoBuffer, location: whole_8, si
 };
 
 define autobuffer_get_whole_8 = function(buffer: *AutoBuffer, location: whole_8): whole_8 {
-    return whole_8.>(whole_8.pcast(autobuffer_get_size(buffer, location, 8)));
+    return whole_8.pcast(autobuffer_get_size(buffer, location, 8)).*;
 };
 
 define autobuffer_get_pointer = function(buffer: *AutoBuffer, location: whole_8): * {
-    return *.>(*.pcast(autobuffer_get(buffer, location)));
+    return *.pcast(autobuffer_get(buffer, location)).*;
 };
 
 define autobuffer_get_any_1 = function(buffer: *AutoBuffer, location: whole_8): any_1 {
-    return any_1.>(any_1.pcast(autobuffer_get(buffer, location)));
+    return any_1.pcast(autobuffer_get(buffer, location)).*;
 };
 
 define autobuffer_get_any_8 = function(buffer: *AutoBuffer, location: whole_8): any_8 {
-    return any_8.>(any_8.pcast(autobuffer_get_size(buffer, location, 8)));
+    return any_8.pcast(autobuffer_get_size(buffer, location, 8)).*;
 };
 
 define autobuffer_get_whole_4 = function(buffer: *AutoBuffer, location: whole_8): whole_4 {
-    return whole_4.>(whole_4.pcast(autobuffer_get(buffer, location)));
+    return whole_4.pcast(autobuffer_get(buffer, location)).*;
 };
 
 define increment_whole_8_pointer = function(pointer: *whole_8, amount: whole_8) {
-    whole_8.<(pointer, +(whole_8.>(pointer), amount));
+    pointer.* = pointer.* + amount;
 };

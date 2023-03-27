@@ -238,7 +238,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, 128:whole_1 + value);
 
-        if =(register_from, RSP) {
+        if register_from == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -318,7 +318,7 @@ define X86_64 = module {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 57:whole_1);
@@ -351,7 +351,7 @@ define X86_64 = module {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
@@ -385,7 +385,7 @@ define X86_64 = module {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 56:whole_1);
@@ -597,7 +597,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_from, RSP) {
+        if register_from == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -615,7 +615,7 @@ define X86_64 = module {
             instruction = instruction + 1:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
@@ -628,7 +628,7 @@ define X86_64 = module {
             value = value + (register_to * 8:whole_1);
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + (register_from - 8:whole_1);
         } else {
             value = value + register_from;
@@ -636,7 +636,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_from, RSP) {
+        if register_from == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -646,29 +646,29 @@ define X86_64 = module {
     define autobuffer_buffer_push_mov_register8_pointer_offset_register2 = function(buffer: *AutoBufferBuffer, register_from: Register8, offset: whole_8, register_to: Register2) {
         declare instruction = 64:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 139:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             value = value + ((register_to - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register_to * 8:whole_1);
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + (register_from - 8:whole_1);
         } else {
             value = value + register_from;
@@ -676,7 +676,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_from, RSP) {
+        if register_from == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -687,30 +687,30 @@ define X86_64 = module {
         declare instruction = 64:whole_1;
         declare instruction2 = 138:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             instruction = instruction + 4:whole_1;
             instruction2 = instruction2 + 1:whole_1;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             instruction = instruction + 1:whole_1;
             instruction2 = instruction2 + 1:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, instruction2);
 
         declare value = 0:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             value = value + ((register_to - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register_to * 8:whole_1);
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + (register_from - 8:whole_1);
         } else {
             value = value + register_from;
@@ -718,7 +718,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, 128:whole_1 + value);
 
-        if =(register_from, RSP) {
+        if register_from == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -728,28 +728,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_mov_register1_register8_pointer_offset = function(buffer: *AutoBufferBuffer, register_from: Register1, register_to: Register8, offset: whole_8) {
         declare instruction = 64:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 136:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + ((register_from - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register_from * 8:whole_1);
         };
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             value = value + (register_to - 8:whole_1);
         } else {
             value = value + register_to;
@@ -757,7 +757,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_to, RSP) {
+        if register_to == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -767,29 +767,29 @@ define X86_64 = module {
     define autobuffer_buffer_push_mov_register2_register8_pointer_offset = function(buffer: *AutoBufferBuffer, register_from: Register2,  register_to: Register8, offset: whole_8) {
         declare instruction = 64:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 137:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             value = value + (register_to - 8:whole_1);
         } else {
             value = value + register_to;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + ((register_from - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register_from * 8:whole_1);
@@ -797,7 +797,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_to, RSP) {
+        if register_to == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -807,28 +807,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_mov_register4_register8_pointer_offset = function(buffer: *AutoBufferBuffer, register_from: Register4,  register_to: Register8, offset: whole_8) {
         declare instruction = 64:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 137:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             value = value + (register_to - 8:whole_1);
         } else {
             value = value + register_to;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + ((register_from - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register_from * 8:whole_1);
@@ -836,7 +836,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_to, RSP) {
+        if register_to == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -846,11 +846,11 @@ define X86_64 = module {
     define autobuffer_buffer_push_mov_register8_register8_pointer_offset = function(buffer: *AutoBufferBuffer, register_from: Register8,  register_to: Register8, offset: whole_8) {
         declare instruction = 72:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
@@ -859,13 +859,13 @@ define X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register_to, 7:whole_1) {
+        if register_to > 7:whole_1 {
             value = value + (register_to - 8:whole_1);
         } else {
             value = value + register_to;
         };
 
-        if >(register_from, 7:whole_1) {
+        if register_from > 7:whole_1 {
             value = value + ((register_from - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register_from * 8:whole_1);
@@ -873,7 +873,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_1(buffer, value + 128:whole_1);
 
-        if =(register_to, RSP) {
+        if register_to == RSP {
             autobuffer_buffer_push_whole_1(buffer, 36:whole_1);
         };
 
@@ -889,12 +889,12 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_mul_register8 = function(buffer: *AutoBufferBuffer, register: Register8) {
         declare instruction = 72:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 73:whole_1;
         };
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 216:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
@@ -903,16 +903,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_mul_register4 = function(buffer: *AutoBufferBuffer, register: Register4) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 216:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
@@ -921,17 +921,17 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_mul_register2 = function(buffer: *AutoBufferBuffer, register: Register2) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 216:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
@@ -940,16 +940,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_mul_register1 = function(buffer: *AutoBufferBuffer, register: Register1) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 246:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 216:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
@@ -958,12 +958,12 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_imul_register8 = function(buffer: *AutoBufferBuffer, register: Register8) {
         declare instruction = 72:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 73:whole_1;
         };
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
@@ -972,16 +972,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_imul_register4 = function(buffer: *AutoBufferBuffer, register: Register4) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
@@ -990,17 +990,17 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_imul_register2 = function(buffer: *AutoBufferBuffer, register: Register2) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
@@ -1009,16 +1009,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_imul_register1 = function(buffer: *AutoBufferBuffer, register: Register1) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 246:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 224:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
@@ -1027,12 +1027,12 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_div_register8 = function(buffer: *AutoBufferBuffer, register: Register8) {
         declare instruction = 72:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 73:whole_1;
         };
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
@@ -1041,16 +1041,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_div_register4 = function(buffer: *AutoBufferBuffer, register: Register4) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
@@ -1059,17 +1059,17 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_div_register2 = function(buffer: *AutoBufferBuffer, register: Register2) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
@@ -1078,16 +1078,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_div_register1 = function(buffer: *AutoBufferBuffer, register: Register1) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 246:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 232:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
@@ -1096,12 +1096,12 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_idiv_register8 = function(buffer: *AutoBufferBuffer, register: Register8) {
         declare instruction = 72:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 73:whole_1;
         };
         autobuffer_buffer_push_whole_1(buffer, instruction);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 248:whole_1 + register);
@@ -1110,16 +1110,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_idiv_register4 = function(buffer: *AutoBufferBuffer, register: Register4) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 248:whole_1 + register);
@@ -1128,17 +1128,17 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_idiv_register2 = function(buffer: *AutoBufferBuffer, register: Register2) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
         autobuffer_buffer_push_whole_1(buffer, 247:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 248:whole_1 + register);
@@ -1147,16 +1147,16 @@ define X86_64 = module {
 
     define autobuffer_buffer_push_idiv_register1 = function(buffer: *AutoBufferBuffer, register: Register1) {
         declare instruction = 64:whole_1;
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             instruction = 65:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 246:whole_1);
 
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 240:whole_1 + register);
         } else {
             autobuffer_buffer_push_whole_1(buffer, 248:whole_1 + register);
@@ -1185,11 +1185,11 @@ define X86_64 = module {
     define autobuffer_buffer_push_add_register8_register8 = function(buffer: *AutoBufferBuffer, register1: Register8, register2: Register8) {
         declare instruction = 72:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
@@ -1198,13 +1198,13 @@ define X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1216,28 +1216,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_add_register4_register4 = function(buffer: *AutoBufferBuffer, register1: Register4, register2: Register4) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 1:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1249,15 +1249,15 @@ define X86_64 = module {
     define autobuffer_buffer_push_add_register2_register2 = function(buffer: *AutoBufferBuffer, register1: Register2, register2: Register2) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
@@ -1265,13 +1265,13 @@ define X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1283,28 +1283,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_add_register1_register1 = function(buffer: *AutoBufferBuffer, register1: Register1, register2: Register1) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 0:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1316,28 +1316,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_or_register1_register1 = function(buffer: *AutoBufferBuffer, register1: Register1, register2: Register1) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 8:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1349,28 +1349,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_and_register1_register1 = function(buffer: *AutoBufferBuffer, register1: Register1, register2: Register1) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 32:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1382,11 +1382,11 @@ define X86_64 = module {
     define autobuffer_buffer_push_sub_register8_register8 = function(buffer: *AutoBufferBuffer, register1: Register8, register2: Register8) {
         declare instruction = 72:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
@@ -1395,13 +1395,13 @@ define X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1413,28 +1413,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_sub_register4_register4 = function(buffer: *AutoBufferBuffer, register1: Register4, register2: Register4) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 41:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1446,15 +1446,15 @@ define X86_64 = module {
     define autobuffer_buffer_push_sub_register2_register2 = function(buffer: *AutoBufferBuffer, register1: Register2, register2: Register2) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 102:whole_1);
@@ -1462,13 +1462,13 @@ define X86_64 = module {
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1480,28 +1480,28 @@ define X86_64 = module {
     define autobuffer_buffer_push_sub_register1_register1 = function(buffer: *AutoBufferBuffer, register1: Register1, register2: Register1) {
         declare instruction = 64:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             instruction = instruction + 1:whole_1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             instruction = instruction + 4:whole_1;
         };
 
-        if !(=(instruction, 64:whole_1)) {
+        if !(instruction == 64:whole_1) {
             autobuffer_buffer_push_whole_1(buffer, instruction);
         };
         autobuffer_buffer_push_whole_1(buffer, 40:whole_1);
 
         declare value = 0:whole_1;
 
-        if >(register1, 7:whole_1) {
+        if register1 > 7:whole_1 {
             value = value + (register1 - 8:whole_1);
         } else {
             value = value + register1;
         };
 
-        if >(register2, 7:whole_1) {
+        if register2 > 7:whole_1 {
             value = value + ((register2 - 8:whole_1) * 8:whole_1);
         } else {
             value = value + (register2 * 8:whole_1);
@@ -1518,7 +1518,7 @@ define X86_64 = module {
     };
 
     define autobuffer_buffer_push_pop_register8 = function(buffer: *AutoBufferBuffer, register: Register8) {
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 65:whole_1);
             autobuffer_buffer_push_whole_1(buffer, 80:whole_1 + register);
         } else {
@@ -1527,7 +1527,7 @@ define X86_64 = module {
     };
 
     define autobuffer_buffer_push_push_register8 = function(buffer: *AutoBufferBuffer, register: Register8) {
-        if >(register, 7:whole_1) {
+        if register > 7:whole_1 {
             autobuffer_buffer_push_whole_1(buffer, 65:whole_1);
             autobuffer_buffer_push_whole_1(buffer, 72:whole_1 + register);
         } else {

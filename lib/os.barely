@@ -3,18 +3,18 @@ define get_file_size = function(file: *): whole_8 {
         declare descriptor = Linux.sys_open(file, Linux.O_RDONLY, 0);
 
         declare stat: Linux.Stat;
-        Linux.sys_fstat(descriptor, &(stat));
+        Linux.sys_fstat(descriptor, &stat);
 
-        Linux.Stat.>size(&(stat))
+        stat.size
     };)
 
     #compile_if(target, macos, return {
         declare descriptor = MacOS.sys_open(file, MacOS.O_RDONLY, 0);
 
         declare stat: MacOS.Stat;
-        MacOS.sys_fstat(descriptor, &(stat));
+        MacOS.sys_fstat(descriptor, &stat);
 
-        MacOS.Stat.>size(&(stat))
+        stat.size
     };)
 };
 
@@ -40,18 +40,18 @@ define exit = function(code: whole_8) {
 };
 
 define map_memory = function(size: whole_8): * {
-    #compile_if(target, linux, return Linux.sys_mmap(*.cast(0), size, 3, +(Linux.MAP_ANONYMOUS, Linux.MAP_PRIVATE), whole_8.cast(-1:integer_8), 0);)
-    #compile_if(target, macos, return MacOS.sys_mmap(*.cast(0), size, 3, +(MacOS.MAP_ANONYMOUS, MacOS.MAP_PRIVATE), whole_8.cast(-1:integer_8), 0);)
+    #compile_if(target, linux, return Linux.sys_mmap(*.cast(0), size, 3, Linux.MAP_ANONYMOUS + Linux.MAP_PRIVATE, whole_8.cast(-1:integer_8), 0);)
+    #compile_if(target, macos, return MacOS.sys_mmap(*.cast(0), size, 3, MacOS.MAP_ANONYMOUS + MacOS.MAP_PRIVATE, whole_8.cast(-1:integer_8), 0);)
 };
 
 define create_and_write_file = function(file: *, buffer: *, size: whole_8) {
     #compile_if(target, linux, {
-        declare output_file = Linux.sys_open(file, +(+(Linux.O_WRONLY, Linux.O_CREAT), Linux.O_TRUNC), 452);
+        declare output_file = Linux.sys_open(file, Linux.O_WRONLY + Linux.O_CREAT + Linux.O_TRUNC, 452);
         Linux.sys_write(output_file, buffer, size);
         Linux.sys_close(output_file);
     };)
     #compile_if(target, macos, {
-        declare output_file = MacOS.sys_open(file, +(+(MacOS.O_WRONLY, MacOS.O_CREAT), MacOS.O_TRUNC), 452);
+        declare output_file = MacOS.sys_open(file, MacOS.O_WRONLY + MacOS.O_CREAT + MacOS.O_TRUNC, 452);
         MacOS.sys_write(output_file, buffer, size);
         MacOS.sys_close(output_file);
     };)
