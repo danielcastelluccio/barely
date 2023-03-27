@@ -1395,10 +1395,11 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
                 retrieve_data.coercion = create_size_one_array8_brk_allocate(coersion_string);
             };
         } else if id == Node.DECLARE {
+            declare declare_data = Node.DeclareData.pcast(pointer_data);
+            declare declare_name = declare_data.name;
+            declare declare_type = declare_data.type;
+
             if !in_function {
-                declare declare_data = Node.DeclareData.pcast(pointer_data);
-                declare declare_name = declare_data.name;
-                declare declare_type = declare_data.type;
                 declare_type = expand_module_name_array(declare_type, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list());
                 declare_name = get_define_name_with_module(&module_stack, declare_name);
                 declare_data.name = declare_name;
@@ -1409,6 +1410,11 @@ define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData)
                 autobuffer_array8_set(global_types, declared_global_id, declare_type);
 
                 declared_global_id = declared_global_id + 1;
+            } else {
+                if array8_length(declare_type) > 0 {
+                    declare type_string = expand_type_array(declare_type, &module_stack);
+                    declare_data.type = create_size_one_array8_brk_allocate(type_string);
+                };
             };
         };
 

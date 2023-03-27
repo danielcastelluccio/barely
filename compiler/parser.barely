@@ -782,7 +782,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Tokens, ind
             seen_item_name = false;
         };
 
-        if id == Token.NAME {
+        if (id == Token.NAME) || (id == Token.PERIOD) {
             if seen_item_name {
                 declare name = parse_name_array(tokens, &index);
                 autobuffer_array8_set(&types, name_index, name);
