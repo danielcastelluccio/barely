@@ -603,16 +603,6 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
     declare uses_previous = retrieve_data.uses_previous;
     declare coercion = retrieve_data.coercion;
 
-    if string_length=(name, "any_", 4) {
-        autobuffer_stack8_push(stack, concatenate2_brk_allocate("structure:", name));
-        return;
-    };
-
-    if string=(name, "@current_module") {
-        autobuffer_stack8_push(stack, concatenate2_brk_allocate("module:", name));
-        return;
-    };
-
     declare type = *.>0();
 
     if uses_previous {
@@ -716,7 +706,30 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
         type = *.cast(array8_get(coercion, 0));
     };
 
+    if string_length=(name, "any_", 4) {
+        type = concatenate2_brk_allocate("structure:", name);
+    };
+
+    if string=(name, "@current_module") {
+        type = concatenate2_brk_allocate("module:", name);
+    };
+
     if !(type == NULL) {
+        if string_length=(type, "structure:", 10) {
+            while true {
+                if stack.index > 0 {
+                    if string=(*.cast(autobuffer_stack8_peek(stack)), "structure:*") {
+                        declare popped = *.cast(autobuffer_stack8_pop(stack));
+                        type = concatenate2_brk_allocate("*", type);
+                    } else {
+                        break;
+                    };
+                } else {
+                    break;
+                };
+            };
+        };
+
         autobuffer_stack8_push(stack, type);
     } else {
         print_node_error_beginning(nodes, nodes_index);
@@ -999,7 +1012,18 @@ define process_cast = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module
         exit(1);
     };
 
-    declare to_push = *.cast(autobuffer_stack8_pop(stack)) + 10;
+    declare pointer_count = 0;
+    declare popped = *.cast(autobuffer_stack8_pop(stack));
+    while any_1.pcast(popped + pointer_count).* == ASCII.ASTERISK {
+        pointer_count = pointer_count + 1;
+    };
+
+    declare to_push = popped + pointer_count + 10;
+    declare i = 0;
+    while i < pointer_count {
+        to_push = concatenate2_brk_allocate("*", to_push);
+        i = i + 1;
+    };
 
     if string=(function_name, "pcast") {
         to_push = concatenate2_brk_allocate("*", to_push);

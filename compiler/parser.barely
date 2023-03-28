@@ -476,6 +476,15 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Tokens, index_p
                 i = i + 1;
             };
         };
+
+        if (Tokens.get_id(tokens, index) == Token.NAME) && string=(name_data.name, "*") {
+            declare name_data = #tokens_get_pointer_data(tokens, Token.NameData, index);
+            if !is_special_operator(name_data.name) {
+                declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
+                retrieve_data.name = name_data.name;
+                index = index + 1;
+            };
+        };
     } else if token_id == Token.PERIOD {
         declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
         retrieve_data.name = "@current_module";
@@ -524,6 +533,29 @@ define is_special_function = function(name: *): boolean {
     else if string=(name, "&") true
     else if string=(name, "!") true
     else if string=(name, "|") true
+    else if string=(name, "&&") true
+    else if string_length=(name, "<", 1) true
+    else if string_length=(name, ">", 1) true
+    else if string_length=(name, "cast", 4) true
+    else if string_length=(name, "pcast", 5) true
+    else if string_length=(name, "size", 4) && (string_length(name) == 4) true
+    else if string_length=(name, "@syscall", 8) true
+    else false;
+};
+
+define is_special_operator = function(name: *): boolean {
+    return if string=(name, "+") true
+    else if string=(name, "-") true
+    else if string=(name, "*") true
+    else if string=(name, "/") true
+    else if string=(name, "%") true
+    else if string=(name, "=") true
+    else if string=(name, "==") true
+    else if string=(name, ">") true
+    else if string=(name, "<") true
+    else if string=(name, "&") true
+    else if string=(name, "!") true
+    else if string=(name, "||") true
     else if string=(name, "&&") true
     else if string_length=(name, "<", 1) true
     else if string_length=(name, ">", 1) true
