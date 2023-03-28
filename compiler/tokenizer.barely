@@ -118,9 +118,10 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
                 if |(character_next < ASCII.ZERO, character_next > ASCII.NINE) {
                     if !handled check_handle_single_operator(character, ASCII.MINUS, "-", #handle_special_tokenize_arguments());
                 };
-                if !handled check_handle_single_operator(character, ASCII.ASTERISK, "*", #handle_special_tokenize_arguments());
                 if !handled check_handle_single_operator(character, ASCII.SLASH, "/", #handle_special_tokenize_arguments());
                 if !handled check_handle_single_operator(character, ASCII.PERCENT, "%", #handle_special_tokenize_arguments());
+
+                if !handled check_handle_single_operator_repetition(contents, ASCII.ASTERISK, "*", #handle_special_tokenize_arguments());
 
                 if has_next {
                     if !handled check_handle_double_operator(character, character_next, ASCII.EQUAL, ASCII.EQUAL, "==", #handle_special_tokenize_arguments());
@@ -189,6 +190,29 @@ define check_handle_single_operator = function(character: any_1, wanted_characte
         buffer_index.* = index.*;
         handled.* = true;
     };
+};
+
+define check_handle_single_operator_repetition = function(contents: *, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+    declare character = any_1.pcast(contents + index.*).*;
+    if !(character == wanted_character) {
+        return;
+    };
+
+    declare full_internal_name = "";
+    while character == wanted_character {
+        tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
+        full_internal_name = concatenate2_brk_allocate(full_internal_name, internal_name);
+        column.* = column.* + 1;
+        index.* = index.* + 1;
+        buffer_index.* = index.*;
+        character = any_1.pcast(contents + index.*).*;
+    };
+
+
+    declare column_copy = column.*;
+    tokenize_inner(full_internal_name, string_length(full_internal_name), tokens, file_name, row, &column_copy);
+
+    handled.* = true;
 };
 
 define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
