@@ -1,43 +1,43 @@
 define whole_8_to_whole_4 = function(input: whole_8): whole_4 {
     declare output = whole_4.>0();
-    output = whole_4.pcast(&input).*;
+    output = *whole_4.cast(&input).*;
     return output;
 };
 
 define whole_8_to_whole_2 = function(input: whole_8): whole_2 {
     declare output = whole_2.>0();
-    output = whole_2.pcast(&input).*;
+    output = *whole_2.cast(&input).*;
     return output;
 };
 
 define whole_8_to_whole_1 = function(input: whole_8): whole_1 {
     declare output = whole_1.>0();
-    output = whole_1.pcast(&input).*;
+    output = *whole_1.cast(&input).*;
     return output;
 };
 
 define whole_4_to_whole_8 = function(input: whole_4): whole_8 {
     declare output = whole_8.>0();
-    whole_4.pcast(&output).* = input;
+    *whole_4.cast(&output).* = input;
     return output;
 };
 
 define whole_2_to_whole_8 = function(input: whole_2): whole_8 {
     declare output = whole_8.>0();
-    whole_2.pcast(&output).* = input;
+    *whole_2.cast(&output).* = input;
     return output;
 };
 
 define whole_1_to_whole_8 = function(input: whole_1): whole_8 {
     declare output = whole_8.>0();
-    whole_1.pcast(&output).* = input;
+    *whole_1.cast(&output).* = input;
     return output;
 };
 
 define string_length = function(string: *): whole_8 {
     declare length = 0;
 
-    while !(0:whole_1 == (any_1.pcast(string) + length).*) {
+    while !(0:whole_1 == (*any_1.cast(string) + length).*) {
         length = length + 1;
     };
 
@@ -58,8 +58,8 @@ define string= = function(string1: *, string2: *): boolean {
 define string_length= = function(string1: *, string2: *, length: whole_8): boolean {
     declare i = 0;
     while i < length {
-        declare string1_character = any_1.pcast(string1 + i).*;
-        declare string2_character = any_1.pcast(string2 + i).*;
+        declare string1_character = *any_1.cast(string1 + i).*;
+        declare string2_character = *any_1.cast(string2 + i).*;
 
         if !(string1_character == string2_character) {
             return false;
@@ -76,19 +76,19 @@ define copy = function(from: *, to: *, size: whole_8) {
 
     while i < size {
         if (i + 4096) < size {
-            any_4096.pcast(to + i).* = any_4096.pcast(from + i).*;
+            *any_4096.cast(to + i).* = *any_4096.cast(from + i).*;
             i = i + 4096;
         } else if (i + 512) < size {
-            any_512.pcast(to + i).* = any_512.pcast(from + i).*;
+            *any_512.cast(to + i).* = *any_512.cast(from + i).*;
             i = i + 512;
         } else if (i + 64) < size {
-            any_64.pcast(to + i).* = any_64.pcast(from + i).*;
+            *any_64.cast(to + i).* = *any_64.cast(from + i).*;
             i = i + 64;
         } else if (i + 8) < size {
-            any_8.pcast(to + i).* = any_8.pcast(from + i).*;
+            *any_8.cast(to + i).* = *any_8.cast(from + i).*;
             i = i + 8;
         } else {
-            any_1.pcast(to + i).* = any_1.pcast(from + i).*;
+            *any_1.cast(to + i).* = *any_1.cast(from + i).*;
             i = i + 1;
         };
     };

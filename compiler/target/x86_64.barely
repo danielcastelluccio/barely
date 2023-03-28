@@ -78,7 +78,7 @@ define Target_X86_64 = module {
             else if id == Node.ENDSCOPE { .output_end_scope(&variable_types, &variable_indexes) }
             else if id == Node.DEFINE { .output_define(program_data, function_locations, &module_stack, pointer_data, declared_module_id, instructions_buffer) }
             else if id == Node.ENDDEFINE {
-                declare define_data = Node.EndDefineData.pcast(pointer_data);
+                declare define_data = *Node.EndDefineData.cast(pointer_data);
                 declare define_type = define_data.type;
 
                 if define_type == 0 {
@@ -125,7 +125,7 @@ define Target_X86_64 = module {
     };
 
     define output_define = function(program_data: *ProgramData, function_locations: *AutoBuffer, module_stack: *AutoBufferStack8, pointer_data: *, declared_module_id: whole_8, instructions_buffer: *AutoBufferBuffer) {
-        declare define_data = Node.DefineData.pcast(pointer_data);
+        declare define_data = *Node.DefineData.cast(pointer_data);
         declare define_name = define_data.name;
         declare define_type = define_data.type;
         
@@ -144,7 +144,7 @@ define Target_X86_64 = module {
 
     define output_scope = function(variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_index: whole_8, instructions_buffer: *AutoBufferBuffer) {
         declare new_hashmap = hashmap_new(512);
-        declare allocated = HashMap.pcast(brk_allocate(24));
+        declare allocated = *HashMap.cast(brk_allocate(24));
         allocated.* = new_hashmap;
         autobuffer_stack8_push(variable_types, allocated);
 
@@ -152,14 +152,14 @@ define Target_X86_64 = module {
     };
 
     define output_target = function(targets: *AutoBuffer, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare target_data = Node.TargetData.pcast(pointer_data);
+        declare target_data = *Node.TargetData.cast(pointer_data);
         declare target = target_data.id;
         
         autobuffer_array8_set(targets, target, X86_64.get_instruction(instructions_buffer));
     };
 
     define output_jump = function(nodes: *Nodes.Nodes, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare jump_data = Node.JumpData.pcast(pointer_data);
+        declare jump_data = *Node.JumpData.cast(pointer_data);
         declare target = jump_data.target_id;
 
         declare jump_instruction = X86_64.autobuffer_buffer_push_jmp_near(instructions_buffer);
@@ -168,7 +168,7 @@ define Target_X86_64 = module {
     };
 
     define output_string = function(data_buffer: *AutoBufferBuffer, data_indexes_to_adjust: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare string_data = Node.StringData.pcast(pointer_data);
+        declare string_data = *Node.StringData.cast(pointer_data);
         declare string_value = string_data.value;
 
         declare string_data_index = ELF_X86_64.autobuffer_buffer_push_data_string(data_buffer, string_value);
@@ -177,7 +177,7 @@ define Target_X86_64 = module {
     };
 
     define output_function = function(nodes: *Nodes.Nodes, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare function_data = Node.FunctionData.pcast(pointer_data);
+        declare function_data = *Node.FunctionData.cast(pointer_data);
         declare function_name = function_data.name;
         declare next_id = Nodes.get_id(nodes, nodes_index + 1);
 
@@ -196,7 +196,7 @@ define Target_X86_64 = module {
 
     define output_declare = function(nodes: *Nodes.Nodes, program_data: *ProgramData, in_function: boolean, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         if in_function {
-            declare declare_data = Node.DeclareData.pcast(pointer_data);
+            declare declare_data = *Node.DeclareData.cast(pointer_data);
             declare variable_name = declare_data.name;
             declare variable_type = declare_data.type;
 
@@ -204,12 +204,12 @@ define Target_X86_64 = module {
             autobuffer_array8_set(variable_sizes, variable_index.*, .get_size_array(variable_type, nodes, program_data));
             variable_index.* = variable_index.* + 1;
 
-            hashmap_string_put(HashMap.pcast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type);
+            hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type);
         };
     };
 
     define output_jump_conditional = function(nodes: *Nodes.Nodes, program_data: *ProgramData, pointer_data: *, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, instructions_buffer: *AutoBufferBuffer) {
-        declare jump_conditional_data = Node.JumpConditionalData.pcast(pointer_data);
+        declare jump_conditional_data = *Node.JumpConditionalData.cast(pointer_data);
         declare target = jump_conditional_data.target_id;
         declare conditional = jump_conditional_data.desired_state;
 
@@ -283,7 +283,7 @@ define Target_X86_64 = module {
     };
 
     define output_retrieve = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare retrieve_data = Node.RetrieveData.pcast(Nodes.get_pointer_data(nodes, nodes_index));
+        declare retrieve_data = *Node.RetrieveData.cast(Nodes.get_pointer_data(nodes, nodes_index));
         declare name = retrieve_data.name;
         declare uses_previous = retrieve_data.uses_previous;
 
@@ -489,7 +489,7 @@ define Target_X86_64 = module {
     };
 
     define output_assign = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare assign_data = Node.AssignData.pcast(pointer_data);
+        declare assign_data = *Node.AssignData.cast(pointer_data);
         declare name = assign_data.name;
 
         declare name = if define_stack.index > 0 {
@@ -572,7 +572,7 @@ define Target_X86_64 = module {
         declare scope_index = scope_count - 1;
         declare variable_type = *.cast(0);
         while (variable_type == 0) && (scope_index < scope_count) {
-            declare scope = HashMap.pcast(autobuffer_stack8_get(variable_types, scope_index));
+            declare scope = *HashMap.cast(autobuffer_stack8_get(variable_types, scope_index));
             variable_type = *.cast(hashmap_string_get(scope, variable_name));
             scope_index = scope_index - 1;
         };
@@ -586,7 +586,7 @@ define Target_X86_64 = module {
     };
 
     define output_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
-        declare invoke_internal_data = Node.InvokeInternalData.pcast(Nodes.get_pointer_data(nodes, nodes_index));
+        declare invoke_internal_data = *Node.InvokeInternalData.cast(Nodes.get_pointer_data(nodes, nodes_index));
         declare function_name = invoke_internal_data.name;
 
         if is_pointer(nodes, nodes_index + 1) {
@@ -983,7 +983,7 @@ define Target_X86_64 = module {
     };
 
     define output_boolean = function(pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare boolean_data = Node.BooleanData.pcast(pointer_data);
+        declare boolean_data = *Node.BooleanData.cast(pointer_data);
         declare value_boolean = boolean_data.value;
 
         X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 1);
@@ -998,7 +998,7 @@ define Target_X86_64 = module {
     };
 
     define output_number = function(module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
-        declare number_data = Node.NumberData.pcast(pointer_data);
+        declare number_data = *Node.NumberData.cast(pointer_data);
         declare value_whole_8 = number_data.value;
         declare coersion = number_data.coersion;
         if coersion == 0 {
@@ -1039,7 +1039,7 @@ define Target_X86_64 = module {
 
         declare i = 0;
         while i < structure_count {
-            declare structure_data = Node.StructureData.pcast(autobuffer_stack8_get(structure_datas, i));
+            declare structure_data = *Node.StructureData.cast(autobuffer_stack8_get(structure_datas, i));
             declare structure_name = structure_data.name;
 
             declare size = .get_size(structure_name, nodes, program_data);

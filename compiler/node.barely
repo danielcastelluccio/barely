@@ -146,11 +146,11 @@ define Nodes = module {
     };
 
     define get_id_pointer = function(nodes: *.Nodes, index: whole_8): *whole_8 {
-        return whole_8.pcast(.get_pointer(nodes, index));
+        return *whole_8.cast(.get_pointer(nodes, index));
     };
 
     define get_location_data = function(nodes: *.Nodes, index: whole_8): *Node.LocationData {
-        return Node.LocationData.pcast(autobuffer_get(&(.Nodes.>buffer(nodes)), +(*(index, Node.SIZE), 8)));
+        return *Node.LocationData.cast(autobuffer_get(&(.Nodes.>buffer(nodes)), +(*(index, Node.SIZE), 8)));
     };
 
     define get_pointer = function(nodes: *.Nodes, index: whole_8): * {
@@ -200,7 +200,7 @@ define Nodes = module {
         declare size_string = any_24.>0();
         whole_8_to_string(size, &(size_string));
 
-        declare define_data = Node.DefineData.pcast(.append_data_anonymous(nodes, Node.DEFINE));
+        declare define_data = *Node.DefineData.cast(.append_data_anonymous(nodes, Node.DEFINE));
         Node.DefineData.<name(define_data, name);
 
         // TODO: Make this type be based on the structure data
@@ -210,7 +210,7 @@ define Nodes = module {
         declare item_names = create_size_one_array8_brk_allocate("_");
         declare item_types = create_size_one_array8_brk_allocate(#array(concatenate2_brk_allocate("any_", &(size_string))));
 
-        declare structure_data = Node.StructureData.pcast(.append_data_anonymous(nodes, Node.STRUCTURE));
+        declare structure_data = *Node.StructureData.cast(.append_data_anonymous(nodes, Node.STRUCTURE));
         Node.StructureData.<item_names(structure_data, item_names);
         Node.StructureData.<item_types(structure_data, item_types);
 
@@ -218,7 +218,7 @@ define Nodes = module {
     };
 
     define append_structure_any = function(nodes: *.Nodes, name: *) {
-        declare structure_data = Node.StructureData.pcast(.append_data_anonymous(nodes, Node.STRUCTURE));
+        declare structure_data = *Node.StructureData.cast(.append_data_anonymous(nodes, Node.STRUCTURE));
         Node.StructureData.<name(structure_data, name);
         Node.StructureData.<item_names(structure_data, &empty);
         Node.StructureData.<item_types(structure_data, &empty);
@@ -226,7 +226,7 @@ define Nodes = module {
     };
 
     define append_function = function(nodes: *.Nodes, name: *, arguments: *, returns: *) {
-        declare function_data = Node.FunctionData.pcast(.append_data_anonymous(nodes, Node.FUNCTION));
+        declare function_data = *Node.FunctionData.cast(.append_data_anonymous(nodes, Node.FUNCTION));
         function_data.name = name;
         function_data.argument_types = arguments;
         function_data.return_types = returns;
@@ -243,7 +243,7 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
     declare id = Nodes.get_id(nodes, index);
     declare pointer_data = Nodes.get_pointer_data(nodes, index);
     if =(id, Node.RETRIEVE) {
-        declare retrieve_data = Node.RetrieveData.pcast(pointer_data);
+        declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
         print("Retrieve{names=");
         //if !(=(Node.RetrieveData.>name(retrieve_data), 0)) {
         //    print("'");
@@ -261,7 +261,7 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
         };
         println("'}");
     } else if =(id, Node.INVOKE_INTERNAL) {
-        declare invoke_data = Node.InvokeInternalData.pcast(pointer_data);
+        declare invoke_data = *Node.InvokeInternalData.cast(pointer_data);
         print("InternalInvoke{names=");
         declare names = Node.InvokeInternalData.>name(invoke_data);
         //if !(=(names, 0)) {
@@ -280,7 +280,7 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
         };
         println("'}");
     } else if =(id, Node.ASSIGN) {
-        declare assign_data = Node.AssignData.pcast(pointer_data);
+        declare assign_data = *Node.AssignData.cast(pointer_data);
         print("Assign{names=");
         //declare names = Node.AssignData.>name(assign_data);
         //if !(=(names, 0)) {
@@ -299,14 +299,14 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
         };
         println("'}");
     } else if =(id, Node.DECLARE) {
-        declare declare_data = Node.DeclareData.pcast(pointer_data);
+        declare declare_data = *Node.DeclareData.cast(pointer_data);
         print("Declare{name='");
         print(Node.DeclareData.>name(declare_data));
         println("'}");
     } else if =(id, Node.INVOKE) {
         println("Invoke{}");
     } else if =(id, Node.NUMBER) {
-        declare number_data = Node.NumberData.pcast(pointer_data);
+        declare number_data = *Node.NumberData.cast(pointer_data);
         print("Number{value=")
         print_whole_8(Node.NumberData.>value(number_data));
         println("}");
@@ -317,7 +317,7 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
     } else if =(id, Node.SKIP) {
         println("Skip{}")
     } else if =(id, Node.ENDIFBLOCK) {
-        declare data = Node.EndIfBlockData.pcast(pointer_data);
+        declare data = *Node.EndIfBlockData.cast(pointer_data);
         print("EndIfBlock{is_last=")
         if data.is_last {
             print("true");
@@ -340,9 +340,9 @@ define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
 };
 
 macro #nodes_append_data(nodes, id, type, location) {
-    type.pcast(Nodes.append_data(nodes, id, location))
+    *type.cast(Nodes.append_data(nodes, id, location))
 };
 
 macro #nodes_get_pointer_data(nodes, type, index) {
-    type.pcast(Nodes.get_pointer_data(nodes, index))
+    *type.cast(Nodes.get_pointer_data(nodes, index))
 };

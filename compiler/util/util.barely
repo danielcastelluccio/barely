@@ -45,7 +45,7 @@ define string_to_number = function(string: *, size: whole_8, signed: boolean): w
 
     declare i = 0;
     while i < length {
-        declare character = whole_1.pcast(string + i).*;
+        declare character = *whole_1.cast(string + i).*;
 
         if character == ASCII.UNDERSCORE {
             break;
@@ -78,7 +78,7 @@ define whole_8_to_string = function(whole_8_in: whole_8, buffer: *) {
     declare whole_8_ = whole_8_in;
 
     if whole_8_ == 0 {
-        any_1.pcast(buffer).* = ASCII.ZERO;
+        *any_1.cast(buffer).* = ASCII.ZERO;
     };
 
     declare length = 0;
@@ -92,7 +92,7 @@ define whole_8_to_string = function(whole_8_in: whole_8, buffer: *) {
     declare i = 0;
     while !(whole_8_ == 0) {
         declare number = whole_8_to_whole_1(whole_8_ % 10);
-        any_1.pcast(buffer + ((length - 1) - i)).* = number + ASCII.ZERO;
+        *any_1.cast(buffer + ((length - 1) - i)).* = number + ASCII.ZERO;
         whole_8_ = whole_8_ / 10;
         i = i + 1;
     };
@@ -138,12 +138,12 @@ define println = function(string: *) {
 };
 
 define array8_set = function(array: *, index: whole_8, value: any_8) {
-    declare index_pointer = any_8.pcast(array + (index * 8));
+    declare index_pointer = *any_8.cast(array + (index * 8));
     index_pointer.* = value;
 };
 
 define array8_get = function(array: *, index: whole_8): any_8 {
-    declare index_pointer = any_8.pcast(array + (index * 8));
+    declare index_pointer = *any_8.cast(array + (index * 8));
     return index_pointer.*;
 };
 
@@ -192,9 +192,9 @@ define hashmap_new = function(size: whole_8): HashMap {
 define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
     declare buffer = &hashmap.buffer;
 
-    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, (hash % (buffer.size / 8)) * 8));
+    declare bucket_pointer = *AutoBuffer.cast(autobuffer_get_any_8(buffer, (hash % (buffer.size / 8)) * 8));
     if bucket_pointer == 0 {
-        declare allocated_autobuffer = AutoBuffer.pcast(brk_allocate(BucketData.size()));
+        declare allocated_autobuffer = *AutoBuffer.cast(brk_allocate(BucketData.size()));
         declare autobuffer = autobuffer_new(48);
         allocated_autobuffer.* = autobuffer;
 
@@ -214,7 +214,7 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
         };
     };
 
-    declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
+    declare bucket_data = *BucketData.cast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
     bucket_data.data = 1;
     bucket_data.hash = hash;
     bucket_data.value = value;
@@ -223,11 +223,11 @@ define hashmap_put = function(hashmap: *HashMap, hash: whole_8, value: any_8) {
 define hashmap_get_general = function(hashmap: *HashMap, hash: whole_8): any_8, boolean {
     declare buffer = &hashmap.buffer;
 
-    declare bucket_pointer = AutoBuffer.pcast(autobuffer_get_any_8(buffer, (hash % (buffer.size / 8)) * 8));
+    declare bucket_pointer = *AutoBuffer.cast(autobuffer_get_any_8(buffer, (hash % (buffer.size / 8)) * 8));
     if !(bucket_pointer == 0) {
         declare i = 0;
         while !(autobuffer_get_any_8(bucket_pointer, i * BucketData.size()) == 0) {
-            declare bucket_data = BucketData.pcast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
+            declare bucket_data = *BucketData.cast(autobuffer_get_size(bucket_pointer, i * BucketData.size(), BucketData.size()));
 
             if bucket_data.hash == hash {
                 return bucket_data.value, true;
@@ -275,7 +275,7 @@ define string_hash = function(string: *): whole_8 {
     declare i = 0;
     declare length = string_length(string);
     while i < length {
-        declare character = whole_1_to_whole_8(whole_1.cast((any_1.pcast(string) + i).*));
+        declare character = whole_1_to_whole_8(whole_1.cast((*any_1.cast(string) + i).*));
         // TODO: using the new syntax here causes compiler error. why?
         hash = +((hash * 33), character);
         i = i + 1;
@@ -334,7 +334,7 @@ define nth_index = function(string: *, character: any_1, n: whole_8): whole_8 {
     declare i = 0;
     declare count = 0;
     while i < string_length(string) {
-        if any_1.pcast(string + i).* == character {
+        if *any_1.cast(string + i).* == character {
             if count == n {
                 return i;
             };
@@ -478,10 +478,10 @@ define autobuffer_buffer_reset = function(buffer: *AutoBufferBuffer) {
     declare i = 0;
     while i < size {
         if (i + 8) < size {
-            any_8.pcast(actual_buffer + i).* = 0;
+            *any_8.cast(actual_buffer + i).* = 0;
             i = i + 8;
         } else {
-            any_1.pcast(actual_buffer + i).* = 0:whole_1;
+            *any_1.cast(actual_buffer + i).* = 0:whole_1;
             i = i + 1;
         };
     };
@@ -540,7 +540,7 @@ define autobuffer_stack8_push = function(buffer: *AutoBufferStack8, value: any_8
 define autobuffer_stack8_pop = function(buffer: *AutoBufferStack8): any_8 {
     declare index = buffer.index;
     index = index - 1;
-    declare index_pointer = any_8.pcast(autobuffer_get(&buffer.autobuffer, index * 8));
+    declare index_pointer = *any_8.cast(autobuffer_get(&buffer.autobuffer, index * 8));
     buffer.index = index;
     return index_pointer.*;
 };
@@ -549,12 +549,12 @@ define autobuffer_stack8_peek = function(buffer: *AutoBufferStack8): any_8 {
     declare index = buffer.index;
     index = index - 1;
 
-    declare index_pointer = any_8.pcast(autobuffer_get(&buffer.autobuffer, index * 8));
+    declare index_pointer = *any_8.cast(autobuffer_get(&buffer.autobuffer, index * 8));
     return index_pointer.*;
 };
 
 define autobuffer_stack8_get = function(buffer: *AutoBufferStack8, index: whole_8): any_8 {
-    declare index_pointer = any_8.pcast(autobuffer_get(&buffer.autobuffer, index * 8));
+    declare index_pointer = *any_8.cast(autobuffer_get(&buffer.autobuffer, index * 8));
     return index_pointer.*;
 };
 
@@ -564,10 +564,10 @@ define autobuffer_stack8_reset = function(buffer: *AutoBufferStack8) {
     declare i = 0;
     while i < size {
         if (i + 8) < size {
-            any_8.pcast(actual_buffer + i).* = 0:whole_8;
+            *any_8.cast(actual_buffer + i).* = 0:whole_8;
             i = i + 1;
         } else {
-            any_1.pcast(actual_buffer + i).* = 0:whole_1;
+            *any_1.cast(actual_buffer + i).* = 0:whole_1;
             i = i + 1;
         };
     };

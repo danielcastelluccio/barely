@@ -135,9 +135,9 @@ define parse_name_array = function(tokens: *Tokens.Tokens, index_pointer: *whole
         } else if id == Token.COLON {
             autobuffer_buffer_push_string(&buffer, ":");
         } else if id == Token.NAME {
-            autobuffer_buffer_push_string(&buffer, Token.NameData.pcast(pointer_data).name);
+            autobuffer_buffer_push_string(&buffer, *Token.NameData.cast(pointer_data).name);
         } else if id == Token.KEYWORD {
-            autobuffer_buffer_push_string(&buffer, Token.KeywordData.pcast(pointer_data).keyword);
+            autobuffer_buffer_push_string(&buffer, *Token.KeywordData.cast(pointer_data).keyword);
         };
         index = index + 1;
     };
@@ -169,7 +169,7 @@ define is_only_asterisks = function(string: *): boolean {
     declare i = 0;
     declare string_length = string_length(string);
     while i < string_length {
-        declare character = any_1.pcast(string + i).*;
+        declare character = *any_1.cast(string + i).*;
         if !(character == ASCII.ASTERISK) {
             return false;
         };
@@ -450,7 +450,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Tokens, index_p
     declare token_pointer_data = Tokens.get_pointer_data(tokens, index);
 
     if token_id == Token.NAME {
-        declare name_data = Token.NameData.pcast(token_pointer_data);
+        declare name_data = *Token.NameData.cast(token_pointer_data);
         // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
         declare name = name_data.name;
 
@@ -489,14 +489,14 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Tokens, index_p
         declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
         retrieve_data.name = "@current_module";
     } else if token_id == Token.STRING {
-        declare string_data = Token.StringData.pcast(token_pointer_data);
+        declare string_data = *Token.StringData.cast(token_pointer_data);
         declare string_value = string_data.value;
         declare string_pointer_data = #nodes_append_data(nodes, Node.STRING, Node.StringData, get_token_location_data(tokens, index));
         string_pointer_data.value = string_value;
 
         index = index + 1;
     } else if token_id == Token.NUMBER {
-        declare number_token_data = Token.NumberData.pcast(token_pointer_data);
+        declare number_token_data = *Token.NumberData.cast(token_pointer_data);
         declare number_value = number_token_data.value;
         declare number_data = #nodes_append_data(nodes, Node.NUMBER, Node.NumberData, get_token_location_data(tokens, index));
         number_data.value = number_value;
@@ -511,7 +511,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Tokens, index_p
             number_data.coersion = coerced_value;
         };
     } else if token_id == Token.BOOLEAN {
-        declare boolean_value = Token.BooleanData.pcast(token_pointer_data).value;
+        declare boolean_value = *Token.BooleanData.cast(token_pointer_data).value;
         declare boolean_data = #nodes_append_data(nodes, Node.BOOLEAN, Node.BooleanData, get_token_location_data(tokens, index));
         boolean_data.value = boolean_value;
 
@@ -728,7 +728,7 @@ define parse_assign = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, 
     declare uses_previous = retrieve_data.uses_previous;
 
     Nodes.set_id(nodes, get_past_retrieve_index(nodes, nodes.index - 1), Node.ASSIGN);
-    declare assign_data = Node.AssignData.pcast(retrieve_data);
+    declare assign_data = *Node.AssignData.cast(retrieve_data);
     assign_data.name = name;
     assign_data.uses_previous = uses_previous;
 
@@ -745,7 +745,7 @@ define parse_while = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, n
     target_node1.id = target1;
 
     parse_expression(tokens, &index, nodes);
-    declare conditional_jump_data = Node.JumpConditionalData.pcast(Nodes.append_data(nodes, Node.JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
+    declare conditional_jump_data = *Node.JumpConditionalData.cast(Nodes.append_data(nodes, Node.JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
     conditional_jump_data.target_id = target2;
     conditional_jump_data.desired_state = false;
     declare _ = Nodes.append(nodes, Node.ENDSTATEMENT, get_token_location_data(tokens, index));
@@ -754,10 +754,10 @@ define parse_while = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, n
     parse_expression(tokens, &index, nodes);
     declare _ = autobuffer_stack8_pop(&while_target_id_stack);
 
-    declare jump_data = Node.JumpData.pcast(Nodes.append_data(nodes, Node.JUMP, get_token_location_data(tokens, index)));
+    declare jump_data = *Node.JumpData.cast(Nodes.append_data(nodes, Node.JUMP, get_token_location_data(tokens, index)));
     jump_data.target_id = target1;
 
-    declare target_node2 = Node.TargetData.pcast(Nodes.append_data(nodes, Node.TARGET, get_token_location_data(tokens, index)));
+    declare target_node2 = *Node.TargetData.cast(Nodes.append_data(nodes, Node.TARGET, get_token_location_data(tokens, index)));
     target_node2.id = target2;
 
     index_pointer.* = index + 1;
