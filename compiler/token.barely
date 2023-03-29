@@ -64,23 +64,23 @@ define Tokens = module {
     };
 
     define get_id = function(tokens: *.Tokens, index: whole_8): whole_8 {
-        return autobuffer_get_whole_8(&tokens.buffer, *(index, Token.SIZE));
+        return autobuffer_get_whole_8(&tokens.buffer, index * Token.SIZE);
     };
 
     define get_pointer = function(tokens: *.Tokens, index: whole_8): * {
-        return autobuffer_get(&tokens.buffer, *(index, Token.SIZE));
+        return autobuffer_get(&tokens.buffer, index * Token.SIZE);
     };
 
     define get_pointer_data = function(tokens: *.Tokens, index: whole_8): * {
-        return autobuffer_get(&tokens.buffer, +(*(index, Token.SIZE), Token.DATA_OFFSET));
+        return autobuffer_get(&tokens.buffer, (index * Token.SIZE) + Token.DATA_OFFSET);
     };
 
     define get_location_data = function(tokens: *.Tokens, index: whole_8): *Token.LocationData {
-        return *Token.LocationData.cast(autobuffer_get(&tokens.buffer, +(*(index, Token.SIZE), 8)));
+        return *Token.LocationData.cast(autobuffer_get(&tokens.buffer, (index * Token.SIZE) + 8));
     };
 
     define append_data = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-        return *.cast(+(Tokens.append(tokens, id, file_name, row, column), Token.DATA_OFFSET));
+        return *.cast(Tokens.append(tokens, id, file_name, row, column) + Token.DATA_OFFSET);
     };
 
     define append = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
@@ -107,7 +107,7 @@ define Tokens = module {
     };
 
     define is_keyword = function(tokens: *.Tokens, index: whole_8, keyword: *): boolean {
-        return if =(.get_id(tokens, index), Token.KEYWORD) {
+        return if .get_id(tokens, index) == Token.KEYWORD {
             string=(*Token.KeywordData.cast(.get_pointer_data(tokens, index)).keyword, keyword)
         } else {
             false
@@ -115,7 +115,7 @@ define Tokens = module {
     };
 
     define is_name = function(tokens: *.Tokens, index: whole_8, name: *): boolean {
-        return if =(.get_id(tokens, index), Token.NAME) {
+        return if .get_id(tokens, index) == Token.NAME {
             string=(*Token.NameData.cast(.get_pointer_data(tokens, index)).name, name)
         } else {
             false

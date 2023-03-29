@@ -52,12 +52,12 @@ define is_signed = function(type: *, nodes: *Nodes.Nodes): whole_8 {
     //declare node_count = nodes.index;
     //declare i = 0;
     //while i < node_count {
-    //    if =(Nodes.get_id(nodes, i), Node.STRUCTURE) {
+    //    if Nodes.get_id(nodes, i) == Node.STRUCTURE {
     //        declare pointer = *Node.StructureData.cast(Nodes.get_pointer_data(nodes, i));
-    //        declare name = Node.StructureData.>name(pointer);
+    //        declare name = pointer.name;
 
-    //        if !(=(name, 0)) {
-    //            declare member_types = Node.StructureData.>item_types(pointer);
+    //        if !(name == 0) {
+    //            declare member_types = pointer.item_types;
     //            if string=(type, name) {
     //                declare is_signed2 = is_signed(*.cast(array8_get(member_types, 0)), nodes);
     //                hashmap_string_put(&cached_signedness_map, type, is_signed2);
@@ -773,7 +773,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
                 print_node_error_beginning(nodes, nodes_index);
                 print("Invoke of '");
 
-                if =(Nodes.get_id(nodes, nodes_index - 1), Node.RETRIEVE) {
+                if Nodes.get_id(nodes, nodes_index - 1) == Node.RETRIEVE {
                     declare previous_node_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index - 1);
                     print(previous_node_data.name);
                 } else {
@@ -1539,7 +1539,7 @@ define is_pointer = function(nodes: *Nodes.Nodes, index_in: whole_8): boolean {
             declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, index);
             declare name = invoke_data.name;
             return string=(name, "&");
-        } else if =(id, Node.SKIP) {
+        } else if id == Node.SKIP {
             
         } else {
             break;

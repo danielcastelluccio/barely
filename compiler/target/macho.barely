@@ -23,169 +23,169 @@ define Target_Macho = module {
         declare bss_indexes_to_adjust = autobuffer_stack8_new(512);
         declare bss_indexes_to_adjust_relative = autobuffer_stack8_new(512);
 
-        declare instruction_set_get_size_fn = InstructionSetFunctions.>get_size(&(output_instruction_set));
+        declare instruction_set_get_size_fn = output_instruction_set.get_size;
 
-        declare global_types = ProgramData.>global_types(&(program_data));
-        declare global_count = autobuffer_array8_length(&(global_types));
-        declare global_locations, bss_index = calculate_global_locations(nodes, &(program_data), instruction_set_get_size_fn, &(global_types), global_count);
+        declare global_types = program_data.global_types;
+        declare global_count = autobuffer_array8_length(&global_types);
+        declare global_locations, bss_index = calculate_global_locations(nodes, &program_data, instruction_set_get_size_fn, &global_types, global_count);
 
-        declare function_argument_names = ProgramData.>function_argument_names(&(program_data));
-        declare function_node_locations = ProgramData.>function_locations(&(program_data));
-        declare function_count = autobuffer_array8_length(&(function_argument_names));
-        declare function_local_sizes = calculate_function_local_sizes(nodes, &(program_data), instruction_set_get_size_fn, &(function_node_locations), function_count);
+        declare function_argument_names = program_data.function_argument_names;
+        declare function_node_locations = program_data.function_locations;
+        declare function_count = autobuffer_array8_length(&function_argument_names);
+        declare function_local_sizes = calculate_function_local_sizes(nodes, &program_data, instruction_set_get_size_fn, &function_node_locations, function_count);
 
-        declare main_function = InstructionSetFunctions.>main(&(output_instruction_set));
-        declare main_call, set_near_call_value, set_far_call_value, set_jmp_value, set_je_value, set_data_absolute_value, set_bss_absolute_value, set_bss_relative_value = main_function(nodes, &(program_data), target_os, &(instructions_buffer), &(data_buffer), &(function_locations), &(pushed_functions), &(pushed_function_targets), &(jmps), &(jmp_targets), &(jes), &(je_targets), &(targets), &(global_types), global_locations, function_local_sizes, &(data_indexes_to_adjust), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative));
+        declare main_function = output_instruction_set.main;
+        declare main_call, set_near_call_value, set_far_call_value, set_jmp_value, set_je_value, set_data_absolute_value, set_bss_absolute_value, set_bss_relative_value = main_function(nodes, &program_data, target_os, &instructions_buffer, &data_buffer, &function_locations, &(pushed_functions), &(pushed_function_targets), &(jmps), &(jmp_targets), &(jes), &(je_targets), &(targets), &(global_types), global_locations, function_local_sizes, &(data_indexes_to_adjust), &(bss_indexes_to_adjust), &(bss_indexes_to_adjust_relative));
 
-        declare instructions_index = AutoBufferBuffer.>index(&(instructions_buffer));
-        declare data_index = AutoBufferBuffer.>index(&(data_buffer));
+        declare instructions_index = instructions_buffer.index;
+        declare data_index = data_buffer.index;
 
         declare start_address = 4294967296;
 
-        declare define_values = &(ProgramData.>define_values(&(program_data)));
+        declare define_values = &program_data.define_values;
         declare main_function_index = whole_8.cast(hashmap_string_get(define_values, "main"));
-        declare main_index = autobuffer_array8_get(&(function_locations), main_function_index);
-        X86_64.set_call_value(&(instructions_buffer), main_call, InstructionIndex.cast(main_index));
+        declare main_index = autobuffer_array8_get(&function_locations, main_function_index);
+        X86_64.set_call_value(&instructions_buffer, main_call, InstructionIndex.cast(main_index));
 
-        .adjust_function_calls(start_address, &(pushed_functions), &(pushed_function_targets), &(function_locations), &(instructions_buffer));
+        .adjust_function_calls(start_address, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer);
 
-        .adjust_jumps(&(jmps), &(jmp_targets), &(targets), X86_64.set_jmp_value, &(instructions_buffer));
-        .adjust_jumps(&(jes), &(je_targets), &(targets), X86_64.set_je_value, &(instructions_buffer));
+        .adjust_jumps(&jmps, &jmp_targets, &targets, X86_64.set_jmp_value, &instructions_buffer);
+        .adjust_jumps(&jes, &je_targets, &targets, X86_64.set_je_value, &instructions_buffer);
 
         declare output_location = autobuffer_buffer_new(32);
-        autobuffer_buffer_push_string(&(output_location), output_file);
+        autobuffer_buffer_push_string(&output_location, output_file);
 
-        declare instructions_autobuffer = &(AutoBufferBuffer.>autobuffer(&(instructions_buffer)));
+        declare instructions_autobuffer = &instructions_buffer.autobuffer;
 
-        declare data_location = +(start_address, .round_up_to_4096(+(instructions_index, 504)));
-        adjust_indexes(&instructions_buffer, X86_64.set_value8_offset, &(data_indexes_to_adjust), data_location);
-        declare bss_location = +(start_address, +(.round_up_to_4096(+(instructions_index, 504)), .round_up_to_4096(data_index)));
-        adjust_indexes(&instructions_buffer, X86_64.set_value8_offset, &(bss_indexes_to_adjust), bss_location);
+        declare data_location = start_address + .round_up_to_4096(instructions_index + 504);
+        adjust_indexes(&instructions_buffer, X86_64.set_value8_offset, &data_indexes_to_adjust, data_location);
+        declare bss_location = start_address + .round_up_to_4096(instructions_index + 504) + .round_up_to_4096(data_index);
+        adjust_indexes(&instructions_buffer, X86_64.set_value8_offset, &bss_indexes_to_adjust, bss_location);
 
         declare i = 0;
-        while <(i, AutoBufferStack8.>index(&(bss_indexes_to_adjust_relative))) {
-            declare index = whole_8.cast(autobuffer_stack8_get(&(bss_indexes_to_adjust_relative), i));
-            declare value_new = +(whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&(AutoBufferBuffer.>autobuffer(&(instructions_buffer))), index))), +(.round_up_to_4096(instructions_index), .round_up_to_4096(data_index)));
-            autobuffer_set_any_4(instructions_autobuffer, whole_8_to_whole_4(-(-(value_new, +(index, 4)), 504)), index);
-            i = +(i, 1);
+        while i < bss_indexes_to_adjust_relative.index {
+            declare index = whole_8.cast(autobuffer_stack8_get(&bss_indexes_to_adjust_relative, i));
+            declare value_new = whole_8.cast(whole_4_to_whole_8(autobuffer_get_whole_4(&instructions_buffer.autobuffer, index))) + .round_up_to_4096(instructions_index) + .round_up_to_4096(data_index);
+            autobuffer_set_any_4(instructions_autobuffer, whole_8_to_whole_4(((value_new - index + 4) - 504)), index);
+            i = i + 1;
         };
 
-        autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(instructions_buffer)), 504, instructions_index);
-        autobuffer_set(&(output), autobuffer_buffer_get_buffer_pointer(&(data_buffer)), .round_up_to_4096(+(instructions_index, 504)), data_index);
+        autobuffer_set(&output, autobuffer_buffer_get_buffer_pointer(&instructions_buffer), 504, instructions_index);
+        autobuffer_set(&output, autobuffer_buffer_get_buffer_pointer(&data_buffer), .round_up_to_4096(instructions_index + 504), data_index);
 
         declare header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread = .create_headers(start_address, instructions_index, data_index, bss_index);
 
-        autobuffer_set(&(output), &(header), 0, 32);
-        autobuffer_set(&(output), &(segment_pagezero), 32, 72);
-        autobuffer_set(&(output), &(segment_instructions), 104, 72);
-        autobuffer_set(&(output), &(segment_data), 176, 72);
-        autobuffer_set(&(output), &(segment_bss), 248, 72);
-        autobuffer_set(&(output), &(unix_thread), 320, 184);
+        autobuffer_set(&output, &header, 0, 32);
+        autobuffer_set(&output, &segment_pagezero, 32, 72);
+        autobuffer_set(&output, &segment_instructions, 104, 72);
+        autobuffer_set(&output, &segment_data, 176, 72);
+        autobuffer_set(&output, &segment_bss, 248, 72);
+        autobuffer_set(&output, &unix_thread, 320, 184);
         
-        declare size = +(+(.round_up_to_4096(+(504, instructions_index)), .round_up_to_4096(data_index)), 0);
+        declare size = .round_up_to_4096(504 + instructions_index) + .round_up_to_4096(data_index) + 0;
 
-        create_and_write_file(autobuffer_buffer_get_buffer_pointer(&(output_location)), AutoBuffer.>buffer(&(output)), size);
+        create_and_write_file(autobuffer_buffer_get_buffer_pointer(&output_location), output.buffer, size);
     };
 
     define adjust_function_calls = function(start_address: whole_8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, function_locations: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
-        declare pushed_function_count = AutoBufferStack8.>index(pushed_functions);
+        declare pushed_function_count = pushed_functions.index;
         declare i = 0;
-        while <(i, pushed_function_count) {
+        while i < pushed_function_count {
             declare pushed_function_instruction_specific = InstructionIndex.cast(autobuffer_stack8_get(pushed_functions, i));
             declare pushed_function_target = whole_8.cast(autobuffer_stack8_get(pushed_function_targets, i));
 
             declare function_index = InstructionIndex.cast(autobuffer_array8_get(function_locations, pushed_function_target));
 
-            declare value_new = +(function_index, 504);
+            declare value_new = function_index + 504;
 
-            X86_64.set_value8_offset(instructions_buffer, +(pushed_function_instruction_specific, 2), +(start_address, value_new));
-            i = +(i, 1);
+            X86_64.set_value8_offset(instructions_buffer, pushed_function_instruction_specific + 2, start_address + value_new);
+            i = i + 1;
         };
     };
 
     define adjust_jumps = function(jumps: *AutoBufferStack8, jump_targets: *AutoBufferStack8, targets: *AutoBuffer, setter: *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], instructions_buffer: *AutoBufferBuffer) {
-        declare jump_count = AutoBufferStack8.>index(jumps);
+        declare jump_count = jumps.index;
 
         declare i = 0;
-        while <(i, jump_count) {
+        while i < jump_count {
             declare jmp_instruction2 = InstructionIndex.cast(autobuffer_stack8_get(jumps, i));
             declare jmp_target = whole_8.cast(autobuffer_stack8_get(jump_targets, i));
             declare target_location = autobuffer_array8_get(targets, jmp_target);
             setter(instructions_buffer, jmp_instruction2, InstructionIndex.cast(target_location));
-            i = +(i, 1);
+            i = i + 1;
         };
     };
 
     define round_up_to_4096 = function(in: whole_8): whole_8 {
-        declare modulus = %(in, 4096);
-        if =(modulus, 0) {
-            if =(in, 0) {
+        declare modulus = in % 4096;
+        if modulus == 0 {
+            if in == 0 {
                 return 4096;
             } else {
                 return in;
             };
         };
 
-        return +(in, -(4096, modulus));
+        return in + (4096 - modulus);
     };
 
     define create_headers = function(start_address: whole_8, instructions_index: whole_8, data_index: whole_8, bss_index: whole_8): MachoHeader, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoSegmentCommand, MachoUnixThreadCommandX86_64 {
         declare header = new_macho_header();
-        MachoHeader.<cpu_type(&(header), 16777223:whole_4);
-        MachoHeader.<cpu_subtype(&(header), 2147483651:whole_4);
-        MachoHeader.<file_type(&(header), 2:whole_4);
-        MachoHeader.<commands_count(&(header), 5:whole_4);
-        MachoHeader.<commands_size(&(header), 472:whole_4);
-        MachoHeader.<flags(&(header), 1:whole_4);
+        header.cpu_type = 16777223:whole_4;
+        header.cpu_type = 16777223:whole_4;
+        header.cpu_subtype = 2147483651:whole_4;
+        header.file_type = 2:whole_4;
+        header.commands_count = 5:whole_4;
+        header.commands_size = 472:whole_4;
+        header.flags = 1:whole_4;
 
         declare segment_pagezero = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_pagezero), 25:whole_4);
-        MachoSegmentCommand.<command_size(&(segment_pagezero), 72:whole_4);
-        declare page_zero = "__PAGEZERO";
-        copy(page_zero, &(MachoSegmentCommand.>name(&(segment_pagezero))), 10);
-        MachoSegmentCommand.<virtual_address(&(segment_pagezero), 0);
-        MachoSegmentCommand.<virtual_size(&(segment_pagezero), 4096);
-        MachoSegmentCommand.<file_address(&(segment_pagezero), 0);
-        MachoSegmentCommand.<file_size(&(segment_pagezero), 0);
-        MachoSegmentCommand.<protection_maximum(&(segment_pagezero), 0:whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_pagezero), 0:whole_4);
+        segment_pagezero.command = 25:whole_4;
+        segment_pagezero.command_size = 72:whole_4;
+        copy("__PAGEZERO", &segment_pagezero.name, 10);
+        segment_pagezero.virtual_address = 0;
+        segment_pagezero.virtual_size = 4096;
+        segment_pagezero.file_address = 0;
+        segment_pagezero.file_size = 0;
+        segment_pagezero.protection_maximum = 0:whole_4;
+        segment_pagezero.protection_initial = 0:whole_4;
 
         declare segment_instructions = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_instructions), 25:whole_4);
-        MachoSegmentCommand.<command_size(&(segment_instructions), 72:whole_4);
-        MachoSegmentCommand.<virtual_address(&(segment_instructions), start_address);
-        MachoSegmentCommand.<virtual_size(&(segment_instructions), +(504, instructions_index));
-        MachoSegmentCommand.<file_address(&(segment_instructions), 0);
-        MachoSegmentCommand.<file_size(&(segment_instructions), +(504, instructions_index));
-        MachoSegmentCommand.<protection_maximum(&(segment_instructions), 7:whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_instructions), 5:whole_4);
+        segment_instructions.command = 25:whole_4;
+        segment_instructions.command_size = 72:whole_4;
+        segment_instructions.virtual_address = start_address;
+        segment_instructions.virtual_size = 504 + instructions_index;
+        segment_instructions.file_address = 0;
+        segment_instructions.file_size = 504 + instructions_index;
+        segment_instructions.protection_maximum = 7:whole_4;
+        segment_instructions.protection_initial = 5:whole_4;
 
         declare segment_data = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_data), 25:whole_4);
-        MachoSegmentCommand.<command_size(&(segment_data), 72:whole_4);
-        MachoSegmentCommand.<virtual_address(&(segment_data), +(.round_up_to_4096(+(instructions_index, 504)), start_address));
-        MachoSegmentCommand.<virtual_size(&(segment_data), data_index);
-        MachoSegmentCommand.<file_address(&(segment_data), .round_up_to_4096(+(instructions_index, 504)));
-        MachoSegmentCommand.<file_size(&(segment_data), data_index);
-        MachoSegmentCommand.<protection_maximum(&(segment_data), 1:whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_data), 1:whole_4);
+        segment_data.command = 25:whole_4;
+        segment_data.command_size = 72:whole_4;
+        segment_data.virtual_address = .round_up_to_4096(instructions_index + 504) + start_address;
+        segment_data.virtual_size = data_index;
+        segment_data.file_address = .round_up_to_4096(instructions_index + 504);
+        segment_data.file_size = data_index;
+        segment_data.protection_maximum = 1:whole_4;
+        segment_data.protection_initial = 1:whole_4;
 
         declare segment_bss = MachoSegmentCommand.>0();
-        MachoSegmentCommand.<command(&(segment_bss), 25:whole_4);
-        MachoSegmentCommand.<command_size(&(segment_bss), 72:whole_4);
-        MachoSegmentCommand.<virtual_address(&(segment_bss), +(.round_up_to_4096(+(instructions_index, 504)), +(start_address, .round_up_to_4096(data_index))));
-        MachoSegmentCommand.<virtual_size(&(segment_bss), bss_index);
-        MachoSegmentCommand.<file_address(&(segment_bss), 0);
-        MachoSegmentCommand.<file_size(&(segment_bss), 0);
-        MachoSegmentCommand.<protection_maximum(&(segment_bss), 3:whole_4);
-        MachoSegmentCommand.<protection_initial(&(segment_bss), 3:whole_4);
+        segment_bss.command = 25:whole_4;
+        segment_bss.command_size = 72:whole_4;
+        segment_bss.virtual_address = .round_up_to_4096(instructions_index + 504) + start_address + .round_up_to_4096(data_index);
+        segment_bss.virtual_size = bss_index;
+        segment_bss.file_address = 0;
+        segment_bss.file_size = 0;
+        segment_bss.protection_maximum = 3:whole_4;
+        segment_bss.protection_initial = 3:whole_4;
 
         declare unix_thread = MachoUnixThreadCommandX86_64.>0();
-        MachoUnixThreadCommandX86_64.<command(&(unix_thread), 5:whole_4);
-        MachoUnixThreadCommandX86_64.<command_size(&(unix_thread), 184:whole_4);
-        MachoUnixThreadCommandX86_64.<flavor(&(unix_thread), 4:whole_4);
-        MachoUnixThreadCommandX86_64.<count(&(unix_thread), 42:whole_4);
-        MachoUnixThreadCommandX86_64.<rip(&(unix_thread), +(start_address, 504));
+        unix_thread.command = 5:whole_4;
+        unix_thread.command_size = 184:whole_4;
+        unix_thread.flavor = 4:whole_4;
+        unix_thread.count = 42:whole_4;
+        unix_thread.rip = start_address + 504;
 
         return header, segment_pagezero, segment_instructions, segment_data, segment_bss, unix_thread;
     };

@@ -600,7 +600,7 @@ define parse_if = function(tokens: *Tokens.Tokens, index_pointer: *whole_8, node
         declare jump_data = #nodes_append_data(nodes, Node.JUMP, Node.JumpData, get_token_location_data(tokens, index));
         jump_data.target_id = end_target;
 
-        declare end_if = #nodes_append_data(nodes, Node.ENDIFBLOCK, Node.EndIfBlockData, get_token_location_data(tokens, -(index, 1)));
+        declare end_if = #nodes_append_data(nodes, Node.ENDIFBLOCK, Node.EndIfBlockData, get_token_location_data(tokens, index - 1));
         end_if.id = end_target;
         end_if.is_bare_else = is_bare_else;
 
