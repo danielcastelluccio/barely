@@ -680,10 +680,8 @@ define is_assign = function(tokens: *Tokens.Tokens, index_pointer: *whole_8): bo
     while checking {
         if Tokens.get_id(tokens, index) == Token.NAME {
             declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
-            if !(Tokens.get_id(tokens, index + 1) == Token.OPEN_PARENTHESIS) {
-                if string=(name, "=") {
-                    checking = false;
-                };
+            if string=(name, "=") {
+                checking = false;
             };
         } else if Tokens.get_id(tokens, index) == Token.KEYWORD {
             is_assign = false;
