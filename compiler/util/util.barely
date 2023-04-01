@@ -245,17 +245,17 @@ define hashmap_get = function(hashmap: *HashMap, hash: whole_8): any_8 {
     return if found {
         value
     } else {
-        0:any_8
+        any_8.cast(0)
     };
 };
 
-// TODO: The implementation in hashmap_get causes a crash here. why?
 define hashmap_get2 = function(hashmap: *HashMap, hash: whole_8): any_8 {
-    declare result, found = hashmap_get_general(hashmap, hash);
-    if !found {
-        result = 999;
+    declare value, found = hashmap_get_general(hashmap, hash);
+    return if found {
+        value
+    } else {
+        any_8.cast(999)
     };
-    return result;
 };
 
 define hashmap_string_put = function(hashmap: *HashMap, string: *, value: any_8) {

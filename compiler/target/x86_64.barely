@@ -1001,11 +1001,6 @@ define Target_X86_64 = module {
         declare number_data = *Node.NumberData.cast(pointer_data);
         declare value_whole_8 = number_data.value;
         declare coersion = number_data.coersion;
-        if coersion == 0 {
-            coersion = "whole_8";
-        } else {
-            coersion = expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-        };
 
         declare size = if string_length=(coersion, "whole_", 6) {
             string_to_whole_8(coersion + 6)

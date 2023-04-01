@@ -174,7 +174,7 @@ define process = function(nodes: *Nodes.Nodes, size_function: *function[*,*Nodes
 
             stack.index = 0;
         } else if id == Node.NUMBER {
-            process_number(&module_stack, &stack, pointer_data);
+            process_number(&module_stack, nodes, i, &stack, pointer_data);
         } else if id == Node.BOOLEAN {
             autobuffer_stack8_push(&stack, "boolean");
         } else if id == Node.STRING {
@@ -282,7 +282,7 @@ define is_define = function(type: *): boolean {
     return true;
 };
 
-define process_number = function(module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, pointer_data: *) {
+define process_number = function(module_stack: *AutoBufferStack8, nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, pointer_data: *) {
     declare number_data = *Node.NumberData.cast(pointer_data);
 
     declare coersion = number_data.coersion;
@@ -291,6 +291,14 @@ define process_number = function(module_stack: *AutoBufferStack8, stack: *AutoBu
     } else {
         coersion = *.cast(array8_get(coersion, 0));
     };
+
+    if (!string_length=(coersion, "whole_", 6)) && (!string_length=(coersion, "integer_", 8)) {
+        print_node_error_beginning(nodes, nodes_index);
+        print("Number coersion '");
+        print(coersion);
+        println("' not allowed");
+    };
+    number_data.coersion = coersion;
 
     autobuffer_stack8_push(stack, coersion);
 };
