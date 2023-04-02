@@ -1,11 +1,11 @@
 define InstructionSetFunctions = structure {
-    main: *function[*Nodes.Nodes,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex,*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:]];
-    get_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8];
-    get_size_multiple: *function[*,whole_8,*Nodes.Nodes,*ProgramData:whole_8];
-    get_size_multiple_reversed: *function[*,whole_8,*Nodes.Nodes,*ProgramData:whole_8];
+    main: *function[*Nodes.Data,*ProgramData,*,*AutoBufferBuffer,*AutoBufferBuffer,*AutoBuffer,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8,*AutoBuffer,*AutoBuffer,*,*,*AutoBufferStack8,*AutoBufferStack8,*AutoBufferStack8:InstructionIndex,*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:],*function[*AutoBufferBuffer,InstructionIndex,whole_8:]];
+    get_size: *function[*,*Nodes.Data,*ProgramData:whole_8];
+    get_size_multiple: *function[*,whole_8,*Nodes.Data,*ProgramData:whole_8];
+    get_size_multiple_reversed: *function[*,whole_8,*Nodes.Data,*ProgramData:whole_8];
 };
 
-define calculate_global_locations = function(nodes: *Nodes.Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8], global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
+define calculate_global_locations = function(nodes: *Nodes.Data, program_data: *ProgramData, function_size: *function[*,*Nodes.Data,*ProgramData:whole_8], global_types: *AutoBuffer, global_count: whole_8): *, whole_8 {
     declare global_locations = autobuffer_new(512);
     declare bss_index = 0;
 
@@ -23,7 +23,7 @@ define calculate_global_locations = function(nodes: *Nodes.Nodes, program_data: 
     return global_locations.buffer, bss_index;
 };
 
-define calculate_function_local_sizes = function(nodes: *Nodes.Nodes, program_data: *ProgramData, function_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
+define calculate_function_local_sizes = function(nodes: *Nodes.Data, program_data: *ProgramData, function_size: *function[*,*Nodes.Data,*ProgramData:whole_8], function_node_locations: *AutoBuffer, function_count: whole_8): * {
     declare function_local_sizes = autobuffer_new(1024);
     declare empty_module_stack = autobuffer_stack8_new(8);
 

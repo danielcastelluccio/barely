@@ -8,7 +8,7 @@ define Target_X86_64 = module {
         return functions;
     };
 
-    define output = function(nodes: *Nodes.Nodes, program_data: *ProgramData, target_os: *, instructions_buffer: *AutoBufferBuffer, data_buffer: *AutoBufferBuffer, function_locations: *AutoBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, targets: *AutoBuffer, global_types: *AutoBuffer, global_locations: *, function_local_sizes: *, data_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8): InstructionIndex, *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:] {
+    define output = function(nodes: *Nodes.Data, program_data: *ProgramData, target_os: *, instructions_buffer: *AutoBufferBuffer, data_buffer: *AutoBufferBuffer, function_locations: *AutoBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, targets: *AutoBuffer, global_types: *AutoBuffer, global_locations: *, function_local_sizes: *, data_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8): InstructionIndex, *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,InstructionIndex:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:], *function[*AutoBufferBuffer,InstructionIndex,whole_8:] {
         declare structure_member_types = program_data.structure_member_types;
         declare structure_member_names = program_data.structure_member_names;
 
@@ -78,19 +78,14 @@ define Target_X86_64 = module {
             else if id == Node.ENDSCOPE { .output_end_scope(&variable_types, &variable_indexes) }
             else if id == Node.DEFINE { .output_define(program_data, function_locations, &module_stack, pointer_data, declared_module_id, instructions_buffer) }
             else if id == Node.ENDDEFINE {
-                declare define_data = *Node.EndDefineData.cast(pointer_data);
-                declare define_type = define_data.type;
-
-                if define_type == 0 {
-                } else if string=(define_type, "module") {
-                    declare _ = autobuffer_stack8_pop(&module_stack);
-                };
             } else if id == Node.MODULE {
+                autobuffer_stack8_push(&module_stack, declared_module_id);
                 declared_module_id = declared_module_id + 1;
+            } else if id == Node.ENDMODULE {
+                declare _ = autobuffer_stack8_pop(&module_stack);
             } else if id == Node.ENDFUNCTION {
                 in_function = false;
-            } else if id == Node.ENDMODULE {}
-            else if id == Node.STRUCTURE {}
+            } else if id == Node.STRUCTURE {}
             else if id == Node.STARTIFBLOCK {}
             else if id == Node.ENDIFBLOCK {}
             else if id == Node.ENDSTATEMENT {}
@@ -133,7 +128,6 @@ define Target_X86_64 = module {
             declare define_values = &program_data.define_values;
             autobuffer_array8_set(function_locations, whole_8.cast(hashmap_string_get(define_values, define_name)), instructions_buffer.index);
         } else if string_length=(define_type, "module", 6) {
-            autobuffer_stack8_push(module_stack, declared_module_id);
         };
     };
 
@@ -158,7 +152,7 @@ define Target_X86_64 = module {
         autobuffer_array8_set(targets, target, X86_64.get_instruction(instructions_buffer));
     };
 
-    define output_jump = function(nodes: *Nodes.Nodes, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_jump = function(nodes: *Nodes.Data, jmps: *AutoBufferStack8, jmp_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare jump_data = *Node.JumpData.cast(pointer_data);
         declare target = jump_data.target_id;
 
@@ -176,7 +170,7 @@ define Target_X86_64 = module {
         ELF_X86_64.autobuffer_buffer_push_push_data(instructions_buffer, data_indexes_to_adjust, string_data_index);
     };
 
-    define output_function = function(nodes: *Nodes.Nodes, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_function = function(nodes: *Nodes.Data, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare function_data = *Node.FunctionData.cast(pointer_data);
         declare function_name = function_data.name;
         declare next_id = Nodes.get_id(nodes, nodes_index + 1);
@@ -194,7 +188,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_declare = function(nodes: *Nodes.Nodes, program_data: *ProgramData, in_function: boolean, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_declare = function(nodes: *Nodes.Data, program_data: *ProgramData, in_function: boolean, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_index: *whole_8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         if in_function {
             declare declare_data = *Node.DeclareData.cast(pointer_data);
             declare variable_name = declare_data.name;
@@ -208,7 +202,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_jump_conditional = function(nodes: *Nodes.Nodes, program_data: *ProgramData, pointer_data: *, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, instructions_buffer: *AutoBufferBuffer) {
+    define output_jump_conditional = function(nodes: *Nodes.Data, program_data: *ProgramData, pointer_data: *, jes: *AutoBufferStack8, je_targets: *AutoBufferStack8, instructions_buffer: *AutoBufferBuffer) {
         declare jump_conditional_data = *Node.JumpConditionalData.cast(pointer_data);
         declare target = jump_conditional_data.target_id;
         declare conditional = jump_conditional_data.desired_state;
@@ -230,7 +224,7 @@ define Target_X86_64 = module {
         autobuffer_stack8_push(je_targets, target);
     };
 
-    define output_return = function(nodes: *Nodes.Nodes, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, function_return_types2: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
+    define output_return = function(nodes: *Nodes.Data, program_data: *ProgramData, current_function_id: whole_8, function_argument_types: *AutoBuffer, function_return_types: *AutoBuffer, function_return_types2: *AutoBuffer, instructions_buffer: *AutoBufferBuffer) {
         declare arguments_size = .get_size_multiple_array(*.cast(autobuffer_array8_get(function_argument_types, current_function_id)), 999, nodes, program_data);
         declare returns_size = .get_size_multiple_array(*.cast(autobuffer_array8_get(function_return_types2, current_function_id)), 999, nodes, program_data);
         declare returns_size_with_extra = returns_size + 8;
@@ -282,7 +276,7 @@ define Target_X86_64 = module {
         X86_64.autobuffer_buffer_push_ret(instructions_buffer);
     };
 
-    define output_retrieve = function(nodes: *Nodes.Nodes, nodes_index: whole_8, in_function: boolean, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_retrieve = function(nodes: *Nodes.Data, nodes_index: whole_8, in_function: boolean, program_data: *ProgramData, module_stack: *AutoBufferStack8, define_stack: *AutoBufferStack8, current_function_id: whole_8, function_argument_names: *AutoBuffer, function_argument_types: *AutoBuffer, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         if !in_function {
             return;
         };
@@ -396,7 +390,7 @@ define Target_X86_64 = module {
         .output_retrieve_define(nodes, nodes_index, program_data, instructions_buffer, pushed_functions, pushed_function_targets, global_types, global_locations, bss_indexes_to_adjust, bss_indexes_to_adjust_relative, module_stack, name, type);
     };
 
-    define output_retrieve_define = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, name_in: *, variable_type_in: *) {
+    define output_retrieve_define = function(nodes: *Nodes.Data, nodes_index: whole_8, program_data: *ProgramData, instructions_buffer: *AutoBufferBuffer, pushed_functions: *AutoBufferStack8, pushed_function_targets: *AutoBufferStack8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust: *AutoBufferStack8, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, name_in: *, variable_type_in: *) {
         declare name = name_in;
         declare variable_type = variable_type_in;
         declare define_types = &program_data.define_types;
@@ -512,7 +506,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_assign = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_assign = function(nodes: *Nodes.Data, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare assign_data = *Node.AssignData.cast(pointer_data);
         declare name = assign_data.name;
 
@@ -609,7 +603,7 @@ define Target_X86_64 = module {
         X86_64.autobuffer_buffer_push_call_far_register8(instructions_buffer, RAX);
     };
 
-    define output_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
+    define output_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole_8, define_stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap, instructions_buffer: *AutoBufferBuffer) {
         declare invoke_internal_data = *Node.InvokeInternalData.cast(Nodes.get_pointer_data(nodes, nodes_index));
         declare function_name = invoke_internal_data.name;
 
@@ -683,7 +677,7 @@ define Target_X86_64 = module {
         .output_syscall5_internal(instructions_buffer);
     };
 
-    define output_equals_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_equals_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
 
         .output_compare(instructions_buffer, size);
@@ -695,7 +689,7 @@ define Target_X86_64 = module {
         X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, CL, RSP, 0);
     };
 
-    define output_greater_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_greater_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
         declare signed = is_signed(type, nodes) == 1;
 
@@ -712,7 +706,7 @@ define Target_X86_64 = module {
         X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, CL, RSP, 0);
     };
 
-    define output_less_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_less_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
         declare signed = is_signed(type, nodes) == 1;
 
@@ -763,7 +757,7 @@ define Target_X86_64 = module {
         X86_64.autobuffer_buffer_push_mov_register1_register8_pointer_offset(instructions_buffer, AL, RSP, 0);
     };
 
-    define output_add_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_add_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
 
         if size == 8 {
@@ -786,7 +780,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_subtract_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_subtract_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
 
         if size == 8 {
@@ -808,7 +802,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_multiply_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_multiply_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
         declare signed = is_signed(type, nodes) == 1;
 
@@ -847,7 +841,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_divide_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_divide_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
         declare signed = is_signed(type, nodes) == 1;
 
@@ -894,7 +888,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define output_modulo_internal = function(nodes: *Nodes.Nodes, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_modulo_internal = function(nodes: *Nodes.Data, program_data: *ProgramData, type: *, instructions_buffer: *AutoBufferBuffer) {
         declare size = .get_size(type, nodes, program_data);
         declare signed = is_signed(type, nodes) == 1;
 
@@ -1048,7 +1042,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define create_structure_internal_functions = function(program_data: *ProgramData, nodes: *Nodes.Nodes, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap) {
+    define create_structure_internal_functions = function(program_data: *ProgramData, nodes: *Nodes.Data, internal_function_instructions: *HashMap, internal_function_instruction_sizes: *HashMap) {
         declare structure_datas = &program_data.structure_datas;
         declare structure_count = structure_datas.index;
 
@@ -1387,7 +1381,7 @@ define Target_X86_64 = module {
         };
     };
 
-    define get_size = function(type: *, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+    define get_size = function(type: *, nodes: *Nodes.Data, program_data: *ProgramData): whole_8 {
         if string_length=(type, "*", 1) {
             return 8;
         };
@@ -1444,13 +1438,13 @@ define Target_X86_64 = module {
         return 0;
     };
 
-    define get_size_array = function(type: *, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+    define get_size_array = function(type: *, nodes: *Nodes.Data, program_data: *ProgramData): whole_8 {
         declare empty_module_stack = autobuffer_stack8_new(8);
         declare expanded_type = expand_module_name_array(type, 0, &module_id_map, &module_references_map, &empty_module_stack, create_previous_results_list());
         return .get_size(expanded_type, nodes, program_data);
     };
 
-    define get_size_multiple = function(array: *, count: whole_8, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+    define get_size_multiple = function(array: *, count: whole_8, nodes: *Nodes.Data, program_data: *ProgramData): whole_8 {
         declare total = 0;
 
         declare i = 0;
@@ -1465,7 +1459,7 @@ define Target_X86_64 = module {
         return total;
     };
 
-    define get_size_multiple_array = function(array: *, count: whole_8, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+    define get_size_multiple_array = function(array: *, count: whole_8, nodes: *Nodes.Data, program_data: *ProgramData): whole_8 {
         declare total = 0;
 
         declare empty_module_stack = autobuffer_stack8_new(8);
@@ -1483,7 +1477,7 @@ define Target_X86_64 = module {
         return total;
     };
 
-    define get_size_multiple_reversed = function(array: *, count: whole_8, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+    define get_size_multiple_reversed = function(array: *, count: whole_8, nodes: *Nodes.Data, program_data: *ProgramData): whole_8 {
         declare total = 0;
 
         declare i = array8_length(array) - 1;
@@ -1495,7 +1489,7 @@ define Target_X86_64 = module {
         return total;
     };
 
-    define get_size_multiple_reversed_array = function(array: *, count: whole_8, nodes: *Nodes.Nodes, program_data: *ProgramData): whole_8 {
+    define get_size_multiple_reversed_array = function(array: *, count: whole_8, nodes: *Nodes.Data, program_data: *ProgramData): whole_8 {
         declare total = 0;
 
         declare empty_module_stack = autobuffer_stack8_new(8);

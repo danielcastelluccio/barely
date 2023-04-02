@@ -1,5 +1,5 @@
 // TODO: Currently using a define to define a type as another will result in two equal types, I would prefer them to be unique, but is that really a good idea?
-define is_type = function(wanted: *, given: *, nodes: *Nodes.Nodes, program_data: *ProgramData): boolean {
+define is_type = function(wanted: *, given: *, nodes: *Nodes.Data, program_data: *ProgramData): boolean {
     if string=(wanted, given) {
         return true;
     };
@@ -23,7 +23,7 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes.Nodes, program_data
     return false;
 };
 
-define is_signed = function(type: *, nodes: *Nodes.Nodes): whole_8 {
+define is_signed = function(type: *, nodes: *Nodes.Data): whole_8 {
     declare cached_signedness = whole_8.cast(hashmap_string_get2(&cached_signedness_map, type));
     if !(cached_signedness == 999) {
         return cached_signedness;
@@ -72,7 +72,7 @@ define is_signed = function(type: *, nodes: *Nodes.Nodes): whole_8 {
     return 0;
 };
 
-define print_node_error_beginning = function(nodes: *Nodes.Nodes, location: whole_8) {
+define print_node_error_beginning = function(nodes: *Nodes.Data, location: whole_8) {
     declare location_data = Nodes.get_location_data(nodes, location);
     print("[ERROR] ");
     print(location_data.file);
@@ -102,10 +102,10 @@ define ProgramData = structure {
     global_types: AutoBuffer;
 
     // possible should be in a separate structure
-    get_size: *function[*,*Nodes.Nodes,*ProgramData:whole_8];
+    get_size: *function[*,*Nodes.Data,*ProgramData:whole_8];
 };
 
-define process = function(nodes: *Nodes.Nodes, size_function: *function[*,*Nodes.Nodes,*ProgramData:whole_8]): ProgramData {
+define process = function(nodes: *Nodes.Data, size_function: *function[*,*Nodes.Data,*ProgramData:whole_8]): ProgramData {
     declare node_count = nodes.index;
 
     declare module_stack = autobuffer_stack8_new(32);
@@ -282,7 +282,7 @@ define is_define = function(type: *): boolean {
     return true;
 };
 
-define process_number = function(module_stack: *AutoBufferStack8, nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, pointer_data: *) {
+define process_number = function(module_stack: *AutoBufferStack8, nodes: *Nodes.Data, nodes_index: whole_8, stack: *AutoBufferStack8, pointer_data: *) {
     declare number_data = *Node.NumberData.cast(pointer_data);
 
     declare coersion = number_data.coersion;
@@ -303,7 +303,7 @@ define process_number = function(module_stack: *AutoBufferStack8, nodes: *Nodes.
     autobuffer_stack8_push(stack, coersion);
 };
 
-define process_jump_conditional = function(nodes: *Nodes.Nodes, nodes_index: whole_8, program_data: *ProgramData, stack: *AutoBufferStack8) {
+define process_jump_conditional = function(nodes: *Nodes.Data, nodes_index: whole_8, program_data: *ProgramData, stack: *AutoBufferStack8) {
     if stack.index == 0 {
         print_node_error_beginning(nodes, nodes_index);
         println("Conditional jump ran out of stack values");
@@ -320,7 +320,7 @@ define process_jump_conditional = function(nodes: *Nodes.Nodes, nodes_index: who
     };
 };
 
-define process_return = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, module_stack: *AutoBufferStack8, current_function_id: whole_8) {
+define process_return = function(nodes: *Nodes.Data, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, module_stack: *AutoBufferStack8, current_function_id: whole_8) {
     declare function_return_types = &program_data.function_return_types;
     declare function_return_types_specific = *.cast(autobuffer_array8_get(function_return_types, current_function_id));
 
@@ -361,7 +361,7 @@ define process_return = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stac
     };
 };
 
-define process_end_if = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, if_blocks: *AutoBufferStack8, if_block_results: *AutoBuffer, pointer_data: *, program_data: *ProgramData) {
+define process_end_if = function(nodes: *Nodes.Data, nodes_index: whole_8, stack: *AutoBufferStack8, if_blocks: *AutoBufferStack8, if_block_results: *AutoBuffer, pointer_data: *, program_data: *ProgramData) {
     declare end_if_data = *Node.EndIfBlockData.cast(pointer_data);
     declare end_if_id = end_if_data.id;
     declare is_last = end_if_data.is_last;
@@ -436,7 +436,7 @@ define process_end_if = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stac
     };
 };
 
-define process_assign = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, variable_scopes_types_map: *AutoBufferStack8, variable_scopes_declares_map: *AutoBufferStack8, pointer_data: *) {
+define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, variable_scopes_types_map: *AutoBufferStack8, variable_scopes_declares_map: *AutoBufferStack8, pointer_data: *) {
     declare nodes_index = nodes_index_in.*;
     declare assign_data = *Node.AssignData.cast(pointer_data);
     declare name = assign_data.name;
@@ -604,7 +604,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
     return *.cast(hashmap_string_get2(define_values, define_name));
 };
 
-define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, variable_scopes_types_map: *AutoBufferStack8, program_data: *ProgramData, current_function_id: whole_8) {
+define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, variable_scopes_types_map: *AutoBufferStack8, program_data: *ProgramData, current_function_id: whole_8) {
     declare nodes_index = nodes_index_in.*;
     declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index);
     declare name = retrieve_data.name;
@@ -768,7 +768,7 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
     };
 };
 
-define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *) {
+define process_invoke = function(nodes: *Nodes.Data, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *) {
     declare function_type = *.cast(autobuffer_stack8_pop(stack));
 
     if string_length=(function_type, "*function[", 10) {
@@ -835,7 +835,7 @@ define process_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, modu
     };
 };
 
-define process_invoke_internal = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *) {
+define process_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *) {
     declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index);
     declare function_name = invoke_data.name;
     declare is_single = !invoke_data.uses_previous;
@@ -1033,7 +1033,7 @@ define print_array8_string = function(array: *) {
     println("]");
 };
 
-define process_cast = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, invoke_data: *Node.InvokeInternalData, function_name: *) {
+define process_cast = function(nodes: *Nodes.Data, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, invoke_data: *Node.InvokeInternalData, function_name: *) {
     if stack.index == 0 {
         print_node_error_beginning(nodes, nodes_index);
         println("Cast ran out of stack values");
@@ -1075,7 +1075,7 @@ define process_cast = function(nodes: *Nodes.Nodes, nodes_index: whole_8, module
     Nodes.set_skip(nodes, nodes_index - 1);
 };
 
-define process_internal_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, module_stack: *AutoBufferStack8, function_name: *) {
+define process_internal_invoke = function(nodes: *Nodes.Data, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, module_stack: *AutoBufferStack8, function_name: *) {
     declare found_function = false;
 
     declare internal_function_argument_types = &program_data.internal_function_argument_types;
@@ -1135,7 +1135,7 @@ define process_internal_invoke = function(nodes: *Nodes.Nodes, nodes_index: whol
     };
 };
 
-define process_math_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, math_name: *): * {
+define process_math_invoke = function(nodes: *Nodes.Data, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, math_name: *): * {
     if stack.index < 2 {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
@@ -1171,7 +1171,7 @@ define process_math_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8,
     return concatenate3_brk_allocate(math_name, "_" first);
 };
 
-define process_comparison_invoke = function(nodes: *Nodes.Nodes, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, comparison_name: *): * {
+define process_comparison_invoke = function(nodes: *Nodes.Data, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, comparison_name: *): * {
     if stack.index == 0 {
         print_node_error_beginning(nodes, nodes_index);
         print("Invoke of '");
@@ -1211,7 +1211,7 @@ declare module_id_map: HashMap;
 declare module_references_map: HashMap;
 declare define_module_map: HashMap;
 
-define setup_process = function(nodes: *Nodes.Nodes, program_data: *ProgramData) {
+define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) {
     declare node_count = nodes.index;
 
     declare module_stack = autobuffer_stack8_new(24);
@@ -1559,7 +1559,7 @@ define create_previous_results_list = function(): *AutoBufferStack8 {
     return allocated;
 };
 
-define is_pointer = function(nodes: *Nodes.Nodes, index_in: whole_8): boolean {
+define is_pointer = function(nodes: *Nodes.Data, index_in: whole_8): boolean {
     declare index = index_in;
     while true {
         declare id = Nodes.get_id(nodes, index);

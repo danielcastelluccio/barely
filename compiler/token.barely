@@ -49,41 +49,41 @@ define Token = module {
 };
 
 define Tokens = module {
-    define Tokens = structure {
+    define Data = structure {
         buffer: AutoBuffer;
         index: whole_8;
     };
 
-    define new = function(size: whole_8): .Tokens {
-        declare tokens = .Tokens.>0();
+    define new = function(size: whole_8): .Data {
+        declare tokens = .Data.>0();
 
-        .Tokens.<buffer(&(tokens), autobuffer_new(size * Token.SIZE));
-        .Tokens.<index(&(tokens), 0);
+        .Data.<buffer(&(tokens), autobuffer_new(size * Token.SIZE));
+        .Data.<index(&(tokens), 0);
 
         return tokens;
     };
 
-    define get_id = function(tokens: *.Tokens, index: whole_8): whole_8 {
+    define get_id = function(tokens: *.Data, index: whole_8): whole_8 {
         return autobuffer_get_whole_8(&tokens.buffer, index * Token.SIZE);
     };
 
-    define get_pointer = function(tokens: *.Tokens, index: whole_8): * {
+    define get_pointer = function(tokens: *.Data, index: whole_8): * {
         return autobuffer_get(&tokens.buffer, index * Token.SIZE);
     };
 
-    define get_pointer_data = function(tokens: *.Tokens, index: whole_8): * {
+    define get_pointer_data = function(tokens: *.Data, index: whole_8): * {
         return autobuffer_get(&tokens.buffer, (index * Token.SIZE) + Token.DATA_OFFSET);
     };
 
-    define get_location_data = function(tokens: *.Tokens, index: whole_8): *Token.LocationData {
+    define get_location_data = function(tokens: *.Data, index: whole_8): *Token.LocationData {
         return *Token.LocationData.cast(autobuffer_get(&tokens.buffer, (index * Token.SIZE) + 8));
     };
 
-    define append_data = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    define append_data = function(tokens: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
         return *.cast(Tokens.append(tokens, id, file_name, row, column) + Token.DATA_OFFSET);
     };
 
-    define append = function(tokens: *.Tokens, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    define append = function(tokens: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
         declare tokens_buffer = &tokens.buffer;
         declare tokens_index = tokens.index;
         declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token.SIZE, Token.SIZE);
@@ -97,7 +97,7 @@ define Tokens = module {
         return to_return;
     };
 
-    define append_count = function(tokens: *.Tokens, count: whole_8): * {
+    define append_count = function(tokens: *.Data, count: whole_8): * {
         declare tokens_buffer = &tokens.buffer;
         declare tokens_index = tokens.index;
         declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token.SIZE, count * Token.SIZE);
@@ -106,7 +106,7 @@ define Tokens = module {
         return to_return;
     };
 
-    define is_keyword = function(tokens: *.Tokens, index: whole_8, keyword: *): boolean {
+    define is_keyword = function(tokens: *.Data, index: whole_8, keyword: *): boolean {
         return if .get_id(tokens, index) == Token.KEYWORD {
             string=(*Token.KeywordData.cast(.get_pointer_data(tokens, index)).keyword, keyword)
         } else {
@@ -114,7 +114,7 @@ define Tokens = module {
         };
     };
 
-    define is_name = function(tokens: *.Tokens, index: whole_8, name: *): boolean {
+    define is_name = function(tokens: *.Data, index: whole_8, name: *): boolean {
         return if .get_id(tokens, index) == Token.NAME {
             string=(*Token.NameData.cast(.get_pointer_data(tokens, index)).name, name)
         } else {

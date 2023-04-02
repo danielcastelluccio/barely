@@ -125,51 +125,51 @@ define Node = module {
 };
 
 define Nodes = module {
-    define Nodes = structure {
+    define Data = structure {
         buffer: AutoBuffer;
         index: whole_8;
     };
 
-    define new = function(size: whole_8): .Nodes {
-        declare nodes: Nodes.Nodes;
+    define new = function(size: whole_8): .Data {
+        declare nodes: Nodes.Data;
         nodes.buffer = autobuffer_new(size * Node.SIZE);
         nodes.index = 0;
         return nodes;
     };
 
-    define get_id = function(nodes: *.Nodes, index: whole_8): whole_8 {
+    define get_id = function(nodes: *.Data, index: whole_8): whole_8 {
         return autobuffer_get_whole_8(&nodes.buffer, index * Node.SIZE);
     };
 
-    define get_pointer_data = function(nodes: *.Nodes, index: whole_8): * {
+    define get_pointer_data = function(nodes: *.Data, index: whole_8): * {
         return autobuffer_get(&nodes.buffer, (index * Node.SIZE) + 32);
     };
 
-    define get_id_pointer = function(nodes: *.Nodes, index: whole_8): *whole_8 {
+    define get_id_pointer = function(nodes: *.Data, index: whole_8): *whole_8 {
         return *whole_8.cast(.get_pointer(nodes, index));
     };
 
-    define get_location_data = function(nodes: *.Nodes, index: whole_8): *Node.LocationData {
+    define get_location_data = function(nodes: *.Data, index: whole_8): *Node.LocationData {
         return *Node.LocationData.cast(autobuffer_get(&nodes.buffer, (index * Node.SIZE) + 8));
     };
 
-    define get_pointer = function(nodes: *.Nodes, index: whole_8): * {
+    define get_pointer = function(nodes: *.Data, index: whole_8): * {
         return autobuffer_get(&nodes.buffer, (index * Node.SIZE));
     };
 
-    define append_data = function(nodes: *.Nodes, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    define append_data = function(nodes: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
         return *.cast(.append(nodes, id, file_name, row, column) + 32);
     };
 
-    define append_data_anonymous = function(nodes: *.Nodes, id: whole_8): * {
+    define append_data_anonymous = function(nodes: *.Data, id: whole_8): * {
         return .append_data(nodes, id, "", 0, 0);
     };
 
-    define append_anonymous = function(nodes: *.Nodes, id: whole_8): * {
+    define append_anonymous = function(nodes: *.Data, id: whole_8): * {
         return .append(nodes, id, "", 0, 0);
     };
 
-    define append = function(nodes: *.Nodes, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    define append = function(nodes: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
         declare nodes_buffer = &nodes.buffer;
         declare nodes_index = &nodes.index;
         declare node_pointer = autobuffer_get_size(nodes_buffer, (nodes_index.* * Node.SIZE), Node.SIZE);
@@ -187,16 +187,16 @@ define Nodes = module {
         return node_pointer;
     };
 
-    define set_skip = function(nodes: *.Nodes, index: whole_8) {
+    define set_skip = function(nodes: *.Data, index: whole_8) {
         .set_id(nodes, index, Node.SKIP);
     };
 
-    define set_id = function(nodes: *.Nodes, index: whole_8, id: whole_8) {
+    define set_id = function(nodes: *.Data, index: whole_8, id: whole_8) {
         declare node_id = .get_id_pointer(nodes, index);
         node_id.* = id;
     };
 
-    define append_structure = function(nodes: *.Nodes, name: *, size: whole_8) {
+    define append_structure = function(nodes: *.Data, name: *, size: whole_8) {
         declare size_string = any_24.>0();
         whole_8_to_string(size, &(size_string));
 
@@ -217,7 +217,7 @@ define Nodes = module {
         declare _ = .append_anonymous(nodes, Node.ENDDEFINE);
     };
 
-    define append_structure_any = function(nodes: *.Nodes, name: *) {
+    define append_structure_any = function(nodes: *.Data, name: *) {
         declare structure_data = *Node.StructureData.cast(.append_data_anonymous(nodes, Node.STRUCTURE));
         structure_data.name = name;
         structure_data.item_names = &empty;
@@ -225,7 +225,7 @@ define Nodes = module {
         structure_data.is_internal = true;
     };
 
-    define append_function = function(nodes: *.Nodes, name: *, arguments: *, returns: *) {
+    define append_function = function(nodes: *.Data, name: *, arguments: *, returns: *) {
         declare function_data = *Node.FunctionData.cast(.append_data_anonymous(nodes, Node.FUNCTION));
         function_data.name = name;
         function_data.argument_types = arguments;
@@ -233,13 +233,13 @@ define Nodes = module {
         declare _ = .append_anonymous(nodes, Node.ENDFUNCTION);
     };
 
-    define copy = function(nodes_from: *.Nodes, nodes_to: *.Nodes, count: whole_8) {
+    define copy = function(nodes_from: *.Data, nodes_to: *.Data, count: whole_8) {
         autobuffer_set(&nodes_to.buffer, nodes_from.buffer.buffer, nodes_to.index * Node.SIZE, count * Node.SIZE);
         nodes_to.index = nodes_to.index + count;
     };
 };
 
-define print_node_info = function(nodes: *Nodes.Nodes, index: whole_8) {
+define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
     declare id = Nodes.get_id(nodes, index);
     declare pointer_data = Nodes.get_pointer_data(nodes, index);
     if id == Node.RETRIEVE {

@@ -1,4 +1,4 @@
-define tokenize_inner = function(buffer_in: *, buffer_length: whole_8, tokens: *Tokens.Tokens, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
+define tokenize_inner = function(buffer_in: *, buffer_length: whole_8, tokens: *Tokens.Data, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
     if buffer_length == 0 {
         return;
     };
@@ -56,7 +56,7 @@ macro #handle_special_tokenize_arguments() {
     contents, &buffer_index, tokens, file_name, &row, &column, &handled, &index
 };
 
-define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
+define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Data) {
     keyword_map = hashmap_new(64);
     hashmap_string_put(&keyword_map, "function", 1);
     hashmap_string_put(&keyword_map, "declare", 1);
@@ -178,7 +178,7 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Tokens) {
     };
 };
 
-define check_handle_single_operator = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_single_operator = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
@@ -192,7 +192,7 @@ define check_handle_single_operator = function(character: any_1, wanted_characte
     };
 };
 
-define check_handle_single_operator_repetition = function(contents: *, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_single_operator_repetition = function(contents: *, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     declare character = *any_1.cast(contents + index.*).*;
     if !(character == wanted_character) {
         return;
@@ -215,7 +215,7 @@ define check_handle_single_operator_repetition = function(contents: *, wanted_ch
     handled.* = true;
 };
 
-define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if &&(character == wanted_character, character_next == wanted_character_next) {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
@@ -229,7 +229,7 @@ define check_handle_double_operator = function(character: any_1, character_next:
     };
 };
 
-define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
         declare column_copy = column.*;
         tokenize_inner(internal_name, string_length(internal_name), tokens, file_name, row, &column_copy);
@@ -241,7 +241,7 @@ define check_handle_single_prefix = function(character: any_1, wanted_character:
     };
 };
 
-define check_handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
         declare _ = Tokens.append(tokens, token, file_name, row.*, column.*);
@@ -253,7 +253,7 @@ define check_handle_special_character = function(current_character: any_1, desir
     };
 };
 
-define check_handle_break = function(current_character: any_1, desired_character: whole_1, contents: *, buffer_index: *whole_8, tokens: *Tokens.Tokens, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_break = function(current_character: any_1, desired_character: whole_1, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
