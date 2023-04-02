@@ -685,8 +685,28 @@ define process_retrieve = function(nodes: *Nodes.Nodes, nodes_index_in: *whole_8
 
     declare define_types = &program_data.define_types;
     declare define_values = &program_data.define_values;
+
     if type == NULL {
-        type = get_define_retrieve_type(define_types, define_values, name);
+        declare found = false;
+        declare i = 0;
+        while i < module_stack.index {
+            declare module_id = whole_8.cast(autobuffer_stack8_get(module_stack, i));
+            declare module_id_string = any_24.>0();
+            whole_8_to_string(module_id, &module_id_string);
+            declare name_temp = concatenate2_brk_allocate(&module_id_string, name);
+            type = get_define_retrieve_type(define_types, define_values, name_temp);
+
+            if !(type == NULL) {
+                name = name_temp;
+                found = true;
+                break;
+            };
+            i = i + 1;
+        };
+
+        if !found {
+            type = get_define_retrieve_type(define_types, define_values, name);
+        };
     };
 
     if !(type == NULL) {
