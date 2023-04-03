@@ -158,106 +158,227 @@ define process = function(nodes: *Nodes.Data, size_function: *function[*,*Nodes.
 
     declare in_function = false;
 
-    declare i = 0;
-    while i < node_count {
-        declare id = Nodes.get_id(nodes, i);
-        declare pointer_data = Nodes.get_pointer_data(nodes, i);
+    //declare i = 0;
+    //while i < node_count {
+    //    declare id = Nodes.get_id(nodes, i);
+    //    declare pointer_data = Nodes.get_pointer_data(nodes, i);
 
-        if id == Node.FUNCTION {
-            declare function_name = *Node.FunctionData.cast(pointer_data).name;
+    //    process_individual(nodes, &i, &program_data, &current_function_id, &function_id, &in_function, &stack, &module_stack, &variable_scopes_types_map, &variable_scopes_declares_map, &if_blocks, &if_block_results, &has_main, &declared_module_id);
+    //    //if id == Node.FUNCTION {
+    //    //    declare function_name = *Node.FunctionData.cast(pointer_data).name;
 
-            if function_name == NULL {
-                current_function_id = function_id;
-                function_id = function_id + 1;
-            };
-            in_function = true;
+    //    //    if function_name == NULL {
+    //    //        current_function_id = function_id;
+    //    //        function_id = function_id + 1;
+    //    //    };
+    //    //    in_function = true;
 
-            stack.index = 0;
-        } else if id == Node.NUMBER {
-            process_number(&module_stack, nodes, i, &stack, pointer_data);
-        } else if id == Node.BOOLEAN {
-            autobuffer_stack8_push(&stack, "boolean");
-        } else if id == Node.STRING {
-            autobuffer_stack8_push(&stack, "*");
-        } else if id == Node.INVOKE {
-            process_invoke(nodes, i, &module_stack, &stack, &program_data, pointer_data);
-        } else if id == Node.INVOKE_INTERNAL {
-            process_invoke_internal(nodes, i, &module_stack, &stack, &program_data, pointer_data);
-        } else if id == Node.DECLARE {
-            declare declare_data = *Node.DeclareData.cast(pointer_data);
-            declare variable_name = declare_data.name;
-            declare variable_type_names = declare_data.type;
+    //    //    stack.index = 0;
+    //    //} else if id == Node.NUMBER {
+    //    //    process_number(&module_stack, nodes, i, &stack, pointer_data);
+    //    //} else if id == Node.BOOLEAN {
+    //    //    autobuffer_stack8_push(&stack, "boolean");
+    //    //} else if id == Node.STRING {
+    //    //    autobuffer_stack8_push(&stack, "*");
+    //    //} else if id == Node.INVOKE {
+    //    //    process_invoke(nodes, i, &module_stack, &stack, &program_data, pointer_data);
+    //    //} else if id == Node.INVOKE_INTERNAL {
+    //    //    process_invoke_internal(nodes, i, &module_stack, &stack, &program_data, pointer_data);
+    //    //} else if id == Node.DECLARE {
+    //    //    declare declare_data = *Node.DeclareData.cast(pointer_data);
+    //    //    declare variable_name = declare_data.name;
+    //    //    declare variable_type_names = declare_data.type;
 
-            if in_function {
-                hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(&variable_scopes_types_map)), variable_name, variable_type_names);
-                hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(&variable_scopes_declares_map)), variable_name, i);
-            };
-        } else if id == Node.ASSIGN {
-            process_assign(nodes, &i, &module_stack, &stack, &program_data, &variable_scopes_types_map, &variable_scopes_declares_map, pointer_data);
-        } else if id == Node.RETRIEVE {
-            if in_function {
-                process_retrieve(nodes, &i, &module_stack, &stack, &variable_scopes_types_map, &program_data, current_function_id);
-            };
-        } else if id == Node.RETURN {
-            process_return(nodes, i, &stack, &program_data, &module_stack, current_function_id);
-        } else if id == Node.JUMP_CONDITIONAL {
-            process_jump_conditional(nodes, i, &program_data, &stack);
-        } else if id == Node.SCOPE {
-            declare new_hashmap = hashmap_new(512);
-            declare allocated = *HashMap.cast(brk_allocate(24));
-            allocated.* = new_hashmap;
-            autobuffer_stack8_push(&variable_scopes_types_map, allocated);
+    //    //    declare type = if declare_data.has_type {
+    //    //        declare popped = *.cast(autobuffer_stack8_pop(&stack)) + 10;
+    //    //        declare_data.type = popped;
+    //    //        popped
+    //    //    } else {
+    //    //        ""
+    //    //    };
 
-            declare new_hashmap = hashmap_new(512);
-            declare allocated = *HashMap.cast(brk_allocate(24));
-            allocated.* = new_hashmap;
-            autobuffer_stack8_push(&variable_scopes_declares_map, allocated);
-        } else if id == Node.ENDSCOPE {
-            declare _ = autobuffer_stack8_pop(&variable_scopes_types_map);
-            declare _ = autobuffer_stack8_pop(&variable_scopes_declares_map);
-        } else if id == Node.STARTIFBLOCK {
-            autobuffer_stack8_push(&if_blocks, stack.index);
-        } else if id == Node.ENDIFBLOCK {
-            process_end_if(nodes, i, &stack, &if_blocks, &if_block_results, pointer_data, &program_data);
-        } else if id == Node.DEFINE {
-            declare define_node_data = *Node.DefineData.cast(pointer_data);
-            if string=(define_node_data.name, "main") {
-                has_main = true;
-            };
-        } else if id == Node.ENDDEFINE {
-        } else if id == Node.MODULE {
-            autobuffer_stack8_push(&module_stack, declared_module_id);
-            declared_module_id = declared_module_id + 1;
-        } else if id == Node.ENDMODULE {
-            declare _ = autobuffer_stack8_pop(&module_stack);
-        } else if id == Node.JUMP {
-        } else if id == Node.TARGET {
-        } else if id == Node.ENDFUNCTION {
-            in_function = false;
-        } else if id == Node.STRUCTURE {
-        } else if id == Node.SKIP {
-        } else if id == Node.ENDSTATEMENT {
-            if !(stack.index == 0) {
-                print_node_error_beginning(nodes, i);
-                println("Statement end has extra stack values");
-                exit(1);
+    //    //    if in_function {
+    //    //        hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(&variable_scopes_types_map)), variable_name, type);
+    //    //        hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(&variable_scopes_declares_map)), variable_name, i);
+    //    //    };
+    //    //} else if id == Node.ASSIGN {
+    //    //    process_assign(nodes, &i, &module_stack, &stack, &program_data, &variable_scopes_types_map, &variable_scopes_declares_map, pointer_data);
+    //    //} else if id == Node.RETRIEVE {
+    //    //    if in_function {
+    //    //        process_retrieve(nodes, &i, &module_stack, &stack, &variable_scopes_types_map, &program_data, current_function_id);
+    //    //    };
+    //    //} else if id == Node.RETURN {
+    //    //    process_return(nodes, i, &stack, &program_data, &module_stack, current_function_id);
+    //    //} else if id == Node.JUMP_CONDITIONAL {
+    //    //    process_jump_conditional(nodes, i, &program_data, &stack);
+    //    //} else if id == Node.SCOPE {
+    //    //    declare new_hashmap = hashmap_new(512);
+    //    //    declare allocated = *HashMap.cast(brk_allocate(24));
+    //    //    allocated.* = new_hashmap;
+    //    //    autobuffer_stack8_push(&variable_scopes_types_map, allocated);
 
-            };
-        } else {
-            print("Unhandled ");
-            print_whole_8(id);
-            println("");
-        };
+    //    //    declare new_hashmap = hashmap_new(512);
+    //    //    declare allocated = *HashMap.cast(brk_allocate(24));
+    //    //    allocated.* = new_hashmap;
+    //    //    autobuffer_stack8_push(&variable_scopes_declares_map, allocated);
+    //    //} else if id == Node.ENDSCOPE {
+    //    //    declare _ = autobuffer_stack8_pop(&variable_scopes_types_map);
+    //    //    declare _ = autobuffer_stack8_pop(&variable_scopes_declares_map);
+    //    //} else if id == Node.STARTIFBLOCK {
+    //    //    autobuffer_stack8_push(&if_blocks, stack.index);
+    //    //} else if id == Node.ENDIFBLOCK {
+    //    //    process_end_if(nodes, i, &stack, &if_blocks, &if_block_results, pointer_data, &program_data);
+    //    //} else if id == Node.DEFINE {
+    //    //    declare define_node_data = *Node.DefineData.cast(pointer_data);
+    //    //    if string=(define_node_data.name, "main") {
+    //    //        has_main = true;
+    //    //    };
+    //    //} else if id == Node.ENDDEFINE {
+    //    //} else if id == Node.MODULE {
+    //    //    autobuffer_stack8_push(&module_stack, declared_module_id);
+    //    //    declared_module_id = declared_module_id + 1;
+    //    //} else if id == Node.ENDMODULE {
+    //    //    declare _ = autobuffer_stack8_pop(&module_stack);
+    //    //} else if id == Node.JUMP {
+    //    //} else if id == Node.TARGET {
+    //    //} else if id == Node.ENDFUNCTION {
+    //    //    in_function = false;
+    //    //} else if id == Node.STRUCTURE {
+    //    //} else if id == Node.SKIP {
+    //    //} else if id == Node.ENDSTATEMENT {
+    //    //    if !(stack.index == 0) {
+    //    //        print_node_error_beginning(nodes, i);
+    //    //        println("Statement end has extra stack values");
+    //    //        exit(1);
 
-        i = i + 1;
-    };
+    //    //    };
+    //    //} else {
+    //    //    print("Unhandled ");
+    //    //    print_whole_8(id);
+    //    //    println("");
+    //    //};
+
+    //    i = i + 1;
+    //};
     
-    if !(has_main) {
-        println("[ERROR] No 'main' function defined");
-        exit(1);
-    };
+    //if !(has_main) {
+    //    println("[ERROR] No 'main' function defined");
+    //    exit(1);
+    //};
 
     return program_data;
+};
+
+define process_individual = function(nodes: *Nodes.Data, index_in: *whole_8, program_data: *ProgramData, current_function_id: *whole_8, function_id: *whole_8, in_function: *boolean, stack: *AutoBufferStack8, module_stack: *AutoBufferStack8, variable_scopes_types_map: *AutoBufferStack8, variable_scopes_declares_map: *AutoBufferStack8, if_blocks: *AutoBufferStack8, if_block_results: *AutoBuffer, has_main: *boolean, declared_module_id: *whole_8, declared_global_id: *whole_8) {
+    declare index = index_in.*;
+    declare id = Nodes.get_id(nodes, index);
+    declare pointer_data = Nodes.get_pointer_data(nodes, index);
+
+    declare define_types = &program_data.define_types;
+    declare define_values = &program_data.define_values;
+    declare define_or_declares = &program_data.define_or_declares;
+
+    declare global_types = &program_data.global_types;
+
+    if id == Node.FUNCTION {
+        declare function_name = *Node.FunctionData.cast(pointer_data).name;
+
+        if function_name == NULL {
+            current_function_id.* = function_id.*;
+            function_id.* = function_id.* + 1;
+        };
+        in_function.* = true;
+    } else if id == Node.NUMBER {
+        process_number(module_stack, nodes, index, stack, pointer_data);
+    } else if id == Node.BOOLEAN {
+        autobuffer_stack8_push(stack, "boolean");
+    } else if id == Node.STRING {
+        autobuffer_stack8_push(stack, "*");
+    } else if id == Node.INVOKE {
+        process_invoke(nodes, index, module_stack, stack, program_data, pointer_data);
+    } else if id == Node.INVOKE_INTERNAL {
+        process_invoke_internal(nodes, index, module_stack, stack, program_data, pointer_data);
+    } else if id == Node.DECLARE {
+        declare declare_data = *Node.DeclareData.cast(pointer_data);
+        declare name = declare_data.name;
+
+        declare type = if declare_data.has_type {
+            declare popped = *.cast(autobuffer_stack8_pop(stack)) + 10;
+            declare_data.type = popped;
+            popped
+        } else {
+            ""
+        };
+
+        if in_function.* {
+            hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(variable_scopes_types_map)), name, type);
+            hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(variable_scopes_declares_map)), name, index);
+        } else {
+            declare declare_name = get_define_name_with_module(module_stack, name);
+            declare_data.name = declare_name;
+
+            hashmap_string_put(define_types, declare_name, type);
+            hashmap_string_put(define_values, declare_name, declared_global_id.*);
+            hashmap_string_put(define_or_declares, declare_name, "declare");
+            autobuffer_array8_set(global_types, declared_global_id.*, type);
+
+            declared_global_id.* = declared_global_id.* + 1;
+        };
+    } else if id == Node.ASSIGN {
+        process_assign(nodes, index_in, module_stack, stack, program_data, variable_scopes_types_map, variable_scopes_declares_map, pointer_data);
+    } else if id == Node.RETRIEVE {
+        process_retrieve(nodes, index_in, module_stack, stack, variable_scopes_types_map, program_data, current_function_id.*, in_function.*);
+    } else if id == Node.RETURN {
+        process_return(nodes, index, stack, program_data, module_stack, current_function_id.*);
+    } else if id == Node.JUMP_CONDITIONAL {
+        process_jump_conditional(nodes, index, program_data, stack);
+    } else if id == Node.SCOPE {
+        declare new_hashmap = hashmap_new(512);
+        declare allocated = *HashMap.cast(brk_allocate(24));
+        allocated.* = new_hashmap;
+        autobuffer_stack8_push(variable_scopes_types_map, allocated);
+
+        declare new_hashmap = hashmap_new(512);
+        declare allocated = *HashMap.cast(brk_allocate(24));
+        allocated.* = new_hashmap;
+        autobuffer_stack8_push(variable_scopes_declares_map, allocated);
+    } else if id == Node.ENDSCOPE {
+        declare _ = autobuffer_stack8_pop(variable_scopes_types_map);
+        declare _ = autobuffer_stack8_pop(variable_scopes_declares_map);
+    } else if id == Node.STARTIFBLOCK {
+        autobuffer_stack8_push(if_blocks, stack.index);
+    } else if id == Node.ENDIFBLOCK {
+        process_end_if(nodes, index, stack, if_blocks, if_block_results, pointer_data, program_data);
+    } else if id == Node.DEFINE {
+        declare define_node_data = *Node.DefineData.cast(pointer_data);
+        if string=(define_node_data.name, "main") {
+            has_main.* = true;
+        };
+    } else if id == Node.ENDDEFINE {
+    } else if id == Node.MODULE {
+        autobuffer_stack8_push(module_stack, declared_module_id.*);
+        declared_module_id.* = declared_module_id.* + 1;
+    } else if id == Node.ENDMODULE {
+        declare _ = autobuffer_stack8_pop(module_stack);
+    } else if id == Node.JUMP {
+    } else if id == Node.TARGET {
+    } else if id == Node.ENDFUNCTION {
+        in_function.* = false;
+    } else if id == Node.STRUCTURE {
+    } else if id == Node.SKIP {
+    } else if id == Node.ENDSTATEMENT {
+        if !(stack.index == 0) {
+            print_node_error_beginning(nodes, index);
+            println("Statement end has extra stack values");
+            exit(1);
+        };
+    } else if id == Node.UNIT_START {
+    } else if id == Node.UNIT_END {
+    } else {
+        print("Unhandled ");
+        print_whole_8(id);
+        println("");
+    };
 };
 
 define is_define = function(type: *): boolean {
@@ -298,7 +419,7 @@ define process_number = function(module_stack: *AutoBufferStack8, nodes: *Nodes.
         print(coersion);
         println("' not allowed");
     };
-    number_data.coersion = coersion;
+    number_data.coersion = #array(coersion);
 
     autobuffer_stack8_push(stack, coersion);
 };
@@ -357,6 +478,7 @@ define process_return = function(nodes: *Nodes.Data, nodes_index: whole_8, stack
     if stack.index > 0 {
         print_node_error_beginning(nodes, nodes_index);
         println("Return has extra stack values");
+        println(*.cast(autobuffer_stack8_peek(stack)));
         exit(1);
     };
 };
@@ -508,8 +630,7 @@ define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, m
     declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, name);
     if !(variable_type == NULL) {
         if string=(variable_type, "") {
-            variable_type = create_size_one_array8_brk_allocate(popped_stack);
-
+            variable_type = popped_stack;
             hashmap_string_put(*HashMap.cast(autobuffer_stack8_get(variable_scopes_types_map, scope_index)), name, variable_type);
 
             declare variable_declare_node_index = hashmap_string_get(*HashMap.cast(autobuffer_stack8_get(variable_scopes_declares_map, scope_index)), name);
@@ -517,8 +638,7 @@ define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, m
             variable_declare_node.type = variable_type;
         };
 
-        type = *.cast(array8_get(variable_type, 0));
-        if !is_type(type, popped_stack, nodes, program_data) {
+        if !is_type(variable_type, popped_stack, nodes, program_data) {
             print_node_error_beginning(nodes, nodes_index);
             print("Assign of ");
             print(name);
@@ -529,6 +649,7 @@ define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, m
             println("'");
             exit(1);
         };
+        type = variable_type;
     };
 
     declare define_types = &program_data.define_types;
@@ -604,7 +725,7 @@ define get_value_of_define = function(define_types: *HashMap, define_values: *Ha
     return *.cast(hashmap_string_get2(define_values, define_name));
 };
 
-define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, variable_scopes_types_map: *AutoBufferStack8, program_data: *ProgramData, current_function_id: whole_8) {
+define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, variable_scopes_types_map: *AutoBufferStack8, program_data: *ProgramData, current_function_id: whole_8, in_function: boolean) {
     declare nodes_index = nodes_index_in.*;
     declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, nodes_index);
     declare name = retrieve_data.name;
@@ -666,20 +787,22 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
         };
     };
 
-    declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, name);
-    if !(variable_type == NULL) {
-        type = expand_module_name_array(variable_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-    };
+    if in_function {
+        declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, name);
+        if !(variable_type == NULL) {
+            type = variable_type;
+        };
 
-    if type == NULL {
-        declare function_argument_types = &program_data.function_argument_types;
-        declare function_argument_names = &program_data.function_argument_names;
-        declare function_argument_names_specific = *.cast(autobuffer_array8_get(function_argument_names, current_function_id));
-        declare function_argument_types_specific = *.cast(autobuffer_array8_get(function_argument_types, current_function_id));
+        if type == NULL {
+            declare function_argument_types = &program_data.function_argument_types;
+            declare function_argument_names = &program_data.function_argument_names;
+            declare function_argument_names_specific = *.cast(autobuffer_array8_get(function_argument_names, current_function_id));
+            declare function_argument_types_specific = *.cast(autobuffer_array8_get(function_argument_types, current_function_id));
 
-        declare argument_type = stringarray_get(function_argument_names_specific, function_argument_types_specific, name, array8_length(function_argument_types_specific));
-        if !(argument_type == NULL) {
-            type = expand_module_name_array(argument_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            declare argument_type = stringarray_get(function_argument_names_specific, function_argument_types_specific, name, array8_length(function_argument_types_specific));
+            if !(argument_type == NULL) {
+                type = expand_module_name_array(argument_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            };
         };
     };
 
@@ -740,6 +863,10 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
 
     if string=(name, "@current_module") {
         type = concatenate2_brk_allocate("module:", name);
+    };
+
+    if is_only_asterisks(name) {
+        type = concatenate2_brk_allocate("structure:", name);
     };
 
     if !(type == NULL) {
@@ -1211,6 +1338,75 @@ declare module_id_map: HashMap;
 declare module_references_map: HashMap;
 declare define_module_map: HashMap;
 
+define collect_compilation_unit = function(nodes: *Nodes.Data, node_count: whole_8, name: *, index: *whole_8, unit_index: *whole_8, module_id: *whole_8, module_stack: *AutoBufferStack8, compilation_unit_names: *AutoBuffer, compilation_unit_starts: *AutoBuffer, compilation_unit_ends: *AutoBuffer, compilation_unit_module_stacks: *AutoBuffer) {
+    declare current_unit = unit_index.*;
+    unit_index.* = unit_index.* + 1;
+
+    autobuffer_array8_set(compilation_unit_names, current_unit, name);
+    autobuffer_array8_set(compilation_unit_starts, current_unit, index.* - 1);
+    autobuffer_array8_set(compilation_unit_module_stacks, current_unit, copy_autobuffer_stack8_brk_allocate(module_stack));
+    if !(name == NULL) {
+        //println(name);
+    };
+    //print_whole_8(index.* - 1);
+    //println("");
+
+    declare in_function = false;
+    while index.* < node_count {
+        declare id = Nodes.get_id(nodes, index.*);
+        if id == Node.UNIT_START {
+            if !in_function {
+                declare data = #nodes_get_pointer_data(nodes, Node.UnitStartData, index.*);
+                declare name = data.name;
+
+                if module_stack.index > 0 {
+                    declare id_string = any_24.>0();
+                    whole_8_to_string(whole_8.cast(autobuffer_stack8_peek(module_stack)), &id_string);
+                    name = concatenate2_brk_allocate(&id_string, name);
+                };
+
+                index.* = index.* + 1;
+                collect_compilation_unit(nodes, node_count, name, index, unit_index, module_id, module_stack, compilation_unit_names, compilation_unit_starts, compilation_unit_ends, compilation_unit_module_stacks);
+            };
+            // Probably should be removed eventually, is a hack
+            //if (!in_function) && (inside_unit == 0) {
+            //    declare data = #nodes_get_pointer_data(nodes, Node.UnitStartData, index.*);
+            //    declare name = data.name;
+
+            //    if module_stack.index > 0 {
+            //        declare id_string = any_24.>0();
+            //        whole_8_to_string(whole_8.cast(autobuffer_stack8_peek(module_stack)), &id_string);
+            //        name = concatenate2_brk_allocate(&id_string, name);
+            //    };
+
+            //    autobuffer_array8_set(compilation_unit_names, current_unit, name);
+            //    autobuffer_array8_set(compilation_unit_starts, current_unit, index.*);
+            //} else if !in_function {
+            //    collect_compilation_unit(nodes, node_count, index, unit_index, module_id, module_stack, compilation_unit_names, compilation_unit_starts, compilation_unit_ends);
+            //};
+
+            //inside_unit = inside_unit + 1;
+        } else if id == Node.UNIT_END {
+            if !in_function {
+                //autobuffer_array8_set(compilation_unit_ends, current_unit, index.*);
+                break;
+            };
+        } else if id == Node.FUNCTION {
+            in_function = true;
+        } else if id == Node.ENDFUNCTION {
+            in_function = false;
+        } else if id == Node.MODULE {
+            autobuffer_stack8_push(module_stack, module_id.*);
+            module_id.* = module_id.* + 1;
+        } else if id == Node.ENDMODULE {
+            declare _ = autobuffer_stack8_pop(module_stack);
+        };
+        index.* = index.* + 1;
+    };
+
+    autobuffer_array8_set(compilation_unit_ends, current_unit, index.* + 1);
+};
+
 define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) {
     declare node_count = nodes.index;
 
@@ -1278,8 +1474,47 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
 
     declare global_types = &program_data.global_types;
 
+    declare compilation_unit_names = autobuffer_new(128);
+    declare compilation_unit_starts = autobuffer_new(128);
+    declare compilation_unit_ends = autobuffer_new(128);
+    declare compilation_unit_module_stacks = autobuffer_new(128);
+
+    declare inside_unit = 0;
+
+    declare cached_module_stacks = autobuffer_stack8_new(64);
+
+    // Collecting compilation units
     declare i = 0;
-    while i < node_count {
+    declare unit_index = 0;
+    collect_compilation_unit(nodes, node_count, *.cast(0), &i, &unit_index, &declared_module_id, &module_stack, &compilation_unit_names, &compilation_unit_starts, &compilation_unit_ends, &compilation_unit_module_stacks);
+
+    declared_module_id = 0;
+
+    declare handled_units = autobuffer_stack8_new(128);
+
+    declare current_function_id = 0;
+
+    declare variable_scopes_types_map = autobuffer_stack8_new(64);
+    declare variable_scopes_declares_map = autobuffer_stack8_new(64);
+
+    declare stack = autobuffer_stack8_new(64);
+
+    declare if_blocks = autobuffer_stack8_new(64);
+    declare if_block_results = autobuffer_new(64);
+
+    declare function_id = 0;
+
+    declare has_main = false;
+    declare declared_function_id = 0;
+    declare declared_module_id = 0;
+
+    declare declared_function_id = 0;
+    declare declared_module_id = 0;
+
+    declare in_function = false;
+
+    declare i = 0;
+    while i < nodes.index {
         declare id = Nodes.get_id(nodes, i);
         declare pointer_data = Nodes.get_pointer_data(nodes, i);
 
@@ -1293,185 +1528,590 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
                 hashmap_string_put(internal_function_argument_types, function_name, function_data.argument_types);
                 hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
                 hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
-            } else {
-                expand_function_data(function_data, &module_stack);
-
-                autobuffer_array8_set(function_locations, declared_function_id, i);
-                autobuffer_array8_set(function_datas, declared_function_id, function_data);
-                autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types);
-                autobuffer_array8_set(function_argument_names, declared_function_id, function_data.argument_names);
-                autobuffer_array8_set(function_return_types2, declared_function_id, function_data.return_types);
-                declared_function_id = declared_function_id + 1;
-            };
-            in_function = true;
-        } else if id == Node.ENDFUNCTION {
-            in_function = false;
-        } else if id == Node.STRUCTURE {
-            declare structure_data = *Node.StructureData.cast(pointer_data);
-
-            if structure_data.name == NULL {
-                expand_structure_data(structure_data, &module_stack);
-                autobuffer_array8_set(structure_member_types, declared_structure_id, structure_data.item_types);
-                autobuffer_array8_set(structure_members_names, declared_structure_id, structure_data.item_names);
-
-                // TODO: Depending on defines existing where it probably should not be.
-                declare structure_name = #nodes_get_pointer_data(nodes, Node.DefineData, i - 1).name;
-                structure_data.name = structure_name;
-
-                declared_structure_id = declared_structure_id + 1;
-            };
-
-            autobuffer_stack8_push(structure_datas, structure_data);
-        } else if id == Node.MODULE {
-            autobuffer_stack8_push(&module_stack, declared_module_id);
-            declared_module_id = declared_module_id + 1;
-        } else if id == Node.ENDMODULE {
-            declare _ = autobuffer_stack8_pop(&module_stack);
-        } else if id == Node.DEFINE {
-            declare define_data = *Node.DefineData.cast(pointer_data);
-            declare define_name = define_data.name;
-            declare define_type = define_data.type;
-
-            // Calculate define_type
-            if define_type == NULL {
-                declare next_id = Nodes.get_id(nodes, i + 1);
-                declare next_data = Nodes.get_pointer_data(nodes, i + 1);
-
-                define_type = if next_id == Node.NUMBER {
-                    declare number_data = *Node.NumberData.cast(next_data);
-                    declare coersion = number_data.coersion;
-                    if !(=(coersion, 0)) {
-                        expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list())
-                    } else {
-                        "whole_8"
-                    }
-                } else if next_id == Node.FUNCTION {
-                    expand_function_data(*Node.FunctionData.cast(next_data), &module_stack);
-                    function_data_to_string(&module_stack, *Node.FunctionData.cast(next_data))
-                } else if next_id == Node.STRUCTURE {
-                    structure_data_to_string(*Node.StructureData.cast(next_data))
-                } else if next_id == Node.MODULE {
-                    "module"
-                } else if next_id == Node.RETRIEVE {
-                    "define"
-                } else {
-                    print_node_error_beginning(nodes, i);
-                    println("Unknown define type");
-                    exit(1);
-                    ""
-                };
-
-                define_data.type = define_type;
-            } else {
-                // TODO: Check to make sure type is valid
-            };
-
-            declare name = define_data.name;
-            if module_stack.index > 0 {
-                declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
-                declare top_module_string = any_16.>0();
-                whole_8_to_string(top_module, &top_module_string);
-
-                name = concatenate2_brk_allocate(&top_module_string, name);
-            };
-
-            declare previous_type = hashmap_string_get2(define_types, name);
-            if !(previous_type == 999) {
-                print_node_error_beginning(nodes, i);
-                print("Duplicate definition '");
-                print(name);
-                println("'");
-                exit(1);
-            };
-
-            hashmap_string_put(&define_module_map, name, whole_8.cast(autobuffer_stack8_peek(&module_stack)));
-
-            if string=(define_type, "module") {
-                hashmap_string_put(&module_id_map, name, declared_module_id);
-            } else if string=(define_type, "define") {
-                declare full_define = "";
-
-                i = i + 1;
-                declare j = 0;
-                while |(Nodes.get_id(nodes, i + j) == Node.RETRIEVE, Nodes.get_id(nodes, i + j) == Node.SKIP) {
-                    if Nodes.get_id(nodes, i + j) == Node.RETRIEVE {
-                        declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, i + j);
-                        declare retrieve_name = retrieve_data.name;
-
-                        if string=(retrieve_name, "@current_module") {
-                            declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
-                            declare top_module_string = any_16.>0();
-                            whole_8_to_string(top_module, &top_module_string);
-
-                            full_define = concatenate2_brk_allocate(full_define, &top_module_string);
-                        } else {
-                            full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
-                        };
-                    };
-
-                    j = j + 1;
-                };
-
-                full_define = substring_brk_allocate(full_define, 0, string_length(full_define) - 1);
-                hashmap_string_put(&module_references_map, name, full_define);
-            };
-
-            define_name = get_define_name_with_module(&module_stack, define_name);
-            define_data.name = define_name;
-
-            declare define_value = if string_length=(define_type, "*function", 9) {
-                declared_function_id
-            } else if string_length=(define_type, "structure", 9) {
-                declared_structure_id
-            } else if string_length=(define_type, "global", 6) {
-                declared_global_id
-            } else if string_length=(define_type, "module", 6) {
-                declared_module_id
-            } else {
-                #nodes_get_pointer_data(nodes, Node.NumberData, i + 1).value
-            };
-
-            autobuffer_stack8_push(&define_types_stack, define_type);
-
-            hashmap_string_put(define_types, define_name, define_type);
-            hashmap_string_put(define_values, define_name, define_value);
-            hashmap_string_put(define_or_declares, define_name, "define");
-        } else if id == Node.ENDDEFINE {
-            declare _ = autobuffer_stack8_pop(&define_types_stack);
-        } else if id == Node.RETRIEVE {
-            declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
-            declare coersion = retrieve_data.coercion;
-
-            if !(coersion == NULL) {
-                declare coersion_string = expand_type_array(coersion, &module_stack);
-                retrieve_data.coercion = create_size_one_array8_brk_allocate(coersion_string);
-            };
-        } else if id == Node.DECLARE {
-            declare declare_data = *Node.DeclareData.cast(pointer_data);
-            declare declare_name = declare_data.name;
-            declare declare_type = declare_data.type;
-
-            if !in_function {
-                declare_type = expand_module_name_array(declare_type, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list());
-                declare_name = get_define_name_with_module(&module_stack, declare_name);
-                declare_data.name = declare_name;
-
-                hashmap_string_put(define_types, declare_name, declare_type);
-                hashmap_string_put(define_values, declare_name, declared_global_id);
-                hashmap_string_put(define_or_declares, declare_name, "declare");
-                autobuffer_array8_set(global_types, declared_global_id, declare_type);
-
-                declared_global_id = declared_global_id + 1;
-            } else {
-                if array8_length(declare_type) > 0 {
-                    declare type_string = expand_type_array(declare_type, &module_stack);
-                    declare_data.type = create_size_one_array8_brk_allocate(type_string);
-                };
             };
         };
 
         i = i + 1;
     };
+
+    declare running = true;
+    declare i = 0;
+    while running {
+        declare should_handle = true;
+        declare unit_name = *.cast(autobuffer_array8_get(&compilation_unit_names, i));
+        declare unit_start = autobuffer_array8_get(&compilation_unit_starts, i);
+        declare unit_end = autobuffer_array8_get(&compilation_unit_ends, i);
+        declare j = whole_8.cast(unit_start + 1);
+        
+        declare local_identifiers = autobuffer_stack8_new(64);
+
+        if unit_name == NULL {
+            should_handle = false;
+            autobuffer_stack8_push(&handled_units, i);
+        } else {
+            print("checking ");
+            println(unit_name);
+            while j < unit_end {
+                declare id = Nodes.get_id(nodes, j);
+
+                declare name = *.>0();
+                if id == Node.RETRIEVE {
+                    declare data = #nodes_get_pointer_data(nodes, Node.RetrieveData, j);
+                    name = data.name;
+                } else if id == Node.ASSIGN {
+                    declare data = #nodes_get_pointer_data(nodes, Node.AssignData, j);
+                    name = data.name;
+                } else if id == Node.FUNCTION {
+                    declare data = #nodes_get_pointer_data(nodes, Node.FunctionData, j);
+
+                    declare k = 0;
+                    while k < array8_length(data.argument_names) {
+                        autobuffer_stack8_push(&local_identifiers, *.cast(array8_get(data.argument_names, k)));
+                        k = k + 1;
+                    };
+                };
+
+                if !(name == NULL) {
+                    declare is_local = false;
+                    declare m = 0;
+                    while m < local_identifiers.index {
+                        if string=(name, *.cast(autobuffer_stack8_get(&local_identifiers, m))) {
+                            is_local = true;
+                        };
+                        m = m + 1;
+                    };
+
+                    if !is_local {
+                        declare k = 1;
+                        while k < unit_index {
+                            if string=(name, *.cast(autobuffer_array8_get(&compilation_unit_names, k))) {
+                                declare l = 0;
+                                while l < handled_units.index {
+                                    if k == whole_8.cast(autobuffer_stack8_get(&handled_units, l)) {
+                                        break;
+                                    };
+                                    l = l + 1;
+                                };
+
+                                if l == handled_units.index {
+                                    should_handle = false;
+                                    println(name);
+                                    println("skipping");
+                                };
+                            };
+                            k = k + 1;
+                        };
+                    };
+                };
+
+                j = j + 1;
+            };
+        };
+
+        if should_handle {
+            autobuffer_stack8_push(&handled_units, i);
+            stack.index = 0;
+
+            module_stack = *AutoBufferStack8.cast(autobuffer_array8_get(&compilation_unit_module_stacks, i)).*;
+
+            print("starting ");
+            println(unit_name);
+
+            declare current_function_string = "";
+
+            declare j = whole_8.cast(unit_start + 1);
+            while j < unit_end {
+                declare id = Nodes.get_id(nodes, j);
+                declare pointer_data = Nodes.get_pointer_data(nodes, j);
+
+                declare to_add = 0;
+
+                if id == Node.FUNCTION {
+                    declare function_data = *Node.FunctionData.cast(pointer_data);
+                    declare function_name = function_data.name;
+                    
+                    if !(function_name == NULL) {
+                        expand_function_data(function_data, &module_stack);
+
+                        hashmap_string_put(internal_function_argument_types, function_name, function_data.argument_types);
+                        hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
+                        hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
+                    } else {
+                        declare i = 0;
+                        while i < array8_length(function_data.argument_names) {
+                            declare popped = *.cast(autobuffer_stack8_pop(&stack));
+                            declare pointer_count = 0;
+                            while *any_1.cast(popped + pointer_count).* == ASCII.ASTERISK {
+                                pointer_count = pointer_count + 1;
+                            };
+
+                            popped = popped + 10 + pointer_count;
+
+                            declare j = 0;
+                            while j < pointer_count {
+                                popped = concatenate2_brk_allocate("*", popped);
+                                j = j + 1;
+                            };
+
+                            array8_set(function_data.argument_types, i, #array(popped));
+                            i = i + 1;
+                        };
+
+                        function_data.id = declared_function_id;
+                        autobuffer_array8_set(function_locations, declared_function_id, j);
+                        autobuffer_array8_set(function_datas, declared_function_id, function_data);
+                        autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types);
+                        autobuffer_array8_set(function_argument_names, declared_function_id, function_data.argument_names);
+                        autobuffer_array8_set(function_return_types2, declared_function_id, function_data.return_types);
+                        declared_function_id = declared_function_id + 1;
+
+                        current_function_string = function_data_to_string(&module_stack, function_data);
+                    };
+                    in_function = true;
+                } else if id == Node.ENDFUNCTION {
+                    autobuffer_stack8_push(&stack, current_function_string);
+                    in_function = false;
+                } else if id == Node.STRUCTURE {
+                    declare structure_data = *Node.StructureData.cast(pointer_data);
+
+                    if structure_data.name == NULL {
+                        expand_structure_data(structure_data, &module_stack);
+                        autobuffer_array8_set(structure_member_types, declared_structure_id, structure_data.item_types);
+                        autobuffer_array8_set(structure_members_names, declared_structure_id, structure_data.item_names);
+
+                        // TODO: Depending on defines existing where it probably should not be.
+                        declare structure_name = #nodes_get_pointer_data(nodes, Node.DefineData, j - 1).name;
+                        structure_data.name = structure_name;
+
+                        declared_structure_id = declared_structure_id + 1;
+
+                        autobuffer_stack8_push(&stack, structure_data_to_string(structure_data));
+                    };
+
+                    autobuffer_stack8_push(structure_datas, structure_data);
+                } else if id == Node.MODULE {
+                    //autobuffer_stack8_push(&module_stack, declared_module_id);
+                    //declared_module_id = declared_module_id + 1;
+                } else if id == Node.ENDMODULE {
+                    //declare _ = autobuffer_stack8_pop(&module_stack);
+                    autobuffer_stack8_push(&stack, "module");
+                } else if id == Node.DEFINE {
+                    declare define_data = *Node.DefineData.cast(pointer_data);
+                    declare define_name = define_data.name;
+                    declare define_type = define_data.type;
+
+                    // Calculate define_type
+                    if define_type == NULL {
+                        declare next_id = Nodes.get_id(nodes, j + 1);
+                        declare next_data = Nodes.get_pointer_data(nodes, j + 1);
+
+                        declare is_function = true;
+                        declare k = j + 1;
+                        while true {
+                            declare id = Nodes.get_id(nodes, k);
+                            if id == Node.RETRIEVE {
+                            } else if id == Node.SKIP {
+                            } else if id == Node.FUNCTION {
+                                next_data = Nodes.get_pointer_data(nodes, k);
+                                break;
+                            } else {
+                                is_function = false;
+                                break;
+                            };
+                            k = k + 1;
+                        };
+
+                        //println("");
+                        //println(*.cast(autobuffer_stack8_peek(&stack)));
+
+                        define_type = *.cast(autobuffer_stack8_peek(&stack));
+                        //define_type = if next_id == Node.NUMBER {
+                        //    declare number_data = *Node.NumberData.cast(next_data);
+                        //    declare coersion = number_data.coersion;
+                        //    if !(=(coersion, 0)) {
+                        //        expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list())
+                        //    } else {
+                        //        "whole_8"
+                        //    }
+                        //} else if is_function {
+                        //    expand_function_data(*Node.FunctionData.cast(next_data), &module_stack);
+                        //    function_data_to_string(&module_stack, *Node.FunctionData.cast(next_data))
+                        //} else if next_id == Node.STRUCTURE {
+                        //    structure_data_to_string(*Node.StructureData.cast(next_data))
+                        //} else if next_id == Node.MODULE {
+                        //    "module"
+                        //} else if next_id == Node.RETRIEVE {
+                        //    "define"
+                        //} else {
+                        //    print_node_error_beginning(nodes, j);
+                        //    println("Unknown define type");
+                        //    exit(1);
+                        //    ""
+                        //};
+
+                        define_data.type = define_type;
+                    } else {
+                        // TODO: Check to make sure type is valid
+                    };
+
+                    declare name = define_data.name;
+                    if module_stack.index > 0 {
+                        declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
+                        declare top_module_string = any_16.>0();
+                        whole_8_to_string(top_module, &top_module_string);
+
+                        name = concatenate2_brk_allocate(&top_module_string, name);
+                    };
+
+                    declare previous_type = hashmap_string_get2(define_types, name);
+                    if !(previous_type == 999) {
+                        print_node_error_beginning(nodes, j);
+                        print("Duplicate definition '");
+                        print(name);
+                        println("'");
+                        exit(1);
+                    };
+
+                    hashmap_string_put(&define_module_map, name, whole_8.cast(autobuffer_stack8_peek(&module_stack)));
+
+                    if string=(define_type, "module") {
+                        hashmap_string_put(&module_id_map, name, declared_module_id - 1);
+                    } else if string=(define_type, "define") {
+                        declare full_define = "";
+
+                        declare k = 1;
+                        while |(Nodes.get_id(nodes, j + k) == Node.RETRIEVE, Nodes.get_id(nodes, j + k) == Node.SKIP) {
+                            if Nodes.get_id(nodes, j + k) == Node.RETRIEVE {
+                                declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, j + k);
+                                declare retrieve_name = retrieve_data.name;
+
+                                if string=(retrieve_name, "@current_module") {
+                                    declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
+                                    declare top_module_string = any_16.>0();
+                                    whole_8_to_string(top_module, &top_module_string);
+
+                                    full_define = concatenate2_brk_allocate(full_define, &top_module_string);
+                                } else {
+                                    full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
+                                };
+                            };
+
+                            k = k + 1;
+                        };
+
+                        full_define = substring_brk_allocate(full_define, 0, string_length(full_define) - 1);
+                        hashmap_string_put(&module_references_map, name, full_define);
+                    };
+
+                    define_name = get_define_name_with_module(&module_stack, define_name);
+                    define_data.name = define_name;
+
+                    declare define_value = if string_length=(define_type, "*function", 9) {
+                        declared_function_id - 1
+                    } else if string_length=(define_type, "structure", 9) {
+                        declared_structure_id - 1
+                    } else if string_length=(define_type, "module", 6) {
+                        declared_module_id - 1
+                    } else {
+                        // This is hacky
+                        #nodes_get_pointer_data(nodes, Node.NumberData, j - 1).value
+                    };
+
+                    autobuffer_stack8_push(&define_types_stack, define_type);
+
+                    hashmap_string_put(define_types, define_name, define_type);
+                    hashmap_string_put(define_values, define_name, define_value);
+                    hashmap_string_put(define_or_declares, define_name, "define");
+                } else if id == Node.ENDDEFINE {
+                    declare _ = autobuffer_stack8_pop(&define_types_stack);
+                } else if id == Node.RETRIEVE {
+                    declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
+                    declare coersion = retrieve_data.coercion;
+
+                    if !(coersion == NULL) {
+                        declare coersion_string = expand_type_array(coersion, &module_stack);
+                        retrieve_data.coercion = create_size_one_array8_brk_allocate(coersion_string);
+                    };
+                } else if id == Node.DECLARE {
+                    //declare declare_data = *Node.DeclareData.cast(pointer_data);
+                    //declare declare_name = declare_data.name;
+                    //declare declare_type = declare_data.type;
+
+                    //if declare_data.has_type {
+                    //    declare_type = *.cast(autobuffer_stack8_pop(&stack)) + 10;
+                    //    println(declare_type);
+                    //    print_whole_8(stack.index);
+                    //    println("");
+                    //};
+
+                    //if !in_function {
+                    //    declare_name = get_define_name_with_module(&module_stack, declare_name);
+                    //    declare_data.name = declare_name;
+
+                    //    hashmap_string_put(define_types, declare_name, declare_type);
+                    //    hashmap_string_put(define_values, declare_name, declared_global_id);
+                    //    hashmap_string_put(define_or_declares, declare_name, "declare");
+                    //    autobuffer_array8_set(global_types, declared_global_id, declare_type);
+
+                    //    declared_global_id = declared_global_id + 1;
+                    //} else {
+                    //    //if array8_length(declare_type) > 0 {
+                    //    //    declare type_string = expand_type_array(declare_type, &module_stack);
+                    //    //    declare_data.type = create_size_one_array8_brk_allocate(type_string);
+                    //    //};
+                    //};
+                } else if id == Node.UNIT_START {
+                    if !in_function {
+                        declare inside = 0;
+                        while true {
+                            declare id = Nodes.get_id(nodes, j);
+
+                            if id == Node.UNIT_START {
+                                inside = inside + 1;
+                            } else if id == Node.UNIT_END {
+                                inside = inside - 1;
+
+                                if inside == 0 {
+                                    break;
+                                };
+                            };
+                            j = j + 1;
+                        };
+                    };
+                };
+            
+                process_individual(nodes, &j, program_data, &current_function_id, &function_id, &in_function, &stack, &module_stack, &variable_scopes_types_map, &variable_scopes_declares_map, &if_blocks, &if_block_results, &has_main, &declared_module_id, &declared_global_id);
+                
+                j = j + 1;
+            };
+        };
+
+        if handled_units.index == unit_index {
+            break;
+        };
+
+        i = i + 1;
+
+        while true {
+            declare done_before = false;
+            declare j = 0;
+            while j < handled_units.index {
+                if i == whole_8.cast(autobuffer_stack8_get(&handled_units, j)) {
+                    done_before = true;
+                    break;
+                };
+                j = j + 1;
+            };
+
+            if done_before {
+                i = i + 1;
+            } else if i == unit_index {
+                i = 0;
+            } else {
+                break;
+            };
+        };
+    };
+
+    if !has_main {
+        println("[ERROR] No 'main' function defined");
+        exit(1);
+    };
+
+    //declare i = 0;
+    //while i < node_count {
+    //    declare id = Nodes.get_id(nodes, i);
+    //    declare pointer_data = Nodes.get_pointer_data(nodes, i);
+
+    //    if id == Node.FUNCTION {
+    //        declare function_data = *Node.FunctionData.cast(pointer_data);
+    //        declare function_name = function_data.name;
+    //        
+    //        if !(function_name == NULL) {
+    //            expand_function_data(function_data, &module_stack);
+
+    //            hashmap_string_put(internal_function_argument_types, function_name, function_data.argument_types);
+    //            hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
+    //            hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
+    //        } else {
+    //            expand_function_data(function_data, &module_stack);
+
+    //            autobuffer_array8_set(function_locations, declared_function_id, i);
+    //            autobuffer_array8_set(function_datas, declared_function_id, function_data);
+    //            autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types);
+    //            autobuffer_array8_set(function_argument_names, declared_function_id, function_data.argument_names);
+    //            autobuffer_array8_set(function_return_types2, declared_function_id, function_data.return_types);
+    //            declared_function_id = declared_function_id + 1;
+    //        };
+    //        in_function = true;
+    //    } else if id == Node.ENDFUNCTION {
+    //        in_function = false;
+    //    } else if id == Node.STRUCTURE {
+    //        declare structure_data = *Node.StructureData.cast(pointer_data);
+
+    //        if structure_data.name == NULL {
+    //            expand_structure_data(structure_data, &module_stack);
+    //            autobuffer_array8_set(structure_member_types, declared_structure_id, structure_data.item_types);
+    //            autobuffer_array8_set(structure_members_names, declared_structure_id, structure_data.item_names);
+
+    //            // TODO: Depending on defines existing where it probably should not be.
+    //            declare structure_name = #nodes_get_pointer_data(nodes, Node.DefineData, i - 1).name;
+    //            structure_data.name = structure_name;
+
+    //            declared_structure_id = declared_structure_id + 1;
+    //        };
+
+    //        autobuffer_stack8_push(structure_datas, structure_data);
+    //    } else if id == Node.MODULE {
+    //        autobuffer_stack8_push(&module_stack, declared_module_id);
+    //        declared_module_id = declared_module_id + 1;
+    //    } else if id == Node.ENDMODULE {
+    //        declare _ = autobuffer_stack8_pop(&module_stack);
+    //    } else if id == Node.DEFINE {
+    //        declare define_data = *Node.DefineData.cast(pointer_data);
+    //        declare define_name = define_data.name;
+    //        declare define_type = define_data.type;
+
+    //        // Calculate define_type
+    //        if define_type == NULL {
+    //            declare next_id = Nodes.get_id(nodes, i + 1);
+    //            declare next_data = Nodes.get_pointer_data(nodes, i + 1);
+
+    //            define_type = if next_id == Node.NUMBER {
+    //                declare number_data = *Node.NumberData.cast(next_data);
+    //                declare coersion = number_data.coersion;
+    //                if !(=(coersion, 0)) {
+    //                    expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list())
+    //                } else {
+    //                    "whole_8"
+    //                }
+    //            } else if next_id == Node.FUNCTION {
+    //                expand_function_data(*Node.FunctionData.cast(next_data), &module_stack);
+    //                function_data_to_string(&module_stack, *Node.FunctionData.cast(next_data))
+    //            } else if next_id == Node.STRUCTURE {
+    //                structure_data_to_string(*Node.StructureData.cast(next_data))
+    //            } else if next_id == Node.MODULE {
+    //                "module"
+    //            } else if next_id == Node.RETRIEVE {
+    //                "define"
+    //            } else {
+    //                print_node_error_beginning(nodes, i);
+    //                println("Unknown define type");
+    //                exit(1);
+    //                ""
+    //            };
+
+    //            define_data.type = define_type;
+    //        } else {
+    //            // TODO: Check to make sure type is valid
+    //        };
+
+    //        declare name = define_data.name;
+    //        if module_stack.index > 0 {
+    //            declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
+    //            declare top_module_string = any_16.>0();
+    //            whole_8_to_string(top_module, &top_module_string);
+
+    //            name = concatenate2_brk_allocate(&top_module_string, name);
+    //        };
+
+    //        declare previous_type = hashmap_string_get2(define_types, name);
+    //        if !(previous_type == 999) {
+    //            print_node_error_beginning(nodes, i);
+    //            print("Duplicate definition '");
+    //            print(name);
+    //            println("'");
+    //            exit(1);
+    //        };
+
+    //        hashmap_string_put(&define_module_map, name, whole_8.cast(autobuffer_stack8_peek(&module_stack)));
+
+    //        if string=(define_type, "module") {
+    //            hashmap_string_put(&module_id_map, name, declared_module_id);
+    //        } else if string=(define_type, "define") {
+    //            declare full_define = "";
+
+    //            i = i + 1;
+    //            declare j = 0;
+    //            while |(Nodes.get_id(nodes, i + j) == Node.RETRIEVE, Nodes.get_id(nodes, i + j) == Node.SKIP) {
+    //                if Nodes.get_id(nodes, i + j) == Node.RETRIEVE {
+    //                    declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, i + j);
+    //                    declare retrieve_name = retrieve_data.name;
+
+    //                    if string=(retrieve_name, "@current_module") {
+    //                        declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
+    //                        declare top_module_string = any_16.>0();
+    //                        whole_8_to_string(top_module, &top_module_string);
+
+    //                        full_define = concatenate2_brk_allocate(full_define, &top_module_string);
+    //                    } else {
+    //                        full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
+    //                    };
+    //                };
+
+    //                j = j + 1;
+    //            };
+
+    //            full_define = substring_brk_allocate(full_define, 0, string_length(full_define) - 1);
+    //            hashmap_string_put(&module_references_map, name, full_define);
+    //        };
+
+    //        define_name = get_define_name_with_module(&module_stack, define_name);
+    //        define_data.name = define_name;
+
+    //        declare define_value = if string_length=(define_type, "*function", 9) {
+    //            declared_function_id
+    //        } else if string_length=(define_type, "structure", 9) {
+    //            declared_structure_id
+    //        } else if string_length=(define_type, "global", 6) {
+    //            declared_global_id
+    //        } else if string_length=(define_type, "module", 6) {
+    //            declared_module_id
+    //        } else {
+    //            #nodes_get_pointer_data(nodes, Node.NumberData, i + 1).value
+    //        };
+
+    //        autobuffer_stack8_push(&define_types_stack, define_type);
+
+    //        hashmap_string_put(define_types, define_name, define_type);
+    //        hashmap_string_put(define_values, define_name, define_value);
+    //        hashmap_string_put(define_or_declares, define_name, "define");
+    //    } else if id == Node.ENDDEFINE {
+    //        declare _ = autobuffer_stack8_pop(&define_types_stack);
+    //    } else if id == Node.RETRIEVE {
+    //        declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
+    //        declare coersion = retrieve_data.coercion;
+
+    //        if !(coersion == NULL) {
+    //            declare coersion_string = expand_type_array(coersion, &module_stack);
+    //            retrieve_data.coercion = create_size_one_array8_brk_allocate(coersion_string);
+    //        };
+    //    } else if id == Node.DECLARE {
+    //        declare declare_data = *Node.DeclareData.cast(pointer_data);
+    //        declare declare_name = declare_data.name;
+    //        declare declare_type = declare_data.type;
+
+    //        if !in_function {
+    //            declare_type = expand_module_name_array(declare_type, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list());
+    //            declare_name = get_define_name_with_module(&module_stack, declare_name);
+    //            declare_data.name = declare_name;
+
+    //            hashmap_string_put(define_types, declare_name, declare_type);
+    //            hashmap_string_put(define_values, declare_name, declared_global_id);
+    //            hashmap_string_put(define_or_declares, declare_name, "declare");
+    //            autobuffer_array8_set(global_types, declared_global_id, declare_type);
+
+    //            declared_global_id = declared_global_id + 1;
+    //        } else {
+    //            //if array8_length(declare_type) > 0 {
+    //            //    declare type_string = expand_type_array(declare_type, &module_stack);
+    //            //    declare_data.type = create_size_one_array8_brk_allocate(type_string);
+    //            //};
+    //        };
+    //    };
+
+    //    i = i + 1;
+    //};
 };
 
 define expand_type_array = function(type: *, module_stack: *AutoBufferStack8): * {

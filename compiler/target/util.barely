@@ -38,8 +38,7 @@ define calculate_function_local_sizes = function(nodes: *Nodes.Data, program_dat
             if id == Node.DECLARE {
                 declare declare_data = *Node.DeclareData.cast(pointer_data);
                 declare declare_name = declare_data.name;
-                declare declare_type_names = declare_data.type;
-                declare declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(empty_module_stack), create_previous_results_list());
+                declare declare_type = declare_data.type;
                 total = total + function_size(declare_type, nodes, program_data);
             };
 

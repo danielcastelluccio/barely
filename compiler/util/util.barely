@@ -436,6 +436,17 @@ define copy_array8_length_brk_allocate = function(array: *, length: whole_8): * 
     return new_array;
 };
 
+define copy_autobuffer_stack8_brk_allocate = function(stack: *AutoBufferStack8): *AutoBufferStack8 {
+    declare allocated = *AutoBufferStack8.cast(brk_allocate(AutoBufferStack8.size()));
+    allocated.autobuffer.size = stack.autobuffer.size;
+    allocated.autobuffer.increment = stack.autobuffer.increment;
+    declare allocated_buffer = brk_allocate(allocated.autobuffer.size);
+    copy(stack.autobuffer.buffer, allocated_buffer, allocated.autobuffer.size);
+    allocated.autobuffer.buffer = allocated_buffer;
+    allocated.index = stack.index;
+    return allocated;
+};
+
 define AutoBufferBuffer = structure {
     autobuffer: AutoBuffer;
     index: whole_8;

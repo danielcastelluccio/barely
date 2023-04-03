@@ -33,18 +33,24 @@ define parse_define = function(tokens: *Tokens.Data, index_pointer: *whole_8, no
         0
     };
 
-    declare define_index = nodes.index;
-    declare define_data = #nodes_append_data(nodes, Node.DEFINE, Node.DefineData, get_token_location_data(tokens, index_pointer.*));
-    define_data.name = name;
-    define_data.type = type;
+    declare unit_data = #nodes_append_data(nodes, Node.UNIT_START, Node.UnitStartData, get_token_location_data(tokens, index_pointer.*));
+    unit_data.name = name;
 
+    declare index_saved = index_pointer.*;
     index_pointer.* = index_pointer.* + value_offset;
 
     parse_individual(tokens, index_pointer, nodes);
 
+    declare define_index = nodes.index;
+    declare define_data = #nodes_append_data(nodes, Node.DEFINE, Node.DefineData, get_token_location_data(tokens, index_saved));
+    define_data.name = name;
+    define_data.type = type;
+
     declare end_define_index = nodes.index;
     declare end_define_data = #nodes_append_data(nodes, Node.ENDDEFINE, Node.EndDefineData, get_token_location_data(tokens, index_pointer.*));
     end_define_data.type = type;
+
+    declare _ = Nodes.append(nodes, Node.UNIT_END, get_token_location_data(tokens, index_pointer.*));
 
     index_pointer.* = index_pointer.* + 1;
 };
@@ -182,11 +188,11 @@ define is_only_asterisks = function(string: *): boolean {
 define parse_function = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
     declare index = index_pointer.*;
 
-    declare function_data = #nodes_append_data(nodes, Node.FUNCTION, Node.FunctionData, get_token_location_data(tokens, index_pointer.*));
-
     index = index + 2;
 
     declare function_argument_names, function_argument_types, function_return_types = parse_function_definition(tokens, &index, nodes);
+
+    declare function_data = #nodes_append_data(nodes, Node.FUNCTION, Node.FunctionData, get_token_location_data(tokens, index_pointer.*));
 
     function_data.argument_names = function_argument_names;
     function_data.argument_types = function_argument_types;
@@ -234,8 +240,8 @@ define parse_function_definition = function(tokens: *Tokens.Data, index_pointer:
                 autobuffer_array8_set(&function_argument_names, arguments_index, token_name);
                 index = index + 1;
             } else {
-                declare token_name = parse_name_array(tokens, &index);
-                autobuffer_array8_set(&function_arguments_array, arguments_index, token_name);
+                parse_expression(tokens, &index, nodes);
+                //autobuffer_array8_set(&function_arguments_array, arguments_index, token_name);
                 arguments_index = arguments_index + 1;
             };
 
@@ -764,6 +770,8 @@ define parse_while = function(tokens: *Tokens.Data, index_pointer: *whole_8, nod
 define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
     declare index = index_pointer.*;
 
+    declare unit_data = #nodes_append_data(nodes, Node.UNIT_START, Node.UnitStartData, get_token_location_data(tokens, index_pointer.*));
+
     declare parse_expression, variable_names, variable_types = parse_declare_variable_declaration(tokens, &index, nodes);
 
     if parse_expression {
@@ -776,7 +784,11 @@ define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, n
     while !(array8_get(variable_names, i) == 0) {
         declare declare_data = #nodes_append_data(nodes, Node.DECLARE, Node.DeclareData, get_token_location_data(tokens, index));
         declare_data.name = *.cast(array8_get(variable_names, i));
-        declare_data.type = *.cast(array8_get(variable_types, i));
+        if array8_get(variable_types, i)  == 1 {
+            declare_data.has_type = true;
+        };
+        unit_data.name = *.cast(array8_get(variable_names, i));
+        //declare_data.type = *.cast(array8_get(variable_types, i));
 
         i = i + 1;
     };
@@ -793,6 +805,8 @@ define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, n
         };
     };
 
+    declare _ = Nodes.append(nodes, Node.UNIT_END, get_token_location_data(tokens, index_pointer.*));
+
     index_pointer.* = index + 1;
 };
 
@@ -804,7 +818,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
 
     declare name_index = 0;
     declare seen_item_name = false;
-    declare parse_expression = false;
+    declare has_expression = false;
     while true {
         declare id = Tokens.get_id(tokens, index);
         if id == Token.COMMA {
@@ -814,8 +828,9 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
 
         if (id == Token.NAME) || (id == Token.PERIOD) {
             if seen_item_name {
-                declare name = parse_name_array(tokens, &index);
-                autobuffer_array8_set(&types, name_index, name);
+                parse_expression(tokens, &index, nodes);
+                //declare type = parse_name_array(tokens, &index);
+                autobuffer_array8_set(&types, name_index, 1);
             } else {
                 declare name = parse_name_string(tokens, &index);
                 autobuffer_array8_set(&names, name_index, name);
@@ -829,7 +844,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
         if Tokens.get_id(tokens, index) == Token.NAME {
             declare name_value = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
             if string=(name_value, "=") {
-                parse_expression = true;
+                has_expression = true;
                 break;
             };
         };
@@ -839,7 +854,7 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
     };
 
     index_pointer.* = index;
-    return parse_expression, names.buffer, types.buffer;
+    return has_expression, names.buffer, types.buffer;
 };
 
 define parse_multiple_expressions = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data, breaker: whole_8) {

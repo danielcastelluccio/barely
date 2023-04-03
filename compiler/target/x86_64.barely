@@ -61,7 +61,7 @@ define Target_X86_64 = module {
 
             if id == Node.FUNCTION {
                 in_function = true;
-                .output_function(nodes, i, function_local_sizes, &current_function_id, &variable_index, pointer_data, instructions_buffer); }
+                .output_function(nodes, i, function_locations, function_local_sizes, &current_function_id, &variable_index, pointer_data, instructions_buffer); }
             else if id == Node.NUMBER { .output_number(&module_stack, pointer_data, instructions_buffer) }
             else if id == Node.BOOLEAN { .output_boolean(pointer_data, instructions_buffer) }
             else if id == Node.INVOKE { .output_invoke(instructions_buffer) }
@@ -91,6 +91,8 @@ define Target_X86_64 = module {
             else if id == Node.ENDSTATEMENT {}
             else if id == Node.MODULE {}
             else if id == Node.SKIP {}
+            else if id == Node.UNIT_START {}
+            else if id == Node.UNIT_END {}
             else {
                 print("Unhandled ");
                 print_whole_8(id);
@@ -125,8 +127,7 @@ define Target_X86_64 = module {
         declare define_type = define_data.type;
         
         if string_length=(define_type, "*function", 9) {
-            declare define_values = &program_data.define_values;
-            autobuffer_array8_set(function_locations, whole_8.cast(hashmap_string_get(define_values, define_name)), instructions_buffer.index);
+            //declare define_values = &program_data.define_values;
         } else if string_length=(define_type, "module", 6) {
         };
     };
@@ -170,13 +171,15 @@ define Target_X86_64 = module {
         ELF_X86_64.autobuffer_buffer_push_push_data(instructions_buffer, data_indexes_to_adjust, string_data_index);
     };
 
-    define output_function = function(nodes: *Nodes.Data, nodes_index: whole_8, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+    define output_function = function(nodes: *Nodes.Data, nodes_index: whole_8, function_locations: *AutoBuffer, function_local_sizes: *, current_function_id: *whole_8, variable_index: *whole_8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare function_data = *Node.FunctionData.cast(pointer_data);
         declare function_name = function_data.name;
         declare next_id = Nodes.get_id(nodes, nodes_index + 1);
 
         if function_name == 0 {
-            current_function_id.* = current_function_id.* + 1;
+            current_function_id.* = function_data.id;
+
+            autobuffer_array8_set(function_locations, current_function_id.*, instructions_buffer.index);
 
             X86_64.autobuffer_buffer_push_push_register8(instructions_buffer, RBP);
             X86_64.autobuffer_buffer_push_mov_register8_register8(instructions_buffer, RSP, RBP);
@@ -195,7 +198,7 @@ define Target_X86_64 = module {
             declare variable_type = declare_data.type;
 
             autobuffer_array8_set(variable_names, variable_index.*, variable_name);
-            autobuffer_array8_set(variable_sizes, variable_index.*, .get_size_array(variable_type, nodes, program_data));
+            autobuffer_array8_set(variable_sizes, variable_index.*, .get_size(variable_type, nodes, program_data));
             variable_index.* = variable_index.* + 1;
 
             hashmap_string_put(*HashMap.cast(autobuffer_stack8_peek(variable_types)), variable_name, variable_type);
@@ -302,7 +305,6 @@ define Target_X86_64 = module {
         declare type, scope_index = .get_variable_linux_x86_64(variable_types, name);
         if !(type == 0) {
             declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
-            type = expand_module_name_array(type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
             declare size = .get_size(type, nodes, program_data);
 
             declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, name, scope_variable_index);
@@ -518,8 +520,6 @@ define Target_X86_64 = module {
 
         declare variable_type, scope_index = .get_variable_linux_x86_64(variable_types, name);
         if !(variable_type == 0) {
-            variable_type = expand_module_name_array(variable_type, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
-        
             declare scope_variable_index = whole_8.cast(autobuffer_stack8_get(variable_indexes, scope_index));
             declare size = .get_size(variable_type, nodes, program_data);
             declare location = calculate_variable_location(variable_count, variable_names, variable_sizes, name, scope_variable_index);
@@ -1018,7 +1018,7 @@ define Target_X86_64 = module {
     define output_number = function(module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare number_data = *Node.NumberData.cast(pointer_data);
         declare value_whole_8 = number_data.value;
-        declare coersion = number_data.coersion;
+        declare coersion = *.cast(array8_get(number_data.coersion, 0));
 
         declare size = if string_length=(coersion, "whole_", 6) {
             string_to_whole_8(coersion + 6)

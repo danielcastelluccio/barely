@@ -7,6 +7,7 @@ define Node = module {
         argument_names: *;
         argument_types: *;
         return_types: *;
+        id: whole_8;
     };
 
     define ENDFUNCTION = 1;
@@ -37,6 +38,7 @@ define Node = module {
         name: *;
         // array of strings
         type: *;
+        has_type: boolean;
     };
 
     define ASSIGN = 7;
@@ -114,6 +116,14 @@ define Node = module {
     define MODULE = 23;
 
     define ENDMODULE = 24;
+
+    define UNIT_START = 25;
+
+    define UnitStartData = structure {
+        name: *;
+    };
+
+    define UNIT_END = 26;
 
     define SIZE = 80;
 
@@ -244,7 +254,7 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
     declare pointer_data = Nodes.get_pointer_data(nodes, index);
     if id == Node.RETRIEVE {
         declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
-        print("Retrieve{names=");
+        print("Retrieve{");
         print(",name='");
         print(retrieve_data.name);
         println("'}");
