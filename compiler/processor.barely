@@ -860,6 +860,15 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
     if string_length=(name, "any_", 4) {
         type = concatenate2_brk_allocate("structure:", name);
     };
+    if string_length=(name, "whole_", 6) {
+        type = concatenate2_brk_allocate("structure:", name);
+    };
+    if string_length=(name, "integer_", 8) {
+        type = concatenate2_brk_allocate("structure:", name);
+    };
+    if string=(name, "boolean") {
+        type = "structure:boolean";
+    };
 
     if string=(name, "@current_module") {
         type = concatenate2_brk_allocate("module:", name);
@@ -1549,8 +1558,6 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
             should_handle = false;
             autobuffer_stack8_push(&handled_units, i);
         } else {
-            print("checking ");
-            println(unit_name);
             while j < unit_end {
                 declare id = Nodes.get_id(nodes, j);
 
@@ -1595,8 +1602,6 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
 
                                 if l == handled_units.index {
                                     should_handle = false;
-                                    println(name);
-                                    println("skipping");
                                 };
                             };
                             k = k + 1;
@@ -1613,9 +1618,6 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
             stack.index = 0;
 
             module_stack = *AutoBufferStack8.cast(autobuffer_array8_get(&compilation_unit_module_stacks, i)).*;
-
-            print("starting ");
-            println(unit_name);
 
             declare current_function_string = "";
 
@@ -1637,7 +1639,7 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
                         hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
                         hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
                     } else {
-                        declare i = 0;
+                        declare i = array8_length(function_data.argument_names) - 1;
                         while i < array8_length(function_data.argument_names) {
                             declare popped = *.cast(autobuffer_stack8_pop(&stack));
                             declare pointer_count = 0;
@@ -1654,7 +1656,7 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
                             };
 
                             array8_set(function_data.argument_types, i, #array(popped));
-                            i = i + 1;
+                            i = i - 1;
                         };
 
                         function_data.id = declared_function_id;
@@ -1675,15 +1677,128 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
                     declare structure_data = *Node.StructureData.cast(pointer_data);
 
                     if structure_data.name == NULL {
-                        expand_structure_data(structure_data, &module_stack);
+                        declare i = array8_length(structure_data.item_names) - 1;
+                        while i < array8_length(structure_data.item_names) {
+                            declare popped = *.cast(autobuffer_stack8_pop(&stack));
+                            declare pointer_count = 0;
+                            while *any_1.cast(popped + pointer_count).* == ASCII.ASTERISK {
+                                pointer_count = pointer_count + 1;
+                            };
+
+                            popped = popped + 10 + pointer_count;
+
+                            declare j = 0;
+                            while j < pointer_count {
+                                popped = concatenate2_brk_allocate("*", popped);
+                                j = j + 1;
+                            };
+
+                            array8_set(structure_data.item_types, i, #array(popped));
+                            i = i - 1;
+                        };
+
                         autobuffer_array8_set(structure_member_types, declared_structure_id, structure_data.item_types);
                         autobuffer_array8_set(structure_members_names, declared_structure_id, structure_data.item_names);
 
                         // TODO: Depending on defines existing where it probably should not be.
-                        declare structure_name = #nodes_get_pointer_data(nodes, Node.DefineData, j - 1).name;
+                        declare structure_name = #nodes_get_pointer_data(nodes, Node.DefineData, j + 1).name;
                         structure_data.name = structure_name;
 
                         declared_structure_id = declared_structure_id + 1;
+
+                        declare name = structure_data.name;
+                        declare is_internal = structure_data.is_internal;
+
+                        if name == 0 {
+                            declare define_data = #nodes_get_pointer_data(nodes, Node.DefineData, i + 1);
+                            name = define_data.name;
+                        };
+
+                        if module_stack.index > 0 {
+                            declare module_id_buffer = any_16.>0();
+                            whole_8_to_string(whole_8.cast(autobuffer_stack8_peek(&module_stack)), &module_id_buffer);
+                            name = concatenate2_brk_allocate(&module_id_buffer, name);
+                        };
+
+                        declare pointer_name = concatenate2_brk_allocate("*", name);
+
+                        // Setter for whole value
+                        declare function_name = concatenate2_brk_allocate(name, "<");
+                        declare function_arguments = create_size_two_array8_brk_allocate(#array(pointer_name), #array(name));
+                        declare function_returns = create_size_zero_array8_brk_allocate();
+                        hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                        hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                        // Setter for whole value with reversed inputs
+                        declare function_name = concatenate2_brk_allocate(name, "<2");
+                        declare function_arguments = create_size_two_array8_brk_allocate(#array(name), #array(pointer_name));
+                        declare function_returns = create_size_zero_array8_brk_allocate();
+                        hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                        hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                        // Getter for whole value
+                        declare function_name = concatenate2_brk_allocate(name, ">");
+                        declare function_arguments = create_size_one_array8_brk_allocate(#array(pointer_name));
+                        declare function_returns = create_size_one_array8_brk_allocate(#array(name));
+                        hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                        hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                        // Zero initializer for whole value
+                        declare function_name = concatenate2_brk_allocate(name, ">0");
+                        declare function_arguments = create_size_zero_array8_brk_allocate();
+                        declare function_returns = create_size_one_array8_brk_allocate(#array(name));
+                        hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                        hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                        // Size getter for the whole value
+                        declare function_name = concatenate2_brk_allocate(name, "size");
+                        declare function_arguments = create_size_zero_array8_brk_allocate();
+                        declare function_returns = create_size_one_array8_brk_allocate(#array("whole_8"));
+                        hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                        hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                        declare item_names = structure_data.item_names;
+                        declare item_types = structure_data.item_types;
+
+                        declare j = 0;
+                        while !(array8_get(item_names, j) == 0) {
+                            declare item_name = *.cast(array8_get(item_names, j));
+                            declare item_type = *.cast(array8_get(item_types, j));
+
+                            // Setter for an individual member
+                            declare function_name = concatenate3_brk_allocate(name, "<", item_name);
+                            declare function_arguments = create_size_two_array8_brk_allocate(#array(pointer_name), item_type);
+                            declare function_returns = brk_allocate(8);
+                            hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                            hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                            // Setter for an individual member with reversed inputs
+                            declare function_name = concatenate3_brk_allocate(name, "<2", item_name);
+                            declare function_arguments = create_size_two_array8_brk_allocate(item_type, #array(pointer_name));
+                            declare function_returns = brk_allocate(8);
+                            hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                            hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                            // Getter for individual members
+                            declare function_name = concatenate3_brk_allocate(name, ">", item_name);
+                            declare function_arguments = create_size_one_array8_brk_allocate(#array(pointer_name));
+                            declare function_returns = create_size_one_array8_brk_allocate(item_type);
+                            hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                            hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                            //// Pointer Getter for individual members
+                            declare item_type_copy = copy_array8_brk_allocate(item_type);
+                            if array8_length(item_type_copy) > 0 {
+                                array8_set(item_type_copy, 0, concatenate2_brk_allocate("*", *.cast(array8_get(item_type_copy, 0))));
+                            };
+                            declare function_name = concatenate3_brk_allocate(name, "*>", item_name);
+                            declare function_arguments = create_size_one_array8_brk_allocate(#array(pointer_name));
+                            declare function_returns = create_size_one_array8_brk_allocate(item_type_copy);
+                            hashmap_string_put(internal_function_argument_types, function_name, function_arguments);
+                            hashmap_string_put(internal_function_return_types, function_name, function_returns);
+
+                            j = j + 1;
+                        };
 
                         autobuffer_stack8_push(&stack, structure_data_to_string(structure_data));
                     };

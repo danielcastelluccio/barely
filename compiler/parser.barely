@@ -71,11 +71,12 @@ define parse_structure = function(tokens: *Tokens.Data, index_pointer: *whole_8,
 
         if id == Token.NAME {
             if seen_item_name {
-                declare parsed_name = parse_name_array(tokens, &index);
-                autobuffer_array8_set(&member_types, member_index, parsed_name);
+                parse_expression(tokens, &index, nodes);
+                //autobuffer_array8_set(&member_types, member_index, parsed_name);
                 member_index = member_index + 1;
             } else {
                 declare parsed_name = parse_name_string(tokens, &index);
+                autobuffer_array8_set(&member_types, member_index, 0);
                 autobuffer_array8_set(&member_names, member_index, parsed_name);
             };
 
