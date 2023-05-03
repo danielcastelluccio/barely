@@ -467,6 +467,21 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
             retrieve_data.coercion = parse_name_array(tokens, &index);
         };
 
+        if Tokens.get_id(tokens, index) == Token.APOSTROPHE {
+            declare name_buffer = autobuffer_stack8_new(24);
+            autobuffer_stack8_push(&name_buffer, retrieve_data.name);
+
+            while Tokens.get_id(tokens, index) == Token.APOSTROPHE {
+                index = index + 1;
+                declare name_data = #tokens_get_pointer_data(tokens, Token.NameData, index);
+                autobuffer_stack8_push(&name_buffer, name_data.name);
+                index = index + 1;
+            };
+
+            retrieve_data.has_multiple = true;
+            retrieve_data.name = name_buffer.autobuffer.buffer;
+        };
+
         if last_id == Token.PERIOD {
             retrieve_data.uses_previous = true;
 
@@ -724,11 +739,13 @@ define parse_assign = function(tokens: *Tokens.Data, index_pointer: *whole_8, no
     declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, get_past_retrieve_index(nodes, nodes.index - 1));
     declare name = retrieve_data.name;
     declare uses_previous = retrieve_data.uses_previous;
+    declare has_multiple = retrieve_data.has_multiple;
 
     Nodes.set_id(nodes, get_past_retrieve_index(nodes, nodes.index - 1), Node.ASSIGN);
     declare assign_data = *Node.AssignData.cast(retrieve_data);
     assign_data.name = name;
     assign_data.uses_previous = uses_previous;
+    assign_data.has_multiple = has_multiple;
 
     index_pointer.* = right_side_index;
 };

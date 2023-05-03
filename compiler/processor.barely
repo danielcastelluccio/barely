@@ -448,6 +448,11 @@ define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, m
         exit(1);
     };
 
+    if assign_data.has_multiple {
+        declare full_name = expand_module_name_array(name, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+        name = full_name;
+    };
+
     declare type = *.>0();
 
     if uses_previous {
@@ -613,6 +618,11 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
 
     declare type = *.>0();
 
+    if retrieve_data.has_multiple {
+        declare full_name = expand_module_name_array(name, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+        name = full_name;
+    };
+
     if uses_previous {
         declare peeked = *.cast(autobuffer_stack8_peek(stack));
 
@@ -713,7 +723,7 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
         while string=(type, "define") {
             declare value = *.cast(get_value_of_define(define_types, define_values, name));
             declare reference = *.cast(hashmap_string_get(&module_references_map, name));
-            declare expanded = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            declare expanded = expand_module_name_array(reference, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
             name = expanded;
             type = get_define_retrieve_type(define_types, define_values, name);
         };
@@ -918,7 +928,7 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
             };
             autobuffer_stack8_push(previous_results_list, name);
 
-            name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
+            name = expand_module_name_array(possible_reference, 0, module_id_map, module_references_map, module_stack, previous_results_list);
         };
     };
 
@@ -962,7 +972,7 @@ define expand_module_name_array = function(name_array: *, resolvable_end: whole_
 
             if temp_id == 999 {
                 declare temp_name = *.cast(hashmap_string_get2(module_references_map, current_module));
-                temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
+                temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
                 temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
             };
             temp_id
@@ -979,7 +989,7 @@ define expand_module_name_array = function(name_array: *, resolvable_end: whole_
                     return name;
                 };
 
-                temp_name = expand_module_name(temp_name, module_id_map, module_references_map, module_stack, create_previous_results_list());
+                temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
                 temp_id = whole_8.cast(hashmap_string_get2(module_id_map, temp_name));
             };
             temp_id
@@ -1008,7 +1018,7 @@ define expand_module_name_array = function(name_array: *, resolvable_end: whole_
         };
         autobuffer_stack8_push(previous_results_list, name);
 
-        name = expand_module_name(possible_reference, module_id_map, module_references_map, module_stack, previous_results_list);
+        name = expand_module_name_array(possible_reference, 0, module_id_map, module_references_map, module_stack, previous_results_list);
     };
 
     if !is_first {
@@ -1389,7 +1399,12 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
             if string=(define_type, "module") {
                 hashmap_string_put(&module_id_map, name, declared_module_id);
             } else if string=(define_type, "define") {
+                declare full_define2 = *AutoBufferStack8.cast(brk_allocate(AutoBufferStack8.size()));
+                full_define2.* = autobuffer_stack8_new(24);
                 declare full_define = "";
+
+                // TODO: Should remove once the old syntax is gone (Foo.Bar syntax)
+                declare override_array = *.cast(0);
 
                 i = i + 1;
                 declare j = 0;
@@ -1398,13 +1413,20 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
                         declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, i + j);
                         declare retrieve_name = retrieve_data.name;
 
+                        if retrieve_data.has_multiple {
+                            override_array = retrieve_name;
+                            break;
+                        };
+
                         if string=(retrieve_name, "@current_module") {
                             declare top_module = whole_8.cast(autobuffer_stack8_peek(&module_stack));
                             declare top_module_string = any_16.>0();
                             whole_8_to_string(top_module, &top_module_string);
 
+                            autobuffer_stack8_push(full_define2, copy_string_brk_allocate(&top_module_string));
                             full_define = concatenate2_brk_allocate(full_define, &top_module_string);
                         } else {
+                            autobuffer_stack8_push(full_define2, copy_string_brk_allocate(retrieve_name));
                             full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
                         };
                     };
@@ -1412,8 +1434,12 @@ define setup_process = function(nodes: *Nodes.Data, program_data: *ProgramData) 
                     j = j + 1;
                 };
 
-                full_define = substring_brk_allocate(full_define, 0, string_length(full_define) - 1);
-                hashmap_string_put(&module_references_map, name, full_define);
+                if !(override_array == 0) {
+                    hashmap_string_put(&module_references_map, name, override_array);
+                } else {
+                    full_define = substring_brk_allocate(full_define, 0, string_length(full_define) - 1);
+                    hashmap_string_put(&module_references_map, name, full_define2.autobuffer.buffer);
+                };
             };
 
             define_name = get_define_name_with_module(&module_stack, define_name);

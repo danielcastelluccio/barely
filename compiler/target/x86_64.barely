@@ -285,6 +285,11 @@ define Target_X86_64 = module {
         declare name = retrieve_data.name;
         declare uses_previous = retrieve_data.uses_previous;
 
+        if retrieve_data.has_multiple {
+            declare full_name = expand_module_name_array(name, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            name = full_name;
+        };
+
         if uses_previous {
             declare top_define = *.>0();
             if define_stack.index > 0 {
@@ -374,7 +379,7 @@ define Target_X86_64 = module {
 
         while string=(type, "define") {
             declare reference = *.cast(hashmap_string_get(&module_references_map, name));
-            name = expand_module_name(reference, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            name = expand_module_name_array(reference, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
 
             type = *.cast(get_define_retrieve_type(define_types, define_values, name));
         };
@@ -509,6 +514,12 @@ define Target_X86_64 = module {
     define output_assign = function(nodes: *Nodes.Data, nodes_index: whole_8, program_data: *ProgramData, define_stack: *AutoBufferStack8, variable_names: *AutoBuffer, variable_sizes: *AutoBuffer, variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8, variable_count: whole_8, global_types: *AutoBuffer, global_locations: *, bss_indexes_to_adjust_relative: *AutoBufferStack8, module_stack: *AutoBufferStack8, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare assign_data = *Node.AssignData.cast(pointer_data);
         declare name = assign_data.name;
+
+        if assign_data.has_multiple {
+            declare full_name = expand_module_name_array(name, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+            name = full_name;
+        };
+
 
         declare name = if define_stack.index > 0 {
             expand_module_name_stack(name, &module_id_map, &module_references_map, module_stack, *.cast(autobuffer_stack8_pop(define_stack) + 7), create_previous_results_list())
