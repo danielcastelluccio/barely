@@ -478,6 +478,7 @@ define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, m
                 declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index + index);
                 invoke_data.name = "&";
                 invoke_data.uses_previous = false;
+                invoke_data.has_multiple = false;
                 index = index + 1;
 
                 type = concatenate2_brk_allocate("*", type_temp);
@@ -491,6 +492,7 @@ define process_assign = function(nodes: *Nodes.Data, nodes_index_in: *whole_8, m
             retrieve_data.name = function_name;
             retrieve_data.coercion = *.>0();
             retrieve_data.uses_previous = false;
+            retrieve_data.has_multiple = false;
             index = index + 1;
 
             declare function_name = if string=(name, "*") {
@@ -619,7 +621,12 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
     declare type = *.>0();
 
     if retrieve_data.has_multiple {
-        declare full_name = expand_module_name_array(name, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+        declare last_element = *.cast(array8_get(name, array8_length(name) - 1));
+        declare resolvable_end = 0;
+        if string=(last_element, "cast") {
+            resolvable_end = array8_length(name) - 1;
+        };
+        declare full_name = expand_module_name_array(name, resolvable_end, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
         name = full_name;
     };
 
@@ -850,24 +857,30 @@ define process_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole
     declare function_name = invoke_data.name;
     declare is_single = !invoke_data.uses_previous;
 
+    if invoke_data.has_multiple {
+        function_name = *.cast(array8_get(function_name, array8_length(function_name) - 1));
+    };
+
     if is_single && string=(function_name, "+") {
-        function_name = process_math_invoke(nodes, nodes_index, stack, program_data, "+");
+        invoke_data.name = process_math_invoke(nodes, nodes_index, stack, program_data, "+");
     } else if is_single && string=(function_name, "-") {
-        function_name = process_math_invoke(nodes, nodes_index, stack, program_data, "-");
+        invoke_data.name = process_math_invoke(nodes, nodes_index, stack, program_data, "-");
     } else if is_single && string=(function_name, "*") {
-        function_name = process_math_invoke(nodes, nodes_index, stack, program_data, "*");
+        invoke_data.name = process_math_invoke(nodes, nodes_index, stack, program_data, "*");
     } else if is_single && string=(function_name, "/") {
-        function_name = process_math_invoke(nodes, nodes_index, stack, program_data, "/");
+        invoke_data.name = process_math_invoke(nodes, nodes_index, stack, program_data, "/");
     } else if is_single && string=(function_name, "%") {
-        function_name = process_math_invoke(nodes, nodes_index, stack, program_data, "%");
+        invoke_data.name = process_math_invoke(nodes, nodes_index, stack, program_data, "%");
     } else if is_single && string=(function_name, "=") {
-        function_name = process_comparison_invoke(nodes, nodes_index, stack, program_data, "=");
+        invoke_data.name = process_comparison_invoke(nodes, nodes_index, stack, program_data, "=");
     } else if is_single && string=(function_name, ">") {
-        function_name = process_comparison_invoke(nodes, nodes_index, stack, program_data, ">");
+        invoke_data.name = process_comparison_invoke(nodes, nodes_index, stack, program_data, ">");
     } else if is_single && string=(function_name, "<") {
-        function_name = process_comparison_invoke(nodes, nodes_index, stack, program_data, "<");
-    } else if string=(function_name, "cast") || string=(function_name, "pcast") {
+        invoke_data.name = process_comparison_invoke(nodes, nodes_index, stack, program_data, "<");
+    } else if (string=(function_name, "cast") || string=(function_name, "pcast")) && (!invoke_data.has_multiple) {
         process_cast(nodes, nodes_index, module_stack, stack, program_data, invoke_data, function_name);
+    } else if string=(function_name, "cast") || string=(function_name, "pcast") {
+        process_cast_new(nodes, nodes_index, module_stack, stack, program_data, invoke_data, invoke_data.name);
     } else if is_single && string=(function_name, "&") {
     } else {
         function_name = if !is_single {
@@ -886,9 +899,9 @@ define process_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole
             function_name
         };
         process_internal_invoke(nodes, nodes_index, stack, program_data, module_stack, function_name);
-    };
 
-    invoke_data.name = function_name;
+        invoke_data.name = function_name;
+    };
 };
 
 define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, top_define: *, previous_results_list: *AutoBufferStack8): * {
@@ -1062,6 +1075,37 @@ define process_cast = function(nodes: *Nodes.Data, nodes_index: whole_8, module_
         to_push = concatenate2_brk_allocate("*", to_push);
         i = i + 1;
     };
+
+    if string=(function_name, "pcast") {
+        to_push = concatenate2_brk_allocate("*", to_push);
+    };
+
+    declare popped = *.cast(autobuffer_stack8_pop(stack));
+
+    declare size_function = program_data.get_size;
+    if !(size_function(popped, nodes, program_data) == size_function(to_push, nodes, program_data)) {
+        print_node_error_beginning(nodes, nodes_index);
+        print("Cast wants equal sized types, given '");
+        print(popped);
+        print("' and casts to '");
+        print(to_push);
+        println("'");
+        exit(1);
+    };
+
+    autobuffer_stack8_push(stack, to_push);
+
+    Nodes.set_skip(nodes, nodes_index - 1);
+};
+
+define process_cast_new = function(nodes: *Nodes.Data, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, invoke_data: *Node.InvokeInternalData, function_name: *) {
+    if stack.index == 0 {
+        print_node_error_beginning(nodes, nodes_index);
+        println("Cast ran out of stack values");
+        exit(1);
+    };
+
+    declare to_push = expand_module_name_array(function_name, array8_length(function_name) - 1, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
 
     if string=(function_name, "pcast") {
         to_push = concatenate2_brk_allocate("*", to_push);

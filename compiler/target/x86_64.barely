@@ -618,6 +618,10 @@ define Target_X86_64 = module {
         declare invoke_internal_data = *Node.InvokeInternalData.cast(Nodes.get_pointer_data(nodes, nodes_index));
         declare function_name = invoke_internal_data.name;
 
+        if invoke_internal_data.has_multiple {
+            function_name = *.cast(array8_get(function_name, array8_length(function_name) - 1));
+        };
+
         if is_pointer(nodes, nodes_index + 1) {
             function_name = concatenate2_brk_allocate("*", function_name);
         };
@@ -649,7 +653,7 @@ define Target_X86_64 = module {
         else if string=(function_name, "@syscall4") { .output_syscall4_internal(instructions_buffer) }
         else if string=(function_name, "@syscall5") { .output_syscall5_internal(instructions_buffer) }
         else if string=(function_name, "@syscall6") { .output_syscall6_internal(instructions_buffer) }
-        else if string=(function_name, "cast") || string=(function_name, "pcast") { declare _ = autobuffer_stack8_pop(define_stack); };
+        else if (string=(function_name, "cast") || string=(function_name, "pcast")) && (!invoke_internal_data.has_multiple) { declare _ = autobuffer_stack8_pop(define_stack); };
     };
 
     define output_syscall0_internal = function(instructions_buffer: *AutoBufferBuffer) {

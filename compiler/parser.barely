@@ -309,6 +309,9 @@ define handle_invoke_instructions = function(tokens: *Tokens.Data, index_pointer
             if inner == 0:integer_8 {
                 declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, previous_retrieve_index);
                 declare retrieve_name = retrieve_data.name;
+                if retrieve_data.has_multiple {
+                    retrieve_name = *.cast(array8_get(retrieve_name, array8_length(retrieve_name) - 1));
+                };
                 declare uses_previous = retrieve_data.uses_previous;
                 declare is_special = if is_first_invoke {
                     is_special_function(retrieve_name)
@@ -320,7 +323,8 @@ define handle_invoke_instructions = function(tokens: *Tokens.Data, index_pointer
                     Nodes.set_skip(nodes, previous_retrieve_index);
 
                     declare invoke_data = #nodes_append_data(nodes, Node.INVOKE_INTERNAL, Node.InvokeInternalData, get_token_location_data(tokens, index));
-                    invoke_data.name = retrieve_name;
+                    invoke_data.name = retrieve_data.name;
+                    invoke_data.has_multiple = retrieve_data.has_multiple;
                     invoke_data.uses_previous = uses_previous;
                 } else {
                     declare _ = Nodes.append(nodes, Node.INVOKE, get_token_location_data(tokens, index));
@@ -422,6 +426,7 @@ define check_parse_operator = function(tokens: *Tokens.Data, index_pointer: *who
 
         declare operator_data = #nodes_append_data(nodes, Node.INVOKE_INTERNAL, Node.InvokeInternalData, get_token_location_data(tokens, index_pointer.* - 1));
         operator_data.name = internal_name;
+        operator_data.has_multiple = false;
         return true;
     };
 

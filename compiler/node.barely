@@ -89,6 +89,7 @@ define Node = module {
     define InvokeInternalData = structure {
         name: *;
         uses_previous: boolean;
+        has_multiple: boolean;
     };
 
     define SCOPE = 16;
@@ -247,9 +248,23 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
     if id == Node.RETRIEVE {
         declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
         print("Retrieve{names=");
-        print(",name='");
-        print(retrieve_data.name);
-        println("'}");
+        print(",name=");
+        if retrieve_data.has_multiple {
+            print("[");
+            declare i = 0;
+            while i < array8_length(retrieve_data.name) {
+                print("'");
+                print(*.cast(array8_get(retrieve_data.name, i)));
+                print("', ");
+                i = i + 1;
+            };
+            print("]");
+        } else {
+            print("'");
+            print(retrieve_data.name);
+            print("'");
+        };
+        println("}");
     } else if id == Node.INVOKE_INTERNAL {
         declare invoke_data = *Node.InvokeInternalData.cast(pointer_data);
         print("InternalInvoke{name='");
