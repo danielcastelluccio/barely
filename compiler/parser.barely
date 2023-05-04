@@ -69,8 +69,9 @@ define parse_structure = function(tokens: *Tokens.Data, index_pointer: *whole_8,
                 autobuffer_array8_set(&member_types, member_index, parsed_name);
                 member_index = member_index + 1;
             } else {
-                declare parsed_name = parse_name_string(tokens, &index);
-                autobuffer_array8_set(&member_names, member_index, parsed_name);
+                declare name_token = #tokens_get_pointer_data(tokens, Token.NameData, index);
+                index = index + 1;
+                autobuffer_array8_set(&member_names, member_index, name_token.name);
             };
 
             seen_item_name = !seen_item_name;
@@ -86,22 +87,6 @@ define parse_structure = function(tokens: *Tokens.Data, index_pointer: *whole_8,
     structure_data.item_types = member_types.buffer;
 
     index_pointer.* = index + 1;
-};
-
-define parse_name_string = function(tokens: *Tokens.Data, index_pointer: *whole_8): * {
-    declare array = parse_name_array(tokens, index_pointer);
-    declare buffer = autobuffer_buffer_new(64);
-
-    declare i = 0;
-    while i < array8_length(array) {
-        autobuffer_buffer_push_string(&buffer, *.cast(array8_get(array, i)));
-        if i < array8_length(array) - 1 {
-            autobuffer_buffer_push_string(&buffer, ".");
-        };
-        i = i + 1;
-    };
-
-    return buffer.autobuffer.buffer;
 };
 
 define parse_name_array = function(tokens: *Tokens.Data, index_pointer: *whole_8): * {
@@ -144,7 +129,8 @@ define parse_name_array = function(tokens: *Tokens.Data, index_pointer: *whole_8
 
     autobuffer_array8_set(&array, 0, buffer.autobuffer.buffer);
 
-    if Tokens.get_id(tokens, index) == Token.PERIOD {
+    if (Tokens.get_id(tokens, index) == Token.PERIOD) ||
+        (Tokens.get_id(tokens, index) == Token.APOSTROPHE){
         index = index + 1;
 
         declare first_index_contents = *.cast(autobuffer_array8_get(&array, 0));
@@ -851,8 +837,9 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
                 declare name = parse_name_array(tokens, &index);
                 autobuffer_array8_set(&types, name_index, name);
             } else {
-                declare name = parse_name_string(tokens, &index);
-                autobuffer_array8_set(&names, name_index, name);
+                declare name_token = #tokens_get_pointer_data(tokens, Token.NameData, index);
+                index = index + 1;
+                autobuffer_array8_set(&names, name_index, name_token.name);
                 autobuffer_array8_set(&types, name_index, create_size_zero_array8_brk_allocate());
                 seen_item_name = true;
             };
