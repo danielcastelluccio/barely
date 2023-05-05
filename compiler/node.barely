@@ -267,10 +267,23 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
         println("}");
     } else if id == Node.INVOKE_INTERNAL {
         declare invoke_data = *Node.InvokeInternalData.cast(pointer_data);
-        print("InternalInvoke{name='");
-        declare name = invoke_data.name;
-        print(invoke_data.name);
-        println("'}");
+        print("InternalInvoke{name=");
+        if invoke_data.has_multiple {
+            print("[");
+            declare i = 0;
+            while i < array8_length(invoke_data.name) {
+                print("'");
+                print(*.cast(array8_get(invoke_data.name, i)));
+                print("', ");
+                i = i + 1;
+            };
+            print("]");
+        } else {
+            print("'");
+            print(invoke_data.name);
+            print("'");
+        };
+        println("}");
     } else if id == Node.ASSIGN {
         declare assign_data = *Node.AssignData.cast(pointer_data);
         print("Assign{name='");

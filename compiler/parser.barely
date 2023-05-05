@@ -117,6 +117,9 @@ define parse_name_array = function(tokens: *Tokens.Data, index_pointer: *whole_8
             autobuffer_buffer_push_string(&buffer, ",");
         } else if id == Token.PERIOD {
             autobuffer_buffer_push_string(&buffer, ".");
+        } else if id == Token.APOSTROPHE {
+            // Kinda a hack, but until we remove periods it should be fine
+            autobuffer_buffer_push_string(&buffer, ".");
         } else if id == Token.COLON {
             autobuffer_buffer_push_string(&buffer, ":");
         } else if id == Token.NAME {
@@ -479,13 +482,14 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
         declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
         retrieve_data.name = name_data.name;
         index = index + 1;
-        if Tokens.get_id(tokens, index) == Token.COLON {
-            index = index + 1;
-            retrieve_data.coercion = parse_name_array(tokens, &index);
-        };
 
         if Tokens.get_id(tokens, index) == Token.APOSTROPHE {
             parse_apostrophe(tokens, &index, nodes, retrieve_data);
+        };
+
+        if Tokens.get_id(tokens, index) == Token.COLON {
+            index = index + 1;
+            retrieve_data.coercion = parse_name_array(tokens, &index);
         };
 
         if last_id == Token.PERIOD {
