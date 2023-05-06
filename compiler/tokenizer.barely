@@ -1,4 +1,4 @@
-define tokenize_inner = function(buffer_in: *, buffer_length: whole_8, tokens: *Tokens.Data, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
+define tokenize_inner = function(buffer_in: *, buffer_length: whole_8, tokens: *Tokens'Data, file_name: *, row_ptr: *whole_8, column_ptr: *whole_8) {
     if buffer_length == 0 {
         return;
     };
@@ -9,16 +9,16 @@ define tokenize_inner = function(buffer_in: *, buffer_length: whole_8, tokens: *
     declare row = row_ptr.*;
 
     if is_keyword(buffer) {
-        declare keyword_data = #tokens_append_data(tokens, Token.KEYWORD, Token.KeywordData, file_name, row, column);
+        declare keyword_data = #tokens_append_data(tokens, Token'KEYWORD, Token'KeywordData, file_name, row, column);
         keyword_data.keyword = copy_string_brk_allocate(buffer);
     } else if is_number(buffer, buffer_length) {
-        declare number_data = #tokens_append_data(tokens, Token.NUMBER, Token.NumberData, file_name, row, column);
+        declare number_data = #tokens_append_data(tokens, Token'NUMBER, Token'NumberData, file_name, row, column);
         number_data.value = string_to_whole_8(buffer);
     } else if string=(buffer, "true") || string=(buffer, "false") {
-        declare boolean_data = #tokens_append_data(tokens, Token.BOOLEAN, Token.BooleanData, file_name, row, column);
+        declare boolean_data = #tokens_append_data(tokens, Token'BOOLEAN, Token'BooleanData, file_name, row, column);
         boolean_data.value = string=(buffer, "true");
     } else {
-        declare name_data = #tokens_append_data(tokens, Token.NAME, Token.NameData, file_name, row, column);
+        declare name_data = #tokens_append_data(tokens, Token'NAME, Token'NameData, file_name, row, column);
         name_data.name = copy_string_brk_allocate(buffer);
     };
     
@@ -35,12 +35,12 @@ define is_number = function(string: *, length: whole_8): boolean {
     declare has_number = false;
     declare i = 0;
     while i < length {
-        declare character = *whole_1.cast(string + i).*;
+        declare character = (cast(*whole_1) (string + i)).*;
 
-        if character == ASCII.MINUS {
-        } else if character < ASCII.ZERO {
+        if character == ASCII'MINUS {
+        } else if character < ASCII'ZERO {
             return false;
-        } else if character > ASCII.NINE {
+        } else if character > ASCII'NINE {
             return false;
         } else {
             has_number = true;
@@ -56,7 +56,7 @@ macro #handle_special_tokenize_arguments() {
     contents, &buffer_index, tokens, file_name, &row, &column, &handled, &index
 };
 
-define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Data) {
+define tokenize = function(file_name: *, contents: *, tokens: *Tokens'Data) {
     keyword_map = hashmap_new(64);
     hashmap_string_put(&keyword_map, "function", 1);
     hashmap_string_put(&keyword_map, "declare", 1);
@@ -82,13 +82,13 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Data) {
     declare index = 0;
     declare contents_length = string_length(contents);
     while index < contents_length {
-        declare character = *any_1.cast(contents + index).*;
+        declare character = (cast(*any_1) (contents + index)).*;
         declare has_next = (index + 1) < contents_length;
-        declare character_next = *any_1.cast(contents + index + 1).*;
+        declare character_next = (cast(*any_1) (contents + index + 1)).*;
         declare handled = false;
 
-        if character == ASCII.SLASH {
-            if (character_next == ASCII.SLASH) && has_next {
+        if character == ASCII'SLASH {
+            if (character_next == ASCII'SLASH) && has_next {
                 in_comment = true;
                 handled = true;
                 index = index + 2;
@@ -99,48 +99,48 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Data) {
 
         if !in_quotes {
             if !in_comment {
-                if !handled check_handle_special_character(character, ASCII.OPEN_PARENTHESIS, Token.OPEN_PARENTHESIS, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.CLOSED_PARENTHESIS, Token.CLOSED_PARENTHESIS, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.OPEN_CURLY_BRACKETS, Token.OPEN_CURLY_BRACKETS, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.CLOSED_CURLY_BRACKETS, Token.CLOSED_CURLY_BRACKETS, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.OPEN_BRACKET, Token.OPEN_BRACKET, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.CLOSED_BRACKET, Token.CLOSED_BRACKET, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.COMMA, Token.COMMA, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.SEMICOLON, Token.SEMICOLON, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.PERIOD, Token.PERIOD, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.APOSTROPHE, Token.APOSTROPHE, #handle_special_tokenize_arguments());
-                if !handled check_handle_special_character(character, ASCII.COLON, Token.COLON, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'OPEN_PARENTHESIS, Token'OPEN_PARENTHESIS, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'CLOSED_PARENTHESIS, Token'CLOSED_PARENTHESIS, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'OPEN_CURLY_BRACKETS, Token'OPEN_CURLY_BRACKETS, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'CLOSED_CURLY_BRACKETS, Token'CLOSED_CURLY_BRACKETS, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'OPEN_BRACKET, Token'OPEN_BRACKET, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'CLOSED_BRACKET, Token'CLOSED_BRACKET, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'COMMA, Token'COMMA, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'SEMICOLON, Token'SEMICOLON, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'PERIOD, Token'PERIOD, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'APOSTROPHE, Token'APOSTROPHE, #handle_special_tokenize_arguments());
+                if !handled check_handle_special_character(character, ASCII'COLON, Token'COLON, #handle_special_tokenize_arguments());
 
-                if !handled check_handle_break(character, ASCII.SPACE, #handle_special_tokenize_arguments());
-                if !handled check_handle_break(character, ASCII.LINE_FEED, #handle_special_tokenize_arguments());
-                if !handled check_handle_break(character, ASCII.TAB, #handle_special_tokenize_arguments());
+                if !handled check_handle_break(character, ASCII'SPACE, #handle_special_tokenize_arguments());
+                if !handled check_handle_break(character, ASCII'LINE_FEED, #handle_special_tokenize_arguments());
+                if !handled check_handle_break(character, ASCII'TAB, #handle_special_tokenize_arguments());
 
-                if !handled check_handle_single_operator(character, ASCII.PLUS, "+", #handle_special_tokenize_arguments());
-                if |(character_next < ASCII.ZERO, character_next > ASCII.NINE) {
-                    if !handled check_handle_single_operator(character, ASCII.MINUS, "-", #handle_special_tokenize_arguments());
+                if !handled check_handle_single_operator(character, ASCII'PLUS, "+", #handle_special_tokenize_arguments());
+                if |(character_next < ASCII'ZERO, character_next > ASCII'NINE) {
+                    if !handled check_handle_single_operator(character, ASCII'MINUS, "-", #handle_special_tokenize_arguments());
                 };
-                if !handled check_handle_single_operator(character, ASCII.SLASH, "/", #handle_special_tokenize_arguments());
-                if !handled check_handle_single_operator(character, ASCII.PERCENT, "%", #handle_special_tokenize_arguments());
+                if !handled check_handle_single_operator(character, ASCII'SLASH, "/", #handle_special_tokenize_arguments());
+                if !handled check_handle_single_operator(character, ASCII'PERCENT, "%", #handle_special_tokenize_arguments());
 
-                if !handled check_handle_single_operator_repetition(contents, ASCII.ASTERISK, "*", #handle_special_tokenize_arguments());
+                if !handled check_handle_single_operator_repetition(contents, ASCII'ASTERISK, "*", #handle_special_tokenize_arguments());
 
                 if has_next {
-                    if !handled check_handle_double_operator(character, character_next, ASCII.EQUAL, ASCII.EQUAL, "==", #handle_special_tokenize_arguments());
-                    if !handled check_handle_double_operator(character, character_next, ASCII.AMPERSAND, ASCII.AMPERSAND, "&&", #handle_special_tokenize_arguments());
-                    if !handled check_handle_double_operator(character, character_next, ASCII.VERTICAL_BAR, ASCII.VERTICAL_BAR, "||", #handle_special_tokenize_arguments());
+                    if !handled check_handle_double_operator(character, character_next, ASCII'EQUAL, ASCII'EQUAL, "==", #handle_special_tokenize_arguments());
+                    if !handled check_handle_double_operator(character, character_next, ASCII'AMPERSAND, ASCII'AMPERSAND, "&&", #handle_special_tokenize_arguments());
+                    if !handled check_handle_double_operator(character, character_next, ASCII'VERTICAL_BAR, ASCII'VERTICAL_BAR, "||", #handle_special_tokenize_arguments());
                 };
 
-                if !handled check_handle_single_prefix(character, ASCII.EXCLAMATION_POINT, "!", #handle_special_tokenize_arguments());
-                if !handled check_handle_single_prefix(character, ASCII.AMPERSAND, "&", #handle_special_tokenize_arguments());
+                if !handled check_handle_single_prefix(character, ASCII'EXCLAMATION_POINT, "!", #handle_special_tokenize_arguments());
+                if !handled check_handle_single_prefix(character, ASCII'AMPERSAND, "&", #handle_special_tokenize_arguments());
             };
         };
 
         if !in_comment {
-            if character == ASCII.QUOTATION {
+            if character == ASCII'QUOTATION {
                 if in_quotes {
                     declare buffer_copy = copy_string_length_brk_allocate(contents + buffer_index, index - buffer_index);
 
-                    declare string_pointer_data = #tokens_append_data(tokens, Token.STRING, Token.StringData, file_name, row, column);
+                    declare string_pointer_data = #tokens_append_data(tokens, Token'STRING, Token'StringData, file_name, row, column);
                     string_pointer_data.value = buffer_copy;
 
                     column = column + string_length(buffer_copy);
@@ -154,7 +154,7 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Data) {
             };
         };
 
-        if character == ASCII.LINE_FEED {
+        if character == ASCII'LINE_FEED {
             in_comment = false;
 
             column = 1;
@@ -179,7 +179,7 @@ define tokenize = function(file_name: *, contents: *, tokens: *Tokens.Data) {
     };
 };
 
-define check_handle_single_operator = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_single_operator = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens'Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
@@ -193,8 +193,8 @@ define check_handle_single_operator = function(character: any_1, wanted_characte
     };
 };
 
-define check_handle_single_operator_repetition = function(contents: *, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
-    declare character = *any_1.cast(contents + index.*).*;
+define check_handle_single_operator_repetition = function(contents: *, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens'Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+    declare character = (cast(*any_1) (contents + index.*)).*;
     if !(character == wanted_character) {
         return;
     };
@@ -206,7 +206,7 @@ define check_handle_single_operator_repetition = function(contents: *, wanted_ch
         column.* = column.* + 1;
         index.* = index.* + 1;
         buffer_index.* = index.*;
-        character = *any_1.cast(contents + index.*).*;
+        character = (cast(*any_1) (contents + index.*)).*;
     };
 
 
@@ -216,7 +216,7 @@ define check_handle_single_operator_repetition = function(contents: *, wanted_ch
     handled.* = true;
 };
 
-define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_double_operator = function(character: any_1, character_next: any_1, wanted_character: any_1, wanted_character_next: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens'Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if &&(character == wanted_character, character_next == wanted_character_next) {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 
@@ -230,7 +230,7 @@ define check_handle_double_operator = function(character: any_1, character_next:
     };
 };
 
-define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_single_prefix = function(character: any_1, wanted_character: any_1, internal_name: *, contents: *, buffer_index: *whole_8, tokens: *Tokens'Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if character == wanted_character {
         declare column_copy = column.*;
         tokenize_inner(internal_name, string_length(internal_name), tokens, file_name, row, &column_copy);
@@ -242,10 +242,10 @@ define check_handle_single_prefix = function(character: any_1, wanted_character:
     };
 };
 
-define check_handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_special_character = function(current_character: any_1, desired_character: whole_1, token: whole_8, contents: *, buffer_index: *whole_8, tokens: *Tokens'Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
-        declare _ = Tokens.append(tokens, token, file_name, row.*, column.*);
+        declare _ = Tokens'append(tokens, token, file_name, row.*, column.*);
 
         column.* = column.* + 1;
         index.* = index.* + 1;
@@ -254,7 +254,7 @@ define check_handle_special_character = function(current_character: any_1, desir
     };
 };
 
-define check_handle_break = function(current_character: any_1, desired_character: whole_1, contents: *, buffer_index: *whole_8, tokens: *Tokens.Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
+define check_handle_break = function(current_character: any_1, desired_character: whole_1, contents: *, buffer_index: *whole_8, tokens: *Tokens'Data, file_name: *, row: *whole_8, column: *whole_8, handled: *boolean, index: *whole_8) {
     if current_character == desired_character {
         tokenize_inner(contents + buffer_index.*, index.* - buffer_index.*, tokens, file_name, row, column);
 

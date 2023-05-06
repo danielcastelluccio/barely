@@ -3,7 +3,7 @@ define Target_Elf = module {
     define HEADER_SIZE = 232;
     define ALIGNMENT = 4096;
 
-    define output = function(nodes: *Nodes.Data, program_data: ProgramData, target_os: *, output_file: *, output_instruction_set: InstructionSetFunctions) {
+    define output = function(nodes: *Nodes'Data, program_data: ProgramData, target_os: *, output_file: *, output_instruction_set: InstructionSetFunctions) {
         declare output_buffer = autobuffer_new(1048576);
         declare instructions_buffer = autobuffer_buffer_new(524288);
         declare data_buffer = autobuffer_buffer_new(32768);
@@ -43,34 +43,34 @@ define Target_Elf = module {
 
         { // update_location_references
             declare define_values = &program_data.define_values;
-            declare main_function_index = whole_8.cast(hashmap_string_get(define_values, "main"));
+            declare main_function_index = cast(whole_8) hashmap_string_get(define_values, "main");
             declare main_index = autobuffer_array8_get(&function_locations, main_function_index);
-            set_near_call_value(&instructions_buffer, main_call, InstructionIndex.cast(main_index));
+            set_near_call_value(&instructions_buffer, main_call, cast(InstructionIndex) main_index);
 
-            adjust_function_calls(set_far_call_value, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer, .START_ADDRESS + .HEADER_SIZE);
+            adjust_function_calls(set_far_call_value, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer, 'START_ADDRESS + 'HEADER_SIZE);
 
             adjust_jumps(&jmps, &jmp_targets, &targets, set_jmp_value, &instructions_buffer);
             adjust_jumps(&jes, &je_targets, &targets, set_je_value, &instructions_buffer);
 
             declare instructions_autobuffer = &instructions_buffer.autobuffer;
 
-            declare data_location = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
+            declare data_location = 'START_ADDRESS + 'HEADER_SIZE + instructions_index + 'ALIGNMENT;
             adjust_indexes(&instructions_buffer, set_data_absolute_value, &data_indexes_to_adjust, data_location);
-            declare bss_location = data_location + data_index + .ALIGNMENT;
+            declare bss_location = data_location + data_index + 'ALIGNMENT;
             adjust_indexes(&instructions_buffer, set_bss_absolute_value, &bss_indexes_to_adjust, bss_location);
-            adjust_indexes(&instructions_buffer, set_bss_relative_value, &bss_indexes_to_adjust_relative, (bss_location - .START_ADDRESS) - .HEADER_SIZE);
+            adjust_indexes(&instructions_buffer, set_bss_relative_value, &bss_indexes_to_adjust_relative, (bss_location - 'START_ADDRESS) - 'HEADER_SIZE);
         };
 
-        autobuffer_set(&output_buffer, instructions_buffer.autobuffer.buffer, .HEADER_SIZE, instructions_index);
-        autobuffer_set(&output_buffer, data_buffer.autobuffer.buffer, .HEADER_SIZE + instructions_index, data_index);
+        autobuffer_set(&output_buffer, instructions_buffer.autobuffer.buffer, 'HEADER_SIZE, instructions_index);
+        autobuffer_set(&output_buffer, data_buffer.autobuffer.buffer, 'HEADER_SIZE + instructions_index, data_index);
 
-        declare file_header, program_header_instructions, program_header_data, program_header_bss = .create_headers(instructions_index, data_index, bss_index);
+        declare file_header, program_header_instructions, program_header_data, program_header_bss = 'create_headers(instructions_index, data_index, bss_index);
         autobuffer_set(&output_buffer, &file_header, 0, 64);
         autobuffer_set(&output_buffer, &program_header_instructions, 64, 56);
         autobuffer_set(&output_buffer, &program_header_data, 120, 56);
         autobuffer_set(&output_buffer, &program_header_bss, 176, 56);
 
-        declare buffer_size = .HEADER_SIZE + instructions_index + data_index;
+        declare buffer_size = 'HEADER_SIZE + instructions_index + data_index;
         create_and_write_file(output_file, output_buffer.buffer, buffer_size);
     };
 
@@ -81,39 +81,39 @@ define Target_Elf = module {
         file_header.abi = 3:whole_1;
         file_header.object_file_type = 2:whole_2;
         file_header.machine = 62:whole_2;
-        file_header.entry_point = .START_ADDRESS + .HEADER_SIZE;
+        file_header.entry_point = 'START_ADDRESS + 'HEADER_SIZE;
         file_header.program_header_table = 64;
         file_header.program_header_count = 3:whole_2;
 
         declare program_header_instructions: ELF64ProgramHeader;
         program_header_instructions.type = 1:whole_4;
         program_header_instructions.location = 0;
-        program_header_instructions.virtual_address = .START_ADDRESS;
-        program_header_instructions.physical_address = .START_ADDRESS;
-        program_header_instructions.size_file = .HEADER_SIZE + instructions_index;
-        program_header_instructions.size_memory = .HEADER_SIZE + instructions_index;
+        program_header_instructions.virtual_address = 'START_ADDRESS;
+        program_header_instructions.physical_address = 'START_ADDRESS;
+        program_header_instructions.size_file = 'HEADER_SIZE + instructions_index;
+        program_header_instructions.size_memory = 'HEADER_SIZE + instructions_index;
         program_header_instructions.flags = 5:whole_4;
-        program_header_instructions.alignment = .ALIGNMENT;
+        program_header_instructions.alignment = 'ALIGNMENT;
 
         declare program_header_data: ELF64ProgramHeader;
         program_header_data.type = 1:whole_4;
-        program_header_data.location = instructions_index + .HEADER_SIZE;
-        program_header_data.virtual_address = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
-        program_header_data.physical_address = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT;
+        program_header_data.location = instructions_index + 'HEADER_SIZE;
+        program_header_data.virtual_address = 'START_ADDRESS + 'HEADER_SIZE + instructions_index + 'ALIGNMENT;
+        program_header_data.physical_address = 'START_ADDRESS + 'HEADER_SIZE + instructions_index + 'ALIGNMENT;
         program_header_data.size_file = data_index;
         program_header_data.size_memory = data_index;
         program_header_data.flags = 4:whole_4;
-        program_header_data.alignment = .ALIGNMENT;
+        program_header_data.alignment = 'ALIGNMENT;
 
         declare program_header_bss: ELF64ProgramHeader;
         program_header_bss.type = 1:whole_4;
-        program_header_bss.location = instructions_index + data_index + .HEADER_SIZE;
-        program_header_bss.virtual_address = .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT + data_index + .ALIGNMENT;
-        program_header_bss.physical_address =  .START_ADDRESS + .HEADER_SIZE + instructions_index + .ALIGNMENT + data_index + .ALIGNMENT;
+        program_header_bss.location = instructions_index + data_index + 'HEADER_SIZE;
+        program_header_bss.virtual_address = 'START_ADDRESS + 'HEADER_SIZE + instructions_index + 'ALIGNMENT + data_index + 'ALIGNMENT;
+        program_header_bss.physical_address =  'START_ADDRESS + 'HEADER_SIZE + instructions_index + 'ALIGNMENT + data_index + 'ALIGNMENT;
         program_header_bss.size_file = 0;
         program_header_bss.size_memory = bss_index;
         program_header_bss.flags = 6:whole_4;
-        program_header_bss.alignment = .ALIGNMENT;
+        program_header_bss.alignment = 'ALIGNMENT;
 
         return file_header, program_header_instructions, program_header_data, program_header_bss;
     };

@@ -1,10 +1,10 @@
-define get_token_location_data = function(tokens: *Tokens.Data, index: whole_8): *, whole_8, whole_8 {
-    declare data = Tokens.get_location_data(tokens, index);
+define get_token_location_data = function(tokens: *Tokens'Data, index: whole_8): *, whole_8, whole_8 {
+    declare data = Tokens'get_location_data(tokens, index);
     return data.file, data.row, data.column;
 };
 
-define print_token_error_beginning = function(tokens: *Tokens.Data, location: whole_8) {
-    declare location_data = Tokens.get_location_data(tokens, location);
+define print_token_error_beginning = function(tokens: *Tokens'Data, location: whole_8) {
+    declare location_data = Tokens'get_location_data(tokens, location);
     print("[ERROR] ");
     print(location_data.file);
     print(":");
@@ -14,17 +14,17 @@ define print_token_error_beginning = function(tokens: *Tokens.Data, location: wh
     print(": ");
 };
 
-define parse_define = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_define = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
-    declare name_token_data = #tokens_get_pointer_data(tokens, Token.NameData, index + 1);
+    declare name_token_data = #tokens_get_pointer_data(tokens, Token'NameData, index + 1);
     declare name = name_token_data.name;
 
-    declare type = *.>0();
-    declare value_offset = if Tokens.get_id(tokens, index + 2) == Token.COLON {
-        declare type_token_data = #tokens_get_pointer_data(tokens, Token.NameData, index + 3);
+    declare type = *'>0();
+    declare value_offset = if Tokens'get_id(tokens, index + 2) == Token'COLON {
+        declare type_token_data = #tokens_get_pointer_data(tokens, Token'NameData, index + 3);
         type = type_token_data.name;
         5
-    } else if Tokens.is_name(tokens, index + 2, "=") {
+    } else if Tokens'is_name(tokens, index + 2, "=") {
         3
     } else {
         print_token_error_beginning(tokens, index + 2);
@@ -34,7 +34,7 @@ define parse_define = function(tokens: *Tokens.Data, index_pointer: *whole_8, no
     };
 
     declare define_index = nodes.index;
-    declare define_data = #nodes_append_data(nodes, Node.DEFINE, Node.DefineData, get_token_location_data(tokens, index_pointer.*));
+    declare define_data = #nodes_append_data(nodes, Node'DEFINE, Node'DefineData, get_token_location_data(tokens, index_pointer.*));
     define_data.name = name;
     define_data.type = type;
 
@@ -43,13 +43,13 @@ define parse_define = function(tokens: *Tokens.Data, index_pointer: *whole_8, no
     parse_individual(tokens, index_pointer, nodes);
 
     declare end_define_index = nodes.index;
-    declare end_define_data = #nodes_append_data(nodes, Node.ENDDEFINE, Node.EndDefineData, get_token_location_data(tokens, index_pointer.*));
+    declare end_define_data = #nodes_append_data(nodes, Node'ENDDEFINE, Node'EndDefineData, get_token_location_data(tokens, index_pointer.*));
     end_define_data.type = type;
 
     index_pointer.* = index_pointer.* + 1;
 };
 
-define parse_structure = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_structure = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
     declare member_names = autobuffer_new(40);
@@ -60,83 +60,83 @@ define parse_structure = function(tokens: *Tokens.Data, index_pointer: *whole_8,
 
     declare seen_item_name = false;
 
-    while !(Tokens.get_id(tokens, index) == Token.CLOSED_CURLY_BRACKETS) {
-        declare id = Tokens.get_id(tokens, index);
+    while !(Tokens'get_id(tokens, index) == Token'CLOSED_CURLY_BRACKETS) {
+        declare id = Tokens'get_id(tokens, index);
 
-        if id == Token.NAME {
+        if id == Token'NAME {
             if seen_item_name {
                 declare parsed_name = parse_name_array(tokens, &index);
                 autobuffer_array8_set(&member_types, member_index, parsed_name);
                 member_index = member_index + 1;
             } else {
-                declare name_token = #tokens_get_pointer_data(tokens, Token.NameData, index);
+                declare name_token = #tokens_get_pointer_data(tokens, Token'NameData, index);
                 index = index + 1;
                 autobuffer_array8_set(&member_names, member_index, name_token.name);
             };
 
             seen_item_name = !seen_item_name;
-        } else if id == Token.COLON {
+        } else if id == Token'COLON {
             index = index + 1;
-        } else if id == Token.SEMICOLON {
+        } else if id == Token'SEMICOLON {
             index = index + 1;
         };
     };
 
-    declare structure_data = #nodes_append_data(nodes, Node.STRUCTURE, Node.StructureData, get_token_location_data(tokens, index_pointer.*));
+    declare structure_data = #nodes_append_data(nodes, Node'STRUCTURE, Node'StructureData, get_token_location_data(tokens, index_pointer.*));
     structure_data.item_names = member_names.buffer;
     structure_data.item_types = member_types.buffer;
 
     index_pointer.* = index + 1;
 };
 
-define parse_name_array = function(tokens: *Tokens.Data, index_pointer: *whole_8): * {
+define parse_name_array = function(tokens: *Tokens'Data, index_pointer: *whole_8): * {
     declare index = index_pointer.*;
 
     declare buffer = autobuffer_buffer_new(32);
     declare array = autobuffer_new(24);
-    if Tokens.get_id(tokens, index) == Token.NAME {
-        declare name_token_data = #tokens_get_pointer_data(tokens, Token.NameData, index);
+    if Tokens'get_id(tokens, index) == Token'NAME {
+        declare name_token_data = #tokens_get_pointer_data(tokens, Token'NameData, index);
         autobuffer_buffer_push_string(&buffer, name_token_data.name);
         index = index + 1;
     };
 
     declare inner = 0;
     while (inner > 0) ||
-        ((Tokens.get_id(tokens, index) == Token.OPEN_BRACKET) ||
-            (Tokens.is_name(tokens, index - 1, "*") &&
-            ((Tokens.get_id(tokens, index) == Token.NAME) || (Tokens.get_id(tokens, index) == Token.KEYWORD)))) {
-        declare id = Tokens.get_id(tokens, index);
-        declare pointer_data = Tokens.get_pointer_data(tokens, index);
-        if id == Token.OPEN_BRACKET {
+        ((Tokens'get_id(tokens, index) == Token'OPEN_BRACKET) ||
+            (Tokens'is_name(tokens, index - 1, "*") &&
+            ((Tokens'get_id(tokens, index) == Token'NAME) || (Tokens'get_id(tokens, index) == Token'KEYWORD)))) {
+        declare id = Tokens'get_id(tokens, index);
+        declare pointer_data = Tokens'get_pointer_data(tokens, index);
+        if id == Token'OPEN_BRACKET {
             autobuffer_buffer_push_string(&buffer, "[");
             inner = inner + 1;
-        } else if id == Token.CLOSED_BRACKET {
+        } else if id == Token'CLOSED_BRACKET {
             autobuffer_buffer_push_string(&buffer, "]");
             inner = inner - 1;
-        } else if id == Token.COMMA {
+        } else if id == Token'COMMA {
             autobuffer_buffer_push_string(&buffer, ",");
-        } else if id == Token.PERIOD {
+        } else if id == Token'PERIOD {
             autobuffer_buffer_push_string(&buffer, ".");
-        } else if id == Token.APOSTROPHE {
+        } else if id == Token'APOSTROPHE {
             // Kinda a hack, but until we remove periods it should be fine
             autobuffer_buffer_push_string(&buffer, ".");
-        } else if id == Token.COLON {
+        } else if id == Token'COLON {
             autobuffer_buffer_push_string(&buffer, ":");
-        } else if id == Token.NAME {
-            autobuffer_buffer_push_string(&buffer, *Token.NameData.cast(pointer_data).name);
-        } else if id == Token.KEYWORD {
-            autobuffer_buffer_push_string(&buffer, *Token.KeywordData.cast(pointer_data).keyword);
+        } else if id == Token'NAME {
+            autobuffer_buffer_push_string(&buffer, (cast(*Token'NameData) pointer_data).name);
+        } else if id == Token'KEYWORD {
+            autobuffer_buffer_push_string(&buffer, (cast(*Token'KeywordData) pointer_data).keyword);
         };
         index = index + 1;
     };
 
     autobuffer_array8_set(&array, 0, buffer.autobuffer.buffer);
 
-    if (Tokens.get_id(tokens, index) == Token.PERIOD) ||
-        (Tokens.get_id(tokens, index) == Token.APOSTROPHE){
+    if (Tokens'get_id(tokens, index) == Token'PERIOD) ||
+        (Tokens'get_id(tokens, index) == Token'APOSTROPHE) {
         index = index + 1;
 
-        declare first_index_contents = *.cast(autobuffer_array8_get(&array, 0));
+        declare first_index_contents = cast(*) autobuffer_array8_get(&array, 0);
         if is_only_asterisks(first_index_contents) {
             autobuffer_array8_set(&array, 0, concatenate2_brk_allocate(first_index_contents, "@current_module"));
         };
@@ -145,7 +145,7 @@ define parse_name_array = function(tokens: *Tokens.Data, index_pointer: *whole_8
 
         declare i = 0;
         while i < array8_length(next_array) {
-            autobuffer_array8_set(&array, i + 1, *.cast(array8_get(next_array, i)));
+            autobuffer_array8_set(&array, i + 1, cast(*) array8_get(next_array, i));
             i = i + 1;
         };
     };
@@ -158,8 +158,8 @@ define is_only_asterisks = function(string: *): boolean {
     declare i = 0;
     declare string_length = string_length(string);
     while i < string_length {
-        declare character = *any_1.cast(string + i).*;
-        if !(character == ASCII.ASTERISK) {
+        declare character = (cast(*any_1) (string + i)).*;
+        if !(character == ASCII'ASTERISK) {
             return false;
         };
         i = i + 1;
@@ -168,10 +168,10 @@ define is_only_asterisks = function(string: *): boolean {
     return true;
 };
 
-define parse_function = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_function = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
-    declare function_data = #nodes_append_data(nodes, Node.FUNCTION, Node.FunctionData, get_token_location_data(tokens, index_pointer.*));
+    declare function_data = #nodes_append_data(nodes, Node'FUNCTION, Node'FunctionData, get_token_location_data(tokens, index_pointer.*));
 
     index = index + 2;
 
@@ -181,30 +181,30 @@ define parse_function = function(tokens: *Tokens.Data, index_pointer: *whole_8, 
     function_data.argument_types = function_argument_types;
     function_data.return_types = function_return_types;
 
-    declare has_body = Tokens.get_id(tokens, index) == Token.OPEN_CURLY_BRACKETS;
+    declare has_body = Tokens'get_id(tokens, index) == Token'OPEN_CURLY_BRACKETS;
     if has_body {
         index = index + 1;
 
-        declare _ = Nodes.append(nodes, Node.SCOPE, get_token_location_data(tokens, index));
-        while !(Tokens.get_id(tokens, index) == Token.CLOSED_CURLY_BRACKETS) {
+        declare _ = Nodes'append(nodes, Node'SCOPE, get_token_location_data(tokens, index));
+        while !(Tokens'get_id(tokens, index) == Token'CLOSED_CURLY_BRACKETS) {
             parse_statement(tokens, &index, nodes);
         };
 
         index = index + 1;
         
-        if !(Nodes.get_id(nodes, nodes.index - 1) == Node.RETURN) {
-            declare _ = Nodes.append(nodes, Node.RETURN, get_token_location_data(tokens, index - 1));
+        if !(Nodes'get_id(nodes, nodes.index - 1) == Node'RETURN) {
+            declare _ = Nodes'append(nodes, Node'RETURN, get_token_location_data(tokens, index - 1));
         };
 
-        declare _ = Nodes.append(nodes, Node.ENDSCOPE, get_token_location_data(tokens, index));
+        declare _ = Nodes'append(nodes, Node'ENDSCOPE, get_token_location_data(tokens, index));
     };
 
-    declare _ = Nodes.append(nodes, Node.ENDFUNCTION, get_token_location_data(tokens, index));
+    declare _ = Nodes'append(nodes, Node'ENDFUNCTION, get_token_location_data(tokens, index));
 
     index_pointer.* = index;
 };
 
-define parse_function_definition = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data): *, *, * {
+define parse_function_definition = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data): *, *, * {
     declare index = index_pointer.*;
 
     declare function_argument_names = autobuffer_new(40);
@@ -213,13 +213,13 @@ define parse_function_definition = function(tokens: *Tokens.Data, index_pointer:
 
     declare is_name = true;
     declare arguments_index = 0;
-    while !(Tokens.get_id(tokens, index) == Token.CLOSED_PARENTHESIS) {
-        declare id = Tokens.get_id(tokens, index);
+    while !(Tokens'get_id(tokens, index) == Token'CLOSED_PARENTHESIS) {
+        declare id = Tokens'get_id(tokens, index);
 
-        if id == Token.NAME {
+        if id == Token'NAME {
 
             if is_name {
-                declare token_name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
+                declare token_name = #tokens_get_pointer_data(tokens, Token'NameData, index).name;
                 autobuffer_array8_set(&function_argument_names, arguments_index, token_name);
                 index = index + 1;
             } else {
@@ -229,7 +229,7 @@ define parse_function_definition = function(tokens: *Tokens.Data, index_pointer:
             };
 
             is_name = !is_name;
-        } else if (id == Token.COMMA) || (id == Token.COLON) {
+        } else if (id == Token'COMMA) || (id == Token'COLON) {
             index = index + 1;
         };
     };
@@ -237,14 +237,14 @@ define parse_function_definition = function(tokens: *Tokens.Data, index_pointer:
     index = index + 1;
 
     declare returns_index = 0;
-    while (!(Tokens.get_id(tokens, index) == Token.OPEN_CURLY_BRACKETS)) && (!(Tokens.get_id(tokens, index) == Token.SEMICOLON)) {
-        declare id = Tokens.get_id(tokens, index);
+    while (!(Tokens'get_id(tokens, index) == Token'OPEN_CURLY_BRACKETS)) && (!(Tokens'get_id(tokens, index) == Token'SEMICOLON)) {
+        declare id = Tokens'get_id(tokens, index);
 
-        if (id == Token.NAME) || (id == Token.PERIOD) || (id == Token.APOSTROPHE) {
+        if (id == Token'NAME) || (id == Token'PERIOD) || (id == Token'APOSTROPHE) {
             declare token_name = parse_name_array(tokens, &index);
             autobuffer_array8_set(&function_return_types, returns_index, token_name);
             returns_index = returns_index + 1;
-        } else if (id == Token.COMMA) || (id == Token.COLON) {
+        } else if (id == Token'COMMA) || (id == Token'COLON) {
             index = index + 1;
         };
     };
@@ -254,31 +254,31 @@ define parse_function_definition = function(tokens: *Tokens.Data, index_pointer:
     return function_argument_names.buffer, function_arguments_array.buffer, function_return_types.buffer;
 };
 
-define parse_inside_parenthesis = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_inside_parenthesis = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     index_pointer.* = index_pointer.* + 1;
 
-    parse_multiple_expressions(tokens, index_pointer, nodes, Token.CLOSED_PARENTHESIS);
+    parse_multiple_expressions(tokens, index_pointer, nodes, Token'CLOSED_PARENTHESIS);
 
     index_pointer.* = index_pointer.* + 1;
 };
 
-define check_parse_invoke_chain = function(tokens: *Tokens.Data, index_in: whole_8, nodes: *Nodes.Data) {
+define check_parse_invoke_chain = function(tokens: *Tokens'Data, index_in: whole_8, nodes: *Nodes'Data) {
     declare index = index_in;
 
     declare inner = 0:integer_8;
-    while (inner > 0:integer_8) || (Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
-        declare id = Tokens.get_id(tokens, index);
-        if id == Token.OPEN_PARENTHESIS {
+    while (inner > 0:integer_8) || (Tokens'get_id(tokens, index) == Token'OPEN_PARENTHESIS) {
+        declare id = Tokens'get_id(tokens, index);
+        if id == Token'OPEN_PARENTHESIS {
             if inner == 0:integer_8 {
                 declare inside_index = index + 1;
                 declare inside_inner = 1:integer_8;
                 while inside_inner > 0:integer_8 {
-                    declare id3 = Tokens.get_id(tokens, inside_index);
-                    if id3 == Token.OPEN_PARENTHESIS {
+                    declare id3 = Tokens'get_id(tokens, inside_index);
+                    if id3 == Token'OPEN_PARENTHESIS {
                         inside_inner = inside_inner + 1:integer_8;
-                    } else if id3 == Token.CLOSED_PARENTHESIS {
+                    } else if id3 == Token'CLOSED_PARENTHESIS {
                         inside_inner = inside_inner - 1:integer_8;
-                    } else if id3 == Token.SEMICOLON {
+                    } else if id3 == Token'SEMICOLON {
                         print_token_error_beginning(tokens, index);
                         println("Unclosed parenthesis");
                         exit(1);
@@ -293,27 +293,27 @@ define check_parse_invoke_chain = function(tokens: *Tokens.Data, index_in: whole
                 inner = inner + 1:integer_8;
                 index = index + 1;
             };
-        } else if id == Token.CLOSED_PARENTHESIS {
+        } else if id == Token'CLOSED_PARENTHESIS {
             inner = inner - 1:integer_8;
             index = index + 1;
         };
     };
 };
 
-define handle_invoke_instructions = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data, previous_retrieve_index: whole_8) {
+define handle_invoke_instructions = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data, previous_retrieve_index: whole_8) {
     declare index = index_pointer.*;
     declare inner = 0:integer_8;
 
     declare is_first_invoke = true;
 
-    while (inner > 0:integer_8) || (Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS) {
-        declare id = Tokens.get_id(tokens, index);
-        if id == Token.OPEN_PARENTHESIS {
+    while (inner > 0:integer_8) || (Tokens'get_id(tokens, index) == Token'OPEN_PARENTHESIS) {
+        declare id = Tokens'get_id(tokens, index);
+        if id == Token'OPEN_PARENTHESIS {
             if inner == 0:integer_8 {
-                declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, previous_retrieve_index);
+                declare retrieve_data = #nodes_get_pointer_data(nodes, Node'RetrieveData, previous_retrieve_index);
                 declare retrieve_name = retrieve_data.name;
                 if retrieve_data.has_multiple {
-                    retrieve_name = *.cast(array8_get(retrieve_name, array8_length(retrieve_name) - 1));
+                    retrieve_name = cast(*) array8_get(retrieve_name, array8_length(retrieve_name) - 1);
                 };
                 declare uses_previous = retrieve_data.uses_previous;
                 declare is_special = if is_first_invoke {
@@ -323,20 +323,20 @@ define handle_invoke_instructions = function(tokens: *Tokens.Data, index_pointer
                 };
 
                 if is_special {
-                    Nodes.set_skip(nodes, previous_retrieve_index);
+                    Nodes'set_skip(nodes, previous_retrieve_index);
 
-                    declare invoke_data = #nodes_append_data(nodes, Node.INVOKE_INTERNAL, Node.InvokeInternalData, get_token_location_data(tokens, index));
+                    declare invoke_data = #nodes_append_data(nodes, Node'INVOKE_INTERNAL, Node'InvokeInternalData, get_token_location_data(tokens, index));
                     invoke_data.name = retrieve_data.name;
                     invoke_data.has_multiple = retrieve_data.has_multiple;
                     invoke_data.uses_previous = uses_previous;
                 } else {
-                    declare _ = Nodes.append(nodes, Node.INVOKE, get_token_location_data(tokens, index));
+                    declare _ = Nodes'append(nodes, Node'INVOKE, get_token_location_data(tokens, index));
                 };
 
                 is_first_invoke = false;
             };
             inner = inner + 1:integer_8;
-        } else if id == Token.CLOSED_PARENTHESIS {
+        } else if id == Token'CLOSED_PARENTHESIS {
             inner = inner - 1:integer_8;
         };
         index = index + 1;
@@ -345,32 +345,32 @@ define handle_invoke_instructions = function(tokens: *Tokens.Data, index_pointer
     index_pointer.* = index;
 };
 
-define parse_expression_inner = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes_temp: *Nodes.Data, invoke_nodes: *Nodes.Data) {
+define parse_expression_inner = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes_temp: *Nodes'Data, invoke_nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
-    declare id = Tokens.get_id(tokens, index);
-    declare pointer_data = Tokens.get_pointer_data(tokens, index);
+    declare id = Tokens'get_id(tokens, index);
+    declare pointer_data = Tokens'get_pointer_data(tokens, index);
 
     check_parse_simple_expressions(tokens, &index, nodes_temp);
 
-    if id == Token.OPEN_CURLY_BRACKETS {
-        declare _ = Nodes.append(nodes_temp, Node.SCOPE, get_token_location_data(tokens, index));
+    if id == Token'OPEN_CURLY_BRACKETS {
+        declare _ = Nodes'append(nodes_temp, Node'SCOPE, get_token_location_data(tokens, index));
         index = index + 1;
-        while !(Tokens.get_id(tokens, index) == Token.CLOSED_CURLY_BRACKETS) {
+        while !(Tokens'get_id(tokens, index) == Token'CLOSED_CURLY_BRACKETS) {
             parse_statement(tokens, &index, nodes_temp);
         };
         index = index + 1;
-        declare _ = Nodes.append(nodes_temp, Node.ENDSCOPE, get_token_location_data(tokens, index));
+        declare _ = Nodes'append(nodes_temp, Node'ENDSCOPE, get_token_location_data(tokens, index));
     };
 
-    if id == Token.OPEN_PARENTHESIS {
+    if id == Token'OPEN_PARENTHESIS {
         index = index + 1;
         parse_expression(tokens, &index, nodes_temp);
         index = index + 1;
     };
 
-    if id == Token.KEYWORD {
-        declare name_value = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
+    if id == Token'KEYWORD {
+        declare name_value = #tokens_get_pointer_data(tokens, Token'NameData, index).name;
         if string=(name_value, "if") {
             parse_if(tokens, &index, nodes_temp);
         };
@@ -380,24 +380,24 @@ define parse_expression_inner = function(tokens: *Tokens.Data, index_pointer: *w
 
     check_parse_invoke_chain(tokens, index, invoke_nodes);
 
-    if Tokens.get_id(tokens, index) == Token.OPEN_PARENTHESIS {
+    if Tokens'get_id(tokens, index) == Token'OPEN_PARENTHESIS {
         handle_invoke_instructions(tokens, &index, nodes_temp, get_past_retrieve_index(nodes_temp, nodes_temp.index - 1));
     };
 
-    declare next_id = Tokens.get_id(tokens, index);
-    if Tokens.get_id(tokens, index) == Token.PERIOD {
+    declare next_id = Tokens'get_id(tokens, index);
+    if Tokens'get_id(tokens, index) == Token'PERIOD {
         index = index + 1;
-        declare new_nodes_temp = Nodes.new(32);
-        declare new_invoke_nodes = Nodes.new(32);
+        declare new_nodes_temp = Nodes'new(32);
+        declare new_invoke_nodes = Nodes'new(32);
         parse_expression_inner(tokens, &index, &new_nodes_temp, &new_invoke_nodes);
 
-        Nodes.copy(&new_invoke_nodes, invoke_nodes, new_invoke_nodes.index);
-        Nodes.copy(&new_nodes_temp, nodes_temp, new_nodes_temp.index);
+        Nodes'copy(&new_invoke_nodes, invoke_nodes, new_invoke_nodes.index);
+        Nodes'copy(&new_nodes_temp, nodes_temp, new_nodes_temp.index);
     };
 
-    if Tokens.get_id(tokens, index) == Token.NAME {
+    if Tokens'get_id(tokens, index) == Token'NAME {
         // TODO: This check should be removed once everything is converted and we don't need to old way of calling
-        declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
+        declare name = #tokens_get_pointer_data(tokens, Token'NameData, index).name;
 
         declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "+", "+");
         declare _ = check_parse_operator(tokens, &index, nodes_temp, name, "-", "-");
@@ -414,20 +414,20 @@ define parse_expression_inner = function(tokens: *Tokens.Data, index_pointer: *w
     index_pointer.* = index;
 };
 
-define parse_expression = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
-    declare nodes_temp = Nodes.new(32);
-    declare invoke_nodes = Nodes.new(32);
+define parse_expression = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
+    declare nodes_temp = Nodes'new(32);
+    declare invoke_nodes = Nodes'new(32);
     parse_expression_inner(tokens, index_pointer, &nodes_temp, &invoke_nodes);
-    Nodes.copy(&invoke_nodes, nodes, invoke_nodes.index);
-    Nodes.copy(&nodes_temp, nodes, nodes_temp.index);
+    Nodes'copy(&invoke_nodes, nodes, invoke_nodes.index);
+    Nodes'copy(&nodes_temp, nodes, nodes_temp.index);
 };
 
-define check_parse_operator = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data, parsed_name: *, wanted_name: *, internal_name: *): boolean {
+define check_parse_operator = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data, parsed_name: *, wanted_name: *, internal_name: *): boolean {
     if string=(parsed_name, wanted_name) {
         index_pointer.* = index_pointer.* + 1;
         parse_expression(tokens, index_pointer, nodes);
 
-        declare operator_data = #nodes_append_data(nodes, Node.INVOKE_INTERNAL, Node.InvokeInternalData, get_token_location_data(tokens, index_pointer.* - 1));
+        declare operator_data = #nodes_append_data(nodes, Node'INVOKE_INTERNAL, Node'InvokeInternalData, get_token_location_data(tokens, index_pointer.* - 1));
         operator_data.name = internal_name;
         operator_data.has_multiple = false;
         return true;
@@ -436,22 +436,22 @@ define check_parse_operator = function(tokens: *Tokens.Data, index_pointer: *who
     return false;
 };
 
-define parse_apostrophe = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data, retrieve_data: *Node.RetrieveData) {
+define parse_apostrophe = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data, retrieve_data: *Node'RetrieveData) {
     declare index = index_pointer.*;
 
     declare name_buffer = autobuffer_stack8_new(24);
     declare retrieve_data = retrieve_data;
 
     if retrieve_data == 0 {
-        retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
+        retrieve_data = #nodes_append_data(nodes, Node'RETRIEVE, Node'RetrieveData, get_token_location_data(tokens, index));
         autobuffer_stack8_push(&name_buffer, "@current_module");
     } else {
         autobuffer_stack8_push(&name_buffer, retrieve_data.name);
     };
 
-    while Tokens.get_id(tokens, index) == Token.APOSTROPHE {
+    while Tokens'get_id(tokens, index) == Token'APOSTROPHE {
         index = index + 1;
-        declare name_data = #tokens_get_pointer_data(tokens, Token.NameData, index);
+        declare name_data = #tokens_get_pointer_data(tokens, Token'NameData, index);
         autobuffer_stack8_push(&name_buffer, name_data.name);
         index = index + 1;
     };
@@ -464,13 +464,13 @@ define parse_apostrophe = function(tokens: *Tokens.Data, index_pointer: *whole_8
 
 define RETRIEVE_SKIP_NODE_COUNT = 2;
 
-define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define check_parse_simple_expressions = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
-    declare token_id = Tokens.get_id(tokens, index);
-    declare token_pointer_data = Tokens.get_pointer_data(tokens, index);
+    declare token_id = Tokens'get_id(tokens, index);
+    declare token_pointer_data = Tokens'get_pointer_data(tokens, index);
 
-    if token_id == Token.NAME {
-        declare name_data = *Token.NameData.cast(token_pointer_data);
+    if token_id == Token'NAME {
+        declare name_data = cast(*Token'NameData) token_pointer_data;
         // TODO: This check should be removed once everything is converted and we don't need to old way of callin)g
         declare name = name_data.name;
 
@@ -479,16 +479,16 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
 
 
         if string=(name, "cast") {
-            declare previous_id = Tokens.get_id(tokens, index - 1);
+            declare previous_id = Tokens'get_id(tokens, index - 1);
 
-            if (!(previous_id == Token.PERIOD)) && (!(previous_id == Token.APOSTROPHE)) {
+            if (!(previous_id == Token'PERIOD)) && (!(previous_id == Token'APOSTROPHE)) {
                 index = index + 2;
                 declare cast_to = parse_name_array(tokens, &index);
                 index = index + 1;
 
                 parse_expression(tokens, &index, nodes);
 
-                declare cast_data = #nodes_append_data(nodes, Node.CAST, Node.CastData, get_token_location_data(tokens, index));
+                declare cast_data = #nodes_append_data(nodes, Node'CAST, Node'CastData, get_token_location_data(tokens, index));
                 cast_data.type = cast_to;
 
                 index_pointer.* = index;
@@ -496,10 +496,10 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
                 return;
             };
         } else if string=(name, "size_of") {
-            declare previous_id = Tokens.get_id(tokens, index - 1);
+            declare previous_id = Tokens'get_id(tokens, index - 1);
 
-            if (!(previous_id == Token.PERIOD)) && (!(previous_id == Token.APOSTROPHE)) {
-                declare size_data = #nodes_append_data(nodes, Node.SIZE_OF, Node.SizeOfData, get_token_location_data(tokens, index));
+            if (!(previous_id == Token'PERIOD)) && (!(previous_id == Token'APOSTROPHE)) {
+                declare size_data = #nodes_append_data(nodes, Node'SIZE_OF, Node'SizeOfData, get_token_location_data(tokens, index));
                 index = index + 2;
                 declare size_to = parse_name_array(tokens, &index);
                 size_data.type = size_to;
@@ -511,69 +511,69 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
             };
         };
 
-        declare last_id = Tokens.get_id(tokens, index - 1);
+        declare last_id = Tokens'get_id(tokens, index - 1);
 
-        declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
+        declare retrieve_data = #nodes_append_data(nodes, Node'RETRIEVE, Node'RetrieveData, get_token_location_data(tokens, index));
         retrieve_data.name = name_data.name;
         index = index + 1;
 
-        if Tokens.get_id(tokens, index) == Token.APOSTROPHE {
+        if Tokens'get_id(tokens, index) == Token'APOSTROPHE {
             parse_apostrophe(tokens, &index, nodes, retrieve_data);
         };
 
-        if Tokens.get_id(tokens, index) == Token.COLON {
+        if Tokens'get_id(tokens, index) == Token'COLON {
             index = index + 1;
             retrieve_data.coercion = parse_name_array(tokens, &index);
         };
 
-        if last_id == Token.PERIOD {
+        if last_id == Token'PERIOD {
             retrieve_data.uses_previous = true;
 
             declare i = 0;
             while i < RETRIEVE_SKIP_NODE_COUNT {
-                declare _ = Nodes.append(nodes, Node.SKIP, get_token_location_data(tokens, index));
+                declare _ = Nodes'append(nodes, Node'SKIP, get_token_location_data(tokens, index));
                 i = i + 1;
             };
         };
 
-        if (Tokens.get_id(tokens, index) == Token.NAME) && string=(name_data.name, "*") {
-            declare name_data = #tokens_get_pointer_data(tokens, Token.NameData, index);
+        if (Tokens'get_id(tokens, index) == Token'NAME) && string=(name_data.name, "*") {
+            declare name_data = #tokens_get_pointer_data(tokens, Token'NameData, index);
             if !is_special_operator(name_data.name) {
-                declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
+                declare retrieve_data = #nodes_append_data(nodes, Node'RETRIEVE, Node'RetrieveData, get_token_location_data(tokens, index));
                 retrieve_data.name = name_data.name;
                 index = index + 1;
             };
         };
-    } else if Tokens.get_id(tokens, index) == Token.APOSTROPHE {
-        parse_apostrophe(tokens, &index, nodes, *Node.RetrieveData.cast(0));
-    } else if token_id == Token.PERIOD {
-        declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));
+    } else if Tokens'get_id(tokens, index) == Token'APOSTROPHE {
+        parse_apostrophe(tokens, &index, nodes, cast(*Node'RetrieveData) 0);
+    } else if token_id == Token'PERIOD {
+        declare retrieve_data = #nodes_append_data(nodes, Node'RETRIEVE, Node'RetrieveData, get_token_location_data(tokens, index));
         retrieve_data.name = "@current_module";
-    } else if token_id == Token.STRING {
-        declare string_data = *Token.StringData.cast(token_pointer_data);
+    } else if token_id == Token'STRING {
+        declare string_data = cast(*Token'StringData) token_pointer_data;
         declare string_value = string_data.value;
-        declare string_pointer_data = #nodes_append_data(nodes, Node.STRING, Node.StringData, get_token_location_data(tokens, index));
+        declare string_pointer_data = #nodes_append_data(nodes, Node'STRING, Node'StringData, get_token_location_data(tokens, index));
         string_pointer_data.value = string_value;
 
         index = index + 1;
-    } else if token_id == Token.NUMBER {
-        declare number_token_data = *Token.NumberData.cast(token_pointer_data);
+    } else if token_id == Token'NUMBER {
+        declare number_token_data = (cast(*Token'NumberData) token_pointer_data);
         declare number_value = number_token_data.value;
-        declare number_data = #nodes_append_data(nodes, Node.NUMBER, Node.NumberData, get_token_location_data(tokens, index));
+        declare number_data = #nodes_append_data(nodes, Node'NUMBER, Node'NumberData, get_token_location_data(tokens, index));
         number_data.value = number_value;
 
         index = index + 1;
 
         declare coerced_value = "whole_8";
-        if Tokens.get_id(tokens, index) == Token.COLON {
+        if Tokens'get_id(tokens, index) == Token'COLON {
             index = index + 1;
 
             coerced_value = parse_name_array(tokens, &index);
             number_data.coersion = coerced_value;
         };
-    } else if token_id == Token.BOOLEAN {
-        declare boolean_value = *Token.BooleanData.cast(token_pointer_data).value;
-        declare boolean_data = #nodes_append_data(nodes, Node.BOOLEAN, Node.BooleanData, get_token_location_data(tokens, index));
+    } else if token_id == Token'BOOLEAN {
+        declare boolean_value = (cast(*Token'BooleanData) token_pointer_data).value;
+        declare boolean_data = #nodes_append_data(nodes, Node'BOOLEAN, Node'BooleanData, get_token_location_data(tokens, index));
         boolean_data.value = boolean_value;
 
         index = index + 1;
@@ -627,52 +627,52 @@ define is_special_operator = function(name: *): boolean {
     else false;
 };
 
-define parse_if = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_if = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
     declare end_target = get_target_id();
 
-    while Tokens.get_id(tokens, index) == Token.KEYWORD {
+    while Tokens'get_id(tokens, index) == Token'KEYWORD {
         declare target = get_target_id();
-        declare token_data = #tokens_get_pointer_data(tokens, Token.KeywordData, index);
+        declare token_data = #tokens_get_pointer_data(tokens, Token'KeywordData, index);
 
         declare is_bare_else = false;
 
-        if Tokens.is_keyword(tokens, index, "if") {
+        if Tokens'is_keyword(tokens, index, "if") {
             index = index + 1;
 
             parse_expression(tokens, &index, nodes);
-            declare conditional_jump_data = #nodes_append_data(nodes, Node.JUMP_CONDITIONAL, Node.JumpConditionalData, get_token_location_data(tokens, index));
+            declare conditional_jump_data = #nodes_append_data(nodes, Node'JUMP_CONDITIONAL, Node'JumpConditionalData, get_token_location_data(tokens, index));
             conditional_jump_data.target_id = target;
-        } else if Tokens.is_keyword(tokens, index, "else") && Tokens.is_keyword(tokens, index, "if") {
+        } else if Tokens'is_keyword(tokens, index, "else") && Tokens'is_keyword(tokens, index, "if") {
             index = index + 2;
 
             parse_expression(tokens, &index, nodes);
-            declare conditional_jump_data = #nodes_append_data(nodes, Node.JUMP_CONDITIONAL, Node.JumpConditionalData, get_token_location_data(tokens, index));
+            declare conditional_jump_data = #nodes_append_data(nodes, Node'JUMP_CONDITIONAL, Node'JumpConditionalData, get_token_location_data(tokens, index));
             conditional_jump_data.target_id = target;
         } else {
             is_bare_else = true;
             index = index + 1;
         };
 
-        declare _ = Nodes.append(nodes, Node.STARTIFBLOCK, get_token_location_data(tokens, index));
+        declare _ = Nodes'append(nodes, Node'STARTIFBLOCK, get_token_location_data(tokens, index));
         parse_expression(tokens, &index, nodes);
 
-        declare jump_data = #nodes_append_data(nodes, Node.JUMP, Node.JumpData, get_token_location_data(tokens, index));
+        declare jump_data = #nodes_append_data(nodes, Node'JUMP, Node'JumpData, get_token_location_data(tokens, index));
         jump_data.target_id = end_target;
 
-        declare end_if = #nodes_append_data(nodes, Node.ENDIFBLOCK, Node.EndIfBlockData, get_token_location_data(tokens, index - 1));
+        declare end_if = #nodes_append_data(nodes, Node'ENDIFBLOCK, Node'EndIfBlockData, get_token_location_data(tokens, index - 1));
         end_if.id = end_target;
         end_if.is_bare_else = is_bare_else;
 
-        declare target_data = #nodes_append_data(nodes, Node.TARGET, Node.TargetData, get_token_location_data(tokens, index));
+        declare target_data = #nodes_append_data(nodes, Node'TARGET, Node'TargetData, get_token_location_data(tokens, index));
         target_data.id = target;
     };
 
-    declare end_if = #nodes_get_pointer_data(nodes, Node.EndIfBlockData, nodes.index - 2);
+    declare end_if = #nodes_get_pointer_data(nodes, Node'EndIfBlockData, nodes.index - 2);
     end_if.is_last = true;
 
-    declare target_node_data = #nodes_append_data(nodes, Node.TARGET, Node.TargetData, get_token_location_data(tokens, index));
+    declare target_node_data = #nodes_append_data(nodes, Node'TARGET, Node'TargetData, get_token_location_data(tokens, index));
     target_node_data.id = end_target;
 
     index_pointer.* = index;
@@ -689,26 +689,26 @@ define get_target_id = function(): whole_8 {
     return result;
 };
 
-define parse_statement = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_statement = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
-    if Tokens.is_keyword(tokens, index, "declare") {
+    if Tokens'is_keyword(tokens, index, "declare") {
         parse_declare(tokens, &index, nodes);
-    } else if Tokens.is_keyword(tokens, index, "return") {
+    } else if Tokens'is_keyword(tokens, index, "return") {
         parse_return(tokens, &index, nodes);
-    } else if Tokens.is_keyword(tokens, index, "while") {
+    } else if Tokens'is_keyword(tokens, index, "while") {
         parse_while(tokens, &index, nodes);
     } else if is_assign(tokens, &index) {
         parse_assign(tokens, &index, nodes);
-    } else if Tokens.is_keyword(tokens, index, "break") {
+    } else if Tokens'is_keyword(tokens, index, "break") {
         parse_break(tokens, &index, nodes);
     } else {
         parse_expression(tokens, &index, nodes);
-        declare id = Tokens.get_id(tokens, index);
-        if id == Token.SEMICOLON {
-            declare _ = Nodes.append(nodes, Node.ENDSTATEMENT, get_token_location_data(tokens, index_pointer.*));
+        declare id = Tokens'get_id(tokens, index);
+        if id == Token'SEMICOLON {
+            declare _ = Nodes'append(nodes, Node'ENDSTATEMENT, get_token_location_data(tokens, index_pointer.*));
             index = index + 1;
-        } else if id == Token.COLON {
+        } else if id == Token'COLON {
             print_token_error_beginning(tokens, index);
             println("Unexpected token");
             exit(1);
@@ -718,36 +718,36 @@ define parse_statement = function(tokens: *Tokens.Data, index_pointer: *whole_8,
     index_pointer.* = index;
 };
 
-define parse_break = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
-    declare jump_data = #nodes_append_data(nodes, Node.JUMP, Node.JumpData, get_token_location_data(tokens, index_pointer.*));
-    jump_data.target_id = whole_8.cast(autobuffer_stack8_peek(&while_target_id_stack));
+define parse_break = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
+    declare jump_data = #nodes_append_data(nodes, Node'JUMP, Node'JumpData, get_token_location_data(tokens, index_pointer.*));
+    jump_data.target_id = cast(whole_8) autobuffer_stack8_peek(&while_target_id_stack);
 
     index_pointer.* = index_pointer.* + 2;
 };
 
-define parse_return = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_return = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     index_pointer.* = index_pointer.* + 1;
 
-    parse_multiple_expressions(tokens, index_pointer, nodes, Token.SEMICOLON);
+    parse_multiple_expressions(tokens, index_pointer, nodes, Token'SEMICOLON);
 
-    declare node = Nodes.append(nodes, Node.RETURN, get_token_location_data(tokens, index_pointer.*));
+    declare node = Nodes'append(nodes, Node'RETURN, get_token_location_data(tokens, index_pointer.*));
     index_pointer.* = index_pointer.* + 1;
 };
 
-define is_assign = function(tokens: *Tokens.Data, index_pointer: *whole_8): boolean {
+define is_assign = function(tokens: *Tokens'Data, index_pointer: *whole_8): boolean {
     declare is_assign = true;
     declare index = index_pointer.*;
     declare checking = true;
     while checking {
-        if Tokens.get_id(tokens, index) == Token.NAME {
-            declare name = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
+        if Tokens'get_id(tokens, index) == Token'NAME {
+            declare name = #tokens_get_pointer_data(tokens, Token'NameData, index).name;
             if string=(name, "=") {
                 checking = false;
             };
-        } else if Tokens.get_id(tokens, index) == Token.KEYWORD {
+        } else if Tokens'get_id(tokens, index) == Token'KEYWORD {
             is_assign = false;
             checking = false;
-        } else if Tokens.get_id(tokens, index) == Token.SEMICOLON {
+        } else if Tokens'get_id(tokens, index) == Token'SEMICOLON {
             is_assign = false;
             checking = false;
         };
@@ -757,10 +757,10 @@ define is_assign = function(tokens: *Tokens.Data, index_pointer: *whole_8): bool
     return is_assign;
 };
 
-define get_past_retrieve_index = function(nodes: *Nodes.Data, start_index: whole_8): whole_8 {
+define get_past_retrieve_index = function(nodes: *Nodes'Data, start_index: whole_8): whole_8 {
     declare i = start_index;
     while true {
-        if !(Nodes.get_id(nodes, i) == Node.SKIP) {
+        if !(Nodes'get_id(nodes, i) == Node'SKIP) {
             return i;
         };
         i = i - 1;
@@ -768,27 +768,27 @@ define get_past_retrieve_index = function(nodes: *Nodes.Data, start_index: whole
     return 999;
 };
 
-define parse_assign = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_assign = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare right_side_index = index_pointer.*;
     declare left_side_index = right_side_index;
 
-    while !Tokens.is_name(tokens, right_side_index, "=") {
+    while !Tokens'is_name(tokens, right_side_index, "=") {
         right_side_index = right_side_index + 1;
     };
     right_side_index = right_side_index+ 1;
 
-    parse_multiple_expressions(tokens, &right_side_index, nodes, Token.SEMICOLON);
+    parse_multiple_expressions(tokens, &right_side_index, nodes, Token'SEMICOLON);
 
     right_side_index = right_side_index + 1;
 
     parse_expression(tokens, &left_side_index, nodes);
-    declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, get_past_retrieve_index(nodes, nodes.index - 1));
+    declare retrieve_data = #nodes_get_pointer_data(nodes, Node'RetrieveData, get_past_retrieve_index(nodes, nodes.index - 1));
     declare name = retrieve_data.name;
     declare uses_previous = retrieve_data.uses_previous;
     declare has_multiple = retrieve_data.has_multiple;
 
-    Nodes.set_id(nodes, get_past_retrieve_index(nodes, nodes.index - 1), Node.ASSIGN);
-    declare assign_data = *Node.AssignData.cast(retrieve_data);
+    Nodes'set_id(nodes, get_past_retrieve_index(nodes, nodes.index - 1), Node'ASSIGN);
+    declare assign_data = cast(*Node'AssignData) retrieve_data;
     assign_data.name = name;
     assign_data.uses_previous = uses_previous;
     assign_data.has_multiple = has_multiple;
@@ -796,35 +796,35 @@ define parse_assign = function(tokens: *Tokens.Data, index_pointer: *whole_8, no
     index_pointer.* = right_side_index;
 };
 
-define parse_while = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_while = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.* + 1;
 
     declare target1 = get_target_id();
     declare target2 = get_target_id();
 
-    declare target_node1 = #nodes_append_data(nodes, Node.TARGET, Node.TargetData, get_token_location_data(tokens, index));
+    declare target_node1 = #nodes_append_data(nodes, Node'TARGET, Node'TargetData, get_token_location_data(tokens, index));
     target_node1.id = target1;
 
     parse_expression(tokens, &index, nodes);
-    declare conditional_jump_data = *Node.JumpConditionalData.cast(Nodes.append_data(nodes, Node.JUMP_CONDITIONAL, get_token_location_data(tokens, index)));
+    declare conditional_jump_data = cast(*Node'JumpConditionalData) Nodes'append_data(nodes, Node'JUMP_CONDITIONAL, get_token_location_data(tokens, index));
     conditional_jump_data.target_id = target2;
     conditional_jump_data.desired_state = false;
-    declare _ = Nodes.append(nodes, Node.ENDSTATEMENT, get_token_location_data(tokens, index));
+    declare _ = Nodes'append(nodes, Node'ENDSTATEMENT, get_token_location_data(tokens, index));
 
     autobuffer_stack8_push(&while_target_id_stack, target2);
     parse_expression(tokens, &index, nodes);
     declare _ = autobuffer_stack8_pop(&while_target_id_stack);
 
-    declare jump_data = *Node.JumpData.cast(Nodes.append_data(nodes, Node.JUMP, get_token_location_data(tokens, index)));
+    declare jump_data = cast(*Node'JumpData) Nodes'append_data(nodes, Node'JUMP, get_token_location_data(tokens, index));
     jump_data.target_id = target1;
 
-    declare target_node2 = *Node.TargetData.cast(Nodes.append_data(nodes, Node.TARGET, get_token_location_data(tokens, index)));
+    declare target_node2 = cast(*Node'TargetData) Nodes'append_data(nodes, Node'TARGET, get_token_location_data(tokens, index));
     target_node2.id = target2;
 
     index_pointer.* = index + 1;
 };
 
-define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_declare = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
     declare parse_expression, variable_names, variable_types = parse_declare_variable_declaration(tokens, &index, nodes);
@@ -832,14 +832,14 @@ define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, n
     if parse_expression {
         index = index + 1;
 
-        parse_multiple_expressions(tokens, &index, nodes, Token.SEMICOLON);
+        parse_multiple_expressions(tokens, &index, nodes, Token'SEMICOLON);
     };
 
     declare i = 0;
     while !(array8_get(variable_names, i) == 0) {
-        declare declare_data = #nodes_append_data(nodes, Node.DECLARE, Node.DeclareData, get_token_location_data(tokens, index));
-        declare_data.name = *.cast(array8_get(variable_names, i));
-        declare_data.type = *.cast(array8_get(variable_types, i));
+        declare declare_data = #nodes_append_data(nodes, Node'DECLARE, Node'DeclareData, get_token_location_data(tokens, index));
+        declare_data.name = cast(*) array8_get(variable_names, i);
+        declare_data.type = cast(*) array8_get(variable_types, i);
 
         i = i + 1;
     };
@@ -849,8 +849,8 @@ define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, n
         declare i = array8_length(variable_names) - 1;
         // Probably should fix this
         while i < temp {
-            declare assign_data = #nodes_append_data(nodes, Node.ASSIGN, Node.AssignData, get_token_location_data(tokens, index));
-            assign_data.name = *.cast(array8_get(variable_names, i));
+            declare assign_data = #nodes_append_data(nodes, Node'ASSIGN, Node'AssignData, get_token_location_data(tokens, index));
+            assign_data.name = cast(*) array8_get(variable_names, i);
 
             i = i - 1;
         };
@@ -859,7 +859,7 @@ define parse_declare = function(tokens: *Tokens.Data, index_pointer: *whole_8, n
     index_pointer.* = index + 1;
 };
 
-define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data): boolean, *, * {
+define parse_declare_variable_declaration = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data): boolean, *, * {
     declare index = index_pointer.* + 1;
 
     declare names = autobuffer_new(40);
@@ -869,18 +869,18 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
     declare seen_item_name = false;
     declare parse_expression = false;
     while true {
-        declare id = Tokens.get_id(tokens, index);
-        if id == Token.COMMA {
+        declare id = Tokens'get_id(tokens, index);
+        if id == Token'COMMA {
             name_index = name_index + 1;
             seen_item_name = false;
         };
 
-        if (id == Token.NAME) || (id == Token.PERIOD) {
+        if (id == Token'NAME) || (id == Token'PERIOD) {
             if seen_item_name {
                 declare name = parse_name_array(tokens, &index);
                 autobuffer_array8_set(&types, name_index, name);
             } else {
-                declare name_token = #tokens_get_pointer_data(tokens, Token.NameData, index);
+                declare name_token = #tokens_get_pointer_data(tokens, Token'NameData, index);
                 index = index + 1;
                 autobuffer_array8_set(&names, name_index, name_token.name);
                 autobuffer_array8_set(&types, name_index, create_size_zero_array8_brk_allocate());
@@ -890,14 +890,14 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
             index = index + 1;
         };
 
-        if Tokens.get_id(tokens, index) == Token.NAME {
-            declare name_value = #tokens_get_pointer_data(tokens, Token.NameData, index).name;
+        if Tokens'get_id(tokens, index) == Token'NAME {
+            declare name_value = #tokens_get_pointer_data(tokens, Token'NameData, index).name;
             if string=(name_value, "=") {
                 parse_expression = true;
                 break;
             };
         };
-        if Tokens.get_id(tokens, index) == Token.SEMICOLON {
+        if Tokens'get_id(tokens, index) == Token'SEMICOLON {
             break;
         };
     };
@@ -906,13 +906,13 @@ define parse_declare_variable_declaration = function(tokens: *Tokens.Data, index
     return parse_expression, names.buffer, types.buffer;
 };
 
-define parse_multiple_expressions = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data, breaker: whole_8) {
+define parse_multiple_expressions = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data, breaker: whole_8) {
     declare index = index_pointer.*;
-    while !(Tokens.get_id(tokens, index) == breaker) {
-        declare id = Tokens.get_id(tokens, index);
-        if id == Token.COMMA {
+    while !(Tokens'get_id(tokens, index) == breaker) {
+        declare id = Tokens'get_id(tokens, index);
+        if id == Token'COMMA {
             index = index + 1;
-        } else if (id == Token.SEMICOLON) || (id == Token.CLOSED_PARENTHESIS) || (id == Token.CLOSED_CURLY_BRACKETS) {
+        } else if (id == Token'SEMICOLON) || (id == Token'CLOSED_PARENTHESIS) || (id == Token'CLOSED_CURLY_BRACKETS) {
             print_token_error_beginning(tokens, index);
             println("Unexpected token");
             exit(1);
@@ -924,24 +924,24 @@ define parse_multiple_expressions = function(tokens: *Tokens.Data, index_pointer
     index_pointer.* = index;
 };
 
-define parse_module = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
+define parse_module = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
     declare index = index_pointer.*;
 
-    declare _ = Nodes.append(nodes, Node.MODULE, get_token_location_data(tokens, index));
+    declare _ = Nodes'append(nodes, Node'MODULE, get_token_location_data(tokens, index));
 
     index = index + 2;
 
-    parse_multiple(tokens, &index, nodes, Token.CLOSED_CURLY_BRACKETS);
+    parse_multiple(tokens, &index, nodes, Token'CLOSED_CURLY_BRACKETS);
 
-    declare _ = Nodes.append(nodes, Node.ENDMODULE, get_token_location_data(tokens, index));
+    declare _ = Nodes'append(nodes, Node'ENDMODULE, get_token_location_data(tokens, index));
 
     index_pointer.* = index + 1;
 };
 
-define parse_individual = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data) {
-    declare id = Tokens.get_id(tokens, index_pointer.*);
-    if id == Token.KEYWORD {
-        declare keyword_data = #tokens_get_pointer_data(tokens, Token.KeywordData, index_pointer.*);
+define parse_individual = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data) {
+    declare id = Tokens'get_id(tokens, index_pointer.*);
+    if id == Token'KEYWORD {
+        declare keyword_data = #tokens_get_pointer_data(tokens, Token'KeywordData, index_pointer.*);
         declare keyword = keyword_data.keyword;
 
         if string=(keyword, "function") {
@@ -968,14 +968,14 @@ define parse_individual = function(tokens: *Tokens.Data, index_pointer: *whole_8
     };
 };
 
-define parse_multiple = function(tokens: *Tokens.Data, index_pointer: *whole_8, nodes: *Nodes.Data, ending: whole_8) {
+define parse_multiple = function(tokens: *Tokens'Data, index_pointer: *whole_8, nodes: *Nodes'Data, ending: whole_8) {
     declare tokens_index = tokens.index;
-    while (!(Tokens.get_id(tokens, index_pointer.*) == ending)) && (index_pointer.* < tokens_index) {
+    while (!(Tokens'get_id(tokens, index_pointer.*) == ending)) && (index_pointer.* < tokens_index) {
         parse_individual(tokens, index_pointer, nodes);
     };
 };
 
-define parse = function(tokens: *Tokens.Data, nodes: *Nodes.Data) {
+define parse = function(tokens: *Tokens'Data, nodes: *Nodes'Data) {
     declare index = 0;
     parse_multiple(tokens, &index, nodes, 0);
 };

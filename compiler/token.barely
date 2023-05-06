@@ -55,69 +55,69 @@ define Tokens = module {
         index: whole_8;
     };
 
-    define new = function(size: whole_8): .Data {
-        declare tokens = .Data.>0();
+    define new = function(size: whole_8): 'Data {
+        declare tokens = 'Data'>0();
 
-        .Data.<buffer(&(tokens), autobuffer_new(size * Token.SIZE));
-        .Data.<index(&(tokens), 0);
+        tokens.buffer = autobuffer_new(size * Token'SIZE);
+        tokens.index = 0;
 
         return tokens;
     };
 
-    define get_id = function(tokens: *.Data, index: whole_8): whole_8 {
-        return autobuffer_get_whole_8(&tokens.buffer, index * Token.SIZE);
+    define get_id = function(tokens: *'Data, index: whole_8): whole_8 {
+        return autobuffer_get_whole_8(&tokens.buffer, index * Token'SIZE);
     };
 
-    define get_pointer = function(tokens: *.Data, index: whole_8): * {
-        return autobuffer_get(&tokens.buffer, index * Token.SIZE);
+    define get_pointer = function(tokens: *'Data, index: whole_8): * {
+        return autobuffer_get(&tokens.buffer, index * Token'SIZE);
     };
 
-    define get_pointer_data = function(tokens: *.Data, index: whole_8): * {
-        return autobuffer_get(&tokens.buffer, (index * Token.SIZE) + Token.DATA_OFFSET);
+    define get_pointer_data = function(tokens: *'Data, index: whole_8): * {
+        return autobuffer_get(&tokens.buffer, (index * Token'SIZE) + Token'DATA_OFFSET);
     };
 
-    define get_location_data = function(tokens: *.Data, index: whole_8): *Token.LocationData {
-        return *Token.LocationData.cast(autobuffer_get(&tokens.buffer, (index * Token.SIZE) + 8));
+    define get_location_data = function(tokens: *'Data, index: whole_8): *Token'LocationData {
+        return cast(*Token'LocationData) autobuffer_get(&tokens.buffer, (index * Token'SIZE) + 8);
     };
 
-    define append_data = function(tokens: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-        return *.cast(Tokens.append(tokens, id, file_name, row, column) + Token.DATA_OFFSET);
+    define append_data = function(tokens: *'Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+        return cast(*) ('append(tokens, id, file_name, row, column) + Token'DATA_OFFSET);
     };
 
-    define append = function(tokens: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    define append = function(tokens: *'Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
         declare tokens_buffer = &tokens.buffer;
         declare tokens_index = tokens.index;
-        declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token.SIZE, Token.SIZE);
+        declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token'SIZE, Token'SIZE);
 
-        *whole_8.cast(to_return).* = id;
-        **.cast(to_return + 8).* = file_name;
-        *whole_8.cast(to_return + 16).* = row;
-        *whole_8.cast(to_return + 24).* = column;
+        (cast(*whole_8) to_return).* = id;
+        (cast(**) (to_return + 8)).* = file_name;
+        (cast(*whole_8) (to_return + 16)).* = row;
+        (cast(*whole_8) (to_return + 24)).* = column;
 
         tokens.index = tokens.index + 1;
         return to_return;
     };
 
-    define append_count = function(tokens: *.Data, count: whole_8): * {
+    define append_count = function(tokens: *'Data, count: whole_8): * {
         declare tokens_buffer = &tokens.buffer;
         declare tokens_index = tokens.index;
-        declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token.SIZE, count * Token.SIZE);
+        declare to_return = autobuffer_get_size(tokens_buffer, tokens_index * Token'SIZE, count * Token'SIZE);
 
         tokens.index = tokens.index + count;
         return to_return;
     };
 
-    define is_keyword = function(tokens: *.Data, index: whole_8, keyword: *): boolean {
-        return if .get_id(tokens, index) == Token.KEYWORD {
-            string=(*Token.KeywordData.cast(.get_pointer_data(tokens, index)).keyword, keyword)
+    define is_keyword = function(tokens: *'Data, index: whole_8, keyword: *): boolean {
+        return if 'get_id(tokens, index) == Token'KEYWORD {
+            string=((cast(*Token'KeywordData) 'get_pointer_data(tokens, index)).keyword, keyword)
         } else {
             false
         };
     };
 
-    define is_name = function(tokens: *.Data, index: whole_8, name: *): boolean {
-        return if .get_id(tokens, index) == Token.NAME {
-            string=(*Token.NameData.cast(.get_pointer_data(tokens, index)).name, name)
+    define is_name = function(tokens: *'Data, index: whole_8, name: *): boolean {
+        return if 'get_id(tokens, index) == Token'NAME {
+            string=((cast(*Token'NameData) 'get_pointer_data(tokens, index)).name, name)
         } else {
             false
         };
@@ -125,9 +125,9 @@ define Tokens = module {
 };
 
 macro #tokens_append_data(tokens, id, type, file_name, row, column) {
-    *type.cast(Tokens.append_data(tokens, id, file_name, row, column))
+    cast(*type) Tokens.append_data(tokens, id, file_name, row, column)
 };
 
 macro #tokens_get_pointer_data(tokens, type, index) {
-    *type.cast(Tokens.get_pointer_data(tokens, index))
+    (cast(*type) Tokens.get_pointer_data(tokens, index))
 };

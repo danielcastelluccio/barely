@@ -33,19 +33,19 @@ define MacOS = module {
     define MAP_ANONYMOUS: whole_8 = 4096;
 
     define sys_read = function(fd: whole_8, buffer: *, length: whole_8) {
-        declare _: any_8 = @syscall3(.SYS_READ, fd, buffer, length);
+        declare _: any_8 = @syscall3('SYS_READ, fd, buffer, length);
     };
 
     define sys_write = function(fd: whole_8, buffer: *, length: whole_8) {
-        declare _: any_8 = @syscall3(.SYS_WRITE, fd, buffer, length);
+        declare _: any_8 = @syscall3('SYS_WRITE, fd, buffer, length);
     };
 
     define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
-        return whole_8.cast(@syscall3(.SYS_OPEN, path, flags, mode));
+        return cast(whole_8) @syscall3('SYS_OPEN, path, flags, mode);
     };
 
     define sys_close = function(fd: whole_8) {
-        declare _: any_8 = @syscall1(.SYS_CLOSE, fd);
+        declare _: any_8 = @syscall1('SYS_CLOSE, fd);
     };
 
     define Stat = structure {
@@ -54,32 +54,32 @@ define MacOS = module {
         nonsense_1: any_88;
     };
 
-    define sys_stat = function(name: *, buffer: *.Stat) {
-        declare _ = @syscall2(.SYS_STAT, name, buffer);
+    define sys_stat = function(name: *, buffer: *'Stat) {
+        declare _ = @syscall2('SYS_STAT, name, buffer);
     };
 
-    define sys_fstat = function(fd: whole_8, buffer: *.Stat) {
-        declare _ = @syscall2(.SYS_FSTAT, fd, buffer);
+    define sys_fstat = function(fd: whole_8, buffer: *'Stat) {
+        declare _ = @syscall2('SYS_FSTAT, fd, buffer);
     };
 
     define sys_brk = function(location: *): * {
-        return *.cast(@syscall1(.SYS_BRK, location));
+        return cast(*) @syscall1('SYS_BRK, location);
     };
 
     define sys_fork = function(): whole_8 {
-        return whole_8.cast(@syscall0(.SYS_FORK));
+        return cast(whole_8) @syscall0('SYS_FORK);
     };
 
     define sys_execve = function(file: *, args: *, env: **): whole_8 {
-        return whole_8.cast(@syscall3(.SYS_EXECVE, file, args, env));
+        return cast(whole_8) @syscall3('SYS_EXECVE, file, args, env);
     };
 
     define sys_exit = function(code: whole_8) {
-        declare _ = @syscall1(.SYS_EXIT, code);
+        declare _ = @syscall1('SYS_EXIT, code);
     };
 
     define sys_mkdir = function(path: *, mode: whole_8) {
-        declare _ = @syscall2(.SYS_MKDIR, path, mode);
+        declare _ = @syscall2('SYS_MKDIR, path, mode);
     };
 
     define TimeVal = structure {
@@ -87,11 +87,11 @@ define MacOS = module {
         microseconds: whole_8;
     };
 
-    define sys_get_time_of_day = function(time_val: *.TimeVal) {
-        declare _ = @syscall2(.SYS_GETTIMEOFDAY, time_val, 0);
+    define sys_get_time_of_day = function(time_val: *'TimeVal) {
+        declare _ = @syscall2('SYS_GETTIMEOFDAY, time_val, 0);
     };
 
     define sys_mmap = function(address: *, size: whole_8, protection: whole_8, flags: whole_8, fd: whole_8, offset: whole_8): * {
-        return *.cast(@syscall6(.SYS_MMAP, address, size, protection, flags, fd, offset));
+        return cast(*) @syscall6('SYS_MMAP, address, size, protection, flags, fd, offset);
     };
 };

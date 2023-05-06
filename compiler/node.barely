@@ -143,54 +143,54 @@ define Nodes = module {
         index: whole_8;
     };
 
-    define new = function(size: whole_8): .Data {
-        declare nodes: Nodes.Data;
-        nodes.buffer = autobuffer_new(size * Node.SIZE);
+    define new = function(size: whole_8): 'Data {
+        declare nodes: Nodes'Data;
+        nodes.buffer = autobuffer_new(size * Node'SIZE);
         nodes.index = 0;
         return nodes;
     };
 
-    define get_id = function(nodes: *.Data, index: whole_8): whole_8 {
-        return autobuffer_get_whole_8(&nodes.buffer, index * Node.SIZE);
+    define get_id = function(nodes: *'Data, index: whole_8): whole_8 {
+        return autobuffer_get_whole_8(&nodes.buffer, index * Node'SIZE);
     };
 
-    define get_pointer_data = function(nodes: *.Data, index: whole_8): * {
-        return autobuffer_get(&nodes.buffer, (index * Node.SIZE) + 32);
+    define get_pointer_data = function(nodes: *'Data, index: whole_8): * {
+        return autobuffer_get(&nodes.buffer, (index * Node'SIZE) + 32);
     };
 
-    define get_id_pointer = function(nodes: *.Data, index: whole_8): *whole_8 {
-        return *whole_8.cast(.get_pointer(nodes, index));
+    define get_id_pointer = function(nodes: *'Data, index: whole_8): *whole_8 {
+        return cast(*whole_8) 'get_pointer(nodes, index);
     };
 
-    define get_location_data = function(nodes: *.Data, index: whole_8): *Node.LocationData {
-        return *Node.LocationData.cast(autobuffer_get(&nodes.buffer, (index * Node.SIZE) + 8));
+    define get_location_data = function(nodes: *'Data, index: whole_8): *Node'LocationData {
+        return cast(*Node'LocationData) autobuffer_get(&nodes.buffer, (index * Node'SIZE) + 8);
     };
 
-    define get_pointer = function(nodes: *.Data, index: whole_8): * {
-        return autobuffer_get(&nodes.buffer, (index * Node.SIZE));
+    define get_pointer = function(nodes: *'Data, index: whole_8): * {
+        return autobuffer_get(&nodes.buffer, (index * Node'SIZE));
     };
 
-    define append_data = function(nodes: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
-        return *.cast(.append(nodes, id, file_name, row, column) + 32);
+    define append_data = function(nodes: *'Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+        return cast(*) ('append(nodes, id, file_name, row, column) + 32);
     };
 
-    define append_data_anonymous = function(nodes: *.Data, id: whole_8): * {
-        return .append_data(nodes, id, "", 0, 0);
+    define append_data_anonymous = function(nodes: *'Data, id: whole_8): * {
+        return 'append_data(nodes, id, "", 0, 0);
     };
 
-    define append_anonymous = function(nodes: *.Data, id: whole_8): * {
-        return .append(nodes, id, "", 0, 0);
+    define append_anonymous = function(nodes: *'Data, id: whole_8): * {
+        return 'append(nodes, id, "", 0, 0);
     };
 
-    define append = function(nodes: *.Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
+    define append = function(nodes: *'Data, id: whole_8, file_name: *, row: whole_8, column: whole_8): * {
         declare nodes_buffer = &nodes.buffer;
         declare nodes_index = &nodes.index;
-        declare node_pointer = autobuffer_get_size(nodes_buffer, (nodes_index.* * Node.SIZE), Node.SIZE);
+        declare node_pointer = autobuffer_get_size(nodes_buffer, (nodes_index.* * Node'SIZE), Node'SIZE);
 
-        declare id_pointer = .get_id_pointer(nodes, nodes_index.*);
+        declare id_pointer = 'get_id_pointer(nodes, nodes_index.*);
         id_pointer.* = id;
 
-        declare location_data = .get_location_data(nodes, nodes_index.*);
+        declare location_data = 'get_location_data(nodes, nodes_index.*);
         location_data.file = file_name;
         location_data.row = row;
         location_data.column = column;
@@ -200,20 +200,20 @@ define Nodes = module {
         return node_pointer;
     };
 
-    define set_skip = function(nodes: *.Data, index: whole_8) {
-        .set_id(nodes, index, Node.SKIP);
+    define set_skip = function(nodes: *'Data, index: whole_8) {
+        'set_id(nodes, index, Node'SKIP);
     };
 
-    define set_id = function(nodes: *.Data, index: whole_8, id: whole_8) {
-        declare node_id = .get_id_pointer(nodes, index);
+    define set_id = function(nodes: *'Data, index: whole_8, id: whole_8) {
+        declare node_id = 'get_id_pointer(nodes, index);
         node_id.* = id;
     };
 
-    define append_structure = function(nodes: *.Data, name: *, size: whole_8) {
-        declare size_string = any_24.>0();
+    define append_structure = function(nodes: *'Data, name: *, size: whole_8) {
+        declare size_string = any_24'>0();
         whole_8_to_string(size, &(size_string));
 
-        declare define_data = *Node.DefineData.cast(.append_data_anonymous(nodes, Node.DEFINE));
+        declare define_data = cast(*Node'DefineData) 'append_data_anonymous(nodes, Node'DEFINE);
         define_data.name = name;
 
         // TODO: Make this type be based on the structure data
@@ -223,40 +223,40 @@ define Nodes = module {
         declare item_names = create_size_one_array8_brk_allocate("_");
         declare item_types = create_size_one_array8_brk_allocate(#array(concatenate2_brk_allocate("any_", &(size_string))));
 
-        declare structure_data = *Node.StructureData.cast(.append_data_anonymous(nodes, Node.STRUCTURE));
+        declare structure_data = cast(*Node'StructureData) 'append_data_anonymous(nodes, Node'STRUCTURE);
         structure_data.item_names = item_names;
         structure_data.item_types = item_types;
 
-        declare _ = .append_anonymous(nodes, Node.ENDDEFINE);
+        declare _ = 'append_anonymous(nodes, Node'ENDDEFINE);
     };
 
-    define append_structure_any = function(nodes: *.Data, name: *) {
-        declare structure_data = *Node.StructureData.cast(.append_data_anonymous(nodes, Node.STRUCTURE));
+    define append_structure_any = function(nodes: *'Data, name: *) {
+        declare structure_data = cast(*Node'StructureData) 'append_data_anonymous(nodes, Node'STRUCTURE);
         structure_data.name = name;
         structure_data.item_names = &empty;
         structure_data.item_types = &empty;
         structure_data.is_internal = true;
     };
 
-    define append_function = function(nodes: *.Data, name: *, arguments: *, returns: *) {
-        declare function_data = *Node.FunctionData.cast(.append_data_anonymous(nodes, Node.FUNCTION));
+    define append_function = function(nodes: *'Data, name: *, arguments: *, returns: *) {
+        declare function_data = cast(*Node'FunctionData) 'append_data_anonymous(nodes, Node'FUNCTION);
         function_data.name = name;
         function_data.argument_types = arguments;
         function_data.return_types = returns;
-        declare _ = .append_anonymous(nodes, Node.ENDFUNCTION);
+        declare _ = 'append_anonymous(nodes, Node'ENDFUNCTION);
     };
 
-    define copy = function(nodes_from: *.Data, nodes_to: *.Data, count: whole_8) {
-        autobuffer_set(&nodes_to.buffer, nodes_from.buffer.buffer, nodes_to.index * Node.SIZE, count * Node.SIZE);
+    define copy = function(nodes_from: *'Data, nodes_to: *'Data, count: whole_8) {
+        autobuffer_set(&nodes_to.buffer, nodes_from.buffer.buffer, nodes_to.index * Node'SIZE, count * Node'SIZE);
         nodes_to.index = nodes_to.index + count;
     };
 };
 
-define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
-    declare id = Nodes.get_id(nodes, index);
-    declare pointer_data = Nodes.get_pointer_data(nodes, index);
-    if id == Node.RETRIEVE {
-        declare retrieve_data = *Node.RetrieveData.cast(pointer_data);
+define print_node_info = function(nodes: *Nodes'Data, index: whole_8) {
+    declare id = Nodes'get_id(nodes, index);
+    declare pointer_data = Nodes'get_pointer_data(nodes, index);
+    if id == Node'RETRIEVE {
+        declare retrieve_data = cast(*Node'RetrieveData) pointer_data;
         print("Retrieve{names=");
         print(",name=");
         if retrieve_data.has_multiple {
@@ -264,7 +264,7 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
             declare i = 0;
             while i < array8_length(retrieve_data.name) {
                 print("'");
-                print(*.cast(array8_get(retrieve_data.name, i)));
+                print(cast(*) array8_get(retrieve_data.name, i));
                 print("', ");
                 i = i + 1;
             };
@@ -275,15 +275,15 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
             print("'");
         };
         println("}");
-    } else if id == Node.INVOKE_INTERNAL {
-        declare invoke_data = *Node.InvokeInternalData.cast(pointer_data);
+    } else if id == Node'INVOKE_INTERNAL {
+        declare invoke_data = cast(*Node'InvokeInternalData) pointer_data;
         print("InternalInvoke{name=");
         if invoke_data.has_multiple {
             print("[");
             declare i = 0;
             while i < array8_length(invoke_data.name) {
                 print("'");
-                print(*.cast(array8_get(invoke_data.name, i)));
+                print(cast(*) array8_get(invoke_data.name, i));
                 print("', ");
                 i = i + 1;
             };
@@ -294,31 +294,31 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
             print("'");
         };
         println("}");
-    } else if id == Node.ASSIGN {
-        declare assign_data = *Node.AssignData.cast(pointer_data);
+    } else if id == Node'ASSIGN {
+        declare assign_data = cast(*Node'AssignData) pointer_data;
         print("Assign{name='");
         print(assign_data.name);
         println("'}");
-    } else if id == Node.DECLARE {
-        declare declare_data = *Node.DeclareData.cast(pointer_data);
+    } else if id == Node'DECLARE {
+        declare declare_data = cast(*Node'DeclareData) pointer_data;
         print("Declare{name='");
         print(declare_data.name);
         println("'}");
-    } else if id == Node.INVOKE {
+    } else if id == Node'INVOKE {
         println("Invoke{}");
-    } else if id == Node.NUMBER {
-        declare number_data = *Node.NumberData.cast(pointer_data);
+    } else if id == Node'NUMBER {
+        declare number_data = cast(*Node'NumberData) pointer_data;
         print("Number{value=")
         print_whole_8(number_data.value);
         println("}");
-    } else if id == Node.BOOLEAN {
+    } else if id == Node'BOOLEAN {
         println("Boolean{}")
-    } else if id == Node.STRING {
+    } else if id == Node'STRING {
         println("String{}")
-    } else if id == Node.SKIP {
+    } else if id == Node'SKIP {
         println("Skip{}")
-    } else if id == Node.ENDIFBLOCK {
-        declare data = *Node.EndIfBlockData.cast(pointer_data);
+    } else if id == Node'ENDIFBLOCK {
+        declare data = cast(*Node'EndIfBlockData) pointer_data;
         print("EndIfBlock{is_last=")
         if data.is_last {
             print("true");
@@ -332,7 +332,7 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
             print("false");
         };
         println("}");
-    } else if id == Node.ENDSTATEMENT {
+    } else if id == Node'ENDSTATEMENT {
         println("EndStatement{}")
     } else {
         print_whole_8(id);
@@ -341,9 +341,9 @@ define print_node_info = function(nodes: *Nodes.Data, index: whole_8) {
 };
 
 macro #nodes_append_data(nodes, id, type, location) {
-    *type.cast(Nodes.append_data(nodes, id, location))
+    (cast(*type) Nodes'append_data(nodes, id, location))
 };
 
 macro #nodes_get_pointer_data(nodes, type, index) {
-    *type.cast(Nodes.get_pointer_data(nodes, index))
+    (cast(*type) Nodes'get_pointer_data(nodes, index))
 };
