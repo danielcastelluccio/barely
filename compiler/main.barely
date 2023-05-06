@@ -299,30 +299,50 @@ define add_used_any_types = function(nodes: *Nodes.Data) {
     declare i = 0;
     while i < nodes_index_saved {
         declare id = Nodes.get_id(nodes, i);
+
+        declare name = "";
     
         if id == Node.RETRIEVE {
             declare retrieve_data = #nodes_get_pointer_data(nodes, Node.RetrieveData, i);
-            declare name = retrieve_data.name;
-            if string_length=(name, "any_", 4) {
-                declare added = false;
-                declare j = 0;
-                while j < already_added_types.index {
-                    if string=(*.cast(autobuffer_stack8_get(&already_added_types, j)), name) {
-                        added = true;
-                    };
-                    j = j + 1;
-                };
+            name = if retrieve_data.has_multiple {
+                *.cast(array8_get(retrieve_data.name, 0))
+            } else {
+                retrieve_data.name
+            };
+        } else if id == Node.INVOKE_INTERNAL {
+            declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, i);
+            name = if invoke_data.has_multiple {
+                *.cast(array8_get(invoke_data.name, 0))
+            } else {
+                invoke_data.name
+            };
+        } else if id == Node.CAST {
+            declare cast_data = #nodes_get_pointer_data(nodes, Node.CastData, i);
+            name = *.cast(array8_get(cast_data.type, 0));
 
-                if !added {
-                    Nodes.append_structure_any(nodes, name);
-                    autobuffer_stack8_push(&already_added_types, name);
+            if *any_1.cast(name).* == ASCII.ASTERISK {
+                name = name + 1;
+            };
+        };
+
+        if string_length=(name, "any_", 4) {
+            declare added = false;
+            declare j = 0;
+            while j < already_added_types.index {
+                if string=(*.cast(autobuffer_stack8_get(&already_added_types, j)), name) {
+                    added = true;
                 };
+                j = j + 1;
+            };
+
+            if !added {
+                Nodes.append_structure_any(nodes, name);
+                autobuffer_stack8_push(&already_added_types, name);
             };
         };
 
         i = i + 1;
     };
-
 };
 
 define add_basic_internals = function(nodes: *Nodes.Data) {

@@ -136,6 +136,7 @@ define Target_X86_64 = module {
     define output_size_of = function(program_data: *ProgramData, nodes: *Nodes.Data, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
         declare size_data = *Node.SizeOfData.cast(pointer_data);
         declare size = .get_size_array(size_data.type, nodes, program_data);
+        X86_64.autobuffer_buffer_push_sub_register8_whole_8(instructions_buffer, RSP, 8);
         X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RAX, size);
         X86_64.autobuffer_buffer_push_mov_register8_register8_pointer_offset(instructions_buffer, RAX, RSP, 0);
     };

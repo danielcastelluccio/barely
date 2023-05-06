@@ -240,7 +240,7 @@ define parse_function_definition = function(tokens: *Tokens.Data, index_pointer:
     while (!(Tokens.get_id(tokens, index) == Token.OPEN_CURLY_BRACKETS)) && (!(Tokens.get_id(tokens, index) == Token.SEMICOLON)) {
         declare id = Tokens.get_id(tokens, index);
 
-        if (id == Token.NAME) || (id == Token.PERIOD) {
+        if (id == Token.NAME) || (id == Token.PERIOD) || (id == Token.APOSTROPHE) {
             declare token_name = parse_name_array(tokens, &index);
             autobuffer_array8_set(&function_return_types, returns_index, token_name);
             returns_index = returns_index + 1;
@@ -504,8 +504,6 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
                 declare size_to = parse_name_array(tokens, &index);
                 size_data.type = size_to;
                 index = index + 1;
-
-                parse_expression(tokens, &index, nodes);
 
                 index_pointer.* = index;
 
