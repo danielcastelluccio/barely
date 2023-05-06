@@ -477,6 +477,41 @@ define check_parse_simple_expressions = function(tokens: *Tokens.Data, index_poi
         if check_parse_operator(tokens, index_pointer, nodes, name, "!", "!") { return; }; // TODO: I have no idea why the syntax with the bar return is not working
         if check_parse_operator(tokens, index_pointer, nodes, name, "&", "&") { return; };
 
+
+        if string=(name, "cast") {
+            declare previous_id = Tokens.get_id(tokens, index - 1);
+
+            if (!(previous_id == Token.PERIOD)) && (!(previous_id == Token.APOSTROPHE)) {
+                declare cast_data = #nodes_append_data(nodes, Node.CAST, Node.CastData, get_token_location_data(tokens, index));
+                index = index + 2;
+                declare cast_to = parse_name_array(tokens, &index);
+                cast_data.type = cast_to;
+                index = index + 1;
+
+                parse_expression(tokens, &index, nodes);
+
+                index_pointer.* = index;
+
+                return;
+            };
+        } else if string=(name, "size_of") {
+            declare previous_id = Tokens.get_id(tokens, index - 1);
+
+            if (!(previous_id == Token.PERIOD)) && (!(previous_id == Token.APOSTROPHE)) {
+                declare size_data = #nodes_append_data(nodes, Node.SIZE_OF, Node.SizeOfData, get_token_location_data(tokens, index));
+                index = index + 2;
+                declare size_to = parse_name_array(tokens, &index);
+                size_data.type = size_to;
+                index = index + 1;
+
+                parse_expression(tokens, &index, nodes);
+
+                index_pointer.* = index;
+
+                return;
+            };
+        };
+
         declare last_id = Tokens.get_id(tokens, index - 1);
 
         declare retrieve_data = #nodes_append_data(nodes, Node.RETRIEVE, Node.RetrieveData, get_token_location_data(tokens, index));

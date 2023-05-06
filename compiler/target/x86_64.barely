@@ -77,6 +77,7 @@ define Target_X86_64 = module {
             else if id == Node.SCOPE { .output_scope(&variable_types, &variable_indexes, variable_index, instructions_buffer) }
             else if id == Node.ENDSCOPE { .output_end_scope(&variable_types, &variable_indexes) }
             else if id == Node.DEFINE { .output_define(program_data, function_locations, &module_stack, pointer_data, declared_module_id, instructions_buffer) }
+            else if id == Node.SIZE_OF { .output_size_of(program_data, nodes, pointer_data, instructions_buffer) }
             else if id == Node.ENDDEFINE {
             } else if id == Node.MODULE {
                 autobuffer_stack8_push(&module_stack, declared_module_id);
@@ -86,6 +87,7 @@ define Target_X86_64 = module {
             } else if id == Node.ENDFUNCTION {
                 in_function = false;
             } else if id == Node.STRUCTURE {}
+            else if id == Node.CAST {}
             else if id == Node.STARTIFBLOCK {}
             else if id == Node.ENDIFBLOCK {}
             else if id == Node.ENDSTATEMENT {}
@@ -129,6 +131,13 @@ define Target_X86_64 = module {
             autobuffer_array8_set(function_locations, whole_8.cast(hashmap_string_get(define_values, define_name)), instructions_buffer.index);
         } else if string_length=(define_type, "module", 6) {
         };
+    };
+
+    define output_size_of = function(program_data: *ProgramData, nodes: *Nodes.Data, pointer_data: *, instructions_buffer: *AutoBufferBuffer) {
+        declare size_data = *Node.SizeOfData.cast(pointer_data);
+        declare size = .get_size_array(size_data.type, nodes, program_data);
+        X86_64.autobuffer_buffer_push_mov_whole_8_register8(instructions_buffer, RAX, size);
+        X86_64.autobuffer_buffer_push_mov_register8_register8_pointer_offset(instructions_buffer, RAX, RSP, 0);
     };
 
     define output_end_scope = function(variable_types: *AutoBufferStack8, variable_indexes: *AutoBufferStack8) {

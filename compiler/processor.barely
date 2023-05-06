@@ -183,6 +183,13 @@ define process = function(nodes: *Nodes.Data, size_function: *function[*,*Nodes.
             process_invoke(nodes, i, &module_stack, &stack, &program_data, pointer_data);
         } else if id == Node.INVOKE_INTERNAL {
             process_invoke_internal(nodes, i, &module_stack, &stack, &program_data, pointer_data);
+        } else if id == Node.CAST {
+            declare cast_data = #nodes_get_pointer_data(nodes, Node.CastData, i);
+            declare _ = autobuffer_stack8_pop(&stack);
+            declare cast_to = expand_module_name_array(cast_data.type, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list());
+            autobuffer_stack8_push(&stack, cast_to);
+        } else if id == Node.SIZE_OF {
+            autobuffer_stack8_push(&stack, "whole_8");
         } else if id == Node.DECLARE {
             declare declare_data = *Node.DeclareData.cast(pointer_data);
             declare variable_name = declare_data.name;
