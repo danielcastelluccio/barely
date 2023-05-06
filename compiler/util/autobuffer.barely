@@ -21,10 +21,10 @@ define autobuffer_reset = function(buffer: *AutoBuffer) {
     declare i = 0;
     while i < size {
         if (i + 8) < size {
-            (cast(*any_8) (actual_buffer + i)).* = 0:whole_8;
+            cast(*any_8, actual_buffer + i).* = 0:whole_8;
             i = i + 8;
         } else  {
-            (cast(*any_1) (actual_buffer + i)).* = 0:whole_1;
+            cast(*any_1, actual_buffer + i).* = 0:whole_1;
             i = i + 1;
         };
     };
@@ -71,7 +71,7 @@ define autobuffer_set_checked = function(buffer: *AutoBuffer, from: *, to: whole
         autobuffer_register(buffer, to, size);
     };
 
-    declare to_pointer = cast(*) (buffer.buffer + to);
+    declare to_pointer = cast(*, buffer.buffer + to);
     copy(from, to_pointer, size);
 };
 
@@ -80,7 +80,7 @@ define autobuffer_set = function(buffer: *AutoBuffer, from: *, to: whole_8, size
 };
 
 define autobuffer_get = function(buffer: *AutoBuffer, location: whole_8): * {
-    return cast(*) (buffer.buffer + location);
+    return cast(*, buffer.buffer + location);
 };
 
 define autobuffer_get_size = function(buffer: *AutoBuffer, location: whole_8, size: whole_8): * {
@@ -89,23 +89,23 @@ define autobuffer_get_size = function(buffer: *AutoBuffer, location: whole_8, si
 };
 
 define autobuffer_get_whole_8 = function(buffer: *AutoBuffer, location: whole_8): whole_8 {
-    return (cast(*whole_8) autobuffer_get_size(buffer, location, 8)).*;
+    return cast(*whole_8, autobuffer_get_size(buffer, location, 8)).*;
 };
 
 define autobuffer_get_pointer = function(buffer: *AutoBuffer, location: whole_8): * {
-    return (cast(**) autobuffer_get(buffer, location)).*;
+    return cast(**, autobuffer_get(buffer, location)).*;
 };
 
 define autobuffer_get_any_1 = function(buffer: *AutoBuffer, location: whole_8): any_1 {
-    return (cast(*any_1) autobuffer_get(buffer, location)).*;
+    return cast(*any_1, autobuffer_get(buffer, location)).*;
 };
 
 define autobuffer_get_any_8 = function(buffer: *AutoBuffer, location: whole_8): any_8 {
-    return (cast(*any_8) autobuffer_get_size(buffer, location, 8)).*;
+    return cast(*any_8, autobuffer_get_size(buffer, location, 8)).*;
 };
 
 define autobuffer_get_whole_4 = function(buffer: *AutoBuffer, location: whole_8): whole_4 {
-    return (cast(*whole_4) autobuffer_get(buffer, location)).*;
+    return cast(*whole_4, autobuffer_get(buffer, location)).*;
 };
 
 define increment_whole_8_pointer = function(pointer: *whole_8, amount: whole_8) {

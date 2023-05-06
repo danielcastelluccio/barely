@@ -43,9 +43,9 @@ define Target_Elf = module {
 
         { // update_location_references
             declare define_values = &program_data.define_values;
-            declare main_function_index = cast(whole_8) hashmap_string_get(define_values, "main");
+            declare main_function_index = cast(whole_8, hashmap_string_get(define_values, "main"));
             declare main_index = autobuffer_array8_get(&function_locations, main_function_index);
-            set_near_call_value(&instructions_buffer, main_call, cast(InstructionIndex) main_index);
+            set_near_call_value(&instructions_buffer, main_call, cast(InstructionIndex, main_index));
 
             adjust_function_calls(set_far_call_value, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer, 'START_ADDRESS + 'HEADER_SIZE);
 

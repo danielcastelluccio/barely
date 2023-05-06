@@ -59,7 +59,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_4(instructions, 0:whole_4);
 
-        return cast(InstructionIndex) current_instruction;
+        return cast(InstructionIndex, current_instruction);
     };
 
     define autobuffer_buffer_push_je_near = function(instructions: *AutoBufferBuffer): InstructionIndex {
@@ -70,7 +70,7 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_4(instructions, 0:whole_4);
 
-        return cast(InstructionIndex) current_instruction;
+        return cast(InstructionIndex, current_instruction);
     };
 
     define autobuffer_buffer_push_jne_near = function(instructions: *AutoBufferBuffer): InstructionIndex {
@@ -81,29 +81,29 @@ define X86_64 = module {
 
         autobuffer_buffer_push_whole_4(instructions, 0:whole_4);
 
-        return cast(InstructionIndex) current_instruction;
+        return cast(InstructionIndex, current_instruction);
     };
 
     define set_jmp = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jump: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8) (jump + 5));
-        autobuffer_set_any_4(instructions, offset, cast(whole_8) (jump + 1));
+        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8, jump + 5));
+        autobuffer_set_any_4(instructions, offset, cast(whole_8, jump + 1));
     };
 
     define set_jmp_value = function(instructions: *AutoBufferBuffer, jump: InstructionIndex, value: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(cast(whole_8) value) - whole_8_to_whole_4(cast(whole_8) (jump + 5));
-        autobuffer_set_any_4(&instructions.autobuffer, offset, cast(whole_8) (jump + 1));
+        declare offset = whole_8_to_whole_4(cast(whole_8, value)) - whole_8_to_whole_4(cast(whole_8, jump + 5));
+        autobuffer_set_any_4(&instructions.autobuffer, offset, cast(whole_8, jump + 1));
     };
 
     define set_bss_relative_value = function(instructions: *AutoBufferBuffer, location: InstructionIndex, offset: whole_8) {
-        declare index = cast(whole_8) location;
-        declare value = cast(whole_8) whole_4_to_whole_8(autobuffer_get_whole_4(&instructions.autobuffer, index)) + offset;
+        declare index = cast(whole_8, location);
+        declare value = cast(whole_8, whole_4_to_whole_8(autobuffer_get_whole_4(&instructions.autobuffer, index)) + offset);
         autobuffer_set_any_4(&instructions.autobuffer, whole_8_to_whole_4((value - (index + 4))), index);
     };
 
     define set_value8_offset = function(instructions: *AutoBufferBuffer, location: InstructionIndex, offset: whole_8) {
-        declare previous_value = whole_4_to_whole_8(autobuffer_get_whole_4(&instructions.autobuffer, cast(whole_8) location));
+        declare previous_value = whole_4_to_whole_8(autobuffer_get_whole_4(&instructions.autobuffer, cast(whole_8, location)));
         declare new_value = previous_value + offset;
-        autobuffer_set_any_8(&instructions.autobuffer, new_value, cast(whole_8) location);
+        autobuffer_set_any_8(&instructions.autobuffer, new_value, cast(whole_8, location));
     };
 
     define autobuffer_buffer_push_call_far_register8 = function(instructions: *AutoBufferBuffer, register: Register8) {
@@ -115,7 +115,7 @@ define X86_64 = module {
         autobuffer_buffer_push_whole_1(instructions, 232:whole_1);
         declare current_instruction = instructions.index;
         autobuffer_buffer_push_whole_4(instructions, 0:whole_4);
-        return cast(InstructionIndex) current_instruction;
+        return cast(InstructionIndex, current_instruction);
     };
 
     define autobuffer_buffer_push_ret = function(instructions: *AutoBufferBuffer) {
@@ -123,34 +123,34 @@ define X86_64 = module {
     };
 
     define set_call = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, call: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8) (call + 5));
-        autobuffer_set_any_4(instructions, offset, cast(whole_8) (call + 1));
+        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8, call + 5));
+        autobuffer_set_any_4(instructions, offset, cast(whole_8, call + 1));
     };
 
     define set_call_value = function(instructions: *AutoBufferBuffer, call: InstructionIndex, value: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(cast(whole_8) value) - whole_8_to_whole_4(cast(whole_8) (call + 4));
-        autobuffer_set_any_4(&instructions.autobuffer, offset, cast(whole_8) call);
+        declare offset = whole_8_to_whole_4(cast(whole_8, value)) - whole_8_to_whole_4(cast(whole_8, call + 4));
+        autobuffer_set_any_4(&instructions.autobuffer, offset, cast(whole_8, call));
     };
 
     define set_je = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, je: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8) (je + 6));
-        autobuffer_set_any_4(instructions, offset, cast(whole_8) (je + 2));
+        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8, je + 6));
+        autobuffer_set_any_4(instructions, offset, cast(whole_8, je + 2));
     };
 
     define set_je_value = function(instructions: *AutoBufferBuffer, je: InstructionIndex, value: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(cast(whole_8) value) - whole_8_to_whole_4(cast(whole_8) (je + 6));
-        autobuffer_set_any_4(&instructions.autobuffer, offset, cast(whole_8) (je + 2));
+        declare offset = whole_8_to_whole_4(cast(whole_8, value)) - whole_8_to_whole_4(cast(whole_8, je + 6));
+        autobuffer_set_any_4(&instructions.autobuffer, offset, cast(whole_8, je + 2));
     };
 
     define set_jne = function(instructions: *AutoBuffer, instruction_index_pointer: *whole_8, jne: InstructionIndex) {
-        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8) (jne + 6));
-        autobuffer_set_any_4(instructions, offset, cast(whole_8) (jne + 2));
+        declare offset = whole_8_to_whole_4(instruction_index_pointer.*) - whole_8_to_whole_4(cast(whole_8, jne + 6));
+        autobuffer_set_any_4(instructions, offset, cast(whole_8, jne + 2));
     };
 
     define get_instruction = function(instructions: *AutoBufferBuffer): InstructionIndex {
         declare index = instructions.index;
 
-        return cast(InstructionIndex) index;
+        return cast(InstructionIndex, index);
     };
 
     define autobuffer_buffer_push_push_instruction_pointer = function(buffer: *AutoBufferBuffer): InstructionIndex {
@@ -158,7 +158,7 @@ define X86_64 = module {
         X86_64'autobuffer_buffer_push_mov_whole_8_register8(buffer, RAX, 0);
         X86_64'autobuffer_buffer_push_push_register8(buffer, RAX);
 
-        return cast(InstructionIndex) instruction_index;
+        return cast(InstructionIndex, instruction_index);
     };
 
     define autobuffer_buffer_push_mov_whole_8_register8 = function(buffer: *AutoBufferBuffer, register: Register8, value: whole_8) {

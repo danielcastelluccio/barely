@@ -24,7 +24,7 @@ define is_type = function(wanted: *, given: *, nodes: *Nodes'Data, program_data:
 };
 
 define is_signed = function(type: *, nodes: *Nodes'Data): whole_8 {
-    declare cached_signedness = cast(whole_8) hashmap_string_get2(&cached_signedness_map, type);
+    declare cached_signedness = cast(whole_8, hashmap_string_get2(&cached_signedness_map, type));
     if !(cached_signedness == 999) {
         return cached_signedness;
     };
@@ -53,13 +53,13 @@ define is_signed = function(type: *, nodes: *Nodes'Data): whole_8 {
     //declare i = 0;
     //while i < node_count {
     //    if Nodes'get_id(nodes, i) == Node'STRUCTURE {
-    //        declare pointer = cast(*Node'StructureData) Nodes'get_pointer_data(nodes, i);
+    //        declare pointer = cast(*Node'StructureData, Nodes'get_pointer_data(nodes, i));
     //        declare name = pointer.name;
 
     //        if !(name == 0) {
     //            declare member_types = pointer.item_types;
     //            if string=(type, name) {
-    //                declare is_signed2 = is_signed(cast(*) array8_get(member_types, 0), nodes);
+    //                declare is_signed2 = is_signed(cast(*, array8_get(member_types, 0)), nodes);
     //                hashmap_string_put(&cached_signedness_map, type, is_signed2);
     //                return is_signed2;
     //            };
@@ -164,7 +164,7 @@ define process = function(nodes: *Nodes'Data, size_function: *function[*,*Nodes'
         declare pointer_data = Nodes'get_pointer_data(nodes, i);
 
         if id == Node'FUNCTION {
-            declare function_name = (cast(*Node'FunctionData) pointer_data).name;
+            declare function_name = cast(*Node'FunctionData, pointer_data).name;
 
             if function_name == NULL {
                 current_function_id = function_id;
@@ -191,13 +191,13 @@ define process = function(nodes: *Nodes'Data, size_function: *function[*,*Nodes'
         } else if id == Node'SIZE_OF {
             autobuffer_stack8_push(&stack, "whole_8");
         } else if id == Node'DECLARE {
-            declare declare_data = cast(*Node'DeclareData) pointer_data;
+            declare declare_data = cast(*Node'DeclareData, pointer_data);
             declare variable_name = declare_data.name;
             declare variable_type_names = declare_data.type;
 
             if in_function {
-                hashmap_string_put(cast(*HashMap) autobuffer_stack8_peek(&variable_scopes_types_map), variable_name, variable_type_names);
-                hashmap_string_put(cast(*HashMap) autobuffer_stack8_peek(&variable_scopes_declares_map), variable_name, i);
+                hashmap_string_put(cast(*HashMap, autobuffer_stack8_peek(&variable_scopes_types_map)), variable_name, variable_type_names);
+                hashmap_string_put(cast(*HashMap, autobuffer_stack8_peek(&variable_scopes_declares_map)), variable_name, i);
             };
         } else if id == Node'ASSIGN {
             process_assign(nodes, &i, &module_stack, &stack, &program_data, &variable_scopes_types_map, &variable_scopes_declares_map, pointer_data);
@@ -211,12 +211,12 @@ define process = function(nodes: *Nodes'Data, size_function: *function[*,*Nodes'
             process_jump_conditional(nodes, i, &program_data, &stack);
         } else if id == Node'SCOPE {
             declare new_hashmap = hashmap_new(512);
-            declare allocated = cast(*HashMap) brk_allocate(24);
+            declare allocated = cast(*HashMap, brk_allocate(24));
             allocated.* = new_hashmap;
             autobuffer_stack8_push(&variable_scopes_types_map, allocated);
 
             declare new_hashmap = hashmap_new(512);
-            declare allocated = cast(*HashMap) brk_allocate(24);
+            declare allocated = cast(*HashMap, brk_allocate(24));
             allocated.* = new_hashmap;
             autobuffer_stack8_push(&variable_scopes_declares_map, allocated);
         } else if id == Node'ENDSCOPE {
@@ -227,7 +227,7 @@ define process = function(nodes: *Nodes'Data, size_function: *function[*,*Nodes'
         } else if id == Node'ENDIFBLOCK {
             process_end_if(nodes, i, &stack, &if_blocks, &if_block_results, pointer_data, &program_data);
         } else if id == Node'DEFINE {
-            declare define_node_data = cast(*Node'DefineData) pointer_data;
+            declare define_node_data = cast(*Node'DefineData, pointer_data);
             if string=(define_node_data.name, "main") {
                 has_main = true;
             };
@@ -290,13 +290,13 @@ define is_define = function(type: *): boolean {
 };
 
 define process_number = function(module_stack: *AutoBufferStack8, nodes: *Nodes'Data, nodes_index: whole_8, stack: *AutoBufferStack8, pointer_data: *) {
-    declare number_data = cast(*Node'NumberData) pointer_data;
+    declare number_data = cast(*Node'NumberData, pointer_data);
 
     declare coersion = number_data.coersion;
     if coersion == NULL {
         coersion = "whole_8";
     } else {
-        coersion = cast(*) array8_get(coersion, 0);
+        coersion = cast(*, array8_get(coersion, 0));
     };
 
     if (!string_length=(coersion, "whole_", 6)) && (!string_length=(coersion, "integer_", 8)) {
@@ -317,7 +317,7 @@ define process_jump_conditional = function(nodes: *Nodes'Data, nodes_index: whol
         exit(1);
     };
 
-    declare popped = cast(*) autobuffer_stack8_pop(stack);
+    declare popped = cast(*, autobuffer_stack8_pop(stack));
     if !is_type(popped, "boolean", nodes, program_data) {
         print_node_error_beginning(nodes, nodes_index);
         print("Conditional Jump (if/while) wants 'boolean', given '");
@@ -329,16 +329,16 @@ define process_jump_conditional = function(nodes: *Nodes'Data, nodes_index: whol
 
 define process_return = function(nodes: *Nodes'Data, nodes_index: whole_8, stack: *AutoBufferStack8, program_data: *ProgramData, module_stack: *AutoBufferStack8, current_function_id: whole_8) {
     declare function_return_types = &program_data.function_return_types;
-    declare function_return_types_specific = cast(*) autobuffer_array8_get(function_return_types, current_function_id);
+    declare function_return_types_specific = cast(*, autobuffer_array8_get(function_return_types, current_function_id));
 
     declare function_return_types2 = &program_data.function_return_types2;
-    declare function_return_types2_specific = cast(*) autobuffer_array8_get(function_return_types2, current_function_id);
+    declare function_return_types2_specific = cast(*, autobuffer_array8_get(function_return_types2, current_function_id));
 
     declare temp = array8_length(function_return_types2_specific);
     declare j = temp - 1;
     while j < temp {
-        declare function_return = cast(*) array8_get(function_return_types2_specific, j);
-        function_return = cast(*) array8_get(function_return, 0);
+        declare function_return = cast(*, array8_get(function_return_types2_specific, j));
+        function_return = cast(*, array8_get(function_return, 0));
 
         if stack.index == 0 {
             print_node_error_beginning(nodes, nodes_index);
@@ -346,7 +346,7 @@ define process_return = function(nodes: *Nodes'Data, nodes_index: whole_8, stack
             exit(1);
         };
 
-        declare stack_popped = cast(*) autobuffer_stack8_pop(stack);
+        declare stack_popped = cast(*, autobuffer_stack8_pop(stack));
         
         if !is_type(function_return, stack_popped, nodes, program_data) {
             print_node_error_beginning(nodes, nodes_index);
@@ -369,13 +369,13 @@ define process_return = function(nodes: *Nodes'Data, nodes_index: whole_8, stack
 };
 
 define process_end_if = function(nodes: *Nodes'Data, nodes_index: whole_8, stack: *AutoBufferStack8, if_blocks: *AutoBufferStack8, if_block_results: *AutoBuffer, pointer_data: *, program_data: *ProgramData) {
-    declare end_if_data = cast(*Node'EndIfBlockData) pointer_data;
+    declare end_if_data = cast(*Node'EndIfBlockData, pointer_data);
     declare end_if_id = end_if_data.id;
     declare is_last = end_if_data.is_last;
     declare is_bare_else = end_if_data.is_bare_else;
 
-    declare start_stack = cast(whole_8) autobuffer_stack8_pop(if_blocks);
-    declare previous_results = cast(*) autobuffer_array8_get(if_block_results, end_if_id);
+    declare start_stack = cast(whole_8, autobuffer_stack8_pop(if_blocks));
+    declare previous_results = cast(*, autobuffer_array8_get(if_block_results, end_if_id));
 
     declare size = 8 * (stack.index - start_stack);
     if previous_results == NULL {
@@ -408,8 +408,8 @@ define process_end_if = function(nodes: *Nodes'Data, nodes_index: whole_8, stack
 
         declare j = 0;
         while j < size / 8 {
-            declare previous_value = cast(*) array8_get(previous_array, j);
-            declare value = cast(*) array8_get(array, j);
+            declare previous_value = cast(*, array8_get(previous_array, j));
+            declare value = cast(*, array8_get(array, j));
 
             declare error = false;
 
@@ -445,7 +445,7 @@ define process_end_if = function(nodes: *Nodes'Data, nodes_index: whole_8, stack
 
 define process_assign = function(nodes: *Nodes'Data, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, variable_scopes_types_map: *AutoBufferStack8, variable_scopes_declares_map: *AutoBufferStack8, pointer_data: *) {
     declare nodes_index = nodes_index_in.*;
-    declare assign_data = cast(*Node'AssignData) pointer_data;
+    declare assign_data = cast(*Node'AssignData, pointer_data);
     declare name = assign_data.name;
     declare uses_previous = assign_data.uses_previous;
 
@@ -463,7 +463,7 @@ define process_assign = function(nodes: *Nodes'Data, nodes_index_in: *whole_8, m
     declare type = *'>0();
 
     if uses_previous {
-        declare peeked = cast(*) autobuffer_stack8_peek(stack);
+        declare peeked = cast(*, autobuffer_stack8_peek(stack));
 
         declare top_define = *'>0();
         if string_length=(peeked, "module:", 7) {
@@ -477,7 +477,7 @@ define process_assign = function(nodes: *Nodes'Data, nodes_index_in: *whole_8, m
             declare _ = autobuffer_stack8_pop(stack);
         } else {
             declare index = 0;
-            declare type_temp = cast(*) autobuffer_stack8_peek(stack);
+            declare type_temp = cast(*, autobuffer_stack8_peek(stack));
             if string_length=(type_temp, "*", 1) {
                 type_temp = type_temp + 1;
             } else {
@@ -517,21 +517,21 @@ define process_assign = function(nodes: *Nodes'Data, nodes_index_in: *whole_8, m
         };
     };
 
-    declare popped_stack = cast(*) autobuffer_stack8_pop(stack);
+    declare popped_stack = cast(*, autobuffer_stack8_pop(stack));
 
     declare scope_index, variable_type = get_variable_info(variable_scopes_types_map, name);
     if !(variable_type == NULL) {
         if string=(variable_type, "") {
             variable_type = create_size_one_array8_brk_allocate(popped_stack);
 
-            hashmap_string_put(cast(*HashMap) autobuffer_stack8_get(variable_scopes_types_map, scope_index), name, variable_type);
+            hashmap_string_put(cast(*HashMap, autobuffer_stack8_get(variable_scopes_types_map, scope_index)), name, variable_type);
 
-            declare variable_declare_node_index = hashmap_string_get(cast(*HashMap) autobuffer_stack8_get(variable_scopes_declares_map, scope_index), name);
-            declare variable_declare_node = cast(*Node'DeclareData) Nodes'get_pointer_data(nodes, cast(whole_8) variable_declare_node_index);
+            declare variable_declare_node_index = hashmap_string_get(cast(*HashMap, autobuffer_stack8_get(variable_scopes_declares_map, scope_index)), name);
+            declare variable_declare_node = cast(*Node'DeclareData, Nodes'get_pointer_data(nodes, cast(whole_8, variable_declare_node_index)));
             variable_declare_node.type = variable_type;
         };
 
-        type = cast(*) array8_get(variable_type, 0);
+        type = cast(*, array8_get(variable_type, 0));
         if !is_type(type, popped_stack, nodes, program_data) {
             print_node_error_beginning(nodes, nodes_index);
             print("Assign of ");
@@ -575,10 +575,10 @@ define process_assign = function(nodes: *Nodes'Data, nodes_index_in: *whole_8, m
 define get_variable_info = function(variable_scopes_types_map: *AutoBufferStack8, variable_name: *): whole_8, * {
     declare max_index = variable_scopes_types_map.index;
     declare scope_index = max_index - 1;
-    declare variable_type = cast(*) 0;
+    declare variable_type = cast(*, 0);
     while (variable_type == NULL) && (scope_index < max_index) {
-        declare scope_map = cast(*HashMap) autobuffer_stack8_get(variable_scopes_types_map, scope_index);
-        variable_type = cast(*) hashmap_string_get(scope_map, variable_name);
+        declare scope_map = cast(*HashMap, autobuffer_stack8_get(variable_scopes_types_map, scope_index));
+        variable_type = cast(*, hashmap_string_get(scope_map, variable_name));
         scope_index = scope_index - 1;
     };
     scope_index = scope_index + 1;
@@ -587,7 +587,7 @@ define get_variable_info = function(variable_scopes_types_map: *AutoBufferStack8
 };
 
 define get_define_type = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
-    return cast(*) hashmap_string_get(define_types, define_name);
+    return cast(*, hashmap_string_get(define_types, define_name));
 };
 
 define get_define_retrieve_type_without_structure = function(define_types: *HashMap, define_values: *HashMap, define_name: *): * {
@@ -615,7 +615,7 @@ define get_define_retrieve_type = function(define_types: *HashMap, define_values
 };
 
 define get_value_of_define = function(define_types: *HashMap, define_values: *HashMap, define_name: *): any_8 {
-    return cast(*) hashmap_string_get2(define_values, define_name);
+    return cast(*, hashmap_string_get2(define_values, define_name));
 };
 
 define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, variable_scopes_types_map: *AutoBufferStack8, program_data: *ProgramData, current_function_id: whole_8) {
@@ -628,7 +628,7 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
     declare type = *'>0();
 
     if retrieve_data.has_multiple {
-        declare last_element = cast(*) array8_get(name, array8_length(name) - 1);
+        declare last_element = cast(*, array8_get(name, array8_length(name) - 1));
         declare resolvable_end = 0;
         if string=(last_element, "cast") {
             resolvable_end = 1;
@@ -638,7 +638,7 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
     };
 
     if uses_previous {
-        declare peeked = cast(*) autobuffer_stack8_peek(stack);
+        declare peeked = cast(*, autobuffer_stack8_peek(stack));
 
         declare top_define = *'>0();
         if string_length=(peeked, "module:", 7) {
@@ -652,7 +652,7 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
             declare _ = autobuffer_stack8_pop(stack);
         } else {
             declare index = 0;
-            declare type_temp = cast(*) autobuffer_stack8_peek(stack);
+            declare type_temp = cast(*, autobuffer_stack8_peek(stack));
             if string_length=(type_temp, "*", 1) {
                 type_temp = type_temp + 1;
             } else {
@@ -698,8 +698,8 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
     if type == NULL {
         declare function_argument_types = &program_data.function_argument_types;
         declare function_argument_names = &program_data.function_argument_names;
-        declare function_argument_names_specific = cast(*) autobuffer_array8_get(function_argument_names, current_function_id);
-        declare function_argument_types_specific = cast(*) autobuffer_array8_get(function_argument_types, current_function_id);
+        declare function_argument_names_specific = cast(*, autobuffer_array8_get(function_argument_names, current_function_id));
+        declare function_argument_types_specific = cast(*, autobuffer_array8_get(function_argument_types, current_function_id));
 
         declare argument_type = stringarray_get(function_argument_names_specific, function_argument_types_specific, name, array8_length(function_argument_types_specific));
         if !(argument_type == NULL) {
@@ -714,7 +714,7 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
         declare found = false;
         declare i = 0;
         while i < module_stack.index {
-            declare module_id = cast(whole_8) autobuffer_stack8_get(module_stack, i);
+            declare module_id = cast(whole_8, autobuffer_stack8_get(module_stack, i));
             declare module_id_string = any_24'>0();
             whole_8_to_string(module_id, &module_id_string);
             declare name_temp = concatenate2_brk_allocate(&module_id_string, name);
@@ -735,8 +735,8 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
 
     if !(type == NULL) {
         while string=(type, "define") {
-            declare value = cast(*) get_value_of_define(define_types, define_values, name);
-            declare reference = cast(*) hashmap_string_get(&module_references_map, name);
+            declare value = cast(*, get_value_of_define(define_types, define_values, name));
+            declare reference = cast(*, hashmap_string_get(&module_references_map, name));
             declare expanded = expand_module_name_array(reference, 0, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
             name = expanded;
             type = get_define_retrieve_type(define_types, define_values, name);
@@ -755,7 +755,7 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
 
     // TODO: add checks to ensure that this is valid
     if !(coercion == NULL) {
-        type = cast(*) array8_get(coercion, 0);
+        type = cast(*, array8_get(coercion, 0));
     };
 
     if string_length=(name, "any_", 4) {
@@ -770,8 +770,8 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
         if string_length=(type, "structure:", 10) {
             while true {
                 if stack.index > 0 {
-                    if string=(cast(*) autobuffer_stack8_peek(stack), "structure:*") {
-                        declare popped = cast(*) autobuffer_stack8_pop(stack);
+                    if string=(cast(*, autobuffer_stack8_peek(stack)), "structure:*") {
+                        declare popped = cast(*, autobuffer_stack8_pop(stack));
                         type = concatenate2_brk_allocate("*", type);
                     } else {
                         break;
@@ -793,14 +793,14 @@ define process_retrieve = function(nodes: *Nodes'Data, nodes_index_in: *whole_8,
 };
 
 define process_invoke = function(nodes: *Nodes'Data, nodes_index: whole_8, module_stack: *AutoBufferStack8, stack: *AutoBufferStack8, program_data: *ProgramData, pointer_data: *) {
-    declare function_type = cast(*) autobuffer_stack8_pop(stack);
+    declare function_type = cast(*, autobuffer_stack8_pop(stack));
 
     if string_length=(function_type, "*function[", 10) {
         declare type = string_to_function_data(function_type);
         declare arguments_buffer = type.argument_types;
         declare returns_buffer = type.return_types;
 
-        declare k = cast(integer_8) array8_length(arguments_buffer);
+        declare k = cast(integer_8, array8_length(arguments_buffer));
         while k > 0:integer_8 {
             k = k - 1:integer_8;
 
@@ -817,9 +817,9 @@ define process_invoke = function(nodes: *Nodes'Data, nodes_index: whole_8, modul
                 exit(1);
             };
 
-            declare given = cast(*) autobuffer_stack8_pop(stack);
-            declare wanted = cast(*) array8_get(arguments_buffer, cast(whole_8) k);
-            wanted = cast(*) array8_get(wanted, 0);
+            declare given = cast(*, autobuffer_stack8_pop(stack));
+            declare wanted = cast(*, array8_get(arguments_buffer, cast(whole_8, k)));
+            wanted = cast(*, array8_get(wanted, 0));
 
             if !is_type(wanted, given, nodes, program_data) {
                 print_node_error_beginning(nodes, nodes_index);
@@ -844,8 +844,8 @@ define process_invoke = function(nodes: *Nodes'Data, nodes_index: whole_8, modul
         declare k = 0;
         declare length = array8_length(returns_buffer);
         while k < length {
-            declare return_type = cast(*) array8_get(returns_buffer, k);
-            declare return_type = cast(*) array8_get(return_type, 0);
+            declare return_type = cast(*, array8_get(returns_buffer, k));
+            declare return_type = cast(*, array8_get(return_type, 0));
 
             autobuffer_stack8_push(stack, return_type);
             k = k + 1;
@@ -866,7 +866,7 @@ define process_invoke_internal = function(nodes: *Nodes'Data, nodes_index: whole
     declare function_name_simple = function_name;
 
     if invoke_data.has_multiple {
-        function_name_simple = cast(*) array8_get(function_name, array8_length(function_name) - 1);
+        function_name_simple = cast(*, array8_get(function_name, array8_length(function_name) - 1));
         declare expand_end = 0;
         if is_special_function(function_name_simple) {
             expand_end = 1;
@@ -900,7 +900,7 @@ define process_invoke_internal = function(nodes: *Nodes'Data, nodes_index: whole
     } else if is_single && string=(function_name, "&") {
     } else {
         function_name = if !is_single {
-            declare popped = cast(*) autobuffer_stack8_pop(stack);
+            declare popped = cast(*, autobuffer_stack8_pop(stack));
             if !string_length=(popped, "structure:", 10) {
                 if string_length=(popped, "module:", 7) {
                     print_node_error_beginning(nodes, nodes_index);
@@ -924,7 +924,7 @@ define process_invoke_internal = function(nodes: *Nodes'Data, nodes_index: whole
 define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, top_define: *, previous_results_list: *AutoBufferStack8): * {
     declare name = name_in;
     declare pointer_count = 0;
-    while ((cast(*any_1) name + pointer_count).* == ASCII'ASTERISK) && (pointer_count < string_length(name)) {
+    while (cast(*any_1, name + pointer_count).* == ASCII'ASTERISK) && (pointer_count < string_length(name)) {
          pointer_count = pointer_count + 1;
     };
 
@@ -933,9 +933,9 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
     if string_length(name) > 0 {
         declare current_module_id = if !(top_define == NULL) {
             if string=(top_define, "@current_module") {
-                cast(whole_8) autobuffer_stack8_peek(module_stack)
+                cast(whole_8, autobuffer_stack8_peek(module_stack))
             } else {
-                cast(whole_8) hashmap_string_get2(module_id_map, top_define)
+                cast(whole_8, hashmap_string_get2(module_id_map, top_define))
             }
         } else {
             999
@@ -947,11 +947,11 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
             name = concatenate2_brk_allocate(&current_module_id_string, name);
         };
 
-        declare possible_reference = cast(*) hashmap_string_get2(module_references_map, name);
+        declare possible_reference = cast(*, hashmap_string_get2(module_references_map, name));
         if !(possible_reference == 999) {
             declare i = 0;
             while i < previous_results_list.index {
-                if string=(cast(*) autobuffer_stack8_get(previous_results_list, i), name) {
+                if string=(cast(*, autobuffer_stack8_get(previous_results_list, i)), name) {
                     return name;
                 };
                 i = i + 1;
@@ -973,37 +973,37 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
 
 define expand_module_name_array = function(name_array: *, resolvable_end: whole_8, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, previous_results_list: *AutoBufferStack8): * {
     if array8_length(name_array) == 1 {
-        return cast(*) array8_get(name_array, 0);
+        return cast(*, array8_get(name_array, 0));
     };
 
-    declare name = cast(*) array8_get(name_array, 0);
+    declare name = cast(*, array8_get(name_array, 0));
     declare pointer_count = 0;
-    while ((cast(*any_1) (name + pointer_count)).* == ASCII'ASTERISK) && (pointer_count < string_length(name)) {
+    while (cast(*any_1, name + pointer_count).* == ASCII'ASTERISK) && (pointer_count < string_length(name)) {
          pointer_count = pointer_count + 1;
     };
 
     // TODO: lol
-    name = cast(*) array8_get(name_array, array8_length(name_array) - 1);
+    name = cast(*, array8_get(name_array, array8_length(name_array) - 1));
 
     declare current_module_id = 999;
     declare i = 0;
     declare is_first = true;
     while i < ((array8_length(name_array) - resolvable_end) - 1) {
-        declare current_module = cast(*) array8_get(name_array, i);
+        declare current_module = cast(*, array8_get(name_array, i));
         if is_first {
             current_module = current_module + pointer_count;
         };
         is_first = false;
 
         declare new_id = if string=(current_module, "@current_module") {
-            cast(whole_8) autobuffer_stack8_peek(module_stack)
+            cast(whole_8, autobuffer_stack8_peek(module_stack))
         } else if =(current_module_id, 999) {
-            declare temp_id = cast(whole_8) hashmap_string_get2(module_id_map, current_module);
+            declare temp_id = cast(whole_8, hashmap_string_get2(module_id_map, current_module));
 
             if temp_id == 999 {
-                declare temp_name = cast(*) hashmap_string_get2(module_references_map, current_module);
+                declare temp_name = cast(*, hashmap_string_get2(module_references_map, current_module));
                 temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
-                temp_id = cast(whole_8) hashmap_string_get2(module_id_map, temp_name);
+                temp_id = cast(whole_8, hashmap_string_get2(module_id_map, temp_name));
             };
             temp_id
         } else {
@@ -1011,16 +1011,16 @@ define expand_module_name_array = function(name_array: *, resolvable_end: whole_
             whole_8_to_string(current_module_id, &current_module_id_string);
 
             declare current_module_full = concatenate2_brk_allocate(&current_module_id_string, current_module);
-            declare temp_id = cast(whole_8) hashmap_string_get2(module_id_map, current_module_full);
+            declare temp_id = cast(whole_8, hashmap_string_get2(module_id_map, current_module_full));
 
             if temp_id == 999 {
-                declare temp_name = cast(*) hashmap_string_get2(module_references_map, current_module_full);
+                declare temp_name = cast(*, hashmap_string_get2(module_references_map, current_module_full));
                 if temp_name == 999 {
                     return name;
                 };
 
                 temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
-                temp_id = cast(whole_8) hashmap_string_get2(module_id_map, temp_name);
+                temp_id = cast(whole_8, hashmap_string_get2(module_id_map, temp_name));
             };
             temp_id
         };
@@ -1032,16 +1032,16 @@ define expand_module_name_array = function(name_array: *, resolvable_end: whole_
     if !(current_module_id == 999) {
         declare current_module_id_string = any_16'>0();
         whole_8_to_string(current_module_id, &current_module_id_string);
-        name = concatenate2_brk_allocate(&current_module_id_string, cast(*) array8_get(name_array, (array8_length(name_array) - resolvable_end) - 1));
+        name = concatenate2_brk_allocate(&current_module_id_string, cast(*, array8_get(name_array, (array8_length(name_array) - resolvable_end) - 1)));
     } else {
-        name = cast(*) array8_get(name_array, (array8_length(name_array) - resolvable_end) - 1);
+        name = cast(*, array8_get(name_array, (array8_length(name_array) - resolvable_end) - 1));
     };
 
-    declare possible_reference = cast(*) hashmap_string_get2(module_references_map, name);
+    declare possible_reference = cast(*, hashmap_string_get2(module_references_map, name));
     if !(possible_reference == 999) {
         declare i = 0;
         while i < previous_results_list.index {
-            if string=(cast(*) autobuffer_stack8_get(previous_results_list, i), name) {
+            if string=(cast(*, autobuffer_stack8_get(previous_results_list, i)), name) {
                 return name;
             };
             i = i + 1;
@@ -1066,7 +1066,7 @@ define print_array8_string = function(array: *) {
     print("[");
     declare i = 0;
     while i < array8_length(array) {
-        print(cast(*) array8_get(array, i));
+        print(cast(*, array8_get(array, i)));
         print(", ");
         i = i + 1;
     };
@@ -1081,8 +1081,8 @@ define process_cast = function(nodes: *Nodes'Data, nodes_index: whole_8, module_
     };
 
     declare pointer_count = 0;
-    declare popped = cast(*) autobuffer_stack8_pop(stack);
-    while (cast(*any_1) (popped + pointer_count)).* == ASCII'ASTERISK {
+    declare popped = cast(*, autobuffer_stack8_pop(stack));
+    while cast(*any_1, popped + pointer_count).* == ASCII'ASTERISK {
         pointer_count = pointer_count + 1;
     };
 
@@ -1097,7 +1097,7 @@ define process_cast = function(nodes: *Nodes'Data, nodes_index: whole_8, module_
         to_push = concatenate2_brk_allocate("*", to_push);
     };
 
-    declare popped = cast(*) autobuffer_stack8_pop(stack);
+    declare popped = cast(*, autobuffer_stack8_pop(stack));
 
     declare size_function = program_data.get_size;
     if !(size_function(popped, nodes, program_data) == size_function(to_push, nodes, program_data)) {
@@ -1128,7 +1128,7 @@ define process_cast_new = function(nodes: *Nodes'Data, nodes_index: whole_8, mod
         to_push = concatenate2_brk_allocate("*", to_push);
     };
 
-    declare popped = cast(*) autobuffer_stack8_pop(stack);
+    declare popped = cast(*, autobuffer_stack8_pop(stack));
 
     declare size_function = program_data.get_size;
     if !(size_function(popped, nodes, program_data) == size_function(to_push, nodes, program_data)) {
@@ -1160,8 +1160,8 @@ define process_internal_invoke = function(nodes: *Nodes'Data, nodes_index: whole
         exit(1);
     };
 
-    declare arguments = cast(*) hashmap_string_get(internal_function_argument_types, function_name);
-    declare returns = cast(*) hashmap_string_get(internal_function_return_types, function_name);
+    declare arguments = cast(*, hashmap_string_get(internal_function_argument_types, function_name));
+    declare returns = cast(*, hashmap_string_get(internal_function_return_types, function_name));
 
     declare arguments_length = array8_length(arguments);
     declare k = 0;
@@ -1174,9 +1174,9 @@ define process_internal_invoke = function(nodes: *Nodes'Data, nodes_index: whole
             exit(1);
         };
 
-        declare given = cast(*) autobuffer_stack8_pop(stack);
-        declare wanted = cast(*) array8_get(arguments, (arguments_length - k) - 1);
-        wanted = cast(*) array8_get(wanted, 0);
+        declare given = cast(*, autobuffer_stack8_pop(stack));
+        declare wanted = cast(*, array8_get(arguments, (arguments_length - k) - 1));
+        wanted = cast(*, array8_get(wanted, 0));
         if !is_type(wanted, given, nodes, program_data) {
             print_node_error_beginning(nodes, nodes_index);
             print("Invoke of '");
@@ -1194,8 +1194,8 @@ define process_internal_invoke = function(nodes: *Nodes'Data, nodes_index: whole
 
     declare k = 0;
     while !(array8_get(returns, k) == NULL) {
-        declare return_value = cast(*) array8_get(returns, k);
-        return_value = cast(*) array8_get(return_value, 0);
+        declare return_value = cast(*, array8_get(returns, k));
+        return_value = cast(*, array8_get(return_value, 0));
         if is_pointer(nodes, nodes_index + 1) {
             return_value = concatenate2_brk_allocate("*", return_value);
         };
@@ -1215,8 +1215,8 @@ define process_math_invoke = function(nodes: *Nodes'Data, nodes_index: whole_8, 
         exit(1);
     };
 
-    declare first = cast(*) autobuffer_stack8_pop(stack);
-    declare second = cast(*) autobuffer_stack8_pop(stack);
+    declare first = cast(*, autobuffer_stack8_pop(stack));
+    declare second = cast(*, autobuffer_stack8_pop(stack));
 
     declare size_function = program_data.get_size;
     if (!size_function(first, nodes, program_data) == size_function(second, nodes, program_data)) || (!is_signed(first, nodes) == is_signed(second, nodes)) {
@@ -1251,8 +1251,8 @@ define process_comparison_invoke = function(nodes: *Nodes'Data, nodes_index: who
         exit(1);
     };
 
-    declare first = cast(*) autobuffer_stack8_pop(stack);
-    declare second = cast(*) autobuffer_stack8_pop(stack);
+    declare first = cast(*, autobuffer_stack8_pop(stack));
+    declare second = cast(*, autobuffer_stack8_pop(stack));
 
     declare size_function = program_data.get_size;
     if (!(size_function(first, nodes, program_data) == size_function(second, nodes, program_data))) || (!(is_signed(first, nodes) == is_signed(second, nodes))) {
@@ -1306,10 +1306,10 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
         declare next_id = Nodes'get_id(nodes, i + 1);
 
         if id == Node'DEFINE {
-            declare define_data = cast(*Node'DefineData) pointer_data;
+            declare define_data = cast(*Node'DefineData, pointer_data);
             declare define_name = define_data.name;
 
-            hashmap_string_put(&define_module_map, define_name, cast(whole_8) autobuffer_stack8_peek(&module_stack));
+            hashmap_string_put(&define_module_map, define_name, cast(whole_8, autobuffer_stack8_peek(&module_stack)));
 
             if next_id == Node'MODULE {
                 hashmap_string_put(&module_id_map, define_name, declared_module_id);
@@ -1355,7 +1355,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
         declare pointer_data = Nodes'get_pointer_data(nodes, i);
 
         if id == Node'FUNCTION {
-            declare function_data = cast(*Node'FunctionData) pointer_data;
+            declare function_data = cast(*Node'FunctionData, pointer_data);
             declare function_name = function_data.name;
             
             if !(function_name == NULL) {
@@ -1378,7 +1378,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
         } else if id == Node'ENDFUNCTION {
             in_function = false;
         } else if id == Node'STRUCTURE {
-            declare structure_data = cast(*Node'StructureData) pointer_data;
+            declare structure_data = cast(*Node'StructureData, pointer_data);
 
             if structure_data.name == NULL {
                 expand_structure_data(structure_data, &module_stack);
@@ -1399,7 +1399,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
         } else if id == Node'ENDMODULE {
             declare _ = autobuffer_stack8_pop(&module_stack);
         } else if id == Node'DEFINE {
-            declare define_data = cast(*Node'DefineData) pointer_data;
+            declare define_data = cast(*Node'DefineData, pointer_data);
             declare define_name = define_data.name;
             declare define_type = define_data.type;
 
@@ -1409,7 +1409,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 declare next_data = Nodes'get_pointer_data(nodes, i + 1);
 
                 define_type = if next_id == Node'NUMBER {
-                    declare number_data = cast(*Node'NumberData) next_data;
+                    declare number_data = cast(*Node'NumberData, next_data);
                     declare coersion = number_data.coersion;
                     if !(=(coersion, 0)) {
                         expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list())
@@ -1417,10 +1417,10 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                         "whole_8"
                     }
                 } else if next_id == Node'FUNCTION {
-                    expand_function_data(cast(*Node'FunctionData) next_data, &module_stack);
-                    function_data_to_string(&module_stack, cast(*Node'FunctionData) next_data)
+                    expand_function_data(cast(*Node'FunctionData, next_data), &module_stack);
+                    function_data_to_string(&module_stack, cast(*Node'FunctionData, next_data))
                 } else if next_id == Node'STRUCTURE {
-                    structure_data_to_string(cast(*Node'StructureData) next_data)
+                    structure_data_to_string(cast(*Node'StructureData, next_data))
                 } else if next_id == Node'MODULE {
                     "module"
                 } else if next_id == Node'RETRIEVE {
@@ -1439,7 +1439,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
 
             declare name = define_data.name;
             if module_stack.index > 0 {
-                declare top_module = cast(whole_8) autobuffer_stack8_peek(&module_stack);
+                declare top_module = cast(whole_8, autobuffer_stack8_peek(&module_stack));
                 declare top_module_string = any_16'>0();
                 whole_8_to_string(top_module, &top_module_string);
 
@@ -1455,17 +1455,17 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 exit(1);
             };
 
-            hashmap_string_put(&define_module_map, name, cast(whole_8) autobuffer_stack8_peek(&module_stack));
+            hashmap_string_put(&define_module_map, name, cast(whole_8, autobuffer_stack8_peek(&module_stack)));
 
             if string=(define_type, "module") {
                 hashmap_string_put(&module_id_map, name, declared_module_id);
             } else if string=(define_type, "define") {
-                declare full_define2 = cast(*AutoBufferStack8) brk_allocate(size_of(AutoBufferStack8));
+                declare full_define2 = cast(*AutoBufferStack8, brk_allocate(size_of(AutoBufferStack8)));
                 full_define2.* = autobuffer_stack8_new(24);
                 declare full_define = "";
 
                 // TODO: Should remove once the old syntax is gone (Foo.Bar syntax)
-                declare override_array = cast(*) 0;
+                declare override_array = cast(*, 0);
 
                 i = i + 1;
                 declare j = 0;
@@ -1480,7 +1480,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                         };
 
                         if string=(retrieve_name, "@current_module") {
-                            declare top_module = cast(whole_8) autobuffer_stack8_peek(&module_stack);
+                            declare top_module = cast(whole_8, autobuffer_stack8_peek(&module_stack));
                             declare top_module_string = any_16'>0();
                             whole_8_to_string(top_module, &top_module_string);
 
@@ -1526,7 +1526,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
         } else if id == Node'ENDDEFINE {
             declare _ = autobuffer_stack8_pop(&define_types_stack);
         } else if id == Node'RETRIEVE {
-            declare retrieve_data = cast(*Node'RetrieveData) pointer_data;
+            declare retrieve_data = cast(*Node'RetrieveData, pointer_data);
             declare coersion = retrieve_data.coercion;
 
             if !(coersion == NULL) {
@@ -1534,7 +1534,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 retrieve_data.coercion = create_size_one_array8_brk_allocate(coersion_string);
             };
         } else if id == Node'DECLARE {
-            declare declare_data = cast(*Node'DeclareData) pointer_data;
+            declare declare_data = cast(*Node'DeclareData, pointer_data);
             declare declare_name = declare_data.name;
             declare declare_type = declare_data.type;
 
@@ -1562,7 +1562,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
 };
 
 define expand_type_array = function(type: *, module_stack: *AutoBufferStack8): * {
-    declare type_first = cast(*) array8_get(type, 0);
+    declare type_first = cast(*, array8_get(type, 0));
     return if string_length=(type_first, "*function[", 10) {
         declare function_data = string_to_function_data(type_first);
         expand_function_data(&function_data, module_stack);
@@ -1582,7 +1582,7 @@ define expand_function_data = function(function_data: *Node'FunctionData, module
     declare return_types = function_data.return_types;
     declare length = array8_length(argument_types);
     while j < length {
-        declare argument = cast(*) array8_get(argument_types, j);
+        declare argument = cast(*, array8_get(argument_types, j));
         declare expanded_argument = expand_type_array(argument, module_stack);
         array8_set(argument_types, j, create_size_one_array8_brk_allocate(expanded_argument));
         j = j + 1;
@@ -1591,7 +1591,7 @@ define expand_function_data = function(function_data: *Node'FunctionData, module
     declare j = 0;
     declare length = array8_length(return_types);
     while j < length {
-        declare return_ = cast(*) array8_get(return_types, j);
+        declare return_ = cast(*, array8_get(return_types, j));
         declare expanded_return = expand_type_array(return_, module_stack);
         array8_set(return_types, j, create_size_one_array8_brk_allocate(expanded_return));
         j = j + 1;
@@ -1603,7 +1603,7 @@ define expand_structure_data = function(structure_data: *Node'StructureData, mod
     declare item_types = structure_data.item_types;
     declare length = array8_length(item_types);
     while j < length {
-        declare item = cast(*) array8_get(item_types, j);
+        declare item = cast(*, array8_get(item_types, j));
         declare expanded_item = expand_type_array(item, module_stack);
         array8_set(item_types, j, create_size_one_array8_brk_allocate(expanded_item));
         j = j + 1;
@@ -1618,7 +1618,7 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
 
     declare i = 0;
     while i < string_length(name) {
-        declare character = (cast(*any_1) (name + i)).*;
+        declare character = cast(*any_1, name + i).*;
 
         if character == ASCII'PERIOD {
             autobuffer_array8_set(&array, array_index, copy_string_brk_allocate(buffer.autobuffer.buffer));
@@ -1641,7 +1641,7 @@ define expand_module_name = function(name_in: *, module_id_map: *HashMap, module
 
 define create_previous_results_list = function(): *AutoBufferStack8 {
     declare new = autobuffer_stack8_new(32);
-    declare allocated = cast(*AutoBufferStack8) brk_allocate(size_of(AutoBufferStack8));
+    declare allocated = cast(*AutoBufferStack8, brk_allocate(size_of(AutoBufferStack8)));
     allocated.* = new;
     return allocated;
 };
@@ -1670,7 +1670,7 @@ define get_define_name_with_module = function(module_stack: *AutoBufferStack8, d
     declare new_define_name = "";
 
     if module_stack.index > 0 {
-        declare module_id = cast(whole_8) autobuffer_stack8_peek(module_stack);
+        declare module_id = cast(whole_8, autobuffer_stack8_peek(module_stack));
         declare module_id_buffer = any_24'>0();
         whole_8_to_string(module_id, &module_id_buffer);
 

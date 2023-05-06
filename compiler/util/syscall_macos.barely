@@ -41,7 +41,7 @@ define MacOS = module {
     };
 
     define sys_open = function(path: *, flags: whole_8, mode: whole_8): whole_8 {
-        return cast(whole_8) @syscall3('SYS_OPEN, path, flags, mode);
+        return cast(whole_8, @syscall3('SYS_OPEN, path, flags, mode));
     };
 
     define sys_close = function(fd: whole_8) {
@@ -63,15 +63,15 @@ define MacOS = module {
     };
 
     define sys_brk = function(location: *): * {
-        return cast(*) @syscall1('SYS_BRK, location);
+        return cast(*, @syscall1('SYS_BRK, location));
     };
 
     define sys_fork = function(): whole_8 {
-        return cast(whole_8) @syscall0('SYS_FORK);
+        return cast(whole_8, @syscall0('SYS_FORK));
     };
 
     define sys_execve = function(file: *, args: *, env: **): whole_8 {
-        return cast(whole_8) @syscall3('SYS_EXECVE, file, args, env);
+        return cast(whole_8, @syscall3('SYS_EXECVE, file, args, env));
     };
 
     define sys_exit = function(code: whole_8) {
@@ -92,6 +92,6 @@ define MacOS = module {
     };
 
     define sys_mmap = function(address: *, size: whole_8, protection: whole_8, flags: whole_8, fd: whole_8, offset: whole_8): * {
-        return cast(*) @syscall6('SYS_MMAP, address, size, protection, flags, fd, offset);
+        return cast(*, @syscall6('SYS_MMAP, address, size, protection, flags, fd, offset));
     };
 };

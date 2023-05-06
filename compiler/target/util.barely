@@ -11,7 +11,7 @@ define calculate_global_locations = function(nodes: *Nodes'Data, program_data: *
 
     declare i = 0;
     while i < global_count {
-        declare global_type = cast(*) autobuffer_array8_get(global_types, i);
+        declare global_type = cast(*, autobuffer_array8_get(global_types, i));
 
         autobuffer_array8_set(&global_locations, i, bss_index);
 
@@ -30,13 +30,13 @@ define calculate_function_local_sizes = function(nodes: *Nodes'Data, program_dat
     declare i = 0;
     while i < function_count {
         declare total = 0;
-        declare j = cast(whole_8) autobuffer_array8_get(function_node_locations, i);
+        declare j = cast(whole_8, autobuffer_array8_get(function_node_locations, i));
         while !(Nodes'get_id(nodes, j) == Node'ENDFUNCTION) {
             declare id = Nodes'get_id(nodes, j);
             declare pointer_data = Nodes'get_pointer_data(nodes, j);
             
             if id == Node'DECLARE {
-                declare declare_data = cast(*Node'DeclareData) pointer_data;
+                declare declare_data = cast(*Node'DeclareData, pointer_data);
                 declare declare_name = declare_data.name;
                 declare declare_type_names = declare_data.type;
                 declare declare_type = expand_module_name_array(declare_type_names, 0, &(module_id_map), &(module_references_map), &(empty_module_stack), create_previous_results_list());
@@ -59,7 +59,7 @@ define calculate_variable_location = function(variable_count: whole_8, variable_
     while true {
         if !(j < variable_count) {
             break;
-        } else if !((!string=(variable_name, cast(*) autobuffer_array8_get(variable_names, j))) || (j < scope_variable_index)) {
+        } else if !((!string=(variable_name, cast(*, autobuffer_array8_get(variable_names, j)))) || (j < scope_variable_index)) {
             break;
         } else {
             location = location + autobuffer_array8_get(variable_sizes, j);
@@ -74,7 +74,7 @@ define adjust_indexes = function(instructions_autobuffer: *AutoBufferBuffer, set
     declare index_count = indexes_to_adjust.index;
     declare i = 0;
     while i < index_count {
-        declare index = cast(InstructionIndex) autobuffer_stack8_get(indexes_to_adjust, i);
+        declare index = cast(InstructionIndex, autobuffer_stack8_get(indexes_to_adjust, i));
 
         setter(instructions_autobuffer, index, offset);
         i = i + 1;
@@ -86,10 +86,10 @@ define adjust_jumps = function(jumps: *AutoBufferStack8, jump_targets: *AutoBuff
 
     declare i = 0;
     while i < jump_count {
-        declare jmp_instruction = cast(InstructionIndex) autobuffer_stack8_get(jumps, i);
-        declare jmp_target = cast(whole_8) autobuffer_stack8_get(jump_targets, i);
+        declare jmp_instruction = cast(InstructionIndex, autobuffer_stack8_get(jumps, i));
+        declare jmp_target = cast(whole_8, autobuffer_stack8_get(jump_targets, i));
         declare target_location = autobuffer_array8_get(targets, jmp_target);
-        setter(instructions_buffer, jmp_instruction, cast(InstructionIndex) target_location);
+        setter(instructions_buffer, jmp_instruction, cast(InstructionIndex, target_location));
         i = i + 1;
     };
 };
@@ -98,12 +98,12 @@ define adjust_function_calls = function(set_function_value: *function[*AutoBuffe
     declare pushed_function_count = pushed_functions.index;
     declare i = 0;
     while i < pushed_function_count {
-        declare pushed_function_instruction_specific = cast(InstructionIndex) autobuffer_stack8_get(pushed_functions, i);
-        declare pushed_function_target = cast(whole_8) autobuffer_stack8_get(pushed_function_targets, i);
+        declare pushed_function_instruction_specific = cast(InstructionIndex, autobuffer_stack8_get(pushed_functions, i));
+        declare pushed_function_target = cast(whole_8, autobuffer_stack8_get(pushed_function_targets, i));
 
-        declare function_index = cast(InstructionIndex) autobuffer_array8_get(function_locations, pushed_function_target);
+        declare function_index = cast(InstructionIndex, autobuffer_array8_get(function_locations, pushed_function_target));
 
-        set_function_value(instructions_buffer, pushed_function_instruction_specific, cast(whole_8) (function_index + offset));
+        set_function_value(instructions_buffer, pushed_function_instruction_specific, cast(whole_8, function_index + offset));
         i = i + 1;
     };
 };

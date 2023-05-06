@@ -43,9 +43,9 @@ define Target_Macho = module {
         declare start_address = 4294967296;
 
         declare define_values = &program_data.define_values;
-        declare main_function_index = cast(whole_8) hashmap_string_get(define_values, "main");
+        declare main_function_index = cast(whole_8, hashmap_string_get(define_values, "main"));
         declare main_index = autobuffer_array8_get(&function_locations, main_function_index);
-        set_near_call_value(&instructions_buffer, main_call, cast(InstructionIndex) main_index);
+        set_near_call_value(&instructions_buffer, main_call, cast(InstructionIndex, main_index));
 
         adjust_function_calls(set_far_call_value, &pushed_functions, &pushed_function_targets, &function_locations, &instructions_buffer, start_address + 504);
 
@@ -85,10 +85,10 @@ define Target_Macho = module {
 
         declare i = 0;
         while i < jump_count {
-            declare jmp_instruction2 = cast(InstructionIndex) autobuffer_stack8_get(jumps, i);
-            declare jmp_target = cast(whole_8) autobuffer_stack8_get(jump_targets, i);
+            declare jmp_instruction2 = cast(InstructionIndex, autobuffer_stack8_get(jumps, i));
+            declare jmp_target = cast(whole_8, autobuffer_stack8_get(jump_targets, i));
             declare target_location = autobuffer_array8_get(targets, jmp_target);
-            setter(instructions_buffer, jmp_instruction2, cast(InstructionIndex) target_location);
+            setter(instructions_buffer, jmp_instruction2, cast(InstructionIndex, target_location));
             i = i + 1;
         };
     };
