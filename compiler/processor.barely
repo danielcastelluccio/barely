@@ -631,7 +631,7 @@ define process_retrieve = function(nodes: *Nodes.Data, nodes_index_in: *whole_8,
         declare last_element = *.cast(array8_get(name, array8_length(name) - 1));
         declare resolvable_end = 0;
         if string=(last_element, "cast") {
-            resolvable_end = array8_length(name) - 1;
+            resolvable_end = 1;
         };
         declare full_name = expand_module_name_array(name, resolvable_end, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
         name = full_name;
@@ -863,9 +863,18 @@ define process_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole
     declare invoke_data = #nodes_get_pointer_data(nodes, Node.InvokeInternalData, nodes_index);
     declare function_name = invoke_data.name;
     declare is_single = !invoke_data.uses_previous;
+    declare function_name_simple = function_name;
 
     if invoke_data.has_multiple {
-        function_name = *.cast(array8_get(function_name, array8_length(function_name) - 1));
+        function_name_simple = *.cast(array8_get(function_name, array8_length(function_name) - 1));
+        declare expand_end = 0;
+        if is_special_function(function_name_simple) {
+            expand_end = 1;
+        };
+        function_name = expand_module_name_array(function_name, expand_end, &module_id_map, &module_references_map, module_stack, create_previous_results_list());
+        if is_special_function(function_name_simple) {
+            function_name = concatenate2_brk_allocate(function_name, function_name_simple);
+        };
     };
 
     if is_single && string=(function_name, "+") {
@@ -884,7 +893,7 @@ define process_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole
         invoke_data.name = process_comparison_invoke(nodes, nodes_index, stack, program_data, ">");
     } else if is_single && string=(function_name, "<") {
         invoke_data.name = process_comparison_invoke(nodes, nodes_index, stack, program_data, "<");
-    } else if (string=(function_name, "cast") || string=(function_name, "pcast")) && (!invoke_data.has_multiple) {
+    } else if (string=(function_name_simple, "cast") || string=(function_name_simple, "pcast")) && (!invoke_data.has_multiple) {
         process_cast(nodes, nodes_index, module_stack, stack, program_data, invoke_data, function_name);
     } else if string=(function_name, "cast") || string=(function_name, "pcast") {
         process_cast_new(nodes, nodes_index, module_stack, stack, program_data, invoke_data, invoke_data.name);
@@ -908,6 +917,7 @@ define process_invoke_internal = function(nodes: *Nodes.Data, nodes_index: whole
         process_internal_invoke(nodes, nodes_index, stack, program_data, module_stack, function_name);
 
         invoke_data.name = function_name;
+        invoke_data.has_multiple = false;
     };
 };
 
