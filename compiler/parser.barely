@@ -487,7 +487,7 @@ define check_parse_simple_expressions = function(tokens: *Tokens'Data, index_poi
                 declare cast_to = parse_name_array(tokens, &index);
 
                 declare current_token = Tokens'get_id(tokens, index);
-                if current_token == Token.COMMA {
+                if current_token == Token'COMMA {
                     index = index + 1;
                     parse_expression(tokens, &index, nodes);
                     index = index + 1;
@@ -606,9 +606,6 @@ define is_special_function = function(name: *): boolean {
     else if string=(name, "&&") true
     else if string_length=(name, "<", 1) true
     else if string_length=(name, ">", 1) true
-    else if string_length=(name, "cast", 4) true
-    else if string_length=(name, "pcast", 5) true
-    else if string_length=(name, "size", 4) && (string_length(name) == 4) true
     else if string_length=(name, "@syscall", 8) true
     else false;
 };
@@ -629,9 +626,6 @@ define is_special_operator = function(name: *): boolean {
     else if string=(name, "&&") true
     else if string_length=(name, "<", 1) true
     else if string_length=(name, ">", 1) true
-    else if string_length=(name, "cast", 4) true
-    else if string_length=(name, "pcast", 5) true
-    else if string_length=(name, "size", 4) && (string_length(name) == 4) true
     else if string_length=(name, "@syscall", 8) true
     else false;
 };
