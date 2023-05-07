@@ -899,6 +899,108 @@ define expand_module_name_stack = function(name_in: *, module_id_map: *HashMap, 
     return name;
 };
 
+define expand_module_name_array_new = function(name_array: *, resolvable_end: whole_8, define_types: *HashMap, define_values: *HashMap, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, previous_results_list: *AutoBufferStack8): * {
+    declare name_first = cast(*, array8_get(name_array, 0));
+    declare current_module_id = 999;
+    declare i = 0;
+    while i < module_stack.index {
+        declare module_id = cast(whole_8, autobuffer_stack8_get(module_stack, i));
+        declare module_id_string = any_24'>0();
+        whole_8_to_string(module_id, &module_id_string);
+
+        declare name_temp = concatenate2_brk_allocate(&module_id_string, name_first);
+        declare type = get_define_retrieve_type(define_types, define_values, name_temp);
+
+        if !(type == NULL) {
+            current_module_id = module_id;
+            break;
+        };
+        i = i + 1;
+    };
+
+    declare pointer_count = 0;
+    while (cast(*any_1, name_first + pointer_count).* == ASCII'ASTERISK) && (pointer_count < string_length(name_first)) {
+         pointer_count = pointer_count + 1;
+    };
+
+    //declare current_module_id = 999;
+    declare i = 0;
+    declare is_first = true;
+    while i < ((array8_length(name_array) - resolvable_end) - 1) {
+        declare current_module = cast(*, array8_get(name_array, i));
+        if is_first {
+            current_module = current_module + pointer_count;
+        };
+        is_first = false;
+
+        declare new_id = if string=(current_module, "@current_module") {
+            cast(whole_8, autobuffer_stack8_peek(module_stack))
+        } else if =(current_module_id, 999) {
+            declare temp_id = cast(whole_8, hashmap_string_get2(module_id_map, current_module));
+
+            if temp_id == 999 {
+                declare temp_name = cast(*, hashmap_string_get2(module_references_map, current_module));
+                temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
+                temp_id = cast(whole_8, hashmap_string_get2(module_id_map, temp_name));
+            };
+
+            temp_id
+        } else {
+            declare current_module_id_string = any_16'>0();
+            whole_8_to_string(current_module_id, &current_module_id_string);
+
+            declare current_module_full = concatenate2_brk_allocate(&current_module_id_string, current_module);
+            declare temp_id = cast(whole_8, hashmap_string_get2(module_id_map, current_module_full));
+
+            if temp_id == 999 {
+                declare temp_name = cast(*, hashmap_string_get2(module_references_map, current_module_full));
+                if temp_name == 999 {
+                    return current_module_full;
+                };
+
+                temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
+                temp_id = cast(whole_8, hashmap_string_get2(module_id_map, temp_name));
+            };
+            temp_id
+        };
+
+        current_module_id = new_id;
+        i = i + 1;
+    };
+
+    declare name = if !(current_module_id == 999) {
+        declare current_module_id_string = any_16'>0();
+        whole_8_to_string(current_module_id, &current_module_id_string);
+        concatenate2_brk_allocate(&current_module_id_string, cast(*, array8_get(name_array, (array8_length(name_array) - resolvable_end) - 1)))
+    } else {
+        cast(*, array8_get(name_array, (array8_length(name_array) - resolvable_end) - 1))
+    };
+
+    declare possible_reference = cast(*, hashmap_string_get2(module_references_map, name));
+    if !(possible_reference == 999) {
+        declare i = 0;
+        while i < previous_results_list.index {
+            if string=(cast(*, autobuffer_stack8_get(previous_results_list, i)), name) {
+                return name;
+            };
+            i = i + 1;
+        };
+        autobuffer_stack8_push(previous_results_list, name);
+
+        name = expand_module_name_array(possible_reference, 0, module_id_map, module_references_map, module_stack, previous_results_list);
+    };
+
+    if !is_first {
+        declare i = 0;
+        while i < pointer_count {
+            name = concatenate2_brk_allocate("*", name);
+            i = i + 1;
+        };
+    };
+
+    return name;
+};
+
 define expand_module_name_array = function(name_array: *, resolvable_end: whole_8, module_id_map: *HashMap, module_references_map: *HashMap, module_stack: *AutoBufferStack8, previous_results_list: *AutoBufferStack8): * {
     if array8_length(name_array) == 1 {
         return cast(*, array8_get(name_array, 0));
@@ -933,6 +1035,7 @@ define expand_module_name_array = function(name_array: *, resolvable_end: whole_
                 temp_name = expand_module_name_array(temp_name, 0, module_id_map, module_references_map, module_stack, create_previous_results_list());
                 temp_id = cast(whole_8, hashmap_string_get2(module_id_map, temp_name));
             };
+
             temp_id
         } else {
             declare current_module_id_string = any_16'>0();
@@ -1286,15 +1389,13 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
             declare function_data = cast(*Node'FunctionData, pointer_data);
             declare function_name = function_data.name;
             
-            if !(function_name == NULL) {
-                expand_function_data(function_data, &module_stack);
+            expand_function_data_new(function_data, define_types, define_values, &module_stack);
 
+            if !(function_name == NULL) {
                 hashmap_string_put(internal_function_argument_types, function_name, function_data.argument_types);
                 hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
                 hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
             } else {
-                expand_function_data(function_data, &module_stack);
-
                 autobuffer_array8_set(function_locations, declared_function_id, i);
                 autobuffer_array8_set(function_datas, declared_function_id, function_data);
                 autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types);
@@ -1345,7 +1446,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                         "whole_8"
                     }
                 } else if next_id == Node'FUNCTION {
-                    expand_function_data(cast(*Node'FunctionData, next_data), &module_stack);
+                    expand_function_data_new(cast(*Node'FunctionData, next_data), define_types, define_values, &module_stack);
                     function_data_to_string(&module_stack, cast(*Node'FunctionData, next_data))
                 } else if next_id == Node'STRUCTURE {
                     structure_data_to_string(cast(*Node'StructureData, next_data))
@@ -1504,6 +1605,22 @@ define expand_type_array = function(type: *, module_stack: *AutoBufferStack8): *
     };
 };
 
+define expand_type_array_new = function(type: *, define_types: *HashMap, define_values: *HashMap, module_stack: *AutoBufferStack8): * {
+    declare type_first = cast(*, array8_get(type, 0));
+    return if string_length=(type_first, "*function[", 10) {
+        declare function_data = string_to_function_data(type_first);
+        expand_function_data(&function_data, module_stack);
+        function_data_to_string(module_stack, &function_data)
+    } else if string_length=(type_first, "**function[", 11) {
+        declare function_data = string_to_function_data(type_first + 1);
+        expand_function_data(&function_data, module_stack);
+        function_data_to_string(module_stack, &function_data)
+    } else {
+        //print_array8_string(type);
+        expand_module_name_array_new(type, 0, define_types, define_values, &module_id_map, &module_references_map, module_stack, create_previous_results_list())
+    };
+};
+
 define expand_function_data = function(function_data: *Node'FunctionData, module_stack: *AutoBufferStack8) {
     declare j = 0;
     declare argument_types = function_data.argument_types;
@@ -1512,7 +1629,36 @@ define expand_function_data = function(function_data: *Node'FunctionData, module
     while j < length {
         declare argument = cast(*, array8_get(argument_types, j));
         declare expanded_argument = expand_type_array(argument, module_stack);
+        //print_array8_string(argument);
+        //println(expanded_argument);
         array8_set(argument_types, j, create_size_one_array8_brk_allocate(expanded_argument));
+        j = j + 1;
+    };
+
+    declare j = 0;
+    declare length = array8_length(return_types);
+    while j < length {
+        declare return_ = cast(*, array8_get(return_types, j));
+        declare expanded_return = expand_type_array(return_, module_stack);
+        array8_set(return_types, j, create_size_one_array8_brk_allocate(expanded_return));
+        j = j + 1;
+    };
+};
+
+define expand_function_data_new = function(function_data: *Node'FunctionData, define_types: *HashMap, define_values: *HashMap, module_stack: *AutoBufferStack8) {
+    declare j = 0;
+    declare argument_types = function_data.argument_types;
+    declare return_types = function_data.return_types;
+    declare length = array8_length(argument_types);
+    while j < length {
+        declare argument = cast(*, array8_get(argument_types, j));
+        declare expanded_argument = expand_type_array_new(argument, define_types, define_values, module_stack);
+        //println(expanded_argument);
+        //print_array8_string(argument);
+        //println(expanded_argument);
+        array8_set(argument_types, j, create_size_one_array8_brk_allocate(expanded_argument));
+        //print_whole_8(j);
+        //println("");
         j = j + 1;
     };
 

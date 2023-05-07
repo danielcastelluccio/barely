@@ -216,8 +216,7 @@ define parse_function_definition = function(tokens: *Tokens'Data, index_pointer:
     while !(Tokens'get_id(tokens, index) == Token'CLOSED_PARENTHESIS) {
         declare id = Tokens'get_id(tokens, index);
 
-        if id == Token'NAME {
-
+        if (id == Token'NAME) || (id == Token'APOSTROPHE) {
             if is_name {
                 declare token_name = #tokens_get_pointer_data(tokens, Token'NameData, index).name;
                 autobuffer_array8_set(&function_argument_names, arguments_index, token_name);
