@@ -52,6 +52,7 @@ define Node = module {
     define STRUCTURE = 9;
     define StructureData = structure {
         name: *;
+        id: whole_8;
         item_names: *;
         item_types: *;
         is_internal: boolean;
@@ -210,24 +211,11 @@ define Nodes = module {
     };
 
     define append_structure = function(nodes: *'Data, name: *, size: whole_8) {
-        declare size_string = any_24'>0();
-        whole_8_to_string(size, &(size_string));
-
-        declare define_data = cast(*Node'DefineData, 'append_data_anonymous(nodes, Node'DEFINE));
-        define_data.name = name;
-
-        // TODO: Make this type be based on the structure data
-        declare structure_type = concatenate3_brk_allocate("structure[_:any_", &(size_string), "]");
-        define_data.type = structure_type;
-
-        declare item_names = create_size_one_array8_brk_allocate("_");
-        declare item_types = create_size_one_array8_brk_allocate(#array(concatenate2_brk_allocate("any_", &(size_string))));
-
         declare structure_data = cast(*Node'StructureData, 'append_data_anonymous(nodes, Node'STRUCTURE));
-        structure_data.item_names = item_names;
-        structure_data.item_types = item_types;
-
-        declare _ = 'append_anonymous(nodes, Node'ENDDEFINE);
+        structure_data.name = name;
+        structure_data.item_names = &empty;
+        structure_data.item_types = &empty;
+        structure_data.is_internal = true;
     };
 
     define append_structure_any = function(nodes: *'Data, name: *) {

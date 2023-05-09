@@ -1078,7 +1078,13 @@ define Target_X86_64 = module {
         declare i = 0;
         while i < structure_count {
             declare structure_data = cast(*Node'StructureData, autobuffer_stack8_get(structure_datas, i));
-            declare structure_name = structure_data.name;
+            declare structure_name = if !(structure_data.name == 0) {
+                structure_data.name
+            } else {
+                declare structure_id_string = any_24'>0();
+                whole_8_to_string(structure_data.id, &structure_id_string);
+                concatenate2_brk_allocate("structure.", &structure_id_string)
+            };
 
             declare size = 'get_size(structure_name, nodes, program_data);
 
@@ -1446,6 +1452,18 @@ define Target_X86_64 = module {
 
         if is_define(type) {
             declare defined_value = cast(whole_8, get_value_of_define(define_types, define_values, type));
+            if !(defined_value == 999) {
+                declare structure_member_types = &program_data.structure_member_types;
+                declare member_types = cast(*, autobuffer_array8_get(structure_member_types, defined_value));
+
+                declare size = 'get_size_multiple_array(member_types, 999, nodes, program_data);
+                hashmap_string_put(&cached_sizes_map, type, size);
+                return size;
+            };
+        };
+
+        if string_length=(type, "structure.", 10) {
+            declare defined_value = string_to_whole_8(type + 10);
             if !(defined_value == 999) {
                 declare structure_member_types = &program_data.structure_member_types;
                 declare member_types = cast(*, autobuffer_array8_get(structure_member_types, defined_value));
