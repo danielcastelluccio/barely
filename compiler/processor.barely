@@ -161,10 +161,8 @@ define process = function(nodes: *Nodes'Data, size_function: *function[*,*Nodes'
     declare function_id = 0;
 
     declare has_main = false;
-    declare declared_function_id = 0;
     declare declared_module_id = 0;
 
-    declare declared_function_id = 0;
     declare declared_module_id = 0;
 
     declare in_function = false;
@@ -1361,13 +1359,7 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
     module_references_map = hashmap_new(64);
     define_module_map = hashmap_new(64);
 
-    declare define_types_stack = autobuffer_stack8_new(32);
-
-    declare current_module_id = 0;
-
     declare declared_module_id = 0;
-
-    declare in_function = false;
 
     declare i = 0;
     while i < node_count {
@@ -1394,8 +1386,6 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
         i = i + 1;
     };
 
-    declare declared_function_id = 0;
-    declare declared_structure_id = 0;
     declare declared_global_id = 0;
     declared_module_id = 0;
 
@@ -1420,6 +1410,8 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
 
     declare global_types = &program_data.global_types;
 
+    declare in_function = false;
+
     declare i = 0;
     while i < node_count {
         declare id = Nodes'get_id(nodes, i);
@@ -1427,25 +1419,11 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
 
         if id == Node'FUNCTION {
             declare function_data = cast(*Node'FunctionData, pointer_data);
-            if function_data.name == NULL {
-                declared_function_id = declared_function_id + 1;
-            };
             in_function = true;
         } else if id == Node'ENDFUNCTION {
             in_function = false;
         } else if id == Node'STRUCTURE {
             declare structure_data = cast(*Node'StructureData, pointer_data);
-
-            if structure_data.name == NULL {
-                expand_structure_data(structure_data, &module_stack);
-                autobuffer_array8_set(structure_member_types, declared_structure_id, structure_data.item_types);
-                autobuffer_array8_set(structure_members_names, declared_structure_id, structure_data.item_names);
-
-                structure_data.id = declared_structure_id;
-
-                declared_structure_id = declared_structure_id + 1;
-            };
-
             autobuffer_stack8_push(structure_datas, structure_data);
         } else if id == Node'MODULE {
             autobuffer_stack8_push(&module_stack, declared_module_id);
@@ -1465,7 +1443,12 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
             declare declare_name = declare_data.name;
             declare declare_type = declare_data.type;
 
-            if !in_function {
+            if in_function {
+                if array8_length(declare_type) > 0 {
+                    declare type_string = expand_type_array(declare_type, &module_stack);
+                    declare_data.type = create_size_one_array8_brk_allocate(type_string);
+                };
+            } else {
                 declare_type = expand_module_name_array(declare_type, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list());
                 declare_name = get_define_name_with_module(&module_stack, declare_name);
                 declare_data.name = declare_name;
@@ -1476,21 +1459,19 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 autobuffer_array8_set(global_types, declared_global_id, declare_type);
 
                 declared_global_id = declared_global_id + 1;
-            } else {
-                if array8_length(declare_type) > 0 {
-                    declare type_string = expand_type_array(declare_type, &module_stack);
-                    declare_data.type = create_size_one_array8_brk_allocate(type_string);
-                };
             };
         };
 
         i = i + 1;
     };
 
-    declared_function_id = 0;
-    declared_structure_id = 0;
+    declare function_id = 0;
+    declare structure_id = 0;
     declared_global_id = 0;
     declared_module_id = 0;
+
+    declare constant_types = autobuffer_stack8_new(32);
+    declare constant_values = autobuffer_stack8_new(32);
 
     declare i = 0;
     while i < node_count {
@@ -1508,16 +1489,60 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 hashmap_string_put(internal_function_argument_names, function_name, function_data.argument_names);
                 hashmap_string_put(internal_function_return_types, function_name, function_data.return_types);
             } else {
-                autobuffer_array8_set(function_locations, declared_function_id, i);
-                autobuffer_array8_set(function_datas, declared_function_id, function_data);
-                autobuffer_array8_set(function_argument_types, declared_function_id, function_data.argument_types);
-                autobuffer_array8_set(function_argument_names, declared_function_id, function_data.argument_names);
-                autobuffer_array8_set(function_return_types2, declared_function_id, function_data.return_types);
-                declared_function_id = declared_function_id + 1;
+                autobuffer_array8_set(function_locations, function_id, i);
+                autobuffer_array8_set(function_datas, function_id, function_data);
+                autobuffer_array8_set(function_argument_types, function_id, function_data.argument_types);
+                autobuffer_array8_set(function_argument_names, function_id, function_data.argument_names);
+                autobuffer_array8_set(function_return_types2, function_id, function_data.return_types);
+
+                autobuffer_stack8_push(&constant_types, function_data_to_string(&module_stack, cast(*Node'FunctionData, function_data)));
+                autobuffer_stack8_push(&constant_values, function_id);
+
+                function_id = function_id + 1;
+            };
+            in_function = true;
+        } else if id == Node'ENDFUNCTION {
+            in_function = false;
+        } else if id == Node'NUMBER {
+            declare number_data = cast(*Node'NumberData, pointer_data);
+
+            if !in_function {
+                declare coersion = number_data.coersion;
+                declare actual_type = if !(coersion == 0) {
+                    expand_module_name_array(coersion, 0, &module_id_map, &module_references_map, &module_stack, create_previous_results_list())
+                } else {
+                    "whole_8"
+                };
+
+                autobuffer_stack8_push(&constant_types, actual_type);
+                autobuffer_stack8_push(&constant_values, number_data.value);
+            };
+        } else if id == Node'RETRIEVE {
+            if !in_function {
+                declare retrieve_data = cast(*Node'RetrieveData, pointer_data);
+                declare array = retrieve_data.name;
+                if !retrieve_data.has_multiple {
+                    array = #array(retrieve_data.name);
+                };
+
+                autobuffer_stack8_push(&constant_types, "define");
+                autobuffer_stack8_push(&constant_values, array);
             };
         } else if id == Node'STRUCTURE {
             declare structure_data = cast(*Node'StructureData, pointer_data);
-            declared_structure_id = declared_structure_id + 1;
+
+            if structure_data.name == NULL {
+                expand_structure_data(structure_data, &module_stack);
+                autobuffer_array8_set(structure_member_types, structure_id, structure_data.item_types);
+                autobuffer_array8_set(structure_members_names, structure_id, structure_data.item_names);
+
+                structure_data.id = structure_id;
+
+                autobuffer_stack8_push(&constant_types, structure_data_to_string(cast(*Node'StructureData, structure_data)));
+                autobuffer_stack8_push(&constant_values, structure_id);
+
+                structure_id = structure_id + 1;
+            };
         } else if id == Node'DEFINE {
             declare define_data = cast(*Node'DefineData, pointer_data);
             declare define_name = define_data.name;
@@ -1566,8 +1591,33 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 name = concatenate2_brk_allocate(&top_module_string, name);
             };
 
-            declare previous_type = hashmap_string_get2(define_types, name);
+            hashmap_string_put(&define_module_map, name, cast(whole_8, autobuffer_stack8_peek(&module_stack)));
 
+            if string=(define_type, "define") {
+                declare retrieve_data = #nodes_get_pointer_data(nodes, Node'RetrieveData, i + 1);
+                declare array = retrieve_data.name;
+                if !retrieve_data.has_multiple {
+                    array = #array(retrieve_data.name);
+                };
+                hashmap_string_put(&module_references_map, name, array);
+            };
+
+            define_name = get_define_name_with_module(&module_stack, define_name);
+            define_data.name = define_name;
+        } else if id == Node'ENDDEFINE {
+            declare define_data = cast(*Node'EndDefineData, pointer_data);
+            declare name = define_data.name;
+
+            if module_stack.index > 0 {
+                declare top_module = cast(whole_8, autobuffer_stack8_peek(&module_stack));
+                declare top_module_string = any_16'>0();
+                whole_8_to_string(top_module, &top_module_string);
+
+                name = concatenate2_brk_allocate(&top_module_string, name);
+                define_data.name = name;
+            };
+
+            declare previous_type = hashmap_string_get2(define_types, name);
             if !(previous_type == 999) {
                 print_node_error_beginning(nodes, i);
                 print("Duplicate definition '");
@@ -1576,78 +1626,25 @@ define setup_process = function(nodes: *Nodes'Data, program_data: *ProgramData) 
                 exit(1);
             };
 
-            hashmap_string_put(&define_module_map, name, cast(whole_8, autobuffer_stack8_peek(&module_stack)));
-
-            if string=(define_type, "module") {
-                hashmap_string_put(&module_id_map, name, declared_module_id);
-            } else if string=(define_type, "define") {
-                declare full_define2 = cast(*AutoBufferStack8, brk_allocate(size_of(AutoBufferStack8)));
-                full_define2.* = autobuffer_stack8_new(24);
-                declare full_define = "";
-
-                // TODO: Should remove once the old syntax is gone (Foo.Bar syntax)
-                declare override_array = cast(*, 0);
-
-                i = i + 1;
-                declare j = 0;
-                while (Nodes'get_id(nodes, i + j) == Node'RETRIEVE) || (Nodes'get_id(nodes, i + j) == Node'SKIP) {
-                    if Nodes'get_id(nodes, i + j) == Node'RETRIEVE {
-                        declare retrieve_data = #nodes_get_pointer_data(nodes, Node'RetrieveData, i + j);
-                        declare retrieve_name = retrieve_data.name;
-
-                        if retrieve_data.has_multiple {
-                            override_array = retrieve_name;
-                            break;
-                        };
-
-                        if string=(retrieve_name, "@current_module") {
-                            declare top_module = cast(whole_8, autobuffer_stack8_peek(&module_stack));
-                            declare top_module_string = any_16'>0();
-                            whole_8_to_string(top_module, &top_module_string);
-
-                            autobuffer_stack8_push(full_define2, copy_string_brk_allocate(&top_module_string));
-                            full_define = concatenate2_brk_allocate(full_define, &top_module_string);
-                        } else {
-                            autobuffer_stack8_push(full_define2, copy_string_brk_allocate(retrieve_name));
-                            full_define = concatenate3_brk_allocate(full_define, retrieve_name, ".");
-                        };
-                    };
-
-                    j = j + 1;
-                };
-
-                if !(override_array == 0) {
-                    hashmap_string_put(&module_references_map, name, override_array);
-                } else {
-                    full_define = substring_brk_allocate(full_define, 0, string_length(full_define) - 1);
-                    hashmap_string_put(&module_references_map, name, full_define2.autobuffer.buffer);
-                };
-            };
-
-            define_name = get_define_name_with_module(&module_stack, define_name);
-            define_data.name = define_name;
-
-            declare define_value = if string_length=(define_type, "*function", 9) {
-                declared_function_id
-            } else if string_length=(define_type, "structure", 9) {
-                declared_structure_id
-            } else if string_length=(define_type, "global", 6) {
-                declared_global_id
-            } else if string_length=(define_type, "module", 6) {
-                declared_module_id
+            declare type = cast(*, autobuffer_stack8_pop(&constant_types));
+            if !(define_data.type == 0) {
+                type = define_data.type;
             } else {
-                #nodes_get_pointer_data(nodes, Node'NumberData, i + 1).value
+                define_data.type = type;
             };
 
-            autobuffer_stack8_push(&define_types_stack, define_type);
+            declare value = cast(*, autobuffer_stack8_pop(&constant_values));
+            define_data.value = value;
 
-            hashmap_string_put(define_types, define_name, define_type);
-            hashmap_string_put(define_values, define_name, define_value);
-            hashmap_string_put(define_or_declares, define_name, "define");
-        } else if id == Node'ENDDEFINE {
-            declare _ = autobuffer_stack8_pop(&define_types_stack);
+            hashmap_string_put(define_types, name, type);
+            hashmap_string_put(define_values, name, value);
+            hashmap_string_put(define_or_declares, name, "define");
         } else if id == Node'MODULE {
             autobuffer_stack8_push(&module_stack, declared_module_id);
+
+            autobuffer_stack8_push(&constant_types, "module");
+            autobuffer_stack8_push(&constant_values, declared_module_id);
+
             declared_module_id = declared_module_id + 1;
         } else if id == Node'ENDMODULE {
             declare _ = autobuffer_stack8_pop(&module_stack);
